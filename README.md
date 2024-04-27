@@ -11,24 +11,24 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
     apiVersion: argoproj.io/v1alpha1
     kind: Application
     metadata:
-        name: datahub-local-core
-        namespace: argocd
+      name: datahub-local-core
+      namespace: argocd
     spec:
-        project: default
-        source:
-            repoURL: https://github.com/datahub-local/datahub-local-core.git
-            targetRevision: main
-            path: .
-        destination:
-            server: 'https://kubernetes.default.svc'
-        syncPolicy:
-            automated:
-                prune: true
-                selfHeal: true
-            syncOptions:
-                - CreateNamespace=true
-            retry:
-                limit: 2
+      project: default
+      source:
+        repoURL: https://github.com/datahub-local/datahub-local-core.git
+        targetRevision: main
+        path: .
+      destination:
+        server: "https://kubernetes.default.svc"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 2
     EOF
     ```
 
@@ -108,6 +108,7 @@ For debugging purposes, you can deploy the repository against a local cluster. F
         - name: helmfile-tmp
         emptyDir: {}
     EOF
+
     helm repo add argo https://argoproj.github.io/argo-helm
     helm install -n argocd --create-namespace argo-cd argo/argo-cd --version 6.7.17 --values /tmp/atgocd.values.yaml
     ```
