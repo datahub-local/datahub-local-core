@@ -15,6 +15,7 @@ releases:
   - name: kube-prometheus-stack
     chart: "prometheus-community/kube-prometheus-stack"
     namespace: monitoring
+    createNamespace: true
     values:
       - values/common.yaml
       - values/kube-prometheus-stack.yaml
