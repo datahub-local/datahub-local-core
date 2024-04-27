@@ -22,13 +22,9 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
       destination:
         server: "https://kubernetes.default.svc"
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
+        automated: {}
         syncOptions:
           - CreateNamespace=true
-        retry:
-          limit: 2
     EOF
     ```
 
