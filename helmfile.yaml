@@ -19,8 +19,3 @@ releases:
       - values/common.yaml
       - values/kube-prometheus-stack.yaml
     disableValidationOnInstall: true
-    hooks:
-      - events: ["prepare"]
-        showlogs: true
-        command: kubectl
-        args: ["create", "ns", "monitoring"]
