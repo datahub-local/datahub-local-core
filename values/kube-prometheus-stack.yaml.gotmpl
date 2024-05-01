@@ -1,0 +1,53 @@
+# Values for kube-prometheus-stack chart. See https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+
+prometheusOperator:
+  admissionWebhooks:
+    failurePolicy: Ignore
+
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: "traefik"
+    paths:
+      - /monitoring/alertmanager
+    secureBackends: true
+    annotations:
+      cert-manager.io/cluster-issuer: default-cluster-issuer
+      traefik.ingress.kubernetes.io/router.middlewares: "monitoring-monitoring-alertmanager@kubernetescrd{{ if .Values.traeffik.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+
+grafana:
+  grafana.ini:
+    server:
+      domain: "{{ .StateValues.ingress_hostname }}"
+      root_url: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/grafana"
+      serve_from_sub_path: true
+    auth:
+      disable_login_form: true
+      disable_signout_menu: true
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+    auth.basic:
+      enabled: false
+  ingress:
+    enabled: true
+    ingressClassName: "traefik"
+    path: /monitoring/grafana
+    secureBackends: true
+    annotations:
+      cert-manager.io/cluster-issuer: default-cluster-issuer
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: "traefik"
+    paths:
+      - /monitoring/prometheus
+    secureBackends: true
+    annotations:
+      cert-manager.io/cluster-issuer: default-cluster-issuer
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+  prometheusSpec:
+    externalUrl: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/prometheus"
+    routePrefix: /monitoring/prometheus

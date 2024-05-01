@@ -1,0 +1,18 @@
+{{- range $key, $value := .Values.traeffik.middleware }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: "{{ $key }}"
+  namespace: "{{ $value.namespace | default "kube-system" }}"
+spec:
+  {{- if $value.stripPrefixPath }}
+  stripPrefix:
+    prefixes:
+      - "/{{ $value.stripPrefixPath }}"
+  {{- else }}
+  replacePathRegex:
+    regex: "{{ $value.replacePathRegex }}"
+    replacement: "{{ $value.replacePathReplacement }}"
+  {{- end }}
+{{- end }}

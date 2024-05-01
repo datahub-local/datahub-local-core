@@ -1,0 +1,13 @@
+# Common values shared for all charts
+release_name: datahub-local-core
+
+ingress_hostname: localhost #homelab.alvsanand.com
+ingress_port: 8443 #443
+
+traeffik:
+  auth_enabled: false
+
+  middleware:
+    monitoring-alertmanager:
+      stripPrefixPath: monitoring/alertmanager
+      namespace: monitoring
