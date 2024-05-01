@@ -55,7 +55,7 @@ For debugging purposes, you can deploy the repository against a local cluster. F
           helmfile:
             allowConcurrency: true
             discover:
-              fileName: helmfile.yaml
+              fileName: helmfile.yaml*
             generate:
               command:
                 - bash
