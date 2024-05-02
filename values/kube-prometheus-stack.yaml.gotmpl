@@ -3,9 +3,8 @@
 prometheusOperator:
   admissionWebhooks:
     failurePolicy: Ignore
-    patch:
-        annotations:
-          argocd.argoproj.io/hook: Sync
+    annotations:
+      argocd.argoproj.io/hook: Sync
 
 alertmanager:
   ingress:
