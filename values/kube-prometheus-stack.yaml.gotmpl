@@ -4,10 +4,10 @@ prometheusOperator:
   admissionWebhooks:
     failurePolicy: Ignore
     annotations:
-      argocd.argoproj.io/hook: PreSync
+      argocd.argoproj.io/hook: Sync
       argocd.argoproj.io/hook-delete-policy: HookSucceeded
     patch:
-      argocd.argoproj.io/hook: PreSync
+      argocd.argoproj.io/hook: Sync
       argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
 alertmanager:

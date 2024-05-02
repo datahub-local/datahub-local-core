@@ -124,31 +124,9 @@ For debugging purposes, you can deploy the repository against a local cluster. F
     kubectl port-forward svc/argo-cd-argocd-server -n argocd 8080:80
     ```
 
-4. Create an ArgoCD Application
+4. [Create](#usage) a Application for the repo.
 
-    ```bash
-    kubectl apply -f - <<EOF
-    kind: AppProject
-    apiVersion: argoproj.io/v1alpha1
-    metadata:
-      name: "namespace-argocd"
-    spec:
-      clusterResourceWhitelist:
-        - group: "*"
-          kind: "*"
-      destinations:
-        - namespace: "*"
-          server: "*"
-      sourceNamespaces:
-        - "argocd"
-      sourceRepos:
-        - "*"
-    EOF
-    ```
-
-5. [Create](#usage) a Application for the repo.
-
-6. Delete k8s cluster.
+5. Delete k8s cluster.
 
     ```bash
     k3d cluster delete
