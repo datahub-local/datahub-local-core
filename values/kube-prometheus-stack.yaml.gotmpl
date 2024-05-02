@@ -5,11 +5,14 @@ prometheusOperator:
     failurePolicy: Ignore
     annotations:
       argocd.argoproj.io/hook: Sync
+      argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
 alertmanager:
   ingress:
     enabled: true
     ingressClassName: "traefik"
+    hosts:
+      - {{ .StateValues.ingress_hostname }}
     paths:
       - /monitoring/alertmanager
     secureBackends: true
@@ -34,6 +37,8 @@ grafana:
   ingress:
     enabled: true
     ingressClassName: "traefik"
+    hosts:
+      - {{ .StateValues.ingress_hostname }}
     path: /monitoring/grafana
     secureBackends: true
     annotations:
@@ -44,6 +49,8 @@ prometheus:
   ingress:
     enabled: true
     ingressClassName: "traefik"
+    hosts:
+      - {{ .StateValues.ingress_hostname }}
     paths:
       - /monitoring/prometheus
     secureBackends: true
