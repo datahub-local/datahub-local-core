@@ -2,15 +2,7 @@
 
 prometheusOperator:
   admissionWebhooks:
-    failurePolicy: Ignore
-    timeoutSeconds: 30
-    annotations:
-      argocd.argoproj.io/hook: PreSync
-      argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    patch:
-      annotations:
-        argocd.argoproj.io/hook: PreSync
-        argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    enabled: false
 
 alertmanager:
   ingress:
