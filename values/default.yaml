@@ -4,6 +4,10 @@ release_name: datahub-local-core
 ingress_hostname: homelab.alvsanand.com
 ingress_port: 443
 
+namespaces:
+  - monitoring
+  - other
+
 traeffik:
   auth_enabled: true
 

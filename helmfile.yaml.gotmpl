@@ -20,17 +20,19 @@ repositories:
     url: https://jameswynn.github.io/helm-charts
 
 releases:
-  - name: "{{ .Values.release_name }}-monitoring"
+  - name: "{{ .Values.release_name }}-pre-chart"
     namespace: monitoring
-    chart: "charts/monitoring"
+    chart: "charts/pre-chart"
     values:
       - values/default.yaml
     # Use hook to create all required namespaces if used with ArgoCD
     hooks:
+      #{{ range .Values.namespaces }}
       - events: ["prepare"]
         showlogs: true
         command: bash
-        args: ["-c", "kubectl create ns monitoring 2> /dev/null || true"]
+        args: ["-c", "kubectl create ns {{ . }} 2> /dev/null || true"]
+      #{{ end }}
   - name: "{{ .Values.release_name }}-kube-prometheus-stack"
     namespace: monitoring
     chart: "prometheus-community/kube-prometheus-stack"
