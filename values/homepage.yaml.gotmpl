@@ -10,7 +10,7 @@ config:
     - System:
         - Traefik:
             icon: traefik.png
-            href: /traefik
+            href: "https://{{ .StateValues.ingress_hostname }}/traefik"
             description: The Cloud Native Application Proxy
     - Data: []
   widgets:
