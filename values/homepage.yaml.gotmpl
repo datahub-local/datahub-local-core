@@ -12,7 +12,6 @@ config:
             icon: traefik.png
             href: "https://{{ .StateValues.ingress_hostname }}/traefik"
             description: The Cloud Native Application Proxy
-    - Data: []
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
@@ -66,7 +65,7 @@ ingress:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Homepage"
       gethomepage.dev/description: "A highly customizable homepage (or startpage / application dashboard) with Docker and service API integrations."
-      gethomepage.dev/group: "Core"
+      gethomepage.dev/group: "System"
       gethomepage.dev/icon: "homepage.png"
     hosts:
       - host: "{{ .StateValues.ingress_hostname }}"
