@@ -1,5 +1,9 @@
 # Values for kube-prometheus-stack chart. See https://github.com/jameswynn/helm-charts/blob/main/charts/homepage/values.yaml
 
+image:
+  repository: ghcr.io/gethomepage/homepage
+  tag: latest
+
 config:
   bookmarks:
     - Developer:
@@ -10,7 +14,7 @@ config:
     - System:
         - Traefik:
             icon: traefik.png
-            href: "https://{{ .StateValues.ingress_hostname }}/traefik"
+            href: "https://{{ .StateValues.ingress_hostname }}/dashboard/"
             description: The Cloud Native Application Proxy
   widgets:
     - logo:
@@ -46,6 +50,7 @@ config:
   kubernetes:
     mode: cluster
   settings:
+    startUrl: "/homepage"
 
 # The service account is necessary to allow discovery of other services
 serviceAccount:
@@ -60,7 +65,7 @@ ingress:
     enabled: true
     annotations:
       cert-manager.io/cluster-issuer: default-cluster-issuer
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+      traefik.ingress.kubernetes.io/router.middlewares: "other-other-homepage@kubernetescrd{{ if .Values.traeffik.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Homepage"
@@ -70,5 +75,5 @@ ingress:
     hosts:
       - host: "{{ .StateValues.ingress_hostname }}"
         paths:
-          - path: /
+          - path: /homepage
             pathType: Prefix
