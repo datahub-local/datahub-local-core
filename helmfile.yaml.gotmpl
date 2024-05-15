@@ -41,7 +41,7 @@ releases:
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-homepage"
     namespace: other
+    forceNamespace: other
     chart: "jameswynn/homepage"
     values:
       - values/homepage.yaml.gotmpl
-    disableValidationOnInstall: true
