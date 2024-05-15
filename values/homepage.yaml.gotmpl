@@ -1,0 +1,50 @@
+# Values for kube-prometheus-stack chart. See https://github.com/jameswynn/helm-charts/blob/main/charts/homepage/values.yaml
+
+config:
+  bookmarks:
+    - Developer:
+        - Github:
+            - abbr: GH
+              href: https://github.com/datahub-local/datahub-local
+  widgets:
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: "cluster"
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+    - search:
+        provider: duckduckgo
+        target: _blank
+  kubernetes:
+    mode: cluster
+  settings:
+
+# The service account is necessary to allow discovery of other services
+serviceAccount:
+  create: true
+  name: homepage
+
+# This enables the service account to access the necessary resources
+enableRbac: true
+
+ingress:
+  main:
+    enabled: true
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Homepage"
+      gethomepage.dev/description: "A highly customizable homepage (or startpage / application dashboard) with Docker and service API integrations."
+      gethomepage.dev/group: "Core"
+      gethomepage.dev/icon: "homepage.png"
+    hosts:
+      - host: "{{ .StateValues.ingress_hostname }}"
+        paths:
+          - path: /
+            pathType: Prefix

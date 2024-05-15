@@ -1,3 +1,4 @@
+---
 environments:
   default:
     values:
@@ -15,15 +16,17 @@ commonLabels:
 repositories:
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
+  - name: jameswynn
+    url: https://jameswynn.github.io/helm-charts
 
 releases:
-  - name: "{{ .Values.release_name }}-common"
+  - name: "{{ .Values.release_name }}-monitoring"
     namespace: monitoring
-    chart: "charts/common"
+    chart: "charts/monitoring"
     values:
       - values/default.yaml
     # Use hook to create all required namespaces if used with ArgoCD
-    hooks: 
+    hooks:
       - events: ["prepare"]
         showlogs: true
         command: bash
@@ -31,6 +34,12 @@ releases:
   - name: "{{ .Values.release_name }}-kube-prometheus-stack"
     namespace: monitoring
     chart: "prometheus-community/kube-prometheus-stack"
+    values:
+      - values/kube-prometheus-stack.yaml.gotmpl
+    disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-homepage"
+    namespace: other
+    chart: "jameswynn/homepage"
     values:
       - values/kube-prometheus-stack.yaml.gotmpl
     disableValidationOnInstall: true

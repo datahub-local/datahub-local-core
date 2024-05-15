@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "*.gotmpl": "helm"
+        "**/*.gotmpl": "yaml",
+        "*/*.gotmpl": "yaml"
     }
 }
