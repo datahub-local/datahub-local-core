@@ -6,7 +6,15 @@ config:
         - Github:
             - abbr: GH
               href: https://github.com/datahub-local/datahub-local
+  services:
+    - Core: []
+    - Monitoring: []
   widgets:
+    - logo:
+        icon: https://datahub-local.alvsanand.com/assets/img/logo.png
+    - greeting:
+        text_size: 3xl
+        text: DataHub.local
     - kubernetes:
         cluster:
           show: true
@@ -19,9 +27,19 @@ config:
           cpu: true
           memory: true
           showLabel: true
-    - search:
-        provider: duckduckgo
-        target: _blank
+    - datetime:
+        text_size: l
+        locale: de
+        format:
+          dateStyle: short
+          timeStyle: short
+          hourCycle: h23
+    - openmeteo:
+        label: Rivas-Vaciamadrid
+        latitude: 40.352017983073466
+        longitude: -3.53941998801271
+        units: metric
+        cache: 5
   kubernetes:
     mode: cluster
   settings:
