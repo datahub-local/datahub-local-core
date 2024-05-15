@@ -7,13 +7,17 @@ config:
             - abbr: GH
               href: https://github.com/datahub-local/datahub-local
   services:
-    - Core: []
+    - Core:
+        - Traefik:
+            icon: traefik.png
+            href: /traefik
+            description: The Cloud Native Application Proxy
     - Monitoring: []
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
     - greeting:
-        text_size: 3xl
+        text_size: 2xl
         text: DataHub.local
     - kubernetes:
         cluster:
