@@ -2,7 +2,10 @@
 
 image:
   repository: ghcr.io/gethomepage/homepage
-  tag: latest
+  tag: v0.8.13
+
+env:
+  LOG_LEVEL: "info"
 
 config:
   bookmarks:
@@ -14,7 +17,7 @@ config:
     - System:
         - Traefik:
             icon: traefik.png
-            href: "https://{{ .StateValues.ingress_hostname }}/dashboard/"
+            href: "https://{{ .StateValues.ingress_hostname }}/traefik/"
             description: The Cloud Native Application Proxy
   widgets:
     - logo:
@@ -50,7 +53,8 @@ config:
   kubernetes:
     mode: cluster
   settings:
-    startUrl: "/homepage"
+    title: "DataHub.local"
+    base: "https://{{ .StateValues.ingress_hostname }}/homepage"
 
 # The service account is necessary to allow discovery of other services
 serviceAccount:
@@ -65,7 +69,7 @@ ingress:
     enabled: true
     annotations:
       cert-manager.io/cluster-issuer: default-cluster-issuer
-      traefik.ingress.kubernetes.io/router.middlewares: "other-other-homepage@kubernetescrd{{ if .Values.traeffik.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Homepage"
@@ -75,5 +79,5 @@ ingress:
     hosts:
       - host: "{{ .StateValues.ingress_hostname }}"
         paths:
-          - path: /homepage
+          - path: /
             pathType: Prefix
