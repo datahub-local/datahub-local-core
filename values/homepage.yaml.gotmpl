@@ -38,6 +38,9 @@ ingress:
   main:
     enabled: true
     annotations:
+      cert-manager.io/cluster-issuer: default-cluster-issuer
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Homepage"
       gethomepage.dev/description: "A highly customizable homepage (or startpage / application dashboard) with Docker and service API integrations."
