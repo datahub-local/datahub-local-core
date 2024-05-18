@@ -47,6 +47,7 @@ releases:
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-monitoring"
     namespace: monitoring
+    forceNamespace: monitoring
     chart: "charts/monitoring"
     values:
       - values/default.yaml
