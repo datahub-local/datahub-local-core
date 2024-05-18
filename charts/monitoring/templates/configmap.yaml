@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    grafana_dashboard: "1"
+  name: graphana-custom-dashboards
+data:
+  {{- $files := .Files.Glob "files/dashboards/*.json" }}
+  {{- range $path, $fileContents := $files }}
+  {{- $dashboardName := regexReplaceAll "(^.*/)(.*)\\.json$" $path "${2}" }}
+  {{ $dashboardName }}.json: {{ $.Files.Get $path | toJson }}
+  {{- end }}

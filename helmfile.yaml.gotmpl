@@ -33,15 +33,21 @@ releases:
         command: bash
         args: ["-c", "kubectl create ns {{ . }} 2> /dev/null || true"]
       #{{ end }}
-  - name: "{{ .Values.release_name }}-kube-prometheus-stack"
-    namespace: monitoring
-    chart: "prometheus-community/kube-prometheus-stack"
-    values:
-      - values/kube-prometheus-stack.yaml.gotmpl
-    disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-homepage"
     namespace: other
     forceNamespace: other
     chart: "jameswynn/homepage"
     values:
       - values/homepage.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-kube-prometheus-stack"
+    namespace: monitoring
+    chart: "prometheus-community/kube-prometheus-stack"
+    values:
+      - values/kube-prometheus-stack.yaml.gotmpl
+    disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-monitoring"
+    namespace: monitoring
+    chart: "charts/monitoring"
+    values:
+      - values/default.yaml
+      - values/monitoring.yaml
