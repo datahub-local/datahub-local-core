@@ -20,10 +20,12 @@ alertmanager:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Alertmanager"
       gethomepage.dev/description: "The Alertmanager handles alerts sent by client applications such as the Prometheus server."
-      gethomepage.dev/group: "System"
+      gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "alertmanager.png"
 
 grafana:
+  persistence:
+    enabled: true
   grafana.ini:
     server:
       domain: "{{ .StateValues.ingress_hostname }}"
@@ -51,7 +53,7 @@ grafana:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grafana"
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
-      gethomepage.dev/group: "System"
+      gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "grafana.png"
 
 prometheus:
@@ -70,7 +72,7 @@ prometheus:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "prometheus"
       gethomepage.dev/description: "The Prometheus monitoring system and time series database."
-      gethomepage.dev/group: "System"
+      gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "prometheus.png"
   prometheusSpec:
     externalUrl: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/prometheus"
