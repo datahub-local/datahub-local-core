@@ -19,7 +19,7 @@ alertmanager:
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Alertmanager"
-      gethomepage.dev/href: "https://{{ ingress_hostname }}/monitoring/alertmanager"
+      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/alertmanager"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
       gethomepage.dev/description: "The Alertmanager handles alerts sent by client applications such as the Prometheus server."
       gethomepage.dev/group: "Monitoring"
@@ -54,7 +54,7 @@ grafana:
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grafana"
-      gethomepage.dev/href: "https://{{ ingress_hostname }}/monitoring/grafana"
+      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/grafana"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
       gethomepage.dev/group: "Monitoring"
@@ -75,7 +75,7 @@ prometheus:
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Prometheus"
-      gethomepage.dev/href: "https://{{ ingress_hostname }}/monitoring/prometheus"
+      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/prometheus"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
       gethomepage.dev/description: "The Prometheus monitoring system and time series database."
       gethomepage.dev/group: "Monitoring"
