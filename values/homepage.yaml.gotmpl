@@ -19,6 +19,8 @@ config:
             icon: traefik.png
             href: "https://{{ .StateValues.ingress_hostname }}/traefik/dashboard/"
             description: The Cloud Native Application Proxy
+            namespace: kube-system
+            pod-selector: "app.kubernetes.io/name=traefik"
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
