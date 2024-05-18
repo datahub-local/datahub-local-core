@@ -2153,9 +2153,10 @@
     "timezone": "",
     "title": "Homelab / System / Longhorn / Cluster",
     "tags": [
-      "Homelab",
-      "System",
-      "Longhorn"
+        "Homelab",
+        "System",
+        "Longhorn",
+        "prometheus"
     ],
     "uid": "2BCgsldGz",
     "version": 101
