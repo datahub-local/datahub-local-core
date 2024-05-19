@@ -83,3 +83,7 @@ prometheus:
   prometheusSpec:
     externalUrl: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/prometheus"
     routePrefix: /monitoring/prometheus
+
+    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}

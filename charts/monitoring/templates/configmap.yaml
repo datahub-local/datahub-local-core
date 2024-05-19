@@ -1,12 +1,13 @@
+{{- $files := .Files.Glob "files/dashboards/*.json" }}
+{{- range $path, $fileContents := $files }}
+{{- $dashboardName := regexReplaceAll "[^A-Za-z0-9-]+" (regexReplaceAll "(^.*/)(.*)\\.json$" $path "${2}") "" }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
     grafana_dashboard: "1"
-  name: graphana-custom-dashboards
+  name: graphana-dashboard-{{ $dashboardName }}
 data:
-  {{- $files := .Files.Glob "files/dashboards/*.json" }}
-  {{- range $path, $fileContents := $files }}
-  {{- $dashboardName := regexReplaceAll "(^.*/)(.*)\\.json$" $path "${2}" }}
   {{ $dashboardName }}.json: {{ $.Files.Get $path | toJson }}
-  {{- end }}
+{{- end }}
