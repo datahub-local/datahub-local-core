@@ -112,7 +112,7 @@
             "uid": "prometheus"
           },
           "exemplar": true,
-          "expr": "traefik_service_requests_total{service=\"$service\"}",
+          "expr": "traefik_service_requests_total{exported_service=\"$exported_service\"}",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -120,7 +120,7 @@
           "refId": "A"
         }
       ],
-      "title": "$service return code",
+      "title": "$exported_service return code",
       "type": "piechart"
     },
     {
@@ -194,7 +194,7 @@
             "uid": "prometheus"
           },
           "exemplar": true,
-          "expr": "sum(traefik_service_request_duration_seconds_sum{service=\"$service\"}) / sum(traefik_service_requests_total{service=\"$service\"}) * 1000",
+          "expr": "sum(traefik_service_request_duration_seconds_sum{exported_service=\"$exported_service\"}) / sum(traefik_service_requests_total{exported_service=\"$exported_service\"}) * 1000",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
@@ -202,7 +202,7 @@
           "refId": "A"
         }
       ],
-      "title": "$service response time",
+      "title": "$exported_service response time",
       "type": "stat"
     },
     {
@@ -262,14 +262,14 @@
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "Total requests $service",
+          "legendFormat": "Total requests $exported_service",
           "range": true,
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Total requests over 5min $service",
+      "title": "Total requests over 5min $exported_service",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -572,7 +572,7 @@
           "refId": "A"
         }
       ],
-      "title": "Requests by service (min)",
+      "title": "Requests by service over 5min",
       "type": "piechart"
     },
     {
@@ -673,7 +673,7 @@
         "hide": 0,
         "includeAll": false,
         "multi": false,
-        "name": "service",
+        "name": "exported_service",
         "options": [],
         "query": {
           "qryType": 1,
