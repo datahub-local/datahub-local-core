@@ -1878,7 +1878,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_memstats_heap_alloc_bytes{job=!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_memstats_heap_alloc_bytes{job!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{namespace}}",
@@ -1977,7 +1977,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "irate(process_cpu_seconds_total{job=!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}[1m])",
+              "expr": "irate(process_cpu_seconds_total{job!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}[1m])",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{namespace}}",
@@ -2077,7 +2077,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_goroutines{job=!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_goroutines{job!~\".*argocd-applicationset-controller-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{namespace}}",
@@ -2882,7 +2882,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_memstats_heap_alloc_bytes{job=!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_memstats_heap_alloc_bytes{job!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod}}",
@@ -2967,7 +2967,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_goroutines{job=!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_goroutines{job!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod}}",
@@ -3084,7 +3084,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_memstats_heap_alloc_bytes{job=!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_memstats_heap_alloc_bytes{job!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod}}",
@@ -3177,7 +3177,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_goroutines{job=!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
+              "expr": "go_goroutines{job!~\".*argocd-repo-server-metrics\",namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod}}",
@@ -3269,7 +3269,7 @@
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "go_gc_duration_seconds{job=!~\".*argocd-repo-server-metrics\", quantile=\"1\", namespace=~\"$namespace\"}",
+              "expr": "go_gc_duration_seconds{job!~\".*argocd-repo-server-metrics\", quantile=\"1\", namespace=~\"$namespace\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{pod}}",
@@ -4160,15 +4160,14 @@
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "definition": "label_values(kube_pod_info, namespace)",
+        "definition": "label_values(argocd_app_info, namespace)",
         "hide": 0,
         "includeAll": true,
         "multi": false,
         "name": "namespace",
         "options": [],
-        "query": "label_values(kube_pod_info, namespace)",
+        "query": "label_values(argocd_app_info, namespace)",
         "refresh": 1,
-        "regex": ".*argocd.*",
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",

@@ -1,17 +1,4 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
-  },
   "editable": true,
   "gnetId": 13032,
   "graphTooltip": 0,
@@ -49,8 +36,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "The total number of volumes in the Longhorn storage system",
       "fieldConfig": {
@@ -106,8 +93,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Healthy volumes are volumes that are attaching to a node and have the number of healthy replicas equals to the expected number of replicas.",
       "fieldConfig": {
@@ -171,8 +158,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Note that Longhorn volume actual size is not the size of the filesystem inside a Longhorn volume.  See more at : https://longhorn.io/docs/1.0.2/volumes-and-nodes/volume-size/#volume-actual-size",
       "fieldConfig": {
@@ -277,8 +264,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Degraded volumes are volumes that have the number of healthy replicas smaller than the expected number of replicas. e.g. User creates a volume with 2 replicas but 1 replicas is failed.",
       "fieldConfig": {
@@ -338,8 +325,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Fault volumes are volumes that doesn't have any healthy replica.",
       "fieldConfig": {
@@ -399,8 +386,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "The capacity of each Longhorn volume",
       "fieldConfig": {
@@ -509,8 +496,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Attached volumes are volumes that are currently attaching to a node",
       "fieldConfig": {
@@ -570,8 +557,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Detached volumes are volumes that aren't currently attaching to a node",
       "fieldConfig": {
@@ -657,8 +644,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "The total number of nodes in the Longhorn storage system",
       "fieldConfig": {
@@ -714,8 +701,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Disabled nodes are nodes that are disabled by the user.  When users disable a node, Longhorn will not use the node's storage for replica scheduling. Note that Longhorn can still attach a volume to disabled nodes because the actual data of the volume could be on a different node.",
       "fieldConfig": {
@@ -779,8 +766,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -875,8 +862,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Schedulable nodes are nodes that Longhorn can use their storage for replica scheduling.",
       "fieldConfig": {
@@ -936,8 +923,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Failed Nodes are nodes that Longhorn cannot attach volumes to and cannot schedule replicas onto. e.g: when the nodes went down.",
       "fieldConfig": {
@@ -997,8 +984,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1088,8 +1075,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "decimals": 0,
       "fieldConfig": {
@@ -1213,8 +1200,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "The capacity of each Longhorn volume",
       "fieldConfig": {
@@ -1309,8 +1296,8 @@
     },
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1428,8 +1415,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1538,8 +1525,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "",
       "fieldConfig": {
@@ -1648,8 +1635,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "decimals": 0,
       "description": "Instance managers are pods that contains the engine and replica processes of Longhorn volumes. See more at https://longhorn.io/docs/1.0.2/concepts/#11-the-longhorn-manager-and-the-longhorn-engine ",
@@ -1749,8 +1736,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Instance managers are pods that contains the engine and replica processes of Longhorn volumes. See more at https://longhorn.io/docs/1.0.2/concepts/#11-the-longhorn-manager-and-the-longhorn-engine ",
       "fieldConfig": {
@@ -1859,8 +1846,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "description": "Instance managers are pods that contains the engine and replica processes of Longhorn volumes. See more at https://longhorn.io/docs/1.0.2/concepts/#11-the-longhorn-manager-and-the-longhorn-engine ",
       "fieldConfig": {
@@ -1958,8 +1945,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "decimals": 0,
       "description": "Longhorn manager pods manage the control plane of the Longhorn system. e.g. Volume scheduling, attaching, detaching, backup, etc,..",
@@ -2058,8 +2045,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "decimals": null,
       "description": "Longhorn manager pods manage the control plane of the Longhorn system. e.g. Volume scheduling, attaching, detaching, backup, etc,..",
