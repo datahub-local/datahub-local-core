@@ -30,11 +30,14 @@ consoleIngress:
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
-    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/minio"
+    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=minio"
     gethomepage.dev/description: "The Object Store for AI Data Infrastructure."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "minio.png"
+
+environment:
+  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio"
 
 users:
   - accessKey: console
