@@ -19,11 +19,9 @@ metrics:
 consoleIngress:
   enabled: true
   ingressClassName: "traefik"
+  path: /data/minio
   hosts:
     - "{{ .StateValues.ingress_hostname }}"
-  paths:
-    - /data/minio
-  secureBackends: true
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
