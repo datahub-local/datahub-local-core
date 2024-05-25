@@ -6,6 +6,12 @@ resources:
   requests:
     memory: 256Mi
 
+persistence:
+  enabled: true
+
+  size: 20Gi
+  storageClass: longhorn-no-replica
+
 metrics:
   serviceMonitor:
     enabled: true
