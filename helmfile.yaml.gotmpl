@@ -18,10 +18,12 @@ repositories:
     url: https://prometheus-community.github.io/helm-charts
   - name: jameswynn
     url: https://jameswynn.github.io/helm-charts
+  - name: minio
+    url: https://charts.min.io/
 
 releases:
   - name: "{{ .Values.release_name }}-pre-chart"
-    namespace: monitoring
+    namespace: default
     chart: "charts/pre-chart"
     values:
       - values/default.yaml
@@ -37,11 +39,13 @@ releases:
     namespace: other
     forceNamespace: other
     chart: "jameswynn/homepage"
+    version: "{{ .StateValues.helm_chart_version.homepage }}"
     values:
       - values/homepage.yaml.gotmpl
   - name: "{{ .Values.release_name }}-kube-prometheus-stack"
     namespace: monitoring
     chart: "prometheus-community/kube-prometheus-stack"
+    version: "{{ .StateValues.helm_chart_version.kube_prometheus_stack }}"
     values:
       - values/kube-prometheus-stack.yaml.gotmpl
     disableValidationOnInstall: true
@@ -51,4 +55,11 @@ releases:
     chart: "charts/monitoring"
     values:
       - values/default.yaml
-      - values/monitoring.yaml
+      - values/monitoring.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-minio"
+    namespace: data
+    forceNamespace: data
+    chart: "minio/minio"
+    version: "{{ .StateValues.helm_chart_version.minio }}"
+    values:
+      - values/minio.yaml.gotmpl

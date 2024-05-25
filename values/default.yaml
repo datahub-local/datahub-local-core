@@ -15,3 +15,8 @@ traeffik:
     monitoring-alertmanager:
       stripPrefixPath: monitoring/alertmanager
       namespace: monitoring
+
+helm_chart_version:
+  homepage: "1.2.3"
+  kube_prometheus_stack: "58.7.2"
+  minio: "5.2.0"

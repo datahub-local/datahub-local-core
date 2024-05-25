@@ -1,0 +1,36 @@
+mode: distributed
+
+replicas: 4
+
+resources:
+  requests:
+    memory: 256Mi
+
+metrics:
+  serviceMonitor:
+    enabled: true
+
+consoleIngress:
+  enabled: true
+  ingressClassName: "traefik"
+  hosts:
+    - "{{ .StateValues.ingress_hostname }}"
+  paths:
+    - /data/minio
+  secureBackends: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Minio"
+    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/minio"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=minio"
+    gethomepage.dev/description: "The Object Store for AI Data Infrastructure."
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "minio.png"
+
+users:
+  - accessKey: console
+    secretKey: console123
+    policy: consoleAdmin
