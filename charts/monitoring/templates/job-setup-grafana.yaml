@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: setup-grafana
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: setup-grafana
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args: ["/scripts/setup-grafana.sh"]
+        env:
+        - name: HOMEPAGE_DASHBOARD_UID
+          value: "{{ (.Files.Get "files/dashboards/homepage.json" | fromJson).uid }}"
+        - name: GRAFANA_URL
+          value: "datahub-local-core-kube-prometheus-stack-grafana.monitoring.svc.cluster.local"
+        volumeMounts:
+        - name: script-volume
+          mountPath: /scripts
+      restartPolicy: OnFailure
+      volumes:
+      - name: script-volume
+        configMap:
+          name: setup-grafana-script
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: setup-grafana-script
+data:
+  setup-grafana.sh: |
+{{ .Files.Get "files/scripts/setup-grafana.sh" | indent 4 }}
