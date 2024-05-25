@@ -11,7 +11,7 @@ spec:
       containers:
       - name: setup-grafana
         image: curlimages/curl:latest
-        command: ["/bin/sh", "-c", "/scripts/setup-grafana.sh"]
+        command: ["/bin/sh", "/scripts/setup-grafana.sh"]
         env:
         - name: HOMEPAGE_DASHBOARD_UID
           value: "{{ (.Files.Get "files/dashboards/homepage.json" | fromJson).uid }}"
