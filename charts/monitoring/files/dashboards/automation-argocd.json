@@ -466,7 +466,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "sum(argocd_app_info{namespace=~\"$namespace\",dest_server=~\"$cluster\",operation!=\"\"})",
+          "expr": "sum_over_time(argocd_app_info{namespace=~\"$namespace\",dest_server=~\"$cluster\",operation!=\"\"}[$__range])",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
