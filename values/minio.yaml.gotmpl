@@ -24,7 +24,7 @@ consoleIngress:
     - "{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
@@ -34,10 +34,21 @@ consoleIngress:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "minio.png"
 
-environment:
-  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
-
+#{{- if .Values.auth_enabled }}
+oidc:
+  enabled: true
+  configUrl: "https://github.com/login/oauth/authorize"
+  clientId: "{{ index .StateValues "github.client_id" }}"
+  clientSecret: "{{ index .StateValues "github.clientSecret" }}"
+  claimName: "consoleAdmin"
+  scopes: "openid,profile,email"
+  redirectUri: "https://{{ .StateValues.ingress_hostname }}/data/minio/oauth_callback"
+#{{- else }}
 users:
   - accessKey: console
     secretKey: console123
     policy: consoleAdmin
+#{{- end }}
+
+environment:
+  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
