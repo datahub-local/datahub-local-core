@@ -9,9 +9,9 @@ namespaces:
   - monitoring
   - other
 
-traeffik:
-  auth_enabled: true
+auth_enabled: true
 
+traeffik:
   middleware:
     monitoring-alertmanager:
       stripPrefixPath: /monitoring/alertmanager

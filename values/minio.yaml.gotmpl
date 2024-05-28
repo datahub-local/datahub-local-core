@@ -24,7 +24,7 @@ consoleIngress:
     - "{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.traeffik.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
