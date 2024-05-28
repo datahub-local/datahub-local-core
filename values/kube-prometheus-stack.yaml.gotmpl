@@ -39,9 +39,9 @@ grafana:
       enabled: true
       allow_sign_up: false
       auto_login: true
-      client_id: "{{ .StateValues.ingress_hostname }}"
-      client_secret: "{{ .StateValues.ingress_hostname }}"
-      allowed_organizations: "{{ .StateValues.ingress_hostname }}"
+      client_id: "{{ .StateValues.github.client_id }}"
+      client_secret: "{{ .StateValues.github.clientSecret }}"
+      allowed_organizations: "{{ .StateValues.github.organization }}"
     #{{- else }}
     auth:
       disable_login_form: true
