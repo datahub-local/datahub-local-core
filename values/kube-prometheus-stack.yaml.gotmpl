@@ -33,6 +33,7 @@ grafana:
       domain: "{{ .StateValues.ingress_hostname }}"
       root_url: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/grafana"
       serve_from_sub_path: true
+    #{{- if .Values.traeffik.auth_enabled }}
     auth:
       disable_login_form: true
       disable_signout_menu: true
@@ -41,6 +42,15 @@ grafana:
       org_role: Admin
     auth.basic:
       enabled: false
+    #{{- else }}
+    auth.github:
+      enabled: true
+      allow_sign_up: false
+      auto_login: true
+      client_id: "{{ .StateValues.ingress_hostname }}"
+      client_secret: "{{ .StateValues.ingress_hostname }}"
+      allowed_organizations: "{{ .StateValues.ingress_hostname }}"
+    #{{- end }}
   ingress:
     enabled: true
     ingressClassName: "traefik"
@@ -50,7 +60,7 @@ grafana:
     secureBackends: true
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+      #traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grafana"

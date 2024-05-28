@@ -9,7 +9,7 @@ spec:
   {{- if $value.stripPrefixPath }}
   stripPrefix:
     prefixes:
-      - "/{{ $value.stripPrefixPath }}"
+      - "{{ $value.stripPrefixPath }}"
   {{- else }}
   replacePathRegex:
     regex: "{{ $value.replacePathRegex }}"

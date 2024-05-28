@@ -24,18 +24,18 @@ consoleIngress:
     - "{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.traeffik.auth_enabled }}oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.traeffik.auth_enabled }},oauth2-proxy-traefik-auth@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
-    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
+    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/minio//"
     gethomepage.dev/pod-selector: "app=minio"
     gethomepage.dev/description: "The Object Store for AI Data Infrastructure."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "minio.png"
 
 environment:
-  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio"
+  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
 
 users:
   - accessKey: console
