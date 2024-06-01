@@ -39,6 +39,7 @@ users:
   - accessKey: console
     existingSecret: minio-console-credentials
     existingSecretKey: accessKey
+    policy: consoleAdmin
 
 environment:
   MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
