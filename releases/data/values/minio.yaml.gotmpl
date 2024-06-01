@@ -35,9 +35,9 @@ consoleIngress:
     gethomepage.dev/icon: "minio.png"
 
 users:
-  - accessKey: datahub.local
-    secretKey: console123
-    policy: consoleAdmin
+  - accessKey: console
+    existingSecret: minio-console-credentials
+    existingSecretKey: accessKey
 
 environment:
   MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
