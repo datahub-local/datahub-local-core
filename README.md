@@ -12,7 +12,7 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
     kind: Application
     metadata:
       name: datahub-local-core
-      namespace: argocd
+      namespace: automation
     spec:
       project: default
       source:
@@ -47,7 +47,7 @@ For debugging purposes, you can deploy the repository against a local cluster. F
     configs:
       params:
         server.insecure: true
-        application.namespaces: "default,argocd"
+        application.namespaces: "default,automation"
         server.disable.auth: true
       cmp:
         create: true
@@ -115,13 +115,13 @@ For debugging purposes, you can deploy the repository against a local cluster. F
     EOF
 
     helm repo add argo https://argoproj.github.io/argo-helm
-    helm install -n argocd --create-namespace argo-cd argo/argo-cd --version 6.7.17 --values /tmp/atgocd.values.yaml
+    helm install -n automation --create-namespace argo-cd argo/argo-cd --version 6.7.17 --values /tmp/atgocd.values.yaml
     ```
 
 3. Forward ArgoCD port and access [ArgoCD UI](http://localhost:8080).
 
     ```bash
-    kubectl port-forward svc/argo-cd-argocd-server -n argocd 8080:80
+    kubectl port-forward svc/argo-cd-argocd-server -n automation 8080:80
     ```
 
 4. [Create](#usage) a Application for the repo.

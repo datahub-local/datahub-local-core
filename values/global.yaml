@@ -1,0 +1,27 @@
+# Common values shared for all charts
+release_name: datahub-local-core
+
+namespaces:
+  - data
+  - monitoring
+  - other
+
+ingress_hostname: homelab.alvsanand.com
+ingress_port: 443
+
+security_enabled: true
+
+traeffik:
+  middleware:
+    monitoring-alertmanager:
+      stripPrefixPath: /monitoring/alertmanager
+      namespace: monitoring
+    data-minio:
+      stripPrefixPath: /data/minio
+      namespace: data
+
+sealed_secrets:
+  data-minio-console-user:
+    namespace: data
+    data:
+      accessKey: "AgAXj3c3UsajpO5datkBU41f3m7qxLcH9IYpbQPoI1+xtHsCTbgOt3TOGtNHXIDFiXcRVxug2Ph8/M4hGBhZPJJwwQAzMXE/Dr68B04S+TYAKkdAIStqh4T4LWmEEweNQv0JeY8zxj927Z5qLy+4JrwyjiqeDbQSYGDdw4QGOgHyosZK3ABchL2vkAWTp+kx+Bzj/ygs2YjzpASj/ilqXy2f+owoFFQwjEXLRqP43330erjixWhUtFCZUI246O0rjAhd1bpugGUJvBDujw6vGCAx4QtBHsgv0VIfy+WfEs5QTcMb53SODd695Dtw0bHb6L6FEquJvQs8IhM2PHkwOPGJWaAWB0TM/bT4mLTLUIL40bdeKS09RyIvpeDipIzjAw5QflgM3aYGtq+cdt92pv8esI8tEgq55D2u4A0n1izsjxRpHSvS0Tu7DdVwfkiUmYly3ruihHxbkPOnn0tc8F+s0Dv4WGs0xMJ3N4i0j8WNRoyN0VCSAnuSFbrHg8I2VnBw5sGxxsy3vtK5niqt/iB8gSNIPet5qYL/Iv3qjH4f7OntOiGstoc3k5bQQmtfW5STQjOb+UJPPT+oVEz7fLEfgVoUOvVBUZfAxlsPvb9TV0oexajrBR2bvdN0VDTfl7wuNsXlakVw/+LdQ/iaIZG/dUkdSwh5NTkMOfCDrfkL85dzgOOXaDnDe7nanP7R/688EwYAH+xagQ61k8ae"

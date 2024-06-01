@@ -2,7 +2,7 @@
 environments:
   default:
     values:
-      - values/default.yaml
+      - values/global.yaml
 ---
 helmDefaults:
   wait: true
@@ -13,53 +13,13 @@ helmDefaults:
 commonLabels:
   provider: datahub-local-core-helm
 
-repositories:
-  - name: prometheus-community
-    url: https://prometheus-community.github.io/helm-charts
-  - name: jameswynn
-    url: https://jameswynn.github.io/helm-charts
-  - name: minio
-    url: https://charts.min.io/
-
-releases:
-  - name: "{{ .Values.release_name }}-pre-chart"
-    namespace: default
-    chart: "charts/pre-chart"
+helmfiles:
+  - path: releases/common/helmfile.yaml.gotmpl
     values:
-      - values/default.yaml
-    # Use hook to create all required namespaces if used with ArgoCD
-    hooks:
-      #{{ range .Values.namespaces }}
-      - events: ["prepare"]
-        showlogs: true
-        command: bash
-        args: ["-c", "kubectl create ns {{ . }} 2> /dev/null || true"]
-      #{{ end }}
-  - name: "{{ .Values.release_name }}-homepage"
-    namespace: other
-    forceNamespace: other
-    chart: "jameswynn/homepage"
-    version: "{{ .StateValues.helm_chart_version.homepage }}"
+      - values/global.yaml
+  - path: releases/monitoring/helmfile.yaml.gotmpl
     values:
-      - values/homepage.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-kube-prometheus-stack"
-    namespace: monitoring
-    chart: "prometheus-community/kube-prometheus-stack"
-    version: "{{ .StateValues.helm_chart_version.kube_prometheus_stack }}"
+      - values/global.yaml
+  - path: releases/data/helmfile.yaml.gotmpl
     values:
-      - values/kube-prometheus-stack.yaml.gotmpl
-    disableValidationOnInstall: true
-  - name: "{{ .Values.release_name }}-monitoring"
-    namespace: monitoring
-    forceNamespace: monitoring
-    chart: "charts/monitoring"
-    values:
-      - values/default.yaml
-      - values/monitoring.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-data-minio"
-    namespace: data
-    forceNamespace: data
-    chart: "minio/minio"
-    version: "{{ .StateValues.helm_chart_version.minio }}"
-    values:
-      - values/minio.yaml.gotmpl
+      - values/global.yaml

@@ -660,11 +660,7 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": true,
-          "text": "argo-cd-argo-cd-argocd-server-80@kubernetes",
-          "value": "argo-cd-argo-cd-argocd-server-80@kubernetes"
-        },
+        "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"

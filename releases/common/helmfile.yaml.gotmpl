@@ -1,0 +1,33 @@
+---
+environments:
+  default:
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
+---
+repositories:
+  - name: jameswynn
+    url: https://jameswynn.github.io/helm-charts
+
+releases:
+  - name: "{{ .Values.release_name }}-common"
+    namespace: default
+    chart: "."
+    # Use hook to create all required namespaces if used with ArgoCD
+    hooks:
+      #{{ range .Values.namespaces }}
+      - events: ["prepare"]
+        showlogs: true
+        command: bash
+        args: ["-c", "kubectl create ns {{ . }} 2> /dev/null || true"]
+      #{{ end }}
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-homepage"
+    namespace: other
+    forceNamespace: other
+    chart: "jameswynn/homepage"
+    version: "{{ .StateValues.helm_chart_version.homepage }}"
+    values:
+      - values/homepage.yaml.gotmpl

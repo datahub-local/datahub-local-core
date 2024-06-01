@@ -1,0 +1,26 @@
+---
+environments:
+  default:
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
+---
+repositories:
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+
+releases:
+  - name: "{{ .Values.release_name }}-kube-prometheus-stack"
+    namespace: monitoring
+    chart: "prometheus-community/kube-prometheus-stack"
+    version: "{{ .StateValues.helm_chart_version.kube_prometheus_stack }}"
+    values:
+      - values/kube-prometheus-stack.yaml.gotmpl
+    disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-monitoring"
+    namespace: monitoring
+    forceNamespace: monitoring
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl

@@ -1,0 +1,19 @@
+---
+environments:
+  default:
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
+---
+repositories:
+  - name: minio
+    url: https://charts.min.io/
+
+releases:
+  - name: "{{ .Values.release_name }}-data-minio"
+    namespace: data
+    forceNamespace: data
+    chart: "minio/minio"
+    version: "{{ .StateValues.helm_chart_version.minio }}"
+    values:
+      - values/minio.yaml.gotmpl
