@@ -42,8 +42,8 @@ grafana:
       auto_login: true
       client_id: "{{ index .StateValues "security_github_client_id" }}"
       client_secret: "{{ index .StateValues "security_github_client_secret" }}"
-      role_attribute_path: >-
-          contains([].login, '{{ index .StateValues "security_github_organization" }}') && 'Admin'
+    users:
+      auto_assign_org_role: Admin
     #{{- else }}
     auth:
       disable_login_form: true
