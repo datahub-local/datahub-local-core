@@ -21,6 +21,12 @@ coordinator:
     - "-XX:+UnlockDiagnosticVMOptions"
     - "-XX:G1NumCollectionsKeepPinned=10000000"
 
+  coordinatorExtraConfig:
+    - web-ui.enabled=true
+    - web-ui.authentication.type=FIXED
+    - web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
+    - web-ui.user=admin
+
 worker:
   jvm:
     maxHeapSize: "4G"
@@ -66,10 +72,6 @@ env:
 additionalConfigProperties:
   - internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
   - http-server.process-forwarded=true
-  - web-ui.enabled=true
-  - web-ui.authentication.type=FIXED
-  - web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
-  - web-ui.user=admin
 
 additionalCatalogs:
   memory: |
