@@ -64,8 +64,7 @@ env:
         key: accessKey
 
 additionalConfigProperties:
-  - internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
-  - http-server.process-forwarded=true
+  - internal-communication.https.required=false
 
 additionalCatalogs:
   memory: |
