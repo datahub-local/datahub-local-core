@@ -1,5 +1,5 @@
 image:
-  tag: "443"
+  tag: "449"
 
 server:
   config:
@@ -16,9 +16,19 @@ coordinator:
   jvm:
     maxHeapSize: "4G"
 
+    additionalJVMConfig:
+      - "# https://bugs.openjdk.org/browse/JDK-8329528"
+      - "-XX:+UnlockDiagnosticVMOptions"
+      - "-XX:G1NumCollectionsKeepPinned=10000000"
+
 worker:
   jvm:
     maxHeapSize: "4G"
+
+    additionalJVMConfig:
+      - "# https://bugs.openjdk.org/browse/JDK-8329528"
+      - "-XX:+UnlockDiagnosticVMOptions"
+      - "-XX:G1NumCollectionsKeepPinned=10000000"
 
 serviceAccount:
   create: true
@@ -52,6 +62,10 @@ env:
       secretKeyRef:
         name: minio-admin-credentials
         key: accessKey
+
+additionalConfigProperties:
+  - internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
+  - http-server.process-forwarded=true
 
 additionalCatalogs:
   memory: |
