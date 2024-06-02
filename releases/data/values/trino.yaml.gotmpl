@@ -16,19 +16,19 @@ coordinator:
   jvm:
     maxHeapSize: "4G"
 
-    additionalJVMConfig:
-      - "# https://bugs.openjdk.org/browse/JDK-8329528"
-      - "-XX:+UnlockDiagnosticVMOptions"
-      - "-XX:G1NumCollectionsKeepPinned=10000000"
+  additionalJVMConfig:
+    - "# https://bugs.openjdk.org/browse/JDK-8329528"
+    - "-XX:+UnlockDiagnosticVMOptions"
+    - "-XX:G1NumCollectionsKeepPinned=10000000"
 
 worker:
   jvm:
     maxHeapSize: "4G"
 
-    additionalJVMConfig:
-      - "# https://bugs.openjdk.org/browse/JDK-8329528"
-      - "-XX:+UnlockDiagnosticVMOptions"
-      - "-XX:G1NumCollectionsKeepPinned=10000000"
+  additionalJVMConfig:
+    - "# https://bugs.openjdk.org/browse/JDK-8329528"
+    - "-XX:+UnlockDiagnosticVMOptions"
+    - "-XX:G1NumCollectionsKeepPinned=10000000"
 
 serviceAccount:
   create: true
