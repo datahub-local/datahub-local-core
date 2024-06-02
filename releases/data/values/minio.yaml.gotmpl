@@ -47,7 +47,7 @@ users:
 buckets:
   #{{- range $bucket := .StateValues.buckets }}
   - name: "{{ $bucket.name }}"
-    policy: {{$bucket | get "name" "none"}}
+    policy: {{$bucket | get "policy" "none"}}
     purge: {{$bucket | get "purge" false}}
     objectlocking: {{$bucket | get "objectlocking" false}}
   #{{- end }}
