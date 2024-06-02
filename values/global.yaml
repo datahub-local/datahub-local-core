@@ -19,6 +19,9 @@ traeffik:
     data-minio:
       stripPrefixPath: /data/minio
       namespace: data
+    data-trino:
+      stripPrefixPath: /data/trino
+      namespace: data
 
 sealed_secrets:
   minio-admin-credentials:

@@ -64,7 +64,12 @@ env:
         key: accessKey
 
 additionalConfigProperties:
-  - internal-communication.https.required=false
+  - internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
+  - http-server.process-forwarded=true
+  - web-ui.enabled=true
+  - web-ui.authentication.type=FIXED
+  - web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
+  - web-ui.user=admin
 
 additionalCatalogs:
   memory: |
@@ -90,7 +95,7 @@ ingress:
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "data-data-trino@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
@@ -98,4 +103,4 @@ ingress:
     gethomepage.dev/pod-selector: "app=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "database.png"
+    gethomepage.dev/icon: "si-XX-#DD00A1"
