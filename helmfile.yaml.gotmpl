@@ -3,7 +3,9 @@ environments:
   default:
     values:
       - values/global.yaml
+      #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml
+      #{{- end }}
 ---
 helmDefaults:
   wait: true

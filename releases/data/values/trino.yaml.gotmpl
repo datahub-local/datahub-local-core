@@ -1,0 +1,89 @@
+appVersion: "449"
+
+fullnameOverride: trino
+
+server:
+  config:
+    authenticationType: "OAUTH2"
+
+  workers: 1
+
+  autoscaling:
+    enabled: true
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+
+coordinator:
+  jvm:
+    maxHeapSize: "4G"
+
+worker:
+  jvm:
+    maxHeapSize: "4G"
+
+serviceAccount:
+  create: true
+
+auth:
+  passwordAuthSecret: "trino-admin-credentials"
+
+rules:
+  rules.json: |-
+    {
+      "catalogs": [
+        {
+          "user": "admin",
+          "catalog": ".*",
+          "allow": "all"
+        },
+      "schemas": [
+        {
+          "user": "admin",
+          "schema": ".*",
+          "owner": true
+        }
+      ]
+    }
+
+env:
+  - name: "S3_AWS_ACCESS_KEY"
+    value: "admin"
+  - name: "S3_AWS_SECRET_KEY"
+    valueFrom:
+      secretKeyRef:
+        name: minio-admin-credentials
+        key: accessKey
+
+additionalCatalogs:
+  memory: |
+    connector.name=memory
+    memory.max-data-per-node=128MB
+  # iceberg: |
+  #   connector.name=iceberg
+  #   iceberg.catalog.type=nessiehive.s3.endpoint=http://my-minio:9000
+  #   fs.native-s3.enabled=true
+  #   s3.endpoint=datahub-local-core-data-minio:9000
+  #   s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
+  #   s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
+  #   memory.max-data-per-node=128MB
+
+ingress:
+  enabled: true
+  ingressClassName: "traefik"
+  path: /data/trino
+  hosts:
+    - host: "{{ .StateValues.ingress_hostname }}"
+      paths:
+        - path: /
+          pathType: Prefix
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "data-data-minio@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Trino"
+    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/trino"
+    gethomepage.dev/pod-selector: "app=trino"
+    gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "database.png"

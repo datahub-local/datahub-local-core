@@ -4,10 +4,15 @@ environments:
     values:
       - ../../values/global.yaml
       - values/default.yaml.gotmpl
+      #{{- if isFile "/helm-values/security.yaml" }}
+      - /helm-values/security.yaml
+      #{{- end }}
 ---
 repositories:
   - name: minio
     url: https://charts.min.io/
+  - name: trino
+    url: https://trinodb.github.io/charts
 
 releases:
   - name: "{{ .Values.release_name }}-data-minio"
@@ -17,3 +22,10 @@ releases:
     version: "{{ .StateValues.helm_chart_version.minio }}"
     values:
       - values/minio.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-trino"
+    namespace: data
+    forceNamespace: data
+    chart: "trino/trino"
+    version: "{{ .StateValues.helm_chart_version.trino }}"
+    values:
+      - values/trino.yaml.gotmpl

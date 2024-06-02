@@ -35,11 +35,19 @@ consoleIngress:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "minio.png"
 
+environment:
+  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
+
 users:
-  - accessKey: console
-    existingSecret: minio-console-credentials
+  - accessKey: admin
+    existingSecret: minio-admin-credentials
     existingSecretKey: accessKey
     policy: consoleAdmin
 
-environment:
-  MINIO_BROWSER_REDIRECT_URL: "https://{{ .StateValues.ingress_hostname }}/data/minio/"
+buckets:
+  #{{- range $bucket := .StateValues.buckets }}
+  - name: "{{ $bucket.name }}"
+    policy: {{$bucket | get "name" "none"}}
+    purge: {{$bucket | get "purge" false}}
+    objectlocking: {{$bucket | get "objectlocking" false}}
+  #{{- end }}
