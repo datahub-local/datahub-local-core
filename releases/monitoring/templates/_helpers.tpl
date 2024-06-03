@@ -1,18 +1,18 @@
 {{- define "grafana.jobSetupGrafana" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- if hasPrefix .Release.Name $name }}
-{{- printf "%s-%s" $name "grafana-job-setup" | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" $name "grafana-job-setup" | trunc -30 | trimSuffix "-" }}
 {{- else }}
-{{- printf "%s-%s-%s" .Release.Name $name "grafana-job-setup" | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s-%s" .Release.Name $name "grafana-job-setup" | trunc -30 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 
 {{- define "grafana.configMapJobSetupGrafana" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- if hasPrefix .Release.Name $name }}
-{{- printf "%s-%s-" $name "grafana-job-setup" | trunc -30 | trimSuffix "-" | trimPrefix "-" }}
+{{- printf "%s-%s-" $name "grafana-job-setup" | trunc 63 | trimSuffix "-" | trimPrefix "-" }}
 {{- else }}
-{{- printf "%s-%s-%s-" .Release.Name $name "grafana-job-setup" | trunc -30 | trimSuffix "-" | trimPrefix "-" }}
+{{- printf "%s-%s-%s-" .Release.Name $name "grafana-job-setup" | trunc 63 | trimSuffix "-" | trimPrefix "-" }}
 {{- end }}
 {{- end }}
 
