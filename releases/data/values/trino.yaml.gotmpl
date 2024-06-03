@@ -88,12 +88,12 @@ additionalCatalogs:
 
 ingress:
   enabled: true
-  ingressClassName: "traefik"
+  className: "traefik"
   path: /data/trino
   hosts:
     - host: "{{ .StateValues.ingress_hostname }}"
       paths:
-        - path: /
+        - path: /data/trino
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
@@ -105,4 +105,4 @@ ingress:
     gethomepage.dev/pod-selector: "app=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "si-XX-#DD00A1"
+    gethomepage.dev/icon: "si-trino"
