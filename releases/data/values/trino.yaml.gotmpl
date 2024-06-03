@@ -12,6 +12,12 @@ server:
     maxReplicas: 3
     targetCPUUtilizationPercentage: 75
 
+  coordinatorExtraConfig:
+    - web-ui.enabled=true
+    - web-ui.authentication.type=FIXED
+    - web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
+    - web-ui.user=admin
+
 coordinator:
   jvm:
     maxHeapSize: "4G"
@@ -20,12 +26,6 @@ coordinator:
     - "# https://bugs.openjdk.org/browse/JDK-8329528"
     - "-XX:+UnlockDiagnosticVMOptions"
     - "-XX:G1NumCollectionsKeepPinned=10000000"
-
-  coordinatorExtraConfig:
-    - web-ui.enabled=true
-    - web-ui.authentication.type=FIXED
-    - web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
-    - web-ui.user=admin
 
 worker:
   jvm:
