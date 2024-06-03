@@ -29,3 +29,10 @@ releases:
     version: "{{ .StateValues.helm_chart_version.trino }}"
     values:
       - values/trino.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data"
+    namespace: data
+    forceNamespace: data
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl

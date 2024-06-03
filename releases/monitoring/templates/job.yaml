@@ -1,7 +1,8 @@
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: setup-grafana
+  generateName: {{ template "grafana.jobSetupGrafana" . }}
   annotations:
     argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
@@ -24,12 +25,12 @@ spec:
       volumes:
       - name: script-volume
         configMap:
-          name: setup-grafana-script
+          name: {{ template "grafana.configMapJobSetupGrafana" . }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: setup-grafana-script
+  name: {{ template "grafana.configMapJobSetupGrafana" . }}
 data:
   setup-grafana.sh: |
 {{ .Files.Get "files/scripts/setup-grafana.sh" | indent 4 }}

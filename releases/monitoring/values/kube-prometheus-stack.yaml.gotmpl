@@ -15,7 +15,7 @@ alertmanager:
     secureBackends: true
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "monitoring-monitoring-alertmanager@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-datahub-local-core-kube-pr-alertmanager@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Alertmanager"

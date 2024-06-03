@@ -2,9 +2,6 @@ image:
   tag: "449"
 
 server:
-  config:
-    authenticationType: "PASSWORD"
-
   workers: 1
 
   autoscaling:
@@ -12,12 +9,22 @@ server:
     maxReplicas: 3
     targetCPUUtilizationPercentage: 75
 
+  config:
+    authenticationType: "PASSWORD"
+
+  workerExtraConfig: |
+    internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
+
   coordinatorExtraConfig: |
+    internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
+    http-server.process-forwarded=true
+
     web-ui.enabled=true
     web-ui.authentication.type=FIXED
-    web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
+    #web-ui.shared-secret={{ index .StateValues "security_github_client_id" }}
     web-ui.user=admin
 
+additionalConfigProperties:
 coordinator:
   jvm:
     maxHeapSize: "4G"
@@ -69,10 +76,6 @@ env:
         name: minio-admin-credentials
         key: accessKey
 
-additionalConfigProperties:
-  - internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}
-  - http-server.process-forwarded=true
-
 additionalCatalogs:
   memory: |
     connector.name=memory
@@ -97,11 +100,11 @@ ingress:
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "data-data-trino@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-datahub-local-core-data-trino@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
-    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/trino"
+    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/trino/ui/"
     gethomepage.dev/pod-selector: "app=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"

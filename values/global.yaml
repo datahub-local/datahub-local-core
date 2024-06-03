@@ -13,13 +13,13 @@ security_enabled: true
 
 traeffik:
   middleware:
-    monitoring-alertmanager:
+    datahub-local-core-kube-pr-alertmanager:
       stripPrefixPath: /monitoring/alertmanager
       namespace: monitoring
-    data-minio:
+    datahub-local-core-data-minio-console:
       stripPrefixPath: /data/minio
       namespace: data
-    data-trino:
+    datahub-local-core-data-trino:
       stripPrefixPath: /data/trino
       namespace: data
 
