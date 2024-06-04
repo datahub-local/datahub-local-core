@@ -1,3 +1,14 @@
+global:
+  postgresql:
+    auth:
+      username: "postgres"
+      database: "postgres"
+      existingSecret: "postgresql-admin-credentials"
+      secretKeys:
+        adminPasswordKey: "password"
+        userPasswordKey: "password"
+        replicationPasswordKey: "password"
+
 metrics:
   enabled: true
   serviceMonitor:
