@@ -1,5 +1,9 @@
 architecture: standalone
 
+auth:
+  existingSecret: "valkey-admin-credentials"
+  existingSecretPasswordKey: "password"
+
 metrics:
   enabled: true
   serviceMonitor:

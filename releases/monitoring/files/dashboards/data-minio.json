@@ -3786,12 +3786,6 @@
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": [
-    "Homelab",
-    "System",
-    "Longhorn",
-    "prometheus"
-  ],
   "templating": {
     "list": [
       {
@@ -3855,6 +3849,12 @@
     ]
   },
   "timezone": "",
+  "tags": [
+    "Homelab",
+    "Data",
+    "Minio",
+    "prometheus"
+  ],
   "title": "Homelab / Data / MinIO",
   "uid": "TgmJnqnnk",
   "version": 5,
