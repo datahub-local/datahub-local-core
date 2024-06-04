@@ -9,12 +9,28 @@ environments:
       #{{- end }}
 ---
 repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
   - name: minio
     url: https://charts.min.io/
   - name: trino
     url: https://trinodb.github.io/charts
 
 releases:
+  - name: "{{ .Values.release_name }}-data-postgresql"
+    namespace: data
+    forceNamespace: data
+    chart: "bitnami/postgresql"
+    version: "{{ .StateValues.helm_chart_version.postgresql }}"
+    values:
+      - values/postgresql.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-valkey"
+    namespace: data
+    forceNamespace: data
+    chart: "bitnami/valkey"
+    version: "{{ .StateValues.helm_chart_version.valkey }}"
+    values:
+      - values/valkey.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-minio"
     namespace: data
     forceNamespace: data
