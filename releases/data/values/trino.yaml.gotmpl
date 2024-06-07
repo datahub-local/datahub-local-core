@@ -92,19 +92,18 @@ additionalCatalogs:
 ingress:
   enabled: true
   className: "traefik"
-  path: /data/trino
   hosts:
-    - host: "{{ .StateValues.ingress_hostname }}"
+    - host: "data-trino.{{ .StateValues.ingress_hostname }}"
       paths:
-        - path: /data/trino
+        - path: /
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-datahub-local-core-data-trino@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
-    gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/data/trino/ui/"
+    gethomepage.dev/href: "https://data-trino.{{ .StateValues.ingress_hostname }}/ui/"
     gethomepage.dev/pod-selector: "app=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"

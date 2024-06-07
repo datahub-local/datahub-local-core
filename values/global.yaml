@@ -11,18 +11,6 @@ ingress_port: 443
 
 security_enabled: true
 
-traeffik:
-  middleware:
-    datahub-local-core-kube-pr-alertmanager:
-      stripPrefixPath: /monitoring/alertmanager
-      namespace: monitoring
-    datahub-local-core-data-minio-console:
-      stripPrefixPath: /data/minio
-      namespace: data
-    datahub-local-core-data-trino:
-      stripPrefixPath: /data/trino
-      namespace: data
-
 sealed_secrets:
   minio-admin-credentials:
     namespace: data

@@ -9,17 +9,16 @@ alertmanager:
     enabled: true
     ingressClassName: "traefik"
     hosts:
-      - "{{ .StateValues.ingress_hostname }}"
+      - "monitoring-alertmanager.{{ .StateValues.ingress_hostname }}"
     paths:
-      - /monitoring/alertmanager
+      - /
     secureBackends: true
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-datahub-local-core-kube-pr-alertmanager@kubernetescrd{{ if .Values.security_enabled }},security-traefik-auth@kubernetescrd{{ end }}"
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Alertmanager"
-      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/alertmanager"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
       gethomepage.dev/description: "The Alertmanager handles alerts sent by client applications such as the Prometheus server."
       gethomepage.dev/group: "Monitoring"
@@ -31,8 +30,8 @@ grafana:
     enabled: true
   grafana.ini:
     server:
-      domain: "{{ .StateValues.ingress_hostname }}"
-      root_url: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/grafana"
+      domain: "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
+      root_url: "https://monitoring-grafana.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}"
       serve_from_sub_path: true
     #{{- if .Values.security_enabled }}
     auth.github:
@@ -58,16 +57,14 @@ grafana:
     enabled: true
     ingressClassName: "traefik"
     hosts:
-      - "{{ .StateValues.ingress_hostname }}"
-    path: /monitoring/grafana
+      - "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
+    path: /
     secureBackends: true
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      #traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-traefik-auth@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grafana"
-      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/grafana"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
       gethomepage.dev/group: "Monitoring"
@@ -78,24 +75,23 @@ prometheus:
     enabled: true
     ingressClassName: "traefik"
     hosts:
-      - "{{ .StateValues.ingress_hostname }}"
+      - "monitoring-prometheus.{{ .StateValues.ingress_hostname }}"
     paths:
-      - /monitoring/prometheus
+      - /
     secureBackends: true
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-traefik-auth@kubernetescrd{{ end }}"
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Prometheus"
-      gethomepage.dev/href: "https://{{ .StateValues.ingress_hostname }}/monitoring/prometheus"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
       gethomepage.dev/description: "The Prometheus monitoring system and time series database."
       gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "prometheus.png"
   prometheusSpec:
-    externalUrl: "https://{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/monitoring/prometheus"
-    routePrefix: /monitoring/prometheus
+    externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
+    routePrefix: /
 
     serviceMonitorSelector: {}
     serviceMonitorSelectorNilUsesHelmValues: false
