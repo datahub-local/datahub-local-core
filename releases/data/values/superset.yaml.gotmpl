@@ -7,12 +7,18 @@ redis:
 configOverrides:
   enable_oauth: |
     from flask_appbuilder.security.manager import AUTH_REMOTE_USER
-    AUTH_TYPE = AUTH_REMOTE_USER
 
-    AUTH_ROLE_ADMIN = 'Admin'
-    AUTH_ROLE_PUBLIC = 'Public'
+    class FixedRemoteUserMiddleware(object):
+    def __init__(self, app):
+        self.app = app
+    def __call__(self, environ, start_response):
+        environ['REMOTE_USER'] = "{{ .StateValues.security_admin_user }}"
+        return self.app(environ, start_response)
+
+    AUTH_TYPE = AUTH_REMOTE_USER
     AUTH_USER_REGISTRATION = True
     AUTH_USER_REGISTRATION_ROLE = 'Admin'
+    ADDITIONAL_MIDDLEWARE = [FixedRemoteUserMiddleware, ]
 
 secretEnv:
   create: false
