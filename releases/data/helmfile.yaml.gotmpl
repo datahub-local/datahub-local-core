@@ -70,3 +70,6 @@ releases:
     values:
       - ../../values/global.yaml
       - values/default.yaml.gotmpl
+      #{{- if isFile "/helm-values/security.yaml" }}
+      - /helm-values/security.yaml
+      #{{- end }}
