@@ -28,11 +28,6 @@ extraEnvRaw:
       secretKeyRef:
         name: valkey-admin-credentials
         key: password
-  - name: REDIS_PASS
-    valueFrom:
-      secretKeyRef:
-        name: valkey-admin-credentials
-        key: password
 
 ingress:
   enabled: true
