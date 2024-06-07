@@ -12,6 +12,7 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
     kind: ApplicationSet
     metadata:
       name: datahub-local-core
+      namespace: automation
     spec:
       goTemplate: true
       goTemplateOptions: ["missingkey=error"]
@@ -19,27 +20,28 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
       - list:
           elements:
           - name: common
-            namespace: other
-          - name: engineering-dev
-            namespace: https://1.2.3.4
-          - name: engineering-dev
-            namespace: https://1.2.3.4
+            ns: other
+          - name: monitoring
+            ns: monitoring
+          - name: data
+            ns: data
       template:
         metadata:
           name: 'datahub-local-core-{{.name}}'
         spec:
-          project: datahub-local-core
+          project: namespace-automation
           source:
             repoURL: https://github.com/datahub-local/datahub-local-core.git
             targetRevision: HEAD
-            path: releases/{{.name}}
+            path: "releases/{{.name}}"
           destination:
             server: "https://kubernetes.default.svc"
-            namespace: {{.namespace}}
-        syncPolicy:
-          automated: {}
-          syncOptions:
-            - ServerSideApply=true
+            namespace: "{{.ns}}"
+          syncPolicy:
+            automated: {}
+            syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
     EOF
     ```
 
