@@ -11,26 +11,11 @@ extraSecretEnv:
   SUPERSET_SECRET_KEY: "{{ index .StateValues "security_github_client_id" }}"
 
 extraEnvRaw:
-  - name: DB_HOST
-    value: "{{ .Values.release_name }}-postgresql-hl"
-  - name: DB_PORT
-    value: "5432"
-  - name: DB_USER
-    value: "admin"
   - name: DB_PASS
     valueFrom:
       secretKeyRef:
         name: postgresql-admin-credentials
         key: password
-  - name: DB_NAME
-    value: "postgres"
-
-  - name: REDIS_HOST
-    value: "{{ .Values.release_name }}-valkey-headless"
-  - name: REDIS_PORT
-    value: "6379"
-  - name: REDIS_USER
-    value: "default"
   - name: REDIS_PASS
     valueFrom:
       secretKeyRef:

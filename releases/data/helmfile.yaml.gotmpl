@@ -63,10 +63,10 @@ releases:
     version: "{{ .StateValues.helm_chart_version.superset }}"
     values:
       - values/superset.yaml.gotmpl
-  # - name: "{{ .Values.release_name }}-data"
-  #   namespace: data
-  #   forceNamespace: data
-  #   chart: "."
-  #   values:
-  #     - ../../values/global.yaml
-  #     - values/default.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data"
+    namespace: data
+    forceNamespace: data
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl

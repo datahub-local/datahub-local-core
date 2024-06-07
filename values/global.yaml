@@ -6,6 +6,8 @@ ingress_port: 443
 
 security_enabled: true
 
+security_admin_user: "admin"
+
 sealed_secrets:
   minio-admin-credentials:
     namespace: data

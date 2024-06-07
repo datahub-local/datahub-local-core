@@ -53,13 +53,13 @@ rules:
     {
       "catalogs": [
         {
-          "user": "admin",
+          "user": "{{ .StateValues.security_admin_user }}",
           "catalog": ".*",
           "allow": "all"
         },
       "schemas": [
         {
-          "user": "admin",
+          "user": "{{ .StateValues.security_admin_user }}",
           "schema": ".*",
           "owner": true
         }
@@ -68,7 +68,7 @@ rules:
 
 env:
   - name: "S3_AWS_ACCESS_KEY"
-    value: "admin"
+    value: "{{ .StateValues.security_admin_user }}"
   - name: "S3_AWS_SECRET_KEY"
     valueFrom:
       secretKeyRef:
