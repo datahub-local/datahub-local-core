@@ -19,6 +19,19 @@ configOverrides:
     AUTH_USER_REGISTRATION = True
     AUTH_USER_REGISTRATION_ROLE = 'Admin'
     ADDITIONAL_MIDDLEWARE = [FixedRemoteUserMiddleware, ]
+  lookup_password: |
+    import os
+
+    def lookup_password(url):
+      if 'postgresql' in url:
+        return os.environ['DB_PASS']
+      if 'redis' in url:
+        return os.environ['REDIS_PASS']
+      if 'trino' in url:
+        return os.environ['TRINO_PASS'].split(':')[2]
+      return None
+
+    SQLALCHEMY_CUSTOM_PASSWORD_STORE = lookup_password
 
 secretEnv:
   create: false
@@ -34,6 +47,25 @@ extraEnvRaw:
       secretKeyRef:
         name: valkey-admin-credentials
         key: password
+  - name: TRINO_PASS
+    valueFrom:
+      secretKeyRef:
+        name: trino-admin-credentials
+        key: password.db
+
+bootstrapScript: |
+  #!/bin/bash
+  pip install trino
+
+extraConfigs:
+  import_datasources.yaml: |
+    databases:
+    - allow_file_upload: true
+      allow_ctas: true
+      allow_cvas: true
+      database_name: trino
+      sqlalchemy_uri: trino://{{ .StateValues.security_admin_user }}@datahub-local-core-data-trino:8080/memory
+      tables: []
 
 ingress:
   enabled: true
