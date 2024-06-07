@@ -6,8 +6,13 @@ redis:
 
 configOverrides:
   enable_oauth: |
-    AUTH_ROLE_PUBLIC = 'Admin'
+    from flask_appbuilder.security.manager import AUTH_REMOTE_USER
+    AUTH_TYPE = AUTH_REMOTE_USER
+
+    AUTH_ROLE_ADMIN = 'Admin'
+    AUTH_ROLE_PUBLIC = 'Public'
     AUTH_USER_REGISTRATION = False
+    AUTH_USER_REGISTRATION_ROLE = "Admin"
 
 secretEnv:
   create: false
@@ -17,6 +22,11 @@ extraEnvRaw:
     valueFrom:
       secretKeyRef:
         name: postgresql-admin-credentials
+        key: password
+  - name: REDIS_PASS
+    valueFrom:
+      secretKeyRef:
+        name: valkey-admin-credentials
         key: password
   - name: REDIS_PASS
     valueFrom:
@@ -36,9 +46,9 @@ ingress:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Trino"
+    gethomepage.dev/name: "Superset"
     gethomepage.dev/href: "https://data-trino.{{ .StateValues.ingress_hostname }}/ui/"
-    gethomepage.dev/pod-selector: "app=trino"
+    gethomepage.dev/pod-selector: "app=superset"
     gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "si-superset"
+    gethomepage.dev/icon: "si-apachesuperset"
