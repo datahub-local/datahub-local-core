@@ -11,8 +11,8 @@ configOverrides:
 
     AUTH_ROLE_ADMIN = 'Admin'
     AUTH_ROLE_PUBLIC = 'Public'
-    AUTH_USER_REGISTRATION = False
-    AUTH_USER_REGISTRATION_ROLE = "Admin"
+    AUTH_USER_REGISTRATION = True
+    AUTH_USER_REGISTRATION_ROLE = 'Admin'
 
 secretEnv:
   create: false
@@ -42,7 +42,6 @@ ingress:
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Superset"
-    gethomepage.dev/href: "https://data-trino.{{ .StateValues.ingress_hostname }}/ui/"
     gethomepage.dev/pod-selector: "app=superset"
     gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
     gethomepage.dev/group: "Data"
