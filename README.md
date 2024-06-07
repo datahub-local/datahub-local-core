@@ -79,19 +79,19 @@ For debugging purposes, you can deploy the repository against a local cluster. F
                 - "-c"
                 - |
                   PARAMS=()
-  
+
                   if [[ -v ARGOCD_APP_NAMESPACE ]]; then
                     PARAMS+=(-n \$ARGOCD_APP_NAMESPACE)
                   fi
-  
+
                   if [[ -v ENV_NAME ]]; then
                     PARAMS+=(-e \$ENV_NAME)
                   elif [[ -v ARGOCD_ENV_ENV_NAME ]]; then
                     PARAMS+=(-e \$ARGOCD_ENV_ENV_NAME)
                   fi
-                  
+
                   PARAMS+=(template --include-crds -q)
-                  
+
                   helmfile "\${PARAMS[@]}"
             lockRepo: false
     repoServer:

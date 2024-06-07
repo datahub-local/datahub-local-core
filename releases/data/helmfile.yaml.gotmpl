@@ -24,6 +24,8 @@ repositories:
     url: https://charts.min.io/
   - name: trino
     url: https://trinodb.github.io/charts
+  - name: superset
+    url: http://apache.github.io/superset/
 
 releases:
   - name: "{{ .Values.release_name }}-data-postgresql"
@@ -54,6 +56,13 @@ releases:
     version: "{{ .StateValues.helm_chart_version.trino }}"
     values:
       - values/trino.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-superset"
+    namespace: data
+    forceNamespace: data
+    chart: "superset/superset"
+    version: "{{ .StateValues.helm_chart_version.superset }}"
+    values:
+      - values/superset.yaml.gotmpl
   # - name: "{{ .Values.release_name }}-data"
   #   namespace: data
   #   forceNamespace: data
