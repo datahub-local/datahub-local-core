@@ -1,11 +1,6 @@
 # Common values shared for all charts
 release_name: datahub-local-core
 
-namespaces:
-  - data
-  - monitoring
-  - other
-
 ingress_hostname: homelab.alvsanand.com
 ingress_port: 443
 

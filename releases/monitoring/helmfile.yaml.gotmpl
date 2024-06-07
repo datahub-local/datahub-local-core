@@ -8,6 +8,15 @@ environments:
       - /helm-values/security.yaml
       #{{- end }}
 ---
+helmDefaults:
+  wait: true
+  timeout: 600
+  recreatePods: true
+  force: false
+
+commonLabels:
+  provider: "{{ .Values.release_name }}-helm"
+
 repositories:
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts

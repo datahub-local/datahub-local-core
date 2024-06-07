@@ -9,22 +9,37 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
     ```bash
     kubectl apply -f - <<EOF
     apiVersion: argoproj.io/v1alpha1
-    kind: Application
+    kind: ApplicationSet
     metadata:
       name: datahub-local-core
-      namespace: automation
     spec:
-      project: default
-      source:
-        repoURL: https://github.com/datahub-local/datahub-local-core.git
-        targetRevision: main
-        path: .
-      destination:
-        server: "https://kubernetes.default.svc"
-      syncPolicy:
-        automated: {}
-        syncOptions:
-          - ServerSideApply=true
+      goTemplate: true
+      goTemplateOptions: ["missingkey=error"]
+      generators:
+      - list:
+          elements:
+          - name: common
+            namespace: other
+          - name: engineering-dev
+            namespace: https://1.2.3.4
+          - name: engineering-dev
+            namespace: https://1.2.3.4
+      template:
+        metadata:
+          name: 'datahub-local-core-{{.name}}'
+        spec:
+          project: datahub-local-core
+          source:
+            repoURL: https://github.com/datahub-local/datahub-local-core.git
+            targetRevision: HEAD
+            path: releases/{{.name}}
+          destination:
+            server: "https://kubernetes.default.svc"
+            namespace: {{.namespace}}
+        syncPolicy:
+          automated: {}
+          syncOptions:
+            - ServerSideApply=true
     EOF
     ```
 

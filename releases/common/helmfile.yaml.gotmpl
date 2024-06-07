@@ -8,6 +8,15 @@ environments:
       - /helm-values/security.yaml
       #{{- end }}
 ---
+helmDefaults:
+  wait: true
+  timeout: 600
+  recreatePods: true
+  force: false
+
+commonLabels:
+  provider: "{{ .Values.release_name }}-helm"
+
 repositories:
   - name: jameswynn
     url: https://jameswynn.github.io/helm-charts
@@ -16,14 +25,6 @@ releases:
   - name: "{{ .Values.release_name }}-common"
     namespace: default
     chart: "."
-    # Use hook to create all required namespaces if used with ArgoCD
-    hooks:
-      #{{ range .Values.namespaces }}
-      - events: ["prepare"]
-        showlogs: true
-        command: bash
-        args: ["-c", "kubectl create ns {{ . }} 2> /dev/null || true"]
-      #{{ end }}
     values:
       - ../../values/global.yaml
       - values/default.yaml.gotmpl
