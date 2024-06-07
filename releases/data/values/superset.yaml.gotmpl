@@ -4,6 +4,11 @@ postgresql:
 redis:
   enabled: false
 
+configOverrides:
+  enable_oauth: |
+    AUTH_ROLE_PUBLIC = 'Admin'
+    AUTH_USER_REGISTRATION = False
+
 secretEnv:
   create: false
 
@@ -21,3 +26,22 @@ extraEnvRaw:
       secretKeyRef:
         name: valkey-admin-credentials
         key: password
+
+ingress:
+  enabled: true
+  className: "traefik"
+  path: /
+  pathType: Prefix
+  hosts:
+    - "data-superset.{{ .StateValues.ingress_hostname }}"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Trino"
+    gethomepage.dev/href: "https://data-trino.{{ .StateValues.ingress_hostname }}/ui/"
+    gethomepage.dev/pod-selector: "app=trino"
+    gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-superset"
