@@ -10,5 +10,5 @@
 
 {{- define "postgresql.jobSetup" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- printf "%s-%s-" $name "postgresql-job-setup" | trunc -30 | trimSuffix "-" | trimPrefix "-" }}
+{{- printf "%s-%s-" $name "postgresql-job-setup" | trunc -40 | trimSuffix "-" | trimPrefix "-" }}
 {{- end }}
