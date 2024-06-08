@@ -77,6 +77,7 @@ additionalCatalogs:
     iceberg.nessie-catalog.default-warehouse-dir=s3://datahub-local-gold
     fs.native-s3.enabled=true
     s3.endpoint={{ .Values.release_name }}-data-minio:9000
+    s3.region=us-east-1
     s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
     s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
 

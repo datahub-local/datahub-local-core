@@ -71,22 +71,28 @@ extraConfigs:
   import_datasources.yaml: |
     databases:
     {{- range $key, $value := .Values.postgress_extra_databases }}
-    - allow_file_upload: true
-      allow_ctas: true
+    - allow_ctas: true
       allow_cvas: true
+      allow_dml: true
+      allow_file_upload: true
+      allow_run_async : true
       database_name: postgresql-{{ $key }}
       sqlalchemy_uri: postgresql://{{ $.StateValues.postgress_user}}@{{ $.Values.release_name }}-data-postgresql-hl:5432/{{ $value }}
       tables: []
     {{- end }}
-    - allow_file_upload: true
-      allow_ctas: true
+    - allow_ctas: true
       allow_cvas: true
+      allow_dml: true
+      allow_file_upload: true
+      allow_run_async : true
       database_name: trino-memory
       sqlalchemy_uri: trino://{{ $.StateValues.tino_user}}@{{ $.Values.release_name }}-data-trino:8080/memory
       tables: []
-    - allow_file_upload: true
-      allow_ctas: true
+    - allow_ctas: true
       allow_cvas: true
+      allow_dml: true
+      allow_file_upload: true
+      allow_run_async : true
       database_name: trino-iceberg
       sqlalchemy_uri: trino://{{ $.StateValues.tino_user}}@{{ $.Values.release_name }}-data-trino:8080/iceberg
       tables: []
