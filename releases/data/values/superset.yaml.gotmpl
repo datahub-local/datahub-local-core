@@ -31,8 +31,7 @@ configOverrides:
         return os.environ['DB_PASS']
       if 'redis' in url:
         return os.environ['REDIS_PASSWORD']
-      if 'trino' in url:
-        return os.environ['TRINO_PASS'].split(':')[1]
+
       return None
 
     SQLALCHEMY_CUSTOM_PASSWORD_STORE = lookup_password
