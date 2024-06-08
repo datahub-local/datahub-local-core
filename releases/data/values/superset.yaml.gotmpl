@@ -30,7 +30,7 @@ configOverrides:
       if 'postgresql' in url:
         return os.environ['DB_PASS']
       if 'redis' in url:
-        return os.environ['REDIS_PASS']
+        return os.environ['REDIS_PASSWORD']
       if 'trino' in url:
         return os.environ['TRINO_PASS'].split(':')[1]
       return None
@@ -51,11 +51,6 @@ extraEnvRaw:
       secretKeyRef:
         name: valkey-admin-credentials
         key: password
-  - name: TRINO_PASS
-    valueFrom:
-      secretKeyRef:
-        name: trino-admin-credentials
-        key: password.db
 
 bootstrapScript: |
   #!/bin/bash
@@ -68,7 +63,7 @@ extraConfigs:
       allow_ctas: true
       allow_cvas: true
       database_name: trino-memory
-      sqlalchemy_uri: trino://{{ .StateValues.security_admin_user }}@datahub-local-core-data-trino:8080/memory
+      sqlalchemy_uri: trino://datahub-local-core-data-trino:8080/memory
       tables: []
 
 ingress:

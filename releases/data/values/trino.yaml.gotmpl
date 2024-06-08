@@ -10,13 +10,7 @@ server:
     targetCPUUtilizationPercentage: 75
 
   config:
-    https:
-      enabled: true
-      port: 8443
-      keystore:
-        path: ""
-    authenticationType: "PASSWORD"
-
+  
   workerExtraConfig: ""
 
   coordinatorExtraConfig: |
@@ -47,9 +41,6 @@ worker:
 
 serviceAccount:
   create: true
-
-auth:
-  passwordAuthSecret: "trino-admin-credentials"
 
 rules:
   rules.json: |-
