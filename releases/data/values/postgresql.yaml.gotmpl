@@ -2,7 +2,7 @@ global:
   postgresql:
     auth:
       username: "{{ .StateValues.security_admin_user }}"
-      database: "postgres"
+      database: "{{ .StateValues.postgress_database }}"
       existingSecret: "postgresql-admin-credentials"
       secretKeys:
         adminPasswordKey: "password"

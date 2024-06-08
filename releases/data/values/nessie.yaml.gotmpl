@@ -1,0 +1,29 @@
+replicaCount: 1
+
+versionStoreType: JDBC
+
+jdbc:
+  jdbcUrl: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql-hl:5432/{{ .StateValues.postgress_database }}?currentSchema=nessie"
+  secret:
+    name: postgresql-admin-credentials
+    username: username
+    password: password
+
+ingress:
+  enabled: true
+  className: "traefik"
+  pathType: Prefix
+  hosts:
+    - host: "data-nessie.{{ .StateValues.ingress_hostname }}"
+      paths:
+        - /
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Nessie"
+    gethomepage.dev/pod-selector: "app={{ .Values.release_name }}-data-nessie"
+    gethomepage.dev/description: "Transactional Catalog for Data Lakes with Git-like semantics"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-deno"

@@ -26,8 +26,20 @@ repositories:
     url: https://trinodb.github.io/charts
   - name: superset
     url: http://apache.github.io/superset/
+  - name: nessie
+    url: https://charts.projectnessie.org/
 
 releases:
+  - name: "{{ .Values.release_name }}-data"
+    namespace: data
+    forceNamespace: data
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
+      #{{- if isFile "/helm-values/security.yaml" }}
+      - /helm-values/security.yaml
+      #{{- end }}
   - name: "{{ .Values.release_name }}-data-postgresql"
     namespace: data
     forceNamespace: data
@@ -63,13 +75,10 @@ releases:
     version: "{{ .StateValues.helm_chart_version.superset }}"
     values:
       - values/superset.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-data"
+  - name: "{{ .Values.release_name }}-data-nessie"
     namespace: data
     forceNamespace: data
-    chart: "."
+    chart: "nessie/nessie"
+    version: "{{ .StateValues.helm_chart_version.nessie }}"
     values:
-      - ../../values/global.yaml
-      - values/default.yaml.gotmpl
-      #{{- if isFile "/helm-values/security.yaml" }}
-      - /helm-values/security.yaml
-      #{{- end }}
+      - values/nessie.yaml.gotmpl
