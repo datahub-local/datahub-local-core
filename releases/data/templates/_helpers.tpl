@@ -5,10 +5,10 @@
 
 {{- define "postgresql.configMapJobSetup" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- printf "%s-%s" $name "postgresql-job-setup" | trunc -30 | trimSuffix "-" }}
+{{- printf "%s-%s" $name "postgresql-job-setup" | trunc -63 | trimSuffix "-" }}
 {{- end }}
 
 {{- define "postgresql.jobSetup" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- printf "%s-%s-" $name "postgresql-job-setup" | trunc -45 | trimSuffix "-" | trimPrefix "-" }}
+{{- printf "%s-%s-" $name "postgresql-job-setup" | trunc -30 | trimSuffix "-" | trimPrefix "-" }}
 {{- end }}
