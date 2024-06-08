@@ -1,16 +1,6 @@
 ---
-environments:
-  default:
-    values:
-      - ../../values/global.yaml
-      #{{- if isFile "/helm-values/security.yaml" }}
-      - /helm-values/security.yaml
-      #{{- end }}
----
-environments:
-  default:
-    values:
-      - values/default.yaml.gotmpl
+bases:
+  - ../../values/base.yaml
 ---
 helmDefaults:
   wait: true

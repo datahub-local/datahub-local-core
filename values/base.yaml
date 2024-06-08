@@ -1,0 +1,18 @@
+---
+environments:
+  default:
+    values:
+      - ../../values/global.yaml
+      #{{- if isFile "/helm-values/security.yaml" }}
+      - /helm-values/security.yaml
+      #{{- else }}
+      - ../../values/.security.test.yaml
+      #{{- end }}
+      - values/_version.yaml
+      - values/default.yaml.gotmpl
+---
+helmDefaults:
+  wait: true
+  timeout: 600
+  recreatePods: true
+  force: false

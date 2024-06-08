@@ -2,5 +2,8 @@
     "files.associations": {
         "**/*.gotmpl": "yaml",
         "*/*.gotmpl": "yaml"
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/yamllint.json": "file:///workspaces/datahub-local-core/values/.security.test.yaml"
     }
 }

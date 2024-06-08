@@ -40,7 +40,7 @@ secretEnv:
   create: false
 
 extraSecretEnv:
-  SUPERSET_SECRET_KEY: '{{ index .Values "security_github_client_id" }}'
+  SUPERSET_SECRET_KEY: "{{ .StateValues.security_github_client_id }}"
   REDIS_HOST: "{{ .Values.release_name }}-data-valkey-headless"
   REDIS_PORT: "6379"
   REDIS_PROTO: "redis"

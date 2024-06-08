@@ -1,0 +1,7 @@
+helm_chart_version:
+  minio: "5.2.0"
+  nessie: "0.83.2"
+  postgresql: "15.5.1"
+  superset: "0.12.11"
+  trino: "0.21.0"
+  valkey: "0.3.3"
