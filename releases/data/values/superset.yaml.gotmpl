@@ -4,6 +4,10 @@ postgresql:
 redis:
   enabled: false
 
+supersetNode:
+  connections:
+    redis_password: true
+
 configOverrides:
   enable_oauth: |
     from flask_appbuilder.security.manager import AUTH_REMOTE_USER
