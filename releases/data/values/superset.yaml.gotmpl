@@ -62,7 +62,7 @@ extraConfigs:
       allow_ctas: true
       allow_cvas: true
       database_name: trino-memory
-      sqlalchemy_uri: trino://datahub-local-core-data-trino:8080/memory
+      sqlalchemy_uri: trino://{{ .StateValues.security_admin_user }}@datahub-local-core-data-trino:8080/memory
       tables: []
 
 ingress:
