@@ -9,6 +9,10 @@ server:
     maxReplicas: 3
     targetCPUUtilizationPercentage: 75
 
+  log:
+    trino:
+      level: INFO
+
   coordinatorExtraConfig: |
     web-ui.enabled=true
     web-ui.authentication.type=FIXED
@@ -76,7 +80,7 @@ additionalCatalogs:
     iceberg.nessie-catalog.ref=main
     iceberg.nessie-catalog.default-warehouse-dir=s3://datahub-local-gold
     fs.native-s3.enabled=true
-    s3.endpoint={{ .Values.release_name }}-data-minio:9000
+    s3.endpoint=https://{{ .Values.release_name }}-data-minio:9000
     s3.region=us-east-1
     s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
     s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
