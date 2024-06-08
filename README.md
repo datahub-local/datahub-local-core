@@ -148,3 +148,28 @@ For debugging purposes, you can deploy the repository against a local cluster. F
     ```bash
     k3d cluster delete
     ```
+
+### Other commands
+
+1. Create a seal secret.
+
+    ```bash
+    SECRET_NAMESPACE="data"
+    SECRET_NAME="minio-root-credentials"
+    SECRET_JSON='{
+      "rootUser": "admin",
+      "rootPassword": "some_pass"
+    }'
+
+    literals=()
+
+    # Process each key-value pair in the JSON file and add it to the array
+    while IFS='=' read -r key value; do
+      # Add the --from-literal argument to the array
+      literals+=(--from-literal="${key}=${value}")
+    done < <(echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value|tostring)"')
+
+    kubectl create secret generic $SECRET_NAME -n $SECRET_NAMESPACE --dry-run=client \
+          "${literals[@]}" -o json \
+      | kubeseal --controller-namespace security --controller-name sealed-secrets -o yaml
+    ```

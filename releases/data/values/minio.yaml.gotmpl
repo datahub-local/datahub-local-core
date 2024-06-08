@@ -40,6 +40,8 @@ consoleIngress:
 environment:
   MINIO_BROWSER_REDIRECT_URL: "https://data-minio.{{ .StateValues.ingress_hostname }}/"
 
+existingSecret: "minio-root-credentials"
+
 users:
   - accessKey: admin
     existingSecret: minio-admin-credentials
