@@ -84,6 +84,12 @@ extraConfigs:
       database_name: trino-memory
       sqlalchemy_uri: trino://{{ $.StateValues.tino_user}}@{{ $.Values.release_name }}-data-trino:8080/memory
       tables: []
+    - allow_file_upload: true
+      allow_ctas: true
+      allow_cvas: true
+      database_name: trino-iceberg
+      sqlalchemy_uri: trino://{{ $.StateValues.tino_user}}@{{ $.Values.release_name }}-data-trino:8080/iceberg
+      tables: []
 
 ingress:
   enabled: true
