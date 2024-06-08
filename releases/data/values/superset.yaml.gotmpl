@@ -46,7 +46,7 @@ extraEnvRaw:
       secretKeyRef:
         name: postgresql-admin-credentials
         key: password
-  - name: REDIS_PASS
+  - name: REDIS_PASSWORD
     valueFrom:
       secretKeyRef:
         name: valkey-admin-credentials
