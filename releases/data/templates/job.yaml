@@ -42,6 +42,6 @@ metadata:
   name: {{ template "postgresql.configMapJobSetup" . }}
 data:
   setup_postgresql.sql: |
-    {{- range $schema := .Values.postgress_schemas }}
-    CREATE SCHEMA IF NOT EXISTS {{ $schema }};
+    {{- range $key, $value := .Values.postgress_extra_databases }}
+    CREATE DATABASE IF NOT EXISTS {{ $value }};
     {{- end }}

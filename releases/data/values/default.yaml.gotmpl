@@ -4,9 +4,9 @@ minio_user: "{{ $security_admin_user }}"
 
 postgress_user: "{{ $security_admin_user }}"
 postgress_database: "postgres"
-postgress_schemas:
-  - "superset"
-  - "nessie"
+postgress_extra_databases:
+  superset: superset
+  nessie: nessie
 
 tino_user: "{{ $security_admin_user }}"
 

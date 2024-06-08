@@ -9,7 +9,7 @@ supersetNode:
     redis_password: true
 
 configOverrides:
-  enable_oauth: |
+  auth: |
     from flask_appbuilder.security.manager import AUTH_REMOTE_USER
 
     class FixedRemoteUserMiddleware(object):
@@ -23,7 +23,7 @@ configOverrides:
     AUTH_USER_REGISTRATION = True
     AUTH_USER_REGISTRATION_ROLE = 'Admin'
     ADDITIONAL_MIDDLEWARE = [FixedRemoteUserMiddleware, ]
-  lookup_password: |
+  database: |
     import os
 
     def lookup_password(url):
@@ -48,8 +48,8 @@ extraSecretEnv:
   REDIS_CELERY_DB: "0"
   DB_HOST: "{{ .Values.release_name }}-data-postgresql-hl"
   DB_PORT: "5432"
-  DB_USER: "{{ .StateValues.postgress_user}}"
-  DB_NAME: "{{ .Values.postgress_database }}"
+  DB_USER: "{{ .StateValues.postgress_user }}"
+  DB_NAME: "{{ .StateValues.postgress_extra_databases.superset }}"
 
 extraEnvRaw:
   - name: DB_PASS
@@ -70,17 +70,19 @@ bootstrapScript: |
 extraConfigs:
   import_datasources.yaml: |
     databases:
+    {{- range $key, $value := .Values.postgress_extra_databases }}
     - allow_file_upload: true
       allow_ctas: true
       allow_cvas: true
-      database_name: postgresql
-      sqlalchemy_uri: postgresql://{{ .StateValues.postgress_user}}@{{ .Values.release_name }}-data-postgresql-hl:5432/{{ .Values.postgress_database }}
+      database_name: postgresql-{{ $key }}
+      sqlalchemy_uri: postgresql://{{ $.StateValues.postgress_user}}@{{ $.Values.release_name }}-data-postgresql-hl:5432/{{ $value }}
       tables: []
+    {{- end }}
     - allow_file_upload: true
       allow_ctas: true
       allow_cvas: true
       database_name: trino-memory
-      sqlalchemy_uri: trino://{{ .StateValues.tino_user}}@{{ .Values.release_name }}-data-trino:8080/memory
+      sqlalchemy_uri: trino://{{ $.StateValues.tino_user}}@{{ $.Values.release_name }}-data-trino:8080/memory
       tables: []
 
 ingress:
