@@ -42,6 +42,15 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             syncOptions:
               - CreateNamespace=true
               - ServerSideApply=true
+          ignoreDifferences:
+          - group: "*"
+            kind: "*"
+            jqPathExpressions:
+            - ".spec.template.spec.containers[] | .resources | select(length==0)"
+          - group: "*"
+            kind: "*"
+            jqPathExpressions:
+            - ".spec.template.spec.initContainers[] | .resources | select(length==0)"
     EOF
     ```
 

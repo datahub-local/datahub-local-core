@@ -28,7 +28,7 @@ configOverrides:
       if 'redis' in url:
         return os.environ['REDIS_PASS']
       if 'trino' in url:
-        return os.environ['TRINO_PASS'].split(':')[2]
+        return os.environ['TRINO_PASS'].split(':')[1]
       return None
 
     SQLALCHEMY_CUSTOM_PASSWORD_STORE = lookup_password
@@ -63,7 +63,7 @@ extraConfigs:
     - allow_file_upload: true
       allow_ctas: true
       allow_cvas: true
-      database_name: trino
+      database_name: trino-memory
       sqlalchemy_uri: trino://{{ .StateValues.security_admin_user }}@datahub-local-core-data-trino:8080/memory
       tables: []
 
