@@ -6,7 +6,7 @@ jdbc:
   jdbcUrl: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql-hl:5432/{{ .StateValues.postgress_database }}?currentSchema=nessie"
   secret:
     name: postgresql-admin-credentials
-    username: username
+    username: user
     password: password
 
 ingress:
