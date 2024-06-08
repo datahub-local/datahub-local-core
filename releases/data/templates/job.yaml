@@ -1,0 +1,47 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: {{ template "postgresql.jobSetup" . }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      containers:
+      - name: psql
+        image: postgres:latest
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-admin-credentials
+              key: password
+        command: ["psql"]
+        args: [
+          "-h", "{{ .Values.release_name }}-data-postgresql-hl",
+          "-p", "5432",
+          "-U", "{{ .Values.postgress_username }}",
+          "-d", "{{ .Values.postgress_database }}",
+          "-f", "/scripts/setup_postgresql.sql"
+        ]
+        volumeMounts:
+        - name: script-volume
+          mountPath: /scripts
+      restartPolicy: OnFailure
+      volumes:
+      - name: script-volume
+        configMap:
+          name: {{ template "postgresql.configMapJobSetup" . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "postgresql.configMapJobSetup" . }}
+data:
+  setup_postgresql.sql: |
+    {{- range $schema := .Values.postgress_schemas }}
+    CREATE SCHEMA IF NOT EXISTS {{ $schema }};
+    {{- end }}

@@ -15,7 +15,7 @@ server:
     web-ui.user=admin
 
 additionalConfigProperties:
- - "internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}"
+ - 'internal-communication.shared-secret={{ index .StateValues "security_github_client_id" }}'
 
 coordinator:
   jvm:
@@ -43,13 +43,13 @@ rules:
     {
       "catalogs": [
         {
-          "user": "{{ .StateValues.security_admin_user }}",
+          "user": "{{ .StateValues.minio_user }}",
           "catalog": ".*",
           "allow": "all"
         },
       "schemas": [
         {
-          "user": "{{ .StateValues.security_admin_user }}",
+          "user": "{{ .StateValues.minio_user }}",
           "schema": ".*",
           "owner": true
         }
@@ -58,7 +58,7 @@ rules:
 
 env:
   - name: "S3_AWS_ACCESS_KEY"
-    value: "{{ .StateValues.security_admin_user }}"
+    value: "{{ .StateValues.minio_user }}"
   - name: "S3_AWS_SECRET_KEY"
     valueFrom:
       secretKeyRef:
@@ -73,7 +73,7 @@ additionalCatalogs:
   #   connector.name=iceberg
   #   iceberg.catalog.type=nessiehive.s3.endpoint=http://my-minio:9000
   #   fs.native-s3.enabled=true
-  #   s3.endpoint=datahub-local-core-data-minio:9000
+  #   s3.endpoint={{ .Values.release_name }}-data-minio:9000
   #   s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
   #   s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
   #   memory.max-data-per-node=128MB

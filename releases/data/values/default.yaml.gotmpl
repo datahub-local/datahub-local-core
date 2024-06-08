@@ -6,7 +6,17 @@ helm_chart_version:
   trino: "0.21.0"
   valkey: "0.3.3"
 
+minio_user: '{{ index .StateValues "security_admin_user" }}'
+
+postgress_user: '{{ index .StateValues "security_admin_user" }}'
 postgress_database: "postgres"
+postgress_schemas:
+  - "superset"
+  - "nessie"
+
+tino_user: '{{ index .StateValues "security_admin_user" }}'
+
+superset_user: '{{ index .StateValues "security_admin_user" }}'
 
 buckets:
   - name: datahub-local-bronze

@@ -3,10 +3,14 @@ environments:
   default:
     values:
       - ../../values/global.yaml
-      - values/default.yaml.gotmpl
       #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml
       #{{- end }}
+---
+environments:
+  default:
+    values:
+      - values/default.yaml.gotmpl
 ---
 helmDefaults:
   wait: true
@@ -37,6 +41,7 @@ releases:
     values:
       - ../../values/global.yaml
       - values/default.yaml.gotmpl
+      - values/superset.yaml.gotmpl
       #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml
       #{{- end }}
