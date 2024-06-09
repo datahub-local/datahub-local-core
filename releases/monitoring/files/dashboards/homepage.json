@@ -25,7 +25,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 16450,
   "graphTooltip": 1,
-  "id": 69,
+  "id": 31,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -325,19 +325,19 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "dark-red",
+                "color": "dark-green",
                 "value": null
               },
               {
-                "color": "dark-orange",
+                "color": "dark-yellow",
                 "value": 25
               },
               {
-                "color": "dark-yellow",
+                "color": "dark-orange",
                 "value": 45
               },
               {
-                "color": "dark-green",
+                "color": "dark-red",
                 "value": 65
               }
             ]
@@ -379,7 +379,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum without (instance) ((ceph_cluster_total_bytes-ceph_cluster_total_used_bytes)/ceph_cluster_total_bytes)",
+          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_volume_capacity_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "intervalFactor": 1,
@@ -390,7 +390,7 @@
           "step": 10
         }
       ],
-      "title": "Ceph Cluster Storage space",
+      "title": "Longhorn Cluster Storage Usage/Capacity",
       "type": "gauge"
     },
     {
@@ -917,7 +917,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 2,
         "x": 18,
         "y": 14
       },
@@ -947,11 +947,13 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum without (instance) (ceph_cluster_total_used_bytes)",
+          "expr": "sum (longhorn_node_storage_usage_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "legendFormat": "",
+          "range": true,
           "refId": "A",
           "step": 10
         }
@@ -996,8 +998,89 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
-        "x": 21,
+        "w": 2,
+        "x": 20,
+        "y": 14
+      },
+      "id": 58,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum (longhorn_node_storage_reservation_bytes)",
+          "format": "time_series",
+          "interval": "$resolution",
+          "legendFormat": "",
+          "range": true,
+          "refId": "A",
+          "step": 10
+        }
+      ],
+      "title": "Reserved",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 22,
         "y": 14
       },
       "id": 14,
@@ -1026,12 +1109,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum without (instance) (ceph_cluster_total_bytes)",
+          "expr": "sum (longhorn_node_storage_reservation_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "intervalFactor": 1,
           "legendFormat": "",
+          "range": true,
           "refId": "A",
           "step": 10
         }
@@ -1040,7 +1125,7 @@
       "type": "stat"
     }
   ],
-  "refresh": "5s",
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "Homelab",
@@ -1071,8 +1156,8 @@
       {
         "current": {
           "selected": false,
-          "text": "v1.29.2+k3s1",
-          "value": "v1.29.2+k3s1"
+          "text": "v1.30.1+k3s1",
+          "value": "v1.30.1+k3s1"
         },
         "datasource": {
           "type": "prometheus",
@@ -1145,8 +1230,8 @@
     ]
   },
   "time": {
-    "from": "now-30m",
-    "to": "now"
+    "from": "2024-06-09T12:07:21.451Z",
+    "to": "2024-06-09T16:07:21.451Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1176,6 +1261,6 @@
   "timezone": "browser",
   "title": "Homelab / Homepage",
   "uid": "fdmr8yqdx4jcwf",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

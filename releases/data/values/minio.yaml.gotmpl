@@ -41,6 +41,7 @@ consoleIngress:
 
 environment:
   MINIO_BROWSER_REDIRECT_URL: "https://data-minio.{{ .StateValues.ingress_hostname }}/"
+  MINIO_PROMETHEUS_URL: "http://datahub-local-core-kube-pr-prometheus.monitoring.svc.cluster.local:9090"
 
 existingSecret: "minio-root-credentials"
 
