@@ -1,0 +1,99 @@
+global:
+  postgresqlSecretName: "postgresql-admin-credentials"
+
+  celeryConfigSecretName: "valkey-admin-credentials"
+
+generateCeleryConfigSecret: false
+
+dagsterWebserver:
+  replicaCount: 1
+
+  env:
+    - name: "TRINO_HOST"
+      value: "{{ $.Values.release_name }}-data-trino:8080"
+    - name: "TRINO_PORT"
+      value: "8080"
+    - name: "TRINO_USER"
+      value: "{{ $.StateValues.tino_user}}"
+    - name: "S3_AWS_ENDPOINT"
+      value: "http://{{ .Values.release_name }}-data-minio:9000"
+    - name: "S3_AWS_ACCESS_KEY"
+      value: "{{ .StateValues.minio_user }}"
+    - name: "S3_AWS_SECRET_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: minio-admin-credentials
+          key: accessKey
+
+dagsterDaemon:
+  env:
+    - name: "TRINO_HOST"
+      value: "{{ $.Values.release_name }}-data-trino:8080"
+    - name: "TRINO_PORT"
+      value: "8080"
+    - name: "TRINO_USER"
+      value: "{{ $.StateValues.tino_user}}"
+    - name: "S3_AWS_ENDPOINT"
+      value: "http://{{ .Values.release_name }}-data-minio:9000"
+    - name: "S3_AWS_ACCESS_KEY"
+      value: "{{ .StateValues.minio_user }}"
+    - name: "S3_AWS_SECRET_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: minio-admin-credentials
+          key: accessKey
+
+dagster-user-deployments:
+  env:
+    - name: "TRINO_HOST"
+      value: "{{ $.Values.release_name }}-data-trino:8080"
+    - name: "TRINO_PORT"
+      value: "8080"
+    - name: "TRINO_USER"
+      value: "{{ $.StateValues.tino_user}}"
+    - name: "S3_AWS_ENDPOINT"
+      value: "http://{{ .Values.release_name }}-data-minio:9000"
+    - name: "S3_AWS_ACCESS_KEY"
+      value: "{{ .StateValues.minio_user }}"
+    - name: "S3_AWS_SECRET_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: minio-admin-credentials
+          key: accessKey
+
+runLauncher:
+  type: CeleryK8sRunLauncher
+
+postgresql:
+  enabled: false
+
+  postgresqlHost: "{{ $.Values.release_name }}-data-postgresql-hl"
+  postgresqlUsername: "{{ $.StateValues.postgress_user}}"
+  postgresqlDatabase: dagster
+
+redis:
+  enabled: true
+  internal: false
+
+  host: "{{ .Values.release_name }}-data-valkey-headless"
+  port: 6379
+
+ingress:
+  enabled: true
+
+  ingressClassName: "traefik"
+
+  dagsterWebserver:
+    ingressClassName: "traefik"
+    host: "data-dagster.{{ .StateValues.ingress_hostname }}"
+
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Dagster"
+      gethomepage.dev/pod-selector: "app=minio"
+      gethomepage.dev/description: "The data orchestration platform built for productivity."
+      gethomepage.dev/group: "Data"
+      gethomepage.dev/icon: "dagster.png"

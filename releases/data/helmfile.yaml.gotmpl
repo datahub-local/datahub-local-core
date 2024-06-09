@@ -13,6 +13,8 @@ repositories:
     url: http://apache.github.io/superset/
   - name: nessie
     url: https://charts.projectnessie.org/
+  - name: dagster
+    url: https://dagster-io.github.io/helm
 
 releases:
   - name: "{{ .Values.release_name }}-data"
@@ -68,3 +70,10 @@ releases:
     version: "{{ .StateValues.helm_chart_version.nessie }}"
     values:
       - values/nessie.yaml.gotmpl
+  - name: "dag"
+    namespace: data
+    forceNamespace: data
+    chart: "dagster/dagster"
+    version: "{{ .StateValues.helm_chart_version.dagster }}"
+    values:
+      - values/dagster.yaml.gotmpl
