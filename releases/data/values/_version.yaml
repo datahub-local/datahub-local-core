@@ -4,4 +4,4 @@ helm_chart_version:
   postgresql: "15.5.1"
   superset: "0.12.11"
   trino: "0.21.0"
-  valkey: "0.3.3"
+  valkey: "0.3.5"

@@ -49,7 +49,7 @@ users:
     policy: consoleAdmin
 
 buckets:
-  #{{- range $bucket := .StateValues.buckets }}
+  #{{- range $bucket := .StateValues.minio_buckets }}
   - name: "{{ $bucket.name }}"
     policy: {{$bucket | get "policy" "none"}}
     purge: {{$bucket | get "purge" false}}
