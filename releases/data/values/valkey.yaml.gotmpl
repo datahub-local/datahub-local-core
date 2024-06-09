@@ -4,6 +4,13 @@ auth:
   existingSecret: "valkey-admin-credentials"
   existingSecretPasswordKey: "password"
 
+master:
+  resourcesPreset: "small"
+
+  extraFlags:
+    - "--maxmemory 512mb"
+    - "--maxmemory-policy volatile-ttl"
+
 metrics:
   enabled: true
 
