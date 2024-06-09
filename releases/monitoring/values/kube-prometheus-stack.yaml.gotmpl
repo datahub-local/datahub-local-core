@@ -96,9 +96,11 @@ prometheus:
     externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
     routePrefix: /
 
-    serviceMonitorSelector: {}
-    serviceMonitorSelectorNilUsesHelmValues: false
-    probeSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+
     replicas: 1
     retention: 5d
