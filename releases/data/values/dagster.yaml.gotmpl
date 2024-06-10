@@ -8,6 +8,10 @@ generateCeleryConfigSecret: false
 dagsterWebserver:
   replicaCount: 1
 
+  image:
+    repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
+    tag: 1.7.9
+
   env:
     - name: "TRINO_HOST"
       value: "{{ $.Values.release_name }}-data-trino:8080"
@@ -26,6 +30,10 @@ dagsterWebserver:
           key: accessKey
 
 dagsterDaemon:
+  image:
+    repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
+    tag: 1.7.9
+
   env:
     - name: "TRINO_HOST"
       value: "{{ $.Values.release_name }}-data-trino:8080"
@@ -63,6 +71,11 @@ dagster-user-deployments:
 
 runLauncher:
   type: CeleryK8sRunLauncher
+
+  celeryK8sRunLauncher:
+    image:
+      repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
+      tag: 1.7.9
 
 postgresql:
   enabled: false
