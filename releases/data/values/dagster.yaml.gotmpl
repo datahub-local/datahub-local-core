@@ -72,10 +72,11 @@ dagster-user-deployments:
 runLauncher:
   type: CeleryK8sRunLauncher
 
-  celeryK8sRunLauncher:
-    image:
-      repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
-      tag: 1.7.9
+  config:
+    celeryK8sRunLauncher:
+      image:
+        repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
+        tag: 1.7.9
 
 postgresql:
   enabled: false
