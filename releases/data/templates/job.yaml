@@ -4,7 +4,7 @@ kind: Job
 metadata:
   generateName: {{ template "postgresql.jobSetup" . }}
   annotations:
-    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   backoffLimit: 5
@@ -17,7 +17,7 @@ spec:
         command:
           - /bin/sh
           - -c
-          - dockerize -wait "tcp://{{ .Values.release_name }}-data-postgresql-hl:5432" -timeout 120s
+          - dockerize -wait "tcp://{{ .Values.release_name }}-data-postgresql-hl:5432" -timeout 300s
       containers:
       - name: psql
         image: postgres:latest
@@ -51,6 +51,7 @@ metadata:
 data:
   setup_postgresql.sql: |
     {{- range $key, $value := .Values.postgress_extra_databases }}
+
     SELECT 'CREATE DATABASE {{ $value }}' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ $value }}')\gexec
     
     {{- end }}
