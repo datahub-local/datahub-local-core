@@ -105,17 +105,19 @@ ingress:
 
   ingressClassName: "traefik"
 
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Dagster"
+    gethomepage.dev/pod-selector: "app=minio"
+    gethomepage.dev/description: "The data orchestration platform built for productivity."
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-octopusdeploy"
+
   dagsterWebserver:
-    ingressClassName: "traefik"
     host: "data-dagster.{{ .StateValues.ingress_hostname }}"
 
-    annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Dagster"
-      gethomepage.dev/pod-selector: "app=minio"
-      gethomepage.dev/description: "The data orchestration platform built for productivity."
-      gethomepage.dev/group: "Data"
-      gethomepage.dev/icon: "dagster.png"
+    path: "/"
+    pathType: Prefix
