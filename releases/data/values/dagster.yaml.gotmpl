@@ -70,6 +70,14 @@ dagster-user-deployments:
           name: minio-admin-credentials
           key: accessKey
 
+  # List of unique deployments
+  deployments:
+    - name: "dagster-user-code-example"
+      image:
+        repository: "ghcr.io/datahub-local/dagster-user-code-example"
+        tag: ~
+        pullPolicy: Always
+
 runLauncher:
   type: CeleryK8sRunLauncher
 
