@@ -77,6 +77,10 @@ dagster-user-deployments:
         repository: "ghcr.io/datahub-local/dagster-user-code-example"
         tag: ~
         pullPolicy: Always
+      dagsterApiGrpcArgs:
+        - "--python-file"
+        - "/opt/dagster/app/example_repo/repo.py"
+      port: 3030
 
 runLauncher:
   type: CeleryK8sRunLauncher
