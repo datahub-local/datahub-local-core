@@ -1,8 +1,8 @@
 helm_chart_version:
-  dagster: "1.7.9"
+  dagster: "1.7.10"
   minio: "5.2.0"
-  nessie: "0.83.2"
-  postgresql: "15.5.1"
+  nessie: "0.90.2"
+  postgresql: "15.5.5"
   superset: "0.12.11"
-  trino: "0.21.0"
+  trino: "0.24.0"
   valkey: "0.3.5"

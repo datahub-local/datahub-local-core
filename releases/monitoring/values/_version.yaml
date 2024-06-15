@@ -1,2 +1,2 @@
 helm_chart_version:
-  kube_prometheus_stack: "58.7.2"
+  kube_prometheus_stack: "60.1.0"
