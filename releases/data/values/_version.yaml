@@ -2,6 +2,7 @@ helm_chart_version:
   dagster: "1.7.10"
   minio: "5.2.0"
   nessie: "0.90.2"
+  openwebui: "3.0.4"
   postgresql: "15.5.5"
   superset: "0.12.11"
   trino: "0.24.0"

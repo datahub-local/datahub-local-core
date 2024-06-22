@@ -15,11 +15,12 @@ repositories:
     url: https://charts.projectnessie.org/
   - name: dagster
     url: https://dagster-io.github.io/helm
+  - name: open-webui
+    url: https://helm.openwebui.com
 
 releases:
   - name: "{{ .Values.release_name }}-data"
     namespace: data
-    forceNamespace: data
     chart: "."
     values:
       - ../../values/global.yaml
@@ -30,50 +31,49 @@ releases:
       #{{- end }}
   - name: "{{ .Values.release_name }}-data-postgresql"
     namespace: data
-    forceNamespace: data
     chart: "bitnami/postgresql"
     version: "{{ .StateValues.helm_chart_version.postgresql }}"
     values:
       - values/postgresql.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
-    forceNamespace: data
     chart: "bitnami/valkey"
     version: "{{ .StateValues.helm_chart_version.valkey }}"
     values:
       - values/valkey.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-minio"
     namespace: data
-    forceNamespace: data
     chart: "minio/minio"
     version: "{{ .StateValues.helm_chart_version.minio }}"
     values:
       - values/minio.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-trino"
     namespace: data
-    forceNamespace: data
     chart: "trino/trino"
     version: "{{ .StateValues.helm_chart_version.trino }}"
     values:
       - values/trino.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-superset"
     namespace: data
-    forceNamespace: data
     chart: "superset/superset"
     version: "{{ .StateValues.helm_chart_version.superset }}"
     values:
       - values/superset.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-nessie"
     namespace: data
-    forceNamespace: data
     chart: "nessie/nessie"
     version: "{{ .StateValues.helm_chart_version.nessie }}"
     values:
       - values/nessie.yaml.gotmpl
   - name: "dag"
     namespace: data
-    forceNamespace: data
     chart: "dagster/dagster"
     version: "{{ .StateValues.helm_chart_version.dagster }}"
     values:
       - values/dagster.yaml.gotmpl
+  - name: "open-webui"
+    namespace: data
+    chart: "open-webui/open-webui"
+    version: "{{ .StateValues.helm_chart_version.openwebui }}"
+    values:
+      - values/openwebui.yaml.gotmpl

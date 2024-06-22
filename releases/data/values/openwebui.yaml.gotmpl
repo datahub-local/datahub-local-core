@@ -1,0 +1,35 @@
+ollama:
+  enabled: true
+
+  ollama:
+    gpu:
+      enabled: true
+      type: "nvidia"
+      number: 1
+    models:
+      - llama3:8b
+
+  runtimeClassName: nvidia
+
+  persistentVolume:
+    enabled: true
+
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+ingress:
+  enabled: true
+  className: "traefik"
+  hosts: "data-openwebui.{{ .StateValues.ingress_hostname }}"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Open WebUI"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/component=openwebui"
+    gethomepage.dev/description: "User-friendly WebUI for LLMs (Formerly Ollama WebUI)"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-open-webui"
