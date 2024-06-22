@@ -14,6 +14,8 @@ ollama:
   persistentVolume:
     enabled: true
 
+    storageClass: local-path
+
   tolerations:
     - key: nvidia.com/gpu
       operator: Exists
@@ -21,8 +23,8 @@ ollama:
 
 ingress:
   enabled: true
-  className: "traefik"
-  hosts: "data-openwebui.{{ .StateValues.ingress_hostname }}"
+  class: "traefik"
+  host: "data-openwebui.{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
@@ -32,4 +34,4 @@ ingress:
     gethomepage.dev/pod-selector: "app.kubernetes.io/component=openwebui"
     gethomepage.dev/description: "User-friendly WebUI for LLMs (Formerly Ollama WebUI)"
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "si-open-webui"
+    gethomepage.dev/icon: "open-webui"
