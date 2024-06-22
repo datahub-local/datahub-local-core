@@ -101,7 +101,7 @@ ingress:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
     gethomepage.dev/href: "https://data-trino.{{ .StateValues.ingress_hostname }}/ui/"
-    gethomepage.dev/pod-selector: "app=trino"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "si-trino"

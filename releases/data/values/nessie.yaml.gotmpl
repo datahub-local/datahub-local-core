@@ -23,7 +23,7 @@ ingress:
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Nessie"
-    gethomepage.dev/pod-selector: "app={{ .Values.release_name }}-data-nessie"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=nessie"
     gethomepage.dev/description: "Transactional Catalog for Data Lakes with Git-like semantics"
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "si-deno"
