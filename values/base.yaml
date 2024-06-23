@@ -9,6 +9,7 @@ environments:
       - ../../values/.security.test.yaml
       #{{- end }}
       - values/_version.yaml
+      - values/_kustomize.yaml.gotmpl
       - values/default.yaml.gotmpl
 ---
 helmDefaults:

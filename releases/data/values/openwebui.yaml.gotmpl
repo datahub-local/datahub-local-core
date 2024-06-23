@@ -1,25 +1,8 @@
 ollama:
-  enabled: true
+  enabled: false
 
-  ollama:
-    gpu:
-      enabled: true
-      type: "nvidia"
-      number: 1
-    models:
-      - llama3
-
-  runtimeClassName: nvidia
-
-  persistentVolume:
-    enabled: true
-
-    storageClass: local-path
-
-  tolerations:
-    - key: nvidia.com/gpu
-      operator: Exists
-      effect: NoSchedule
+ollamaUrls:
+  - http://ollama.svc.cluster.local:11434
 
 ingress:
   enabled: true

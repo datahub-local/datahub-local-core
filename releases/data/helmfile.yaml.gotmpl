@@ -15,6 +15,8 @@ repositories:
     url: https://charts.projectnessie.org/
   - name: dagster
     url: https://dagster-io.github.io/helm
+  - name: ollama
+    url: https://otwld.github.io/ollama-helm/
   - name: open-webui
     url: https://helm.openwebui.com
 
@@ -71,6 +73,14 @@ releases:
     version: "{{ .StateValues.helm_chart_version.dagster }}"
     values:
       - values/dagster.yaml.gotmpl
+  - name: "ollama"
+    namespace: data
+    chart: "ollama/ollama"
+    version: "{{ .StateValues.helm_chart_version.ollama }}"
+    values:
+      - values/ollama.yaml.gotmpl
+    strategicMergePatches:
+      {{- .StateValues.kustomize.ollama | toYaml | nindent 6}}
   - name: "open-webui"
     namespace: data
     chart: "open-webui/open-webui"
