@@ -1,6 +1,8 @@
 resources:
   limits:
-    gpu-vendor.example/example-gpu:
+    nvidia.com/gpu: "0.5"
+  requests:
+    nvidia.com/gpu: "0.5"
 
 runtimeClassName: nvidia
 
@@ -11,7 +13,6 @@ tolerations:
   - key: nvidia.com/gpu
     operator: Exists
     effect: NoSchedule
-
 
 ingress:
   enabled: true
