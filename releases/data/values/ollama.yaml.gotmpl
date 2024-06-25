@@ -1,10 +1,16 @@
-resources:
-  limits:
-    nvidia.com/gpu: "0.5"
-  requests:
-    nvidia.com/gpu: "0.5"
+ollama:
+  gpu:
+    enabled: true
+    type: "nvidia"
+    number: 0.5
+  models:
+    - llama3
+
+runtimeClassName: nvidia
 
 persistentVolume:
+  enabled: true
+
   storageClass: local-path
 
 tolerations:
