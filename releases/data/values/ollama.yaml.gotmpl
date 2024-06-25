@@ -1,17 +1,10 @@
-ollama:
-  gpu:
-    enabled: true
-    type: "nvidia"
-    number: 1
-  models:
-    - llama3
-    - llava-llama3
-
-runtimeClassName: nvidia
+resources:
+  limits:
+    nvidia.com/gpu: "0.5"
+  requests:
+    nvidia.com/gpu: "0.5"
 
 persistentVolume:
-  enabled: true
-
   storageClass: local-path
 
 tolerations:

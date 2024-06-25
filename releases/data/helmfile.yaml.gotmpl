@@ -17,6 +17,8 @@ repositories:
     url: https://dagster-io.github.io/helm
   - name: ollama
     url: https://otwld.github.io/ollama-helm/
+  - name: amithkk-sd
+    url: https://amithkk.github.io/stable-diffusion-k8s
   - name: open-webui
     url: https://helm.openwebui.com
 
@@ -79,8 +81,12 @@ releases:
     version: "{{ .StateValues.helm_chart_version.ollama }}"
     values:
       - values/ollama.yaml.gotmpl
-    strategicMergePatches:
-      {{- .StateValues.kustomize.ollama | toYaml | nindent 6}}
+  - name: "stable-diffusion"
+    namespace: data
+    chart: "amithkk-sd/stable-diffusion"
+    version: "{{ .StateValues.helm_chart_version.stable_diffusion }}"
+    values:
+      - values/stable_diffusion.yaml.gotmpl
   - name: "open-webui"
     namespace: data
     chart: "open-webui/open-webui"
