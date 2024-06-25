@@ -14,7 +14,7 @@
 			"version": "v0.158.0"
 		}
 	},
-	"postCreateCommand": "poetry install && echo 'source .venv/bin/activate' >> $HOME/.bashrc",
+	"postCreateCommand": "",
 	"customizations": {
 		"vscode": {
 			"extensions": [

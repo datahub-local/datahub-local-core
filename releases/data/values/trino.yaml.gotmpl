@@ -47,13 +47,13 @@ rules:
     {
       "catalogs": [
         {
-          "user": "{{ .StateValues.minio_user }}",
+          "user": "{{ .StateValues.trino_user }}",
           "catalog": ".*",
           "allow": "all"
         },
       "schemas": [
         {
-          "user": "{{ .StateValues.minio_user }}",
+          "user": "{{ .StateValues.trino_user }}",
           "schema": ".*",
           "owner": true
         }
