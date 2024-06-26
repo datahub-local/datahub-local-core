@@ -81,12 +81,6 @@ releases:
     version: "{{ .StateValues.helm_chart_version.ollama }}"
     values:
       - values/ollama.yaml.gotmpl
-  - name: "stable-diffusion"
-    namespace: data
-    chart: "amithkk-sd/stable-diffusion"
-    version: "{{ .StateValues.helm_chart_version.stable_diffusion }}"
-    values:
-      - values/stable_diffusion.yaml.gotmpl
   - name: "open-webui"
     namespace: data
     chart: "open-webui/open-webui"
