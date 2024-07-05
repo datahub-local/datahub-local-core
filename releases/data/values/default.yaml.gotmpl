@@ -10,9 +10,10 @@ minio_buckets:
 postgress_user: "{{ $security_admin_user }}"
 postgress_database: "postgres"
 postgress_extra_databases:
-  superset: superset
-  nessie: nessie
   dagster: dagster
+  nessie: nessie
+  openwebui: openwebui
+  superset: superset
 
 trino_user: "{{ $security_admin_user }}"
 

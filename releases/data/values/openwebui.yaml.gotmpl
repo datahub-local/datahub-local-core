@@ -25,3 +25,15 @@ ingress:
 extraEnvVars:
   - name: WEBUI_AUTH
     value: "False"
+  - name: "DATABASE_USER"
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-admin-credentials
+        key: user
+  - name: "DATABASE_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-admin-credentials
+        key: password
+  - name: DATABASE_URL
+    value: "postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@{{ $.Values.release_name }}-data-postgresql-hl:5432/my_database"
