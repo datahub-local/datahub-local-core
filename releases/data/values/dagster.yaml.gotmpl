@@ -94,7 +94,7 @@ runLauncher:
 postgresql:
   enabled: false
 
-  postgresqlHost: "{{ $.Values.release_name }}-data-postgresql-hl"
+  postgresqlHost: "datahub-local-core-data-postgresql-hl"
   postgresqlUsername: "{{ $.StateValues.postgress_user}}"
   postgresqlDatabase: dagster
 

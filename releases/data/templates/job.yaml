@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ template "postgresql.jobSetup" . }}
+  generateName: {{template "postgresql.jobSetup" .}}
   annotations:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
@@ -11,47 +11,53 @@ spec:
   template:
     spec:
       initContainers:
-      - name: wait-for-postgres
-        image: "apache/superset:dockerize"
-        imagePullPolicy: "IfNotPresent"
-        command:
-          - /bin/sh
-          - -c
-          - dockerize -wait "tcp://{{ .Values.release_name }}-data-postgresql-hl:5432" -timeout 300s
+        - name: wait-for-postgres
+          image: "apache/superset:dockerize"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/sh
+            - -c
+            - dockerize -wait "tcp://datahub-local-core-data-postgresql-hl:5432" -timeout 300s
       containers:
-      - name: psql
-        image: postgres:latest
-        env:
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgresql-admin-credentials
-              key: password
-        command: ["psql"]
-        args: [
-          "-h", "{{ .Values.release_name }}-data-postgresql-hl",
-          "-p", "5432",
-          "-U", "{{ .Values.postgress_user }}",
-          "-d", "{{ .Values.postgress_database }}",
-          "-f", "/scripts/setup_postgresql.sql"
-        ]
-        volumeMounts:
-        - name: script-volume
-          mountPath: /scripts
+        - name: psql
+          image: postgres:latest
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-admin-credentials
+                  key: password
+          command: ["psql"]
+          args:
+            [
+              "-h",
+              "datahub-local-core-data-postgresql-hl",
+              "-p",
+              "5432",
+              "-U",
+              "{{ .Values.postgress_user }}",
+              "-d",
+              "{{ .Values.postgress_database }}",
+              "-f",
+              "/scripts/setup_postgresql.sql",
+            ]
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
       restartPolicy: OnFailure
       volumes:
-      - name: script-volume
-        configMap:
-          name: {{ template "postgresql.configMapJobSetup" . }}
+        - name: script-volume
+          configMap:
+            name: {{template "postgresql.configMapJobSetup" .}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "postgresql.configMapJobSetup" . }}
+  name: {{template "postgresql.configMapJobSetup" .}}
 data:
   setup_postgresql.sql: |
     {{- range $key, $value := .Values.postgress_extra_databases }}
 
     SELECT 'CREATE DATABASE {{ $value }}' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ $value }}')\gexec
-    
+
     {{- end }}

@@ -164,21 +164,23 @@ For debugging purposes, you can deploy the repository against a local cluster. F
 
     ```bash
     SECRET_NAMESPACE="data"
-    SECRET_NAME="minio-root-credentials"
-    SECRET_JSON='{
-      "rootUser": "admin",
-      "rootPassword": "some_pass"
-    }'
+    SECRET_YAML='
+    minio-root-credentials:
+      rootUser: "admin"
+      rootPassword: "some_pass"
+    '
+    SECRET_NAME=$(echo "$SECRET_YAML" | yq -r '. | to_entries | .[0].key')
+    SECRET_VALUE=$(echo "$SECRET_YAML" | yq -r '. | to_entries | .[0].value')
 
     literals=()
 
-    # Process each key-value pair in the JSON file and add it to the array
+    # Process each key-value pair in the YAML file and add it to the array
     while IFS='=' read -r key value; do
       # Add the --from-literal argument to the array
       literals+=(--from-literal="${key}=${value}")
-    done < <(echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value|tostring)"')
+    done < <(echo "$SECRET_VALUE" | yq -r '. | to_entries | .[] | "\(.key)=\(.value|tostring)"')
 
     kubectl create secret generic $SECRET_NAME -n $SECRET_NAMESPACE --dry-run=client \
-          "${literals[@]}" -o json \
+          "${literals[@]}" -o YAML \
       | kubeseal --controller-namespace security --controller-name sealed-secrets -o yaml
     ```
