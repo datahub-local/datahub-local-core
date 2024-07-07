@@ -3,12 +3,12 @@ environments:
   default:
     values:
       - ../../values/global.yaml
+      - ../../values/_version.yaml
       #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml
       #{{- else }}
       - ../../values/.security.test.yaml
       #{{- end }}
-      - values/_version.yaml
       - values/_kustomize.yaml.gotmpl
       - values/default.yaml.gotmpl
 ---
@@ -17,3 +17,9 @@ helmDefaults:
   timeout: 600
   recreatePods: true
   force: false
+---
+repositories:
+  #{{- range $key, $value := .Values.helmchart_repository }}
+  - name: "{{ $key }}"
+    url: "{{ $value }}"
+  #{{- end }}

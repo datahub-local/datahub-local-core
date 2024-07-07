@@ -2,24 +2,6 @@
 bases:
   - ../../values/base.yaml
 ---
-repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
-  - name: minio
-    url: https://charts.min.io/
-  - name: trino
-    url: https://trinodb.github.io/charts
-  - name: superset
-    url: http://apache.github.io/superset/
-  - name: nessie
-    url: https://charts.projectnessie.org/
-  - name: dagster
-    url: https://dagster-io.github.io/helm
-  - name: ollama
-    url: https://otwld.github.io/ollama-helm/
-  - name: open-webui
-    url: https://helm.openwebui.com
-
 releases:
   - name: "{{ .Values.release_name }}-data"
     namespace: data
@@ -34,54 +16,54 @@ releases:
   - name: "{{ .Values.release_name }}-data-postgresql"
     namespace: data
     chart: "bitnami/postgresql"
-    version: "{{ .StateValues.helm_chart_version.postgresql }}"
+    version: '{{ .StateValues.helm_chart_version | get "bitnami/postgresql" }}'
     values:
       - values/postgresql.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
     chart: "bitnami/valkey"
-    version: "{{ .StateValues.helm_chart_version.valkey }}"
+    version: '{{ .StateValues.helm_chart_version | get "bitnami/valkey" }}'
     values:
       - values/valkey.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-minio"
     namespace: data
     chart: "minio/minio"
-    version: "{{ .StateValues.helm_chart_version.minio }}"
+    version: '{{ .StateValues.helm_chart_version | get "minio/minio" }}'
     values:
       - values/minio.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-trino"
     namespace: data
     chart: "trino/trino"
-    version: "{{ .StateValues.helm_chart_version.trino }}"
+    version: '{{ .StateValues.helm_chart_version | get "trino/trino" }}'
     values:
       - values/trino.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-superset"
     namespace: data
     chart: "superset/superset"
-    version: "{{ .StateValues.helm_chart_version.superset }}"
+    version: '{{ .StateValues.helm_chart_version | get "superset/superset" }}'
     values:
       - values/superset.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-nessie"
     namespace: data
     chart: "nessie/nessie"
-    version: "{{ .StateValues.helm_chart_version.nessie }}"
+    version: '{{ .StateValues.helm_chart_version | get "nessie/nessie" }}'
     values:
       - values/nessie.yaml.gotmpl
   - name: "dag"
     namespace: data
     chart: "dagster/dagster"
-    version: "{{ .StateValues.helm_chart_version.dagster }}"
+    version: '{{ .StateValues.helm_chart_version | get "dagster/dagster" }}'
     values:
       - values/dagster.yaml.gotmpl
   - name: "ollama"
     namespace: data
     chart: "ollama/ollama"
-    version: "{{ .StateValues.helm_chart_version.ollama }}"
+    version: '{{ .StateValues.helm_chart_version | get "ollama/ollama" }}'
     values:
       - values/ollama.yaml.gotmpl
   - name: "open-webui"
     namespace: data
     chart: "open-webui/open-webui"
-    version: "{{ .StateValues.helm_chart_version.openwebui }}"
+    version: '{{ .StateValues.helm_chart_version | get "openwebui/openwebui" }}'
     values:
       - values/openwebui.yaml.gotmpl

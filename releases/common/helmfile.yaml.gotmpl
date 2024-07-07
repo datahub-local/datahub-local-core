@@ -11,10 +11,6 @@ helmDefaults:
 commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
-repositories:
-  - name: jameswynn
-    url: https://jameswynn.github.io/helm-charts
-
 releases:
   - name: "{{ .Values.release_name }}-common"
     namespace: default
@@ -25,6 +21,6 @@ releases:
   - name: "{{ .Values.release_name }}-homepage"
     namespace: other
     chart: "jameswynn/homepage"
-    version: "{{ .StateValues.helm_chart_version.homepage }}"
+    version: '{{ .StateValues.helm_chart_version | get "jameswynn/homepage" }}'
     values:
       - values/homepage.yaml.gotmpl

@@ -11,15 +11,11 @@ helmDefaults:
 commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
-repositories:
-  - name: prometheus-community
-    url: https://prometheus-community.github.io/helm-charts
-
 releases:
   - name: "{{ .Values.release_name }}-kube-prometheus-stack"
     namespace: monitoring
     chart: "prometheus-community/kube-prometheus-stack"
-    version: "{{ .StateValues.helm_chart_version.kube_prometheus_stack }}"
+    version: '{{ .StateValues.helm_chart_version | get "prometheus-community/kube_prometheus_stack" }}'
     values:
       - values/kube-prometheus-stack.yaml.gotmpl
     disableValidationOnInstall: true
