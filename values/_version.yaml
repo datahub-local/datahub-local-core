@@ -1,24 +1,23 @@
-helmchart_repository:
+helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   dagster: https://dagster-io.github.io/helm
   jameswynn: https://jameswynn.github.io/helm-charts
-  minio: https://charts.min.io/
+  minio-oficial: https://charts.min.io/
   nessie: https://charts.projectnessie.org/
   ollama: https://otwld.github.io/ollama-helm/
   open-webui: https://helm.openwebui.com
   prometheus-community: https://prometheus-community.github.io/helm-charts
   superset: http://apache.github.io/superset/
   trino: https://trinodb.github.io/charts
-
 helm_chart_version:
-  bitnami/postgresql: "15.5.13"
-  bitnami/valkey: "0.3.8"
-  dagster/dagster: "1.7.12"
-  jameswynn/homepage: "1.2.3"
-  minio/minio: "5.2.0"
-  nessie/nessie: "0.91.2"
-  ollama/ollama: "0.40.0"
-  openwebui/openwebui: "3.0.5"
-  prometheus-community/kube_prometheus_stack: "61.2.0"
-  superset/superset: "0.12.11"
-  trino/trino: "0.25.0"
+  bitnami/postgresql: 15.5.13
+  bitnami/valkey: 0.3.8
+  dagster/dagster: 1.7.12
+  jameswynn/homepage: 1.2.3
+  minio-oficial/minio: 5.2.0
+  nessie/nessie: 0.91.2
+  ollama/ollama: 0.40.0
+  open-webui/open-webui: 3.0.5
+  prometheus-community/kube_prometheus_stack: 61.2.0
+  superset/superset: 0.12.11
+  trino/trino: 0.25.0

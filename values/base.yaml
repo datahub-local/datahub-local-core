@@ -19,7 +19,7 @@ helmDefaults:
   force: false
 ---
 repositories:
-  #{{- range $key, $value := .Values.helmchart_repository }}
+  #{{- range $key, $value := .Values.helm_chart_repository }}
   - name: "{{ $key }}"
     url: "{{ $value }}"
   #{{- end }}

@@ -27,8 +27,8 @@ releases:
       - values/valkey.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-minio"
     namespace: data
-    chart: "minio/minio"
-    version: '{{ .StateValues.helm_chart_version | get "minio/minio" }}'
+    chart: "minio-oficial/minio"
+    version: '{{ .StateValues.helm_chart_version | get "minio-oficial/minio" }}'
     values:
       - values/minio.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-trino"
@@ -64,6 +64,6 @@ releases:
   - name: "open-webui"
     namespace: data
     chart: "open-webui/open-webui"
-    version: '{{ .StateValues.helm_chart_version | get "openwebui/openwebui" }}'
+    version: '{{ .StateValues.helm_chart_version | get "open-webui/open-webui" }}'
     values:
       - values/openwebui.yaml.gotmpl
