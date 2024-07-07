@@ -20,8 +20,8 @@ jobs:
       - name: Set variables
         id: vars
         run: |
-          echo "::set-output name=date::$(date --iso-8601=date)"
-          echo "::set-output name=helm_chart_version_file::$HELM_CHART_VERSION_FILE"
+          echo "current_date=$(date --iso-8601=date)" >> $GITHUB_OUTPUT
+          echo "helm_chart_version_file=$HELM_CHART_VERSION_FILE" >> $GITHUB_OUTPUT
       - uses: actions/setup-python@v4
         with:
           python-version: 3.12
@@ -39,7 +39,6 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: bump version of Helm Charts until ${{ steps.vars.outputs.date }}'
+          commit-message: 'chore: bump version of Helm Charts until ${{ steps.vars.outputs.current_date }}'
           branch: "chore/bump_help_chart_"
-          title: 'Bump version of Helm Charts until ${{ steps.vars.outputs.date }}'
-          body: 'Bump version of Helm Charts until ${{ steps.vars.outputs.date }}'
+          title: 'Bump version of Helm Charts until ${{ steps.vars.outputs.current_date }}'
