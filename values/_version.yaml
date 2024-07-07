@@ -15,7 +15,7 @@ helm_chart_version:
   dagster/dagster: 1.7.12
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
-  nessie/nessie: 0.91.2
+  nessie/nessie: 0.91.3
   ollama/ollama: 0.40.0
   open-webui/open-webui: 3.0.5
   prometheus-community/kube_prometheus_stack: 61.2.0
