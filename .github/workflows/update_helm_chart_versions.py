@@ -15,7 +15,13 @@ logging.basicConfig(
 _HELM_REPOSITORY_CHART_CACHE = {}
 
 
-def get_helm_chart_metadata(repo_name: str, repo_url: str):
+def _parse_semantic_version(_version: str):
+    version = _version[1:] if _version[0] == "v" else _version
+
+    return ["{:0>5}".format(int(i)) if i.isdigit() else i for i in version.split(".")]
+
+
+def _get_helm_chart_metadata(repo_name: str, repo_url: str, chart_name):
     global _HELM_REPOSITORY_CHART_CACHE
 
     try:
@@ -32,9 +38,11 @@ def get_helm_chart_metadata(repo_name: str, repo_url: str):
 
         _HELM_REPOSITORY_CHART_CACHE[repo_name] = {}
 
-        for chart_name, value in index_data.get("entries").items():
-            _HELM_REPOSITORY_CHART_CACHE[repo_name][chart_name] = sorted(
-                value, key=lambda x: x["created"], reverse=True
+        for _key, _value in index_data.get("entries").items():
+            _HELM_REPOSITORY_CHART_CACHE[repo_name][_key] = sorted(
+                _value,
+                key=lambda x: _parse_semantic_version(x["version"]),
+                reverse=True,
             )[0]
 
         return _HELM_REPOSITORY_CHART_CACHE[repo_name][chart_name]
@@ -42,7 +50,7 @@ def get_helm_chart_metadata(repo_name: str, repo_url: str):
         logging.warning("Error getting charts for '%s': %s", repo_name, str(e))
 
 
-def update_yaml(yaml_file_path):
+def _update_yaml(yaml_file_path):
     with open(yaml_file_path, "r") as f:
         yaml_file = yaml.safe_load(f)
 
@@ -52,17 +60,19 @@ def update_yaml(yaml_file_path):
 
         modified = False
 
-        for chart_name, current_version in helm_chart_versions.items():
-            repo_name = chart_name.split("/")[0]
+        for full_chart_name, current_version in helm_chart_versions.items():
+            repo_name, chart_name = full_chart_name.split("/")
             repo_url = helm_chart_repository.get(repo_name)
 
             if repo_url:
-                metadata = get_helm_chart_metadata(repo_name, repo_url)
+                metadata = _get_helm_chart_metadata(repo_name, repo_url, chart_name)
 
                 if metadata and "version" in metadata:
                     last_version = metadata["version"]
 
-                    if last_version and last_version > current_version:
+                    if last_version and _parse_semantic_version(
+                        last_version
+                    ) > _parse_semantic_version(current_version):
                         logging.info(
                             "Update chart '%s' to version '%s' => '%s'",
                             chart_name,
@@ -70,11 +80,11 @@ def update_yaml(yaml_file_path):
                             last_version,
                         )
 
-                        helm_chart_versions[chart_name] = last_version
+                        helm_chart_versions[full_chart_name] = last_version
 
                         modified = True
             else:
-                logging.warning("Chart '%s' does not have a repo_url", chart_name)
+                logging.warning("Chart '%s' does not have a repo_url", full_chart_name)
 
         if modified:
             yaml_file["helm_chart_version"] = helm_chart_versions
@@ -89,7 +99,7 @@ def main():
     args = parser.parse_args()
 
     logging.info("Updating Helm chart versions for '%s'", args.yaml_file_path)
-    update_yaml(args.yaml_file_path)
+    _update_yaml(args.yaml_file_path)
     logging.info("Updated Helm chart versions for '%s'", args.yaml_file_path)
 
 
