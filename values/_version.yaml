@@ -10,14 +10,14 @@ helm_chart_repository:
   superset: http://apache.github.io/superset/
   trino: https://trinodb.github.io/charts
 helm_chart_version:
-  bitnami/postgresql: 15.5.14
+  bitnami/postgresql: 15.5.15
   bitnami/valkey: 0.3.8
   dagster/dagster: 1.7.12
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
   nessie/nessie: 0.91.3
-  ollama/ollama: 0.40.0
+  ollama/ollama: 0.42.0
   open-webui/open-webui: 3.0.5
-  prometheus-community/kube-prometheus-stack: 61.2.0
+  prometheus-community/kube-prometheus-stack: 61.3.0
   superset/superset: 0.12.11
   trino/trino: 0.25.0
