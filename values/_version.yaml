@@ -1,5 +1,6 @@
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
+  bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
   jameswynn: https://jameswynn.github.io/helm-charts
   minio-oficial: https://charts.min.io/
@@ -12,6 +13,7 @@ helm_chart_repository:
 helm_chart_version:
   bitnami/postgresql: 15.5.15
   bitnami/valkey: 0.3.8
+  bjw-s/app-template: 3.2.1
   dagster/dagster: 1.7.12
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0

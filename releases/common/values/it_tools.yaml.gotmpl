@@ -1,0 +1,45 @@
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: RollingUpdate
+    containers:
+      main:
+        image:
+          repository: ghcr.io/corentinth/it-tools
+          tag: 2024.5.13-a0bc346
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 80
+
+ingress:
+  main:
+    enabled: true
+
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "IT-Tools"
+      gethomepage.dev/description: "Collection of handy online tools for developers, with great UX."
+      gethomepage.dev/group: "System"
+      gethomepage.dev/icon: "it-tools.png"
+
+    className: "traefik"
+
+    hosts:
+      - host: https://system-it-tools.{{ .StateValues.ingress_hostname }}
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: main
+              port: 80
