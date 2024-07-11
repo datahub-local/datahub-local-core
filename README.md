@@ -20,9 +20,9 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
       - list:
           elements:
           - name: common
-            ns: other
+            ns: kube-system
           - name: other
-            ns: data
+            ns: other
           - name: monitoring
             ns: monitoring
           - name: data
