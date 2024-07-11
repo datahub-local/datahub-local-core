@@ -36,7 +36,7 @@ ingress:
     className: "traefik"
 
     hosts:
-      - host: https://system-it-tools.{{ .StateValues.ingress_hostname }}
+      - host: "system-it-tools.{{ .StateValues.ingress_hostname }}"
         paths:
           - path: /
             pathType: Prefix
