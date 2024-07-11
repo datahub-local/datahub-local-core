@@ -21,6 +21,8 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
           elements:
           - name: common
             ns: other
+          - name: other
+            ns: data
           - name: monitoring
             ns: monitoring
           - name: data

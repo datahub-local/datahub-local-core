@@ -18,15 +18,3 @@ releases:
     values:
       - ../../values/global.yaml
       - values/default.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-homepage"
-    namespace: other
-    chart: "jameswynn/homepage"
-    version: '{{ .StateValues.helm_chart_version | get "jameswynn/homepage" }}'
-    values:
-      - values/homepage.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-it-tools"
-    namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
-    values:
-      - values/it_tools.yaml.gotmpl

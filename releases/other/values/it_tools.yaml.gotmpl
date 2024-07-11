@@ -30,16 +30,16 @@ ingress:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "IT-Tools"
       gethomepage.dev/description: "Collection of handy online tools for developers, with great UX."
-      gethomepage.dev/group: "System"
-      gethomepage.dev/icon: "it-tools.png"
+      gethomepage.dev/group: "Other"
+      gethomepage.dev/icon: "it-tools.svg"
 
     className: "traefik"
 
     hosts:
-      - host: "system-it-tools.{{ .StateValues.ingress_hostname }}"
+      - host: "other-it-tools.{{ .StateValues.ingress_hostname }}"
         paths:
           - path: /
             pathType: Prefix
             service:
-              name: main
+              name: "{{ .Values.release_name }}-it-tools"
               port: 80

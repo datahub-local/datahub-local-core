@@ -13,21 +13,21 @@ config:
               href: https://github.com/datahub-local/datahub-local
     - Tools:
         - ChatGPT:
-            - icon: chatgpt.png
+            - icon: chatgpt.svg
               abbr: CG
               href: https://chat.openai.com
         - "Image Creator":
-            - icon: bing.png
+            - icon: bing.svg
               abbr: B
               href: https://www.bing.com/images/create
         - "Self-Hosted Applications and Alternatives":
-            - icon: reddit.png
+            - icon: reddit.svg
               abbr: SH
               href: https://selfh.st/apps/
   services:
   widgets:
     - logo:
-        icon: https://datahub-local.alvsanand.com/assets/img/logo.png
+        icon: https://datahub-local.alvsanand.com/assets/img/logo.svg
     - greeting:
         text_size: 2xl
         text: DataHub.local
@@ -60,7 +60,7 @@ config:
     mode: cluster
   settings:
     title: "DataHub.local"
-    base: "https://system-homepage.{{ .StateValues.ingress_hostname }}"
+    base: "https://other-homepage.{{ .StateValues.ingress_hostname }}"
 
 # The service account is necessary to allow discovery of other services
 serviceAccount:
@@ -80,10 +80,10 @@ ingress:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Homepage"
       gethomepage.dev/description: "A highly customizable homepage (or startpage / application dashboard) with Docker and service API integrations."
-      gethomepage.dev/group: "System"
-      gethomepage.dev/icon: "homepage.png"
+      gethomepage.dev/group: "Other"
+      gethomepage.dev/icon: "homepage.svg"
     hosts:
-      - host: "system-homepage.{{ .StateValues.ingress_hostname }}"
+      - host: "other-homepage.{{ .StateValues.ingress_hostname }}"
         paths:
           - path: /
             pathType: Prefix
