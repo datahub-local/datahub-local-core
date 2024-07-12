@@ -2,6 +2,7 @@
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:75",
         "builtIn": 1,
         "datasource": {
           "type": "datasource",
@@ -15,13 +16,34 @@
       }
     ]
   },
-  "description": "Loki dashboard with quick search and timeline.",
+  "description": "Log Viewer Dashboard for Loki",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": 13186,
+  "gnetId": 13639,
   "graphTooltip": 0,
-  "id": 37,
-  "links": [],
+  "id": 38,
+  "links": [
+    {
+      "$$hashKey": "object:59",
+      "icon": "bolt",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "View In Explore",
+      "type": "link",
+      "url": "/explore?orgId=1&left=[\"now-1h\",\"now\",\"Loki\",{\"expr\":\"{job=\\\"$app\\\"}\"},{\"ui\":[true,true,true,\"none\"]}]"
+    },
+    {
+      "$$hashKey": "object:61",
+      "icon": "external link",
+      "tags": [],
+      "targetBlank": true,
+      "title": "Learn LogQL",
+      "type": "link",
+      "url": "https://grafana.com/docs/loki/latest/logql/"
+    }
+  ],
   "panels": [
     {
       "datasource": {
@@ -65,6 +87,7 @@
               "mode": "off"
             }
           },
+          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -102,17 +125,18 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "7.1.0",
       "targets": [
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({namespace=\"$namespace\", app=\"$workload\", instance=~\"$pod\"} |~ \"$search\"[$__interval]))",
+          "expr": "sum(count_over_time({job=\"$app\"} |= \"$search\" [$__interval]))",
+          "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Timeline",
       "type": "timeseries"
     },
     {
@@ -133,10 +157,10 @@
         "enableLogDetails": true,
         "prettifyLogMessage": false,
         "showCommonLabels": false,
-        "showLabels": true,
+        "showLabels": false,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "wrapLogMessage": false
       },
       "targets": [
         {
@@ -144,11 +168,13 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{namespace=\"$namespace\", app=\"$workload\", instance=~\"$pod\"} |~ \"$search\"",
+          "expr": "{job=\"$app\"} |= \"$search\" | logfmt",
+          "hide": false,
+          "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Logs",
+      "transparent": true,
       "type": "logs"
     }
   ],
@@ -158,76 +184,22 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "automation",
-          "value": "automation"
+          "selected": true,
+          "text": "automation/argocd-application-controller",
+          "value": "automation/argocd-application-controller"
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
         },
-        "definition": "label_values(kube_pod_info, namespace)",
+        "definition": "label_values(job)",
         "hide": 0,
         "includeAll": false,
+        "label": "App",
         "multi": false,
-        "name": "namespace",
+        "name": "app",
         "options": [],
-        "query": "label_values(kube_pod_info, namespace)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "isNone": true,
-          "selected": false,
-          "text": "None",
-          "value": ""
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(mixin_pod_workload{namespace=\"$namespace\"}, workload)",
-        "hide": 0,
-        "includeAll": false,
-        "multi": false,
-        "name": "workload",
-        "options": [],
-        "query": "label_values(mixin_pod_workload{namespace=\"$namespace\"}, workload)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 5,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(mixin_pod_workload{namespace=\"$namespace\", workload=\"$workload\"}, pod)",
-        "hide": 0,
-        "includeAll": true,
-        "multi": false,
-        "name": "pod",
-        "options": [],
-        "query": "label_values(mixin_pod_workload{namespace=\"$namespace\", workload=\"$workload\"}, pod)",
+        "query": "label_values(job)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -244,6 +216,7 @@
           "value": ""
         },
         "hide": 0,
+        "label": "String Match",
         "name": "search",
         "options": [
           {
@@ -263,6 +236,7 @@
     "to": "now"
   },
   "timepicker": {
+    "hidden": false,
     "refresh_intervals": [
       "10s",
       "30s",
