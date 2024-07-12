@@ -1545,8 +1545,8 @@
     ]
   },
   "time": {
-    "from": "2024-06-04T22:51:09.932Z",
-    "to": "2024-06-12T22:51:09.940Z"
+    "from": "now-6h",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [

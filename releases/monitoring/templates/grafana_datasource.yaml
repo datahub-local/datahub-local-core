@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,7 +12,7 @@ data:
     - name: Loki
       type: loki
       access: proxy
-      url: "http://datahub-local-core-loki.monitoring.svc.cluster.local:3100"
+      url: http://datahub-local-core-loki.monitoring.svc.cluster.local:3100
       version: 1
       isDefault: true
       jsonData:

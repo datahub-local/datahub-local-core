@@ -12,7 +12,7 @@ set_homepage() {
     exit 1
   fi
 
-  curl -X PATCH "${GRAFANA_URL}/api/org/preferences" \
+  curl -X PATCH -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" "${GRAFANA_URL}/api/org/preferences" \
        -H "Content-Type: application/json" \
        -d "{
              \"homeDashboardUid\": \"${HOMEPAGE_DASHBOARD_UID}\"

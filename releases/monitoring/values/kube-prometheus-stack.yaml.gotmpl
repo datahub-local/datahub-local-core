@@ -37,6 +37,11 @@ grafana:
       domain: "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
       root_url: "https://monitoring-grafana.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}"
       serve_from_sub_path: true
+    auth:
+      disable_login_form: true
+      disable_signout_menu: true
+    auth.basic:
+      enabled: true
     #{{- if .Values.security_enabled }}
     auth.github:
       enabled: true
@@ -48,15 +53,14 @@ grafana:
     users:
       auto_assign_org_role: Admin
     #{{- else }}
-    auth:
-      disable_login_form: true
-      disable_signout_menu: true
     auth.anonymous:
       enabled: true
       org_role: Admin
-    auth.basic:
-      enabled: false
-    #{{- end }}
+    #{{- end }}admin:
+  admin:
+    existingSecret: "grafana-admin-credentials"
+    userKey: user
+    passwordKey: password
   ingress:
     enabled: true
     ingressClassName: "traefik"

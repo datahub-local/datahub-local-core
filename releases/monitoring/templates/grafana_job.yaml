@@ -18,7 +18,17 @@ spec:
         - name: HOMEPAGE_DASHBOARD_UID
           value: "{{ (.Files.Get "files/dashboards/homepage.json" | fromJson).uid }}"
         - name: GRAFANA_URL
-          value: "{{ .Values.release_name }}-kube-prometheus-stack-grafana"
+          value: "http://{{ .Values.release_name }}-kube-prometheus-stack-grafana"
+        - name: "GRAFANA_ADMIN_USER"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-credentials
+              key: user
+        - name: "GRAFANA_ADMIN_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-credentials
+              key: password
         volumeMounts:
         - name: script-volume
           mountPath: /scripts
