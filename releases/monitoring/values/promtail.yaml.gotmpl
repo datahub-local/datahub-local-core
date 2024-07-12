@@ -1,0 +1,16 @@
+# Values for kube-prometheus-stack chart. See https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml
+
+config:
+  clients:
+    - url: http://loki-gateway/loki/api/v1/push
+
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule

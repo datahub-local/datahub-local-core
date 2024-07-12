@@ -12,3 +12,8 @@
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- printf "%s-%s" $name "grafana-dashboard" | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{- define "grafana.configMapDataSource" -}}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- printf "%s-%s" $name "grafana-datasource" | trunc 63 | trimSuffix "-" }}
+{{- end }}

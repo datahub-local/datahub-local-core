@@ -1,0 +1,144 @@
+# Values for kube-prometheus-stack chart. See https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml
+
+loki:
+  auth_enabled: false
+  server:
+    log_level: info
+    http_listen_port: 3100
+    grpc_listen_port: 9095
+  limits_config:
+    # Adjust the retention period of the logs to be stored.
+    retention_period: 3d
+    reject_old_samples: true
+    reject_old_samples_max_age: 72h
+    max_cache_freshness_per_query: 10m
+    split_queries_by_interval: 24h
+    max_query_parallelism: 100
+    ingestion_rate_mb: 50
+    ingestion_burst_size_mb: 1000
+    per_stream_rate_limit: 5MB
+    per_stream_rate_limit_burst: 20MB
+    shard_streams:
+      enabled: true
+  commonConfig:
+    path_prefix: /var/loki
+    replication_factor: 1
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+      admin_api_directory: /var/loki/admin
+  analytics:
+    reporting_enabled: false
+  schemaConfig:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  ingester:
+    chunk_encoding: snappy
+  tracing:
+    enabled: true
+  querier:
+    # Default is 4, if you have enough memory and CPU you can increase, reduce if OOMing
+    max_concurrent: 2
+
+# Monolithic deployment
+deploymentMode: SingleBinary
+singleBinary:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 3
+      memory: 4Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+  extraEnv:
+    # Keep a little bit lower than memory limits
+    - name: GOMEMLIMIT
+      value: 3750MiB
+  persistence:
+    enabled: true
+    # Since kubernetes 1.24 the Volume Expansion is Stable.
+    # https://kubernetes.io/blog/2022/05/05/volume-expansion-ga/
+    # Make sure the 'storageclass' has 'allowVolumeExpansion' to resize the volume from the initial size.
+    #   NAME                 PROVISIONER          RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+    #   longhorn (default)   driver.longhorn.io   Delete          Immediate           true                   39h
+    # Finally, since the chart does not create a PersistentVolumeClaim and uses volumeClaimTemplates within the statefulset to create it dynamically.
+    # it is necessary to execute following command (kustomize does not work since it does not initially create a PersistentVolumeClaim to be patched).
+    # > kubectl patch pvc storage-loki-0 -n observability -p '{"spec":{"resources":{"requests":{"storage":"2Gi"}}}}'
+    size: 2Gi
+
+chunksCache:
+  # -- Specifies whether memcached based chunks-cache should be enabled
+  enabled: false
+  # default is 500MB, with limited memory keep this smaller
+  writebackSizeLimit: 10MB
+
+resultsCache:
+  # -- Specifies whether memcached based results-cache should be enabled
+  enabled: false
+
+minio:
+  enabled: false
+
+# This category will be Deprecated
+monitoring:
+  dashboards:
+    enabled: false
+    annotations:
+      grafana_folder: Observability
+    labels:
+      grafana_dashboard: "true"
+  rules:
+    enabled: false
+    alerting: false
+  serviceMonitor:
+    enabled: false
+    labels:
+      release: prometheus-stack
+    interval: 15s
+    metricsInstance:
+      enabled: false
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+
+# Zero out replica counts of other deployment modes
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0
+
+lokiCanary:
+  enabled: false
+
+test:
+  enabled: false

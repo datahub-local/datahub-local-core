@@ -19,6 +19,20 @@ releases:
     values:
       - values/kube-prometheus-stack.yaml.gotmpl
     disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-loki"
+    namespace: monitoring
+    chart: "grafana/loki"
+    version: '{{ .StateValues.helm_chart_version | get "grafana/loki" }}'
+    values:
+      - values/loki.yaml.gotmpl
+    disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-promtail"
+    namespace: monitoring
+    chart: "grafana/promtail"
+    version: '{{ .StateValues.helm_chart_version | get "grafana/promtail" }}'
+    values:
+      - values/promtail.yaml.gotmpl
+    disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-monitoring"
     namespace: monitoring
     chart: "."

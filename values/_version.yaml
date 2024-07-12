@@ -2,6 +2,7 @@ helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
+  grafana: https://grafana.github.io/helm-charts
   jameswynn: https://jameswynn.github.io/helm-charts
   minio-oficial: https://charts.min.io/
   nessie: https://charts.projectnessie.org/
@@ -15,6 +16,8 @@ helm_chart_version:
   bitnami/valkey: 0.3.8
   bjw-s/app-template: 3.2.1
   dagster/dagster: 1.7.12
+  grafana/loki: 6.6.6
+  grafana/promtail: 6.16.3
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
   nessie/nessie: 0.91.3

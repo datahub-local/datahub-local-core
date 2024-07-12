@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+   grafana_datasource: "1"
+  name: "{{ template "grafana.configMapDataSource" $ }}-loki"
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: "http://loki.monitoring.svc.cluster.local:3100"
+      version: 1
+      isDefault: true
+      jsonData:
+        timeout: 500
