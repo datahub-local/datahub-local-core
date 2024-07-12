@@ -6,17 +6,35 @@ env:
   LOG_LEVEL: "info"
 
 config:
+  settings:
+    title: "DataHub.local"
+    base: "https://other-homepage.{{ .StateValues.ingress_hostname }}"
+    layout:
+      - System:
+          style: row
+          columns: 4
+      - Monitoring:
+          style: row
+          columns: 4
+      - Automation:
+          style: row
+          columns: 4
+      - Other:
+          style: row
+          columns: 4
+      - Data:
+          style: row
+          columns: 4
   bookmarks:
-    - Developer:
-        - Github:
+    - Bookmarks:
+        - github.com/datahub-local:
             - abbr: GH
               href: https://github.com/datahub-local/datahub-local
-    - Tools:
         - ChatGPT:
             - icon: chatgpt.svg
               abbr: CG
               href: https://chat.openai.com
-        - "Image Creator":
+        - "Bing Image Creator":
             - icon: bing.svg
               abbr: B
               href: https://www.bing.com/images/create
@@ -24,28 +42,6 @@ config:
             - icon: reddit.svg
               abbr: SH
               href: https://selfh.st/apps/
-  layout:
-    - System:
-        style: row
-        columns: 2
-    - Monitoring:
-        style: row
-        columns: 2
-    - Automation:
-        style: row
-        columns: 2
-    - Other:
-        style: row
-        columns: 2
-    - Data:
-        style: row
-        columns: 4
-    - Developer:
-        style: row
-        columns: 2
-    - Tools:
-        style: row
-        columns: 2
   services:
     - System:
     - Monitoring:
@@ -85,9 +81,6 @@ config:
         cache: 5
   kubernetes:
     mode: cluster
-  settings:
-    title: "DataHub.local"
-    base: "https://other-homepage.{{ .StateValues.ingress_hostname }}"
 
 # The service account is necessary to allow discovery of other services
 serviceAccount:
