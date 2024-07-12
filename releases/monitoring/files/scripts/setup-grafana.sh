@@ -2,7 +2,7 @@
 
 # Set the dashboard as the homepage
 set_homepage() {
-  if [ -z "${GRAFANA_URL}" ]; then
+  if [ -z "${REQ_URL}" ]; then
     echo "Failed to retrieve Grafana Url"
     exit 1
   fi
@@ -12,7 +12,7 @@ set_homepage() {
     exit 1
   fi
 
-  curl -X PATCH -u "${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}" "${GRAFANA_URL}/api/org/preferences" \
+  curl -Ss -X PATCH -u "${REQ_USERNAME}:${REQ_PASSWORD}" "${REQ_URL}/api/org/preferences" \
        -H "Content-Type: application/json" \
        -d "{
              \"homeDashboardUid\": \"${HOMEPAGE_DASHBOARD_UID}\"

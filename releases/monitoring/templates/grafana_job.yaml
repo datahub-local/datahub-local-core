@@ -17,14 +17,14 @@ spec:
         env:
         - name: HOMEPAGE_DASHBOARD_UID
           value: "{{ (.Files.Get "files/dashboards/homepage.json" | fromJson).uid }}"
-        - name: GRAFANA_URL
+        - name: REQ_URL
           value: "http://{{ .Values.release_name }}-kube-prometheus-stack-grafana"
-        - name: "GRAFANA_ADMIN_USER"
+        - name: "REQ_USERNAME"
           valueFrom:
             secretKeyRef:
               name: grafana-admin-credentials
               key: user
-        - name: "GRAFANA_ADMIN_PASSWORD"
+        - name: "REQ_PASSWORD"
           valueFrom:
             secretKeyRef:
               name: grafana-admin-credentials
