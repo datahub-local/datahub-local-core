@@ -21,7 +21,15 @@ ingress:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "open-webui"
 
-extraEnvVars:
+extraEnvVars:  
+  - name: ENABLE_SIGNUP
+    value: "False" 
+  - name: ENABLE_OAUTH_SIGNUP
+    value: "True"
+  - name: OAUTH_MERGE_ACCOUNTS_BY_EMAIL
+    value: "True"
+  - name: DEFAULT_USER_ROLE
+    value: "admin"
   - name: OAUTH_CLIENT_ID
     value: "openwebui"
   - name: "OAUTH_CLIENT_SECRET"
