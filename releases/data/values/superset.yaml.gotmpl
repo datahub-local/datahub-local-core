@@ -10,27 +10,36 @@ supersetNode:
 
 configOverrides:
   auth: |
-    from flask_appbuilder.security.manager import AUTH_REMOTE_USER
+    from flask_appbuilder.security.manager import AUTH_OAUTH
 
-    class FixedRemoteUserMiddleware(object):
-      def __init__(self, app):
-        self.app = app
-      def __call__(self, environ, start_response):
-        environ['REMOTE_USER'] = "{{ .StateValues.superset_user }}"
-        return self.app(environ, start_response)
-
-    AUTH_TYPE = AUTH_REMOTE_USER
+    AUTH_TYPE = AUTH_OAUTH
+    OAUTH_PROVIDERS = [
+        {
+            "name": "superset",
+            "whitelist": [ os.getenv("OAUTH_WHITELIST_REGEX", "") ],
+            "icon": "fa-address-card",
+            "token_key": "access_token",
+            "remote_app": {
+                "client_id": os.environ.get("OAUTH_CLIENT_ID"),
+                "client_secret": os.environ.get("OAUTH_CLIENT_SECRET"),
+                "server_metadata_url": "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration",
+                "api_base_url": "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/",
+                "client_kwargs": {"scope": "openid profile email groups"},
+            }
+        }
+    ]
+    AUTH_ROLE_ADMIN = "Admin"
+    AUTH_ROLE_PUBLIC = "Public"
     AUTH_USER_REGISTRATION = True
-    AUTH_USER_REGISTRATION_ROLE = 'Admin'
-    ADDITIONAL_MIDDLEWARE = [FixedRemoteUserMiddleware, ]
+    AUTH_USER_REGISTRATION_ROLE = "Admin"
   database: |
     import os
 
     def lookup_password(url):
-      if 'postgresql' in url:
-        return os.environ['DB_PASS']
-      if 'redis' in url:
-        return os.environ['REDIS_PASSWORD']
+      if "postgresql" in url:
+        return os.environ["DB_PASS"]
+      if "redis" in url:
+        return os.environ["REDIS_PASSWORD"]
 
       return None
 
@@ -50,6 +59,9 @@ extraSecretEnv:
   DB_PORT: "5432"
   DB_USER: "{{ .StateValues.postgress_user }}"
   DB_NAME: "{{ .StateValues.postgress_extra_databases.superset }}"
+
+  OAUTH_CLIENT_ID: "superset"
+  OAUTH_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
 
 extraEnvRaw:
   - name: DB_PASS
