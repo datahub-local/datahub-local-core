@@ -13,7 +13,6 @@ ingress:
   host: "data-openwebui.{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Open WebUI"
@@ -23,8 +22,16 @@ ingress:
     gethomepage.dev/icon: "open-webui"
 
 extraEnvVars:
-  - name: WEBUI_AUTH
-    value: "False"
+  - name: OAUTH_CLIENT_ID
+    value: "openwebui"
+  - name: "OAUTH_CLIENT_SECRET"
+    value: "{{ .StateValues.security_github_client_secret }}"
+  - name: OPENID_PROVIDER_URL
+    value: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
+  - name: OAUTH_PROVIDER_NAME
+    value: "Github"
+  - name: OAUTH_SCOPES
+    value: "openid email profile"
   - name: "DATABASE_URL"
     valueFrom:
       secretKeyRef:
