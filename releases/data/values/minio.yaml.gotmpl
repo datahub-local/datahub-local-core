@@ -48,7 +48,7 @@ oidc:
   configUrl: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
   clientId: "minio"
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
-  claimName: "policy"
+  claimName: "name"
   scopes: "openid,profile,email"
   redirectUri: "https://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
   displayName: "Github"

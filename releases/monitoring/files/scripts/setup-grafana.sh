@@ -16,7 +16,8 @@ set_homepage() {
        -H "Content-Type: application/json" \
        -d "{
              \"homeDashboardUid\": \"${HOMEPAGE_DASHBOARD_UID}\"
-           }"
+           }" \
+    || { echo 'curl command failed' ; exit 1; }
 }
 
 # Main function
