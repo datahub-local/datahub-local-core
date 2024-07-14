@@ -50,7 +50,7 @@ grafana:
 
       client_id: "grafana"
       client_secret: "{{ .StateValues.security_github_client_secret }}"
-      scope: "openid email profile groups offline_access"
+      scopes: "openid,email,profile,groups,offline_access"
       auth_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/auth"
       token_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/token"
       api_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/userinfo"

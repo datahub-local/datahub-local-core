@@ -29,7 +29,6 @@ consoleIngress:
     - "data-minio.{{ .StateValues.ingress_hostname }}"
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
@@ -51,7 +50,7 @@ oidc:
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
   claimName: "policy"
   scopes: "openid,profile,email"
-  redirectUri: "ttps://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
+  redirectUri: "https://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
   displayName: "Github"
 #{{- end }}
 
