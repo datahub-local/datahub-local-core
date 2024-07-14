@@ -41,6 +41,7 @@ consoleIngress:
 environment:
   MINIO_BROWSER_REDIRECT_URL: "https://data-minio.{{ .StateValues.ingress_hostname }}/"
   MINIO_PROMETHEUS_URL: "http://datahub-local-core-kube-pr-prometheus.monitoring.svc.cluster.local:9090"
+  MINIO_IDENTITY_OPENID_ROLE_POLICY: consoleAdmin
 
 #{{- if .Values.security_enabled }}
 oidc:
@@ -48,7 +49,6 @@ oidc:
   configUrl: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
   clientId: "minio"
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
-  claimName: "name"
   scopes: "openid,profile,email"
   redirectUri: "https://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
   displayName: "Github"
