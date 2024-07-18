@@ -1,3 +1,8 @@
+container_image_version:
+  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.7.9
+  trinodb/trino: 449
+  ghcr.io/gethomepage/homepage: v0.9.3
+  ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
