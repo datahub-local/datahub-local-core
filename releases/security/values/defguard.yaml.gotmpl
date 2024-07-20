@@ -15,20 +15,33 @@ postgresql:
 proxyUrl: "https://security-defguard-proxy.{{ .StateValues.ingress_hostname }}"
 publicUrl: "https://security-defguard.{{ .StateValues.ingress_hostname }}"
 
+defguard-proxy:
+  enabled: true
+  publicUrl: "https://security-defguard-proxy.{{ .StateValues.ingress_hostname }}"
+
+  ingress:
+    enabled: true
+
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "DefGuard"
+      gethomepage.dev/description: "The only open-source solution with real WireGuard MFA/2FA & integrated OpenID Connect SSO."
+      gethomepage.dev/group: "Security"
+      gethomepage.dev/icon: "https://raw.githubusercontent.com/DefGuard/defguard/main/web/src/shared/images/svg/defguard-nav-logo-collapsed.svg"
+
+    className: "traefik"
+
+    hosts:
+      grpc: security-defguard-proxy-grpc.{{ .StateValues.ingress_hostname }}
+      web: security-defguard-proxy.{{ .StateValues.ingress_hostname }}
+
 existingJwtSecret: defguard-jwt-secrets
 existingOpenIdSecret: defguard-openid-key
 
 ingress:
   enabled: true
-
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "DefGuard"
-    gethomepage.dev/description: "The only open-source solution with real WireGuard MFA/2FA & integrated OpenID Connect SSO."
-    gethomepage.dev/group: "Security"
-    gethomepage.dev/icon: "https://raw.githubusercontent.com/DefGuard/defguard/main/web/src/shared/images/svg/defguard-nav-logo-collapsed.svg"
 
   className: "traefik"
 
