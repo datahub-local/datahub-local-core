@@ -1,0 +1,35 @@
+# {{- $serviceAccountName := "tailscale" -}}
+# {{- $secretName := "tailscale-auth-current" -}}
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: {{ $serviceAccountName }}
+  annotations:
+    kubernetes.io/service-account.name: {{ $serviceAccountName }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $serviceAccountName }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resourceNames: ["{{ $secretName }}"]
+    resources: ["secrets"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $serviceAccountName }}
+subjects:
+  - kind: ServiceAccount
+    name: "{{ $serviceAccountName }}"
+roleRef:
+  kind: Role
+  name: {{ $serviceAccountName }}
+  apiGroup: rbac.authorization.k8s.io

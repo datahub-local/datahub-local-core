@@ -22,7 +22,7 @@ controllers:
             cpu: 300m
         env:
           - name: TS_KUBE_SECRET
-            value: tailscale-auth
+            value: tailscale-auth-current
           - name: TS_AUTHKEY
             valueFrom:
               secretKeyRef:
@@ -39,3 +39,7 @@ controllers:
           # Run as a non-root user to mitigate privilege escalation attack attempts
           runAsUser: 1000
           runAsGroup: 1000
+
+serviceAccount:
+  create: true
+  name: "tailscale"

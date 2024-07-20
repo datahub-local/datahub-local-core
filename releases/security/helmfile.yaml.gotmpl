@@ -12,6 +12,12 @@ commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
 releases:
+  - name: "{{ .Values.release_name }}-security"
+    namespace: default
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
   - name: "{{ .Values.release_name }}-tailscale"
     namespace: security
     chart: "bjw-s/app-template"
