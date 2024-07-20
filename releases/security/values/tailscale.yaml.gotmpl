@@ -27,7 +27,7 @@ controllers:
             valueFrom:
               secretKeyRef:
                 name: tailscale-auth
-                key: TS_AUTHKEY
+                key: auth-key
           - name: TS_ROUTES
             # <POD_IP_RANGE>,<SERVICE_IP_RANGE>
             # POD_IP_RANGE: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' # -> get subnet that match all subnets

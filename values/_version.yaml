@@ -8,7 +8,6 @@ helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
-  defguard: https://defguard.net/deployment/
   grafana: https://grafana.github.io/helm-charts
   jameswynn: https://jameswynn.github.io/helm-charts
   minio-oficial: https://charts.min.io/
@@ -23,7 +22,6 @@ helm_chart_version:
   bitnami/valkey: 0.3.10
   bjw-s/app-template: 3.2.1
   dagster/dagster: 1.7.14
-  defguard/defguard: 0.7.0
   grafana/loki: 6.7.1
   grafana/promtail: 6.16.4
   jameswynn/homepage: 1.2.3
