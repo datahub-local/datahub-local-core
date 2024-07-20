@@ -181,8 +181,8 @@ For debugging purposes, you can deploy the repository against a local cluster. F
     # Process each key-value pair in the YAML file and add it to the array
     while IFS='=' read -r key value; do
       # Add the --from-literal argument to the array
-      literals+=(--from-literal="${key}=${value}")
-    done < <(echo "$SECRET_VALUE" | yq -r '. | to_entries | .[] | "\(.key)=\(.value|tostring)"')
+      literals+=(--from-literal="${key}=$(echo $value | base64 -d)")
+    done < <(echo "$SECRET_VALUE" | yq -r '. | to_entries | .[] | "\(.key)=\(.value|tostring|@base64)"')
 
     kubectl create secret generic $SECRET_NAME -n $SECRET_NAMESPACE --dry-run=client \
           "${literals[@]}" -o YAML \
