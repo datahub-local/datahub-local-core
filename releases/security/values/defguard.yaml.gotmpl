@@ -1,5 +1,7 @@
 # Values for kube-prometheus-stack chart. See https://github.com/DefGuard/deployment/blob/main/charts/defguard/values.yaml
 
+fullnameOverride: "datahub-local-core-security-defguard"
+
 postgresql:
   enabled: false
   host: "datahub-local-core-data-postgresql-hl.data.svc.cluster.local"
@@ -9,6 +11,12 @@ postgresql:
     existingSecret: postgresql-admin-credentials
     existingSecretPasswordKey: password
     database: defguard
+
+proxyUrl: "https://security-defguard-proxy.{{ .StateValues.ingress_hostname }}"
+publicUrl: "https://security-defguard.{{ .StateValues.ingress_hostname }}"
+
+existingJwtSecret: defguard-jwt-secrets
+existingOpenIdSecret: defguard-openid-key
 
 ingress:
   enabled: true
