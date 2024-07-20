@@ -29,10 +29,10 @@ controllers:
                 name: tailscale-auth
                 key: auth-key
           - name: TS_ROUTES
-            # <POD_IP_RANGE>,<SERVICE_IP_RANGE>
-            # POD_IP_RANGE: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' # -> get subnet that match all subnets
-            # SERVICE_IP_RANGE: kubectl create service clusterip testcidr --tcp='8080:8080' --clusterip='1.0.0.0' 2>&1 | sed 's/.*valid IPs is //'
-            value: "10.42.0.0/16,10.43.0.0/16"
+            # <POD_IP_RANGE>,<SERVICE_IP_RANGE>,<LOCAL_NETWORK>
+            # <POD_IP_RANGE>: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' # -> get subnet that match all subnets
+            # <SERVICE_IP_RANGE>: kubectl create service clusterip testcidr --tcp='8080:8080' --clusterip='1.0.0.0' 2>&1 | sed 's/.*valid IPs is //'
+            value: "10.42.0.0/16,10.43.0.0/16,10.42.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
         securityContext:
