@@ -1,0 +1,29 @@
+# Values for kube-prometheus-stack chart. See https://github.com/DefGuard/deployment/blob/main/charts/defguard/values.yaml
+
+postgresql:
+  enabled: false
+  host: "datahub-local-core-data-postgresql-hl.data.svc.cluster.local"
+  port: 5432
+  auth:
+    username: "{{ $.StateValues.postgress_user}}"
+    existingSecret: postgresql-admin-credentials
+    existingSecretPasswordKey: password
+    database: defguard
+
+ingress:
+  enabled: true
+
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "DefGuard"
+    gethomepage.dev/description: "The only open-source solution with real WireGuard MFA/2FA & integrated OpenID Connect SSO."
+    gethomepage.dev/group: "Security"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/DefGuard/defguard/main/web/src/shared/images/svg/defguard-nav-logo-collapsed.svg"
+
+  className: "traefik"
+
+  hosts:
+    grpc: security-defguard-grpc.{{ .StateValues.ingress_hostname }}
+    web: security-defguard.{{ .StateValues.ingress_hostname }}
