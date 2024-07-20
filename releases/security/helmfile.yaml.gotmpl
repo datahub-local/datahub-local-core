@@ -12,9 +12,9 @@ commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
 releases:
-  - name: "{{ .Values.release_name }}-defguard"
+  - name: "{{ .Values.release_name }}-tailscale"
     namespace: security
-    chart: "defguard/defguard"
-    version: '{{ .StateValues.helm_chart_version | get "defguard/defguard" }}'
+    chart: "bjw-s/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
     values:
-      - values/defguard.yaml.gotmpl
+      - values/tailscale.yaml.gotmpl

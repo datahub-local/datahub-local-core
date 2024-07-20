@@ -13,7 +13,7 @@ controllers:
       main:
         image:
           repository: ghcr.io/corentinth/it-tools
-          tag: 2024.5.13-a0bc346
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/corentinth/it-tools") }}{{ $value }}{{ end }}{{ end }}'
         resources:
           requests:
             memory: 100Mi

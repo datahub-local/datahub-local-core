@@ -11,7 +11,7 @@ dagsterWebserver:
 
   image:
     repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
-    tag: 1.7.9
+    tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/dagster-celery-k8s-oci") }}{{ $value }}{{ end }}{{ end }}'
 
   env:
     - name: "TRINO_HOST"
@@ -33,7 +33,7 @@ dagsterWebserver:
 dagsterDaemon:
   image:
     repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
-    tag: 1.7.9
+    tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/dagster-celery-k8s-oci") }}{{ $value }}{{ end }}{{ end }}'
 
   env:
     - name: "TRINO_HOST"
@@ -89,7 +89,7 @@ runLauncher:
     celeryK8sRunLauncher:
       image:
         repository: "ghcr.io/datahub-local/dagster-celery-k8s-oci"
-        tag: 1.7.9
+        tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/dagster-celery-k8s-oci") }}{{ $value }}{{ end }}{{ end }}'
 
 postgresql:
   enabled: false

@@ -1,0 +1,41 @@
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# See also https://tailscale.com/learn/managing-access-to-kubernetes-with-tailscale#subnet-router-deployments
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    strategy: RollingUpdate
+    containers:
+      main:
+        image:
+          repository: ghcr.io/tailscale/tailscale
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/tailscale/tailscale") }}{{ $value }}{{ end }}{{ end }}'
+        resources:
+          requests:
+            memory: 300Mi
+            cpu: 300m
+        env:
+          - name: TS_KUBE_SECRET
+            value: tailscale-auth
+          - name: TS_AUTHKEY
+            valueFrom:
+              secretKeyRef:
+                name: tailscale-auth
+                key: TS_AUTHKEY
+          - name: TS_ROUTES
+            # <POD_IP_RANGE>,<SERVICE_IP_RANGE>
+            # POD_IP_RANGE: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' # -> get subnet that match all subnets
+            # SERVICE_IP_RANGE: kubectl create service clusterip testcidr --tcp='8080:8080' --clusterip='1.0.0.0' 2>&1 | sed 's/.*valid IPs is //'
+            value: "10.42.0.0/16,10.43.0.0/16"
+          - name: TS_USERSPACE
+            value: "true"
+        securityContext:
+          # Run as a non-root user to mitigate privilege escalation attack attempts
+          runAsUser: 1000
+          runAsGroup: 1000
