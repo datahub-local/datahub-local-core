@@ -26,9 +26,9 @@ helm_chart_version:
   grafana/promtail: 6.16.4
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
-  nessie/nessie: 0.92.1
-  ollama/ollama: 0.44.0
-  open-webui/open-webui: 3.0.9
+  nessie/nessie: 0.93.1
+  ollama/ollama: 0.45.0
+  open-webui/open-webui: 3.0.10
   prometheus-community/kube-prometheus-stack: 61.3.2
   superset/superset: 0.12.11
   trino/trino: 0.25.0
