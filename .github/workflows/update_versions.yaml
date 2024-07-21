@@ -32,7 +32,7 @@ jobs:
         with:
           versions-file: values/_version.yaml
           version-type: minor
-          
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:

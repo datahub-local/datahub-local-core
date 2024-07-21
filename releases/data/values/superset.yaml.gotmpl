@@ -23,7 +23,7 @@ configOverrides:
                 user_info = response['userinfo']
 
                 return { 'name' : user_info['name'], 'email' : user_info['email'], 'id' : user_info['preferred_username'], 'username' : user_info['preferred_username'], 'first_name':'', 'last_name':''}
-    
+
     CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
 
     AUTH_TYPE = AUTH_OAUTH

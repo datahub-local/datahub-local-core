@@ -1,3 +1,5 @@
+#{{ $default_model := index (readFile "./ollama.yaml.gotmpl" | fromYaml).ollama.models 0 }}
+
 ollama:
   enabled: false
 
@@ -21,15 +23,17 @@ ingress:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "open-webui"
 
-extraEnvVars:  
+extraEnvVars:
   - name: ENABLE_SIGNUP
-    value: "False" 
+    value: "False"
   - name: ENABLE_OAUTH_SIGNUP
     value: "True"
   - name: OAUTH_MERGE_ACCOUNTS_BY_EMAIL
     value: "True"
   - name: DEFAULT_USER_ROLE
     value: "admin"
+  - name: DEFAULT_MODELS
+    value: "{{ $default_model }}"
   - name: OAUTH_CLIENT_ID
     value: "openwebui"
   - name: "OAUTH_CLIENT_SECRET"
