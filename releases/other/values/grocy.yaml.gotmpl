@@ -10,6 +10,8 @@ defaultPodOptions:
       hostnames:
         - "backend"
         - "frontend"
+  securityContext:
+    fsGroup: 82
 
 controllers:
   main:
@@ -60,7 +62,7 @@ controllers:
           [
             "sh",
             "-c",
-            "false | cp -irp /www/data/* /www/data_target/ 2>/dev/null",
+            "echo 'Copying /var/www/data' && cp -Rf /var/www/data/* /var/www/data_target/",
           ]
 configMaps:
   config:
@@ -70,7 +72,8 @@ configMaps:
       GROCY_DEFAULT_LOCALE: "es"
       GROCY_CURRENCY: "EUR"
       GROCY_AUTH_CLASS: 'Grocy\Middleware\ReverseProxyAuthMiddleware'
-      GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Forwarded-User"
+      GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Auth-Request-Preferred-Username"
+      GROCY_BASE_URL: "https://other-grocy.{{ .StateValues.ingress_hostname }}/"
 
       MAX_UPLOAD: "50M"
       PHP_MAX_FILE_UPLOAD: "200"
@@ -89,7 +92,7 @@ persistence:
           - path: /var/www/data
             readOnly: false
         backend-init:
-          - path: /www/data_target
+          - path: /var/www/data_target
             readOnly: false
 
 service:
