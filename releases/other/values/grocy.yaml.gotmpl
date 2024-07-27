@@ -26,6 +26,16 @@ controllers:
           requests:
             memory: 100Mi
             cpu: 100m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
       backend:
         image:
           repository: grocy/backend
@@ -37,6 +47,21 @@ controllers:
         envFrom:
           - configMapRef:
               identifier: config
+    initContainers:
+      backend-init:
+        image:
+          repository: grocy/backend
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "grocy/backend") }}{{ $value }}{{ end }}{{ end }}'
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+        command:
+          [
+            "sh",
+            "-c",
+            "false | cp -irp /www/data/* /www/data_target/ 2>/dev/null",
+          ]
 configMaps:
   config:
     enabled: true
@@ -62,6 +87,9 @@ persistence:
       main:
         backend:
           - path: /var/www/data
+            readOnly: false
+        backend-init:
+          - path: /www/data_target
             readOnly: false
 
 service:

@@ -18,6 +18,16 @@ controllers:
           requests:
             memory: 100Mi
             cpu: 100m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
 service:
   main:
     controller: main
