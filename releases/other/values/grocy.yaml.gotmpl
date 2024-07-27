@@ -4,6 +4,13 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
 
+defaultPodOptions:
+  hostAliases:
+    - ip: "127.0.0.1"
+      hostnames:
+        - "backend"
+        - "frontend"
+
 controllers:
   main:
     annotations:
@@ -30,7 +37,6 @@ controllers:
         envFrom:
           - configMapRef:
               identifier: config
-
 configMaps:
   config:
     enabled: true
