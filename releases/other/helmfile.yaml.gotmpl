@@ -24,3 +24,9 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
     values:
       - values/it_tools.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-grocy"
+    namespace: other
+    chart: "bjw-s/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    values:
+      - values/grocy.yaml.gotmpl

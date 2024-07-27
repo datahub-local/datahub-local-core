@@ -1,0 +1,91 @@
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    type: statefulset
+    strategy: RollingUpdate
+    containers:
+      frontend:
+        image:
+          repository: grocy/frontend
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "grocy/frontend") }}{{ $value }}{{ end }}{{ end }}'
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+      backend:
+        image:
+          repository: grocy/backend
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "grocy/backend") }}{{ $value }}{{ end }}{{ end }}'
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+        envFrom:
+          - configMapRef:
+              identifier: config
+
+configMaps:
+  config:
+    enabled: true
+    data:
+      GROCY_MODE: "production"
+      GROCY_DEFAULT_LOCALE: "es"
+      GROCY_CURRENCY: "EUR"
+      GROCY_AUTH_CLASS: 'Grocy\Middleware\ReverseProxyAuthMiddleware'
+      GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Forwarded-User"
+
+      MAX_UPLOAD: "50M"
+      PHP_MAX_FILE_UPLOAD: "200"
+      PHP_MAX_POST: "100M"
+      PHP_MEMORY_LIMIT: "512M"
+
+persistence:
+  persistence:
+    enabled: true
+
+    accessMode: ReadWriteOnce
+    size: 2Gi
+    advancedMounts:
+      main:
+        backend:
+          - path: /var/www/data
+            readOnly: false
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+ingress:
+  main:
+    enabled: true
+
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Grocy"
+      gethomepage.dev/description: "ERP beyond your fridge."
+      gethomepage.dev/group: "Other"
+      gethomepage.dev/icon: "grocy.svg"
+
+    className: "traefik"
+
+    hosts:
+      - host: "other-grocy.{{ .StateValues.ingress_hostname }}"
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: "{{ .Values.release_name }}-grocy"
+              port: 8080
