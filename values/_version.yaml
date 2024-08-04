@@ -21,16 +21,16 @@ helm_chart_repository:
   trino: https://trinodb.github.io/charts
 helm_chart_version:
   bitnami/postgresql: 15.5.20
-  bitnami/valkey: 0.3.12
-  bjw-s/app-template: 3.2.1
-  dagster/dagster: 1.7.15
+  bitnami/valkey: 0.3.13
+  bjw-s/app-template: 3.3.2
+  dagster/dagster: 1.7.16
   grafana/loki: 6.7.3
   grafana/promtail: 6.16.4
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
-  nessie/nessie: 0.94.2
-  ollama/ollama: 0.47.0
-  open-webui/open-webui: 3.1.0
-  prometheus-community/kube-prometheus-stack: 61.4.0
+  nessie/nessie: 0.94.4
+  ollama/ollama: 0.50.0
+  open-webui/open-webui: 3.1.1
+  prometheus-community/kube-prometheus-stack: 61.7.0
   superset/superset: 0.12.11
   trino/trino: 0.25.0
