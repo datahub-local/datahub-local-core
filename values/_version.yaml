@@ -2,9 +2,9 @@ container_image_version:
   ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.7.13
   ghcr.io/gethomepage/homepage: v0.9.5
-  ghcr.io/tailscale/tailscale: v1.68.1
-  grocy/backend: v4.2.0
-  grocy/frontend: v4.2.0
+  ghcr.io/tailscale/tailscale: v1.70.0
+  grocy/backend: v4.2.0-1
+  grocy/frontend: v4.2.0-1
   trinodb/trino: 449
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -20,17 +20,17 @@ helm_chart_repository:
   superset: http://apache.github.io/superset/
   trino: https://trinodb.github.io/charts
 helm_chart_version:
-  bitnami/postgresql: 15.5.17
-  bitnami/valkey: 0.3.10
-  bjw-s/app-template: 3.2.1
-  dagster/dagster: 1.7.14
-  grafana/loki: 6.7.1
+  bitnami/postgresql: 15.5.20
+  bitnami/valkey: 0.3.13
+  bjw-s/app-template: 3.3.2
+  dagster/dagster: 1.7.16
+  grafana/loki: 6.7.3
   grafana/promtail: 6.16.4
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
-  nessie/nessie: 0.93.1
-  ollama/ollama: 0.45.0
-  open-webui/open-webui: 3.0.10
-  prometheus-community/kube-prometheus-stack: 61.3.2
+  nessie/nessie: 0.94.4
+  ollama/ollama: 0.50.0
+  open-webui/open-webui: 3.1.1
+  prometheus-community/kube-prometheus-stack: 61.7.0
   superset/superset: 0.12.11
   trino/trino: 0.25.0
