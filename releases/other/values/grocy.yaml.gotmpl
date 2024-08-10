@@ -72,7 +72,7 @@ configMaps:
       GROCY_DEFAULT_LOCALE: "es"
       GROCY_CURRENCY: "EUR"
       GROCY_AUTH_CLASS: 'Grocy\Middleware\ReverseProxyAuthMiddleware'
-      GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Auth-Request-Preferred-Username"
+      GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Auth-Request-User"
       GROCY_BASE_URL: "https://other-grocy.{{ .StateValues.ingress_hostname }}/"
 
       MAX_UPLOAD: "50M"
