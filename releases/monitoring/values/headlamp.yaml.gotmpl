@@ -1,11 +1,11 @@
 # Values for kube-prometheus-stack chart. See https://github.com/headlamp-k8s/headlamp/blob/main/charts/headlamp/values.yaml
 
-config:  
+config:
   oidc:
     secret:
       create: true
       name: "{{ .Values.release_name }}-headlamp-oidc"
-    
+
     clientID: "headlamp"
     clientSecret: "{{ .StateValues.security_github_client_secret }}"
     issuerURL: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex"
@@ -19,7 +19,7 @@ ingress:
     - host: "monitoring-headlamp.{{ .StateValues.ingress_hostname }}"
       paths:
         - path: /
-          pathType: Prefix
+          type: Prefix
 
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
