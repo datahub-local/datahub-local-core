@@ -10,6 +10,7 @@ helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
+  headlamp: https://headlamp-k8s.github.io/headlamp/
   grafana: https://grafana.github.io/helm-charts
   jameswynn: https://jameswynn.github.io/helm-charts
   minio-oficial: https://charts.min.io/
@@ -26,6 +27,7 @@ helm_chart_version:
   dagster/dagster: 1.8.0
   grafana/loki: 6.10.0
   grafana/promtail: 6.16.4
+  headlamp/headlamp: 0.24.0
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
   nessie/nessie: 0.95.0
