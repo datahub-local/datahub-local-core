@@ -6,7 +6,7 @@ container_image_version:
   ghcr.io/tailscale/tailscale: v1.70.0
   grocy/backend: v4.2.0-1
   grocy/frontend: v4.2.0-1
-  trinodb/trino: 449
+  trinodb/trino: '453'
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
