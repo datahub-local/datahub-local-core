@@ -2,6 +2,7 @@ container_image_version:
   ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.7.13
   ghcr.io/gethomepage/homepage: v0.9.5
+  ghcr.io/headlamp-k8s/headlamp: v0.25.0
   ghcr.io/tailscale/tailscale: v1.70.0
   grocy/backend: v4.2.0-1
   grocy/frontend: v4.2.0-1

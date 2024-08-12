@@ -1,15 +1,40 @@
 # Values for kube-prometheus-stack chart. See https://github.com/headlamp-k8s/headlamp/blob/main/charts/headlamp/values.yaml
 
-config:
-  oidc:
-    secret:
-      create: true
-      name: "{{ .Values.release_name }}-headlamp-oidc"
+image:
+  tag: "{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}"
 
-    clientID: "headlamp"
-    clientSecret: "{{ .StateValues.security_github_client_secret }}"
-    issuerURL: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex"
-    scopes: "openid email profile groups offline_access"
+config:
+  extraArgs:
+    - -kubeconfig
+    - -kubeconfig
+
+
+volumeMounts:
+  - name: script-volume
+    mountPath: /scripts
+  - name: kubeconfig-volume
+    mountPath: /home/headlamp/.kube
+    
+volumes:
+  - name: script-volume
+    configMap:
+      name: "{{ $.Values.release_name }}-common-kubeconfig-creator"
+  - name: kubeconfig-volume
+    emptyDir: {}
+
+initContainers:
+  - command:
+      - /bin/sh
+      - -c
+      - /scripts/create-kubeconfig.sh
+    image: 'ghcr.io/headlamp-k8s/headlamp:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}'
+    imagePullPolicy: IfNotPresent
+    name: headlamp-init
+    volumeMounts:
+    - name: script-volume
+      mountPath: /scripts
+    - name: kubeconfig-volume
+      mountPath: /home/headlamp/.kube
 
 ingress:
   enabled: true
@@ -27,6 +52,7 @@ ingress:
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Headlamp "
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=headlamp"
     gethomepage.dev/description: "A Kubernetes web UI that is fully-featured, user-friendly and extensible."
     gethomepage.dev/group: "Monitoring"
     gethomepage.dev/icon: "https://raw.githubusercontent.com/headlamp-k8s/headlamp/main/frontend/public/favicon.ico"
