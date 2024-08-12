@@ -1,7 +1,3 @@
-image:
-  repository: trinodb/trino
-  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "trinodb/trino") }}{{ $value }}{{ end }}{{ end }}'
-
 server:
   workers: 1
 
