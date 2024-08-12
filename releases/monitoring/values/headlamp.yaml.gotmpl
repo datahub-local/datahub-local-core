@@ -5,8 +5,7 @@ image:
 
 config:
   extraArgs:
-    - -kubeconfig
-    - -kubeconfig
+    - -kubeconfig=/home/headlamp/.kube/config
 
 
 volumeMounts:
@@ -25,7 +24,6 @@ volumes:
 initContainers:
   - command:
       - /bin/sh
-      - -c
       - /scripts/create-kubeconfig.sh
     image: 'ghcr.io/headlamp-k8s/headlamp:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}'
     imagePullPolicy: IfNotPresent
