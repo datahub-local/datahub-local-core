@@ -40,9 +40,9 @@ releases:
     values:
       - values/headlamp.yaml.gotmpl
     disableValidationOnInstall: true
-  # - name: "{{ .Values.release_name }}-monitoring"
-  #   namespace: monitoring
-  #   chart: "."
-  #   values:
-  #     - ../../values/global.yaml
-  #     - values/default.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-monitoring"
+    namespace: monitoring
+    chart: "."
+    values:
+      - ../../values/global.yaml
+      - values/default.yaml.gotmpl
