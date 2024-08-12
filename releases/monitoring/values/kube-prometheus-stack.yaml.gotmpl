@@ -8,6 +8,9 @@ prometheusOperator:
     enabled: false
 
 alertmanager:
+  alertmanagerSpec:
+    replicas: 2
+
   ingress:
     enabled: true
     ingressClassName: "traefik"
