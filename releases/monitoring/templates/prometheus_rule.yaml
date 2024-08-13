@@ -1,0 +1,12 @@
+#{{- $dot := . }}
+#{{- range $ruleName, $value := .Values.prometheus_rules }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: '{{ include "prometheus.ruleName" (list $dot $ruleName) }}'
+spec:
+  groups:
+{{ $value | toYaml | indent 4 }}
+
+#{{- end }}

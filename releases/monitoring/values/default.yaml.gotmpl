@@ -1,1 +1,14 @@
 #{{ $security_admin_user := (readFile "../../../values/global.yaml" | fromYaml).security_admin_user }}
+
+prometheus_rules:
+  datahub.local.rules:
+    - name: datahub.local.rules
+      rules:
+        - alert: HighCPUTemperature
+          annotations:
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server.'
+            summary: One or more nodes have a high CPU temperature.'
+          expr: avg(node_hwmon_temp_celsius) by (instance) > 55
+          for: 5m
+          labels:
+            severity: critical

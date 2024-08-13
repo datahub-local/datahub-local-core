@@ -116,3 +116,11 @@ prometheus:
 
     replicas: 1
     retention: 5d
+
+additionalPrometheusRulesMap:
+  datahub.local:
+    groups:
+      - name: datahub.local.general
+        rules:
+          - record: CPUTemperatureHigh
+            expr: avg(node_hwmon_temp_celsius) by (instance) > 50

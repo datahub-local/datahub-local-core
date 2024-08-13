@@ -17,3 +17,11 @@
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- printf "%s-%s" $name "grafana-datasource" | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{- define "prometheus.ruleName" -}}
+{{- $top := index . 0 -}}
+{{- $prefix := default $top.Chart.Name $top.Values.nameOverride }}
+{{- $name := index . 1 -}}
+{{- printf "%s-%s" $prefix $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
