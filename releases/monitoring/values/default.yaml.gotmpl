@@ -11,4 +11,14 @@ prometheus_rules:
           expr: avg(node_hwmon_temp_celsius) by (instance) > 55
           for: 5m
           labels:
+            severity: warning
+    - name: datahub.local.rules
+      rules:
+        - alert: ExtremeCPUTemperature
+          annotations:
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server.'
+            summary: One or more nodes have a high CPU temperature.'
+          expr: avg(node_hwmon_temp_celsius) by (instance) > 60
+          for: 5m
+          labels:
             severity: critical
