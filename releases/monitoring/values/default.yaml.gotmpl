@@ -12,8 +12,6 @@ prometheus_rules:
           for: 5m
           labels:
             severity: warning
-    - name: datahub.local.rules
-      rules:
         - alert: ExtremeCPUTemperature
           annotations:
             description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server.'
