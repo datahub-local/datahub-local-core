@@ -1,4 +1,4 @@
-# Values for kube-prometheus-stack chart. See https://github.com/headlamp-k8s/headlamp/blob/main/charts/headlamp/values.yaml
+# Values for headlamp chart. See https://github.com/headlamp-k8s/headlamp/blob/main/charts/headlamp/values.yaml
 
 image:
   tag: "{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}"

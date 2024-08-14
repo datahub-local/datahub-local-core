@@ -1,0 +1,43 @@
+# Values for robusta chart. See https://github.com/robusta-dev/robusta/blob/master/helm/robusta/values.yaml
+
+clusterName: homelab.alvsanand.com
+
+globalConfig:
+  signing_key: "{{`{{ env.ROBUSTA_SIGNING_KEY }}`}}"
+  account_id: "{{`{{ env.ROBUSTA_ACCOUNT_ID }}`}}"
+
+  alertmanager_url: "http://datahub-local-core-kube-pr-alertmanager:9093"
+  prometheus_url: "http://datahub-local-core-kube-pr-prometheus:9090"
+
+
+sinksConfig:
+- telegram_sink:
+    name: "Telegram sink"
+    bot_token: "{{`{{ env.TELEGRAM_TOKEN }}`}}"
+    chat_id: "{{`{{ env.TELEGRAM_CHAT_ID }}`}}"
+
+disableCloudRouting: true
+
+runner:
+  sendAdditionalTelemetry: false
+  additional_env_vars:
+  - name: ROBUSTA_SIGNING_KEY
+    valueFrom:
+      secretKeyRef:
+        name: robusta-auth
+        key: signing_key
+  - name: ROBUSTA_ACCOUNT_ID
+    valueFrom:
+      secretKeyRef:
+        name: robusta-auth
+        key: account_id
+  - name: TELEGRAM_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: telegram-auth
+        key: token
+  - name: TELEGRAM_CHAT_ID
+    valueFrom:
+      secretKeyRef:
+        name: telegram-auth
+        key: monitoring_chat_id

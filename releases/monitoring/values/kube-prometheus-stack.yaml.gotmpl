@@ -11,6 +11,25 @@ alertmanager:
   alertmanagerSpec:
     replicas: 2
 
+  config: # Defined by Robusta (https://docs.robusta.dev/master/configuration/alertmanager-integration/alert-manager.html)
+    receivers:
+      - name: "robusta"
+        webhook_configs:
+          - url: "http://<helm-release-name>-runner.<namespace>.svc.cluster.local/api/alerts"
+            send_resolved: true #
+      - name: "default-receiver"
+
+    route:
+      routes:
+        - receiver: "robusta"
+          group_by: ["..."]
+          group_wait: 1s
+          group_interval: 1s
+          matchers:
+            - severity =~ ".*"
+          repeat_interval: 4h
+          continue: true #
+      receiver: "default-receiver"
   ingress:
     enabled: true
     ingressClassName: "traefik"

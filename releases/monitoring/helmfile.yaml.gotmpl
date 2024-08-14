@@ -39,6 +39,12 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "headlamp/headlamp" }}'
     values:
       - values/headlamp.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-robusta"
+    namespace: monitoring
+    chart: "robusta/robusta"
+    version: '{{ .StateValues.helm_chart_version | get "robusta/robusta" }}'
+    values:
+      - values/robusta.yaml.gotmpl
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-monitoring"
     namespace: monitoring
