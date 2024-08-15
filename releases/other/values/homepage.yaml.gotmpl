@@ -112,3 +112,7 @@ ingress:
         paths:
           - path: /
             pathType: Prefix
+      - host: "{{ .StateValues.ingress_hostname }}"
+        paths:
+          - path: /
+            pathType: Prefix
