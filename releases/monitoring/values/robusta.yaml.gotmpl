@@ -9,35 +9,50 @@ globalConfig:
   alertmanager_url: "http://datahub-local-core-kube-pr-alertmanager:9093"
   prometheus_url: "http://datahub-local-core-kube-pr-prometheus:9090"
 
+disableCloudRouting: true
 
 sinksConfig:
-- telegram_sink:
-    name: "Telegram sink"
-    bot_token: "{{`{{ env.TELEGRAM_TOKEN }}`}}"
-    chat_id: "{{`{{ env.TELEGRAM_CHAT_ID }}`}}"
+  - telegram_sink:
+      name: "Telegram sink"
+      bot_token: "{{`{{ env.TELEGRAM_TOKEN }}`}}"
+      chat_id: "{{`{{ env.TELEGRAM_CHAT_ID }}`}}"
 
-disableCloudRouting: true
+customPlaybooks:
+  - actions:
+      - node_restart_silencer: {}
+    triggers:
+      - on_prometheus_alert: {}
+  - actions:
+      - severity_silencer:
+          severity: info
+    triggers:
+      - on_prometheus_alert: {}
+  - actions:
+      - severity_silencer:
+          severity: warning
+    triggers:
+      - on_prometheus_alert: {}
 
 runner:
   sendAdditionalTelemetry: false
   additional_env_vars:
-  - name: ROBUSTA_SIGNING_KEY
-    valueFrom:
-      secretKeyRef:
-        name: robusta-auth
-        key: signing_key
-  - name: ROBUSTA_ACCOUNT_ID
-    valueFrom:
-      secretKeyRef:
-        name: robusta-auth
-        key: account_id
-  - name: TELEGRAM_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: telegram-auth
-        key: token
-  - name: TELEGRAM_CHAT_ID
-    valueFrom:
-      secretKeyRef:
-        name: telegram-auth
-        key: monitoring_chat_id
+    - name: ROBUSTA_SIGNING_KEY
+      valueFrom:
+        secretKeyRef:
+          name: robusta-auth
+          key: signing_key
+    - name: ROBUSTA_ACCOUNT_ID
+      valueFrom:
+        secretKeyRef:
+          name: robusta-auth
+          key: account_id
+    - name: TELEGRAM_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: telegram-auth
+          key: token
+    - name: TELEGRAM_CHAT_ID
+      valueFrom:
+        secretKeyRef:
+          name: telegram-auth
+          key: monitoring_chat_id
