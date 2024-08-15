@@ -13,11 +13,11 @@ alertmanager:
 
   config: # Defined by Robusta (https://docs.robusta.dev/master/configuration/alertmanager-integration/alert-manager.html)
     receivers:
+      - name: "default-receiver"
       - name: "robusta"
         webhook_configs:
-          - url: "http://<helm-release-name>-runner.<namespace>.svc.cluster.local/api/alerts"
-            send_resolved: true #
-      - name: "default-receiver"
+          - url: "http://datahub-local-core-robusta-runner/api/alerts"
+            send_resolved: true
 
     route:
       routes:
