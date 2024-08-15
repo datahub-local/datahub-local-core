@@ -1,4 +1,4 @@
-#{{ $security_admin_user := (readFile "../../../values/global.yaml" | fromYaml).security_admin_user }}
+#{{ $ingress_hostname := (readFile "../../../values/global.yaml" | fromYaml).ingress_hostname }}
 
 prometheus_rules:
   datahub.local.rules:
@@ -29,7 +29,7 @@ prometheus_rules:
           annotations:
             summary: "Argo CD could not synchronize application '{{`{{$labels.name}}`}}'"
             description: |
-              The application '{{`{{$labels.name}}`}}' failed its synchronization in Argo CD. Please, review the error in https://automation-argo-cd.{{ .StateValues.ingress_hostname }}/applications/automation/{{`{{$labels.name}}`}}
+              The application '{{`{{$labels.name}}`}}' failed its synchronization in Argo CD. Please, review the error in https://automation-argo-cd.{{ $ingress_hostname }}/applications/automation/{{`{{$labels.name}}`}}
         - alert: ArgoAppNotSynced
           expr: |
             argocd_app_sync_total{phase="Succeeded"} == 1
