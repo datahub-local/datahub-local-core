@@ -8,7 +8,7 @@ env:
 config:
   settings:
     title: "DataHub.local"
-    base: "https://other-homepage.{{ .StateValues.ingress_hostname }}"
+    base: "https://{{ .StateValues.ingress_hostname }}"
     layout:
       - System:
           style: row
@@ -108,10 +108,6 @@ ingress:
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "homepage.png"
     hosts:
-      - host: "other-homepage.{{ .StateValues.ingress_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
       - host: "{{ .StateValues.ingress_hostname }}"
         paths:
           - path: /
