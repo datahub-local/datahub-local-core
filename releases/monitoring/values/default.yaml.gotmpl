@@ -6,17 +6,37 @@ prometheus_rules:
       rules:
         - alert: HighCPUTemperature
           annotations:
-            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server.'
-            summary: One or more nodes have a high CPU temperature.'
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server'
+            summary: One or more nodes have a high CPUs temperature'
           expr: avg(node_hwmon_temp_celsius) by (instance) > 55
           for: 5m
           labels:
             severity: warning
         - alert: ExtremeCPUTemperature
           annotations:
-            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server.'
-            summary: One or more nodes have a high CPU temperature.'
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server'
+            summary: One or more nodes have a extreme CPUs temperature'
           expr: avg(node_hwmon_temp_celsius) by (instance) > 60
           for: 5m
           labels:
             severity: critical
+        - alert: ArgoAppNotSynced
+          expr: |
+            argocd_app_sync_total{phase="Error"} == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD could not synchronize application '{{`{{$labels.name}}`}}'"
+            description: |
+              The application '{{`{{$labels.name}}`}}' failed its synchronization in Argo CD. Please, review the error in https://automation-argo-cd.{{ .StateValues.ingress_hostname }}/applications/automation/{{`{{$labels.name}}`}}
+        - alert: ArgoAppNotSynced
+          expr: |
+            argocd_app_sync_total{phase="Succeeded"} == 1
+          for: 5m
+          labels:
+            severity: info
+          annotations:
+            summary: "Argo CD synchronized application '{{`{{$labels.name}}`}}'"
+            description: |
+              Application '{{`{{$labels.name}}`}}' was synchronized in Argo CD.
