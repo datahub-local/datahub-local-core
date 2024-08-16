@@ -31,6 +31,10 @@ alertmanager:
           continue: true #
       receiver: "default-receiver"
 
+  defaultRules:
+    rules:
+      kubeProxy: false
+
   ingress:
     enabled: true
     ingressClassName: "traefik"
