@@ -7,6 +7,38 @@ prometheusOperator:
   tls:
     enabled: false
 
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: "traefik"
+    hosts:
+      - "monitoring-prometheus.{{ .StateValues.ingress_hostname }}"
+    paths:
+      - /
+    secureBackends: true
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Prometheus"
+      gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
+      gethomepage.dev/description: "Monitoring system and time series database."
+      gethomepage.dev/group: "Monitoring"
+      gethomepage.dev/icon: "prometheus.png"
+  prometheusSpec:
+    externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
+    routePrefix: /
+
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+    replicas: 1
+    retention: 5d
+
 alertmanager:
   alertmanagerSpec:
     replicas: 2
@@ -31,10 +63,6 @@ alertmanager:
           continue: true #
       receiver: "default-receiver"
 
-  defaultRules:
-    rules:
-      kubeProxy: false
-
   ingress:
     enabled: true
     ingressClassName: "traefik"
@@ -53,6 +81,10 @@ alertmanager:
       gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
       gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "alertmanager.png"
+
+defaultRules:
+  rules:
+    kubeProxy: false
 
 grafana:
   assertNoLeakedSecrets: false
@@ -108,35 +140,3 @@ grafana:
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
       gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "grafana.png"
-
-prometheus:
-  ingress:
-    enabled: true
-    ingressClassName: "traefik"
-    hosts:
-      - "monitoring-prometheus.{{ .StateValues.ingress_hostname }}"
-    paths:
-      - /
-    secureBackends: true
-    annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Prometheus"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
-      gethomepage.dev/description: "Monitoring system and time series database."
-      gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "prometheus.png"
-  prometheusSpec:
-    externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
-    routePrefix: /
-
-    podMonitorSelectorNilUsesHelmValues: false
-    probeSelectorNilUsesHelmValues: false
-    ruleSelectorNilUsesHelmValues: false
-    scrapeConfigSelectorNilUsesHelmValues: false
-    serviceMonitorSelectorNilUsesHelmValues: false
-
-    replicas: 1
-    retention: 5d
