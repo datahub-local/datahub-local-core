@@ -74,6 +74,16 @@ configMaps:
       GROCY_AUTH_CLASS: 'Grocy\Middleware\ReverseProxyAuthMiddleware'
       GROCY_REVERSE_PROXY_AUTH_HEADER: "X-Auth-Request-User"
       GROCY_BASE_URL: "https://other-grocy.{{ .StateValues.ingress_hostname }}/"
+      GROCY_ENTRY_PAGE: "mealplan"
+
+      GROCY_CALENDAR_FIRST_DAY_OF_WEEK: "1"
+
+      GROCY_FEATURE_FLAG_STOCK: "false"
+      GROCY_FEATURE_FLAG_CHORES: "false"
+      GROCY_FEATURE_FLAG_TASKS: "false"
+      GROCY_FEATURE_FLAG_BATTERIES: "false"
+      GROCY_FEATURE_FLAG_EQUIPMENT: "false"
+      GROCY_FEATURE_FLAG_LABEL_PRINTER: "false"
 
       MAX_UPLOAD: "50M"
       PHP_MAX_FILE_UPLOAD: "200"
