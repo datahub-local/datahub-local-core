@@ -12,13 +12,13 @@ commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
 releases:
-  - name: "{{ .Values.release_name }}-homepage"
+  - name: "{{ .Values.release_name }}-other-homepage"
     namespace: other
     chart: "jameswynn/homepage"
     version: '{{ .StateValues.helm_chart_version | get "jameswynn/homepage" }}'
     values:
       - values/homepage.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-it-tools"
+  - name: "{{ .Values.release_name }}-other-it-tools"
     namespace: other
     chart: "bjw-s/app-template"
     version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
@@ -30,7 +30,7 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
     values:
       - values/grocy.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-convertx"
+  - name: "{{ .Values.release_name }}-other-convertx"
     namespace: other
     chart: "bjw-s/app-template"
     version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
