@@ -15,7 +15,7 @@ dagsterWebserver:
 
   env:
     - name: "TRINO_HOST"
-      value: "{{ $.Values.release_name }}-data-trino:8080"
+      value: "{{ $.Values.release_name }}-data-trino-trino:8080"
     - name: "TRINO_PORT"
       value: "8080"
     - name: "TRINO_USER"
@@ -37,7 +37,7 @@ dagsterDaemon:
 
   env:
     - name: "TRINO_HOST"
-      value: "{{ $.Values.release_name }}-data-trino:8080"
+      value: "{{ $.Values.release_name }}-data-trino-trino:8080"
     - name: "TRINO_PORT"
       value: "8080"
     - name: "TRINO_USER"
@@ -55,7 +55,7 @@ dagsterDaemon:
 dagster-user-deployments:
   env:
     - name: "TRINO_HOST"
-      value: "{{ $.Values.release_name }}-data-trino:8080"
+      value: "{{ $.Values.release_name }}-data-trino-trino:8080"
     - name: "TRINO_PORT"
       value: "8080"
     - name: "TRINO_USER"
