@@ -17,7 +17,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - dockerize -wait "tcp://datahub-local-core-data-postgresql-hl:5432" -timeout 300s
+            - dockerize -wait "tcp://{{ $.Values.release_name }}-data-postgresql-hl:5432" -timeout 300s
       containers:
         - name: psql
           image: postgres:latest
@@ -31,7 +31,7 @@ spec:
           args:
             [
               "-h",
-              "datahub-local-core-data-postgresql-hl",
+              "{{ $.Values.release_name }}-data-postgresql-hl",
               "-p",
               "5432",
               "-U",

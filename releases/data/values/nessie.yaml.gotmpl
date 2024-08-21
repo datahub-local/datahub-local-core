@@ -3,7 +3,7 @@ replicaCount: 1
 versionStoreType: JDBC
 
 jdbc:
-  jdbcUrl: "jdbc:postgresql://datahub-local-core-data-postgresql-hl:5432/{{ .StateValues.postgress_extra_databases.nessie }}"
+  jdbcUrl: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql-hl:5432/{{ .StateValues.postgress_extra_databases.nessie }}"
   secret:
     name: postgresql-admin-credentials
     username: user

@@ -6,8 +6,8 @@ globalConfig:
   signing_key: "{{`{{ env.ROBUSTA_SIGNING_KEY }}`}}"
   account_id: "{{`{{ env.ROBUSTA_ACCOUNT_ID }}`}}"
 
-  alertmanager_url: "http://datahub-local-core-kube-pr-alertmanager:9093"
-  prometheus_url: "http://datahub-local-core-kube-pr-prometheus:9090"
+  alertmanager_url: "http://{{ $.Values.release_name }}-kube-pr-alertmanager:9093"
+  prometheus_url: "http://{{ $.Values.release_name }}-kube-pr-prometheus:9090"
 
 disableCloudRouting: true
 

@@ -32,7 +32,7 @@ controllers:
             # <POD_IP_RANGE>,<SERVICE_IP_RANGE>,<LOCAL_NETWORK>
             # <POD_IP_RANGE>: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' # -> get subnet that match all subnets
             # <SERVICE_IP_RANGE>: kubectl create service clusterip testcidr --tcp='8080:8080' --clusterip='1.0.0.0' 2>&1 | sed 's/.*valid IPs is //'
-            value: "10.42.0.0/16,10.43.0.0/16,10.42.0.0/16,192.168.31.0/24"
+            value: "10.42.0.0/16,10.43.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
         securityContext:
@@ -42,4 +42,34 @@ controllers:
 
 serviceAccount:
   create: true
-  name: "tailscale"
+
+rawResources:
+  role:
+    enabled: true
+
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+
+    spec:
+      rules:
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["create"]
+        - apiGroups: [""]
+          resourceNames: ["tailscale-auth-current"]
+          resources: ["secrets"]
+          verbs: ["get", "update", "patch"]
+  role-binding:
+    enabled: true
+
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+
+    spec:
+      subjects:
+        - kind: ServiceAccount
+          name: "{{ $.Values.release_name }}-tailscale"
+      roleRef:
+        kind: Role
+        name: "{{ $.Values.release_name }}-tailscale-role"
+        apiGroup: rbac.authorization.k8s.io

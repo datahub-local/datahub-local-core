@@ -48,7 +48,7 @@ alertmanager:
       - name: "default-receiver"
       - name: "robusta"
         webhook_configs:
-          - url: "http://datahub-local-core-robusta-runner/api/alerts"
+          - url: "http://{{ $.Values.release_name }}-robusta-runner/api/alerts"
             send_resolved: true
 
     route:

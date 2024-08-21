@@ -70,7 +70,7 @@ extraSecretEnv:
   REDIS_PROTO: "redis"
   REDIS_DB: "1"
   REDIS_CELERY_DB: "0"
-  DB_HOST: "datahub-local-core-data-postgresql-hl"
+  DB_HOST: "{{ $.Values.release_name }}-data-postgresql-hl"
   DB_PORT: "5432"
   DB_USER: "{{ .StateValues.postgress_user }}"
   DB_NAME: "{{ .StateValues.postgress_extra_databases.superset }}"
