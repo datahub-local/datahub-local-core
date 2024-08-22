@@ -16,7 +16,6 @@ server:
     web-ui.enabled=true
     web-ui.authentication.type=FIXED
     web-ui.user=admin
-    http-server.process-forwarded=IGNORE
 
 additionalConfigProperties:
   - "internal-communication.shared-secret={{ .StateValues.security_github_client_id }}"
@@ -86,7 +85,7 @@ ingress:
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2-noXForwarding@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
