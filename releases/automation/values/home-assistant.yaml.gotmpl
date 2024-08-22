@@ -4,12 +4,6 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
 
-defaultPodOptions:
-  securityContext:
-    # Run as a non-root user to mitigate privilege escalation attack attempts
-    runAsUser: 1000
-    runAsGroup: 1000
-
 controllers:
   main:
     replicas: 1
@@ -18,10 +12,14 @@ controllers:
     containers:
       main:
         image:
-          repository: ghcr.io/home-assistant/home-assistant
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/home-assistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
+          repository: ghcr.io/onedr0p/home-assistant
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: Europe/Madrid
+          HASS_HTTP_TRUSTED_PROXY_1: 10.42.0.0/16
+          HASS_HTTP_TRUSTED_PROXY_2: 10.52.0.0/16
+          HASS_HTTP_TRUSTED_PROXY_3: 192.168.31.0/24
+          HOME_ASSISTANT__HACS_INSTALL: "true"
         resources:
           requests:
             memory: 300Mi
@@ -78,7 +76,7 @@ ingress:
       gethomepage.dev/name: "Home Assistant"
       gethomepage.dev/description: "Open source home automation that puts local control and privacy first."
       gethomepage.dev/group: "Automation"
-      gethomepage.dev/icon: "homeassistant.svg"
+      gethomepage.dev/icon: "si-homeassistant"
 
     className: "traefik"
 
@@ -88,7 +86,7 @@ ingress:
           - path: /
             pathType: Prefix
             service:
-              name: "{{ .Values.release_name }}-home-assistant"
+              name: "{{ .Values.release_name }}-automation-home-assistant"
               port: 8123
 
 serviceMonitor:
