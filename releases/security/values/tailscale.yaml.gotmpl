@@ -6,20 +6,20 @@
 #
 # See also https://tailscale.com/learn/managing-access-to-kubernetes-with-tailscale#subnet-router-deployments
 
+defaultPodOptions:
+  securityContext:
+    # Run as a non-root user to mitigate privilege escalation attack attempts
+    runAsUser: 1000
+    runAsGroup: 1000
+
 controllers:
   main:
-    annotations:
-      reloader.stakater.com/auto: "true"
     strategy: RollingUpdate
     containers:
       main:
         image:
           repository: ghcr.io/tailscale/tailscale
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/tailscale/tailscale") }}{{ $value }}{{ end }}{{ end }}'
-        resources:
-          requests:
-            memory: 300Mi
-            cpu: 300m
         env:
           - name: TS_KUBE_SECRET
             value: tailscale-auth-current
@@ -35,10 +35,10 @@ controllers:
             value: "10.42.0.0/16,10.43.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
-        securityContext:
-          # Run as a non-root user to mitigate privilege escalation attack attempts
-          runAsUser: 1000
-          runAsGroup: 1000
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 100m
 
 serviceAccount:
   create: true

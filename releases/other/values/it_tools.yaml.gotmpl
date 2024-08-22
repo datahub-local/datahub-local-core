@@ -4,10 +4,14 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
 
+defaultPodOptions:
+  securityContext:
+    # Run as a non-root user to mitigate privilege escalation attack attempts
+    runAsUser: 1000
+    runAsGroup: 1000
+
 controllers:
   main:
-    annotations:
-      reloader.stakater.com/auto: "true"
     strategy: RollingUpdate
     containers:
       main:
@@ -28,6 +32,10 @@ controllers:
             spec:
               failureThreshold: 30
               periodSeconds: 5
+
+serviceAccount:
+  create: true
+
 service:
   main:
     controller: main

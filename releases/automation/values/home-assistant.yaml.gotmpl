@@ -4,6 +4,12 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
 
+defaultPodOptions:
+  securityContext:
+    # Run as a non-root user to mitigate privilege escalation attack attempts
+    runAsUser: 1000
+    runAsGroup: 1000
+
 controllers:
   main:
     replicas: 1
@@ -16,31 +22,23 @@ controllers:
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/home-assistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: Europe/Madrid
-
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities: {drop: ["ALL"]}
         resources:
           requests:
-            cpu: 15m
+            memory: 300Mi
+            cpu: 300m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
 
-defaultPodOptions:
-  automountServiceAccountToken: false
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 568
-    runAsGroup: 568
-    fsGroup: 568
-    fsGroupChangePolicy: OnRootMismatch
-    seccompProfile: {type: RuntimeDefault}
-
-service:
-  main:
-    controller: main
-    ports:
-      http:
-        port: 8123
+serviceAccount:
+  create: true
 
 persistence:
   config:
@@ -60,6 +58,13 @@ persistence:
       - path: /config/tts
   tmp:
     type: emptyDir
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8123
 
 ingress:
   main:
