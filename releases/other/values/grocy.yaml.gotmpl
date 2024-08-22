@@ -11,9 +11,7 @@ defaultPodOptions:
         - "backend"
         - "frontend"
   securityContext:
-    # Run as a non-root user to mitigate privilege escalation attack attempts
-    runAsUser: 1000
-    runAsGroup: 1000
+    fsGroup: 82
   
 configMaps:
   config:
