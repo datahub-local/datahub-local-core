@@ -84,14 +84,16 @@ ingress:
             pathType: Prefix
             service:
               name: "{{ .Values.release_name }}-home-assistant"
-              port: http
+              port: 8123
 
 serviceMonitor:
   main:
     enabled: true
 
+    serviceName: main
+
     endpoints:
-      - port: http
+      - port: 8123
         scheme: http
         path: /api/prometheus
         interval: 1m
