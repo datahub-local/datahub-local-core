@@ -39,4 +39,4 @@ helm_chart_version:
   prometheus-community/kube-prometheus-stack: 61.8.0
   robusta/robusta: 0.16.1
   superset/superset: 0.12.11
-  trino/trino: 0.26.0
+  trino/trino: 0.27.0
