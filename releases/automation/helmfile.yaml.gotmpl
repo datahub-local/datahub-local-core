@@ -1,0 +1,20 @@
+---
+bases:
+  - ../../values/base.yaml
+---
+helmDefaults:
+  wait: true
+  timeout: 600
+  recreatePods: true
+  force: false
+
+commonLabels:
+  provider: "{{ .Values.release_name }}-helm"
+
+releases:
+  - name: "{{ .Values.release_name }}-automation-home-assistant"
+    namespace: other
+    chart: "bjw-s/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    values:
+      - values/home-assistant.yaml.gotmpl

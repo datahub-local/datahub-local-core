@@ -85,7 +85,7 @@ ingress:
           pathType: Prefix
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2-noXForwarding@kubernetescrd{{ end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2-noxforwarding@kubernetescrd{{ end }}"
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"

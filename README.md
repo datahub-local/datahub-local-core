@@ -29,6 +29,8 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             ns: security
           - name: data
             ns: data
+          - name: automation
+            ns: automation
       template:
         metadata:
           name: 'datahub-local-core-{{.name}}'
