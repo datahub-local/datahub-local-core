@@ -33,6 +33,8 @@ configMaps:
             192.168.31.0/24: admin
           allow_bypass_login: true
       configuration.yaml: |
+        logger:
+          default: info
         http:
           use_x_forwarded_for: true
           trusted_proxies:
@@ -45,7 +47,7 @@ configMaps:
           unit_system: metric
           currency: EUR
           country: ES
-
+          
           auth_providers: !include auth_providers.yaml
           
           debug: false
