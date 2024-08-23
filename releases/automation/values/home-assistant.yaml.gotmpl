@@ -24,12 +24,8 @@ configMaps:
         - type: homeassistant
         - type: trusted_networks
           trusted_networks:
-          - 10.42.0.0/16
-          - 10.52.0.0/16
           - 192.168.31.0/24
           trusted_users:
-            10.42.0.0/16: admin
-            10.52.0.0/16: admin
             192.168.31.0/24: admin
           allow_bypass_login: true
       configuration.yaml: |
@@ -40,7 +36,6 @@ configMaps:
           trusted_proxies:
             - 10.42.0.0/16
             - 10.52.0.0/16
-            - 192.168.31.0/24
         homeassistant:
           name: Datahub.local
           
