@@ -25,30 +25,93 @@ configMaps:
             - 10.42.0.0/16
             - 10.52.0.0/16
             - 192.168.31.0/24
-        auth_header:
-          username_header: X-Forwarded-Preferred-Username
+        homeassistant:
+          name: Datahub.local
+          
+          unit_system: metric
+          currency: EUR
+          country: ES
+
+          auth_providers: !include auth_providers.yaml
+          
+          debug: false
+      pre_start.sh: |
+        #!/bin/bash
+
+        set -e
+
+        touch /config/auth_providers.yaml
+      post_start.sh: |
+        #!/bin/bash
+
+        set -e
+
+        if [ ! -f /config/.storage/auth.admin_password ]; then
+          PASSWORD=$(openssl rand -hex 16)
+          HA_URL=http://127.0.0.1:8123
+          CLIENT_ID=$HA_URL
+
+          REQUEST='{
+            "client_id": "'$CLIENT_ID'",
+            "name": "admin",
+            "username": "admin",
+            "password": "'$PASSWORD'",
+            "language": "en-GB"
+          }'
+
+          RESPONSE=$(curl -Ss "$HA_URL/api/onboarding/users" \
+            --header "Content-Type: application/json" \
+            --request POST \
+            --data "$REQUEST")
+          
+          AUTH_CODE=$(echo "$RESPONSE" | jq -r '.auth_code')
+
+          sleep 3
+
+          RESPONSE=$(curl -Ss "$HA_URL/auth/token" -X POST \
+            -d "client_id=$CLIENT_ID&code=$AUTH_CODE&grant_type=authorization_code")
+          
+          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+
+          sleep 3
+
+          curl -Ss "$HA_URL/api/onboarding/core_config" -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN"
+
+          sleep 3
+
+          curl -Ss "$HA_URL/api/onboarding/analytics" -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN"
+
+          sleep 3
+
+          curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN"
+
+          cat <<EOF > /config/auth_providers.yaml
+          - type: trusted_networks
+            trusted_networks:
+            - 10.42.0.0/16
+            - 10.52.0.0/16
+            - 192.168.31.0/24
+            trusted_users:
+              10.42.0.0/16: admin
+              10.52.0.0/16: admin
+              192.168.31.0/24: admin
+            allow_bypass_login: true
+          EOF
+
+          curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN"
+
+          echo "$PASSWORD" > /config/.storage/auth.admin_password
+        fi
 
 controllers:
   main:
     replicas: 1
     strategy: RollingUpdate
     type: statefulset
-    initContainers:
-      init:
-        image:
-          repository: ghcr.io/onedr0p/home-assistant
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
-        command:
-          - "sh"
-          -  "-c"
-          - |  
-              cd /tmp && \
-              git clone https://github.com/BeryJu/hass-auth-header && \
-              mv /tmp/hass-auth-header/custom_components/auth_header /config/custom_components
-        resources:
-          requests:
-            memory: 100Mi
-            cpu: 100m
     containers:
       main:
         image:
@@ -56,9 +119,6 @@ controllers:
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: Europe/Madrid
-          HASS_HTTP_TRUSTED_PROXY_1: 10.42.0.0/16
-          HASS_HTTP_TRUSTED_PROXY_2: 10.52.0.0/16
-          HASS_HTTP_TRUSTED_PROXY_3: 192.168.31.0/24
         resources:
           requests:
             memory: 300Mi
@@ -84,6 +144,13 @@ controllers:
             spec:
               failureThreshold: 30
               periodSeconds: 5
+        lifecycle:
+          preStart:
+            exec:
+              command: ["/bin/sh", "-c", "/config/pre_start.sh"]
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "/config/post_start.sh"]
 
 serviceAccount:
   create: true
@@ -95,7 +162,11 @@ persistence:
     globalMounts:
       - path: /config/configuration.yaml
         subPath: configuration.yaml
-        
+      - path: /config/pre_start.sh
+        subPath: pre_start.sh
+      - path: /config/post_start.sh
+        subPath: post_start.sh
+
   config:
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
