@@ -40,13 +40,17 @@ configMaps:
 
         set -e
 
-        touch /config/auth_providers.yaml
+        if [ ! -f /config/.storage/.intialized ]; then
+        cat <<EOF > /config/auth_providers.yaml
+        - type: trusted_networks
+        EOF
+        fi
       post_start.sh: |
         #!/bin/bash
 
         set -e
 
-        if [ ! -f /config/.storage/auth.admin_password ]; then
+        if [ ! -f /config/.storage/.intialized ]; then
           PASSWORD=$(openssl rand -hex 16)
           HA_URL=http://127.0.0.1:8123
           CLIENT_ID=$HA_URL
@@ -88,23 +92,23 @@ configMaps:
           curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN"
 
-          cat <<EOF > /config/auth_providers.yaml
-          - type: trusted_networks
-            trusted_networks:
-            - 10.42.0.0/16
-            - 10.52.0.0/16
-            - 192.168.31.0/24
-            trusted_users:
-              10.42.0.0/16: admin
-              10.52.0.0/16: admin
-              192.168.31.0/24: admin
-            allow_bypass_login: true
-          EOF
+        cat <<EOF >> /config/auth_providers.yaml
+        - type: trusted_networks
+          trusted_networks:
+          - 10.42.0.0/16
+          - 10.52.0.0/16
+          - 192.168.31.0/24
+          trusted_users:
+            10.42.0.0/16: admin
+            10.52.0.0/16: admin
+            192.168.31.0/24: admin
+          allow_bypass_login: true
+        EOF
 
           curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN"
 
-          echo "$PASSWORD" > /config/.storage/auth.admin_password
+          echo "$PASSWORD" > /config/.storage/.intialized
         fi
 
 controllers:
