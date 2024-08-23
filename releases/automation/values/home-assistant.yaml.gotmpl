@@ -76,7 +76,7 @@ configMaps:
 
           RESPONSE=$(curl -Ss "$HA_URL/api/onboarding/users" \
             --header "Content-Type: application/json" \
-            --request POST \
+            -X POST \
             --data "$REQUEST")
           
           AUTH_CODE=$(echo "$RESPONSE" | jq -r '.auth_code')
@@ -91,22 +91,32 @@ configMaps:
           sleep 3
 
           curl -Ss "$HA_URL/api/onboarding/core_config" -X POST \
-            -H "Authorization: Bearer $ACCESS_TOKEN"
+            --header "Authorization: Bearer $ACCESS_TOKEN"
 
           sleep 3
 
           curl -Ss "$HA_URL/api/onboarding/analytics" -X POST \
-            -H "Authorization: Bearer $ACCESS_TOKEN"
+            --header "Authorization: Bearer $ACCESS_TOKEN"
 
           sleep 3
 
-          curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
-            -H "Authorization: Bearer $ACCESS_TOKEN"
-          
-          cp -f /config/auth_providers_final.yaml /config/auth_providers.yaml
+          REQUEST='{
+            "client_id": "'$CLIENT_ID'",
+            "redirect_uri": "'$CLIENT_ID'"
+          }'
 
-          curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
-            -H "Authorization: Bearer $ACCESS_TOKEN"
+          curl -Ss "$HA_URL/api/onboarding/integration" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer $ACCESS_TOKEN" \
+            -X POST \
+            --data "$REQUEST"
+
+          ADMIN_ID=$(cat /config/.storage/auth | jq -r '.data.users[] | select(.name == "'$ADMIN_USER'") | .id')
+          
+          cat /config/auth_providers_final.yaml | sed 's/admin/'$ADMIN_ID'/g' > /config/auth_providers.yaml
+
+          curl -Ss "$HA_URL/api/services/homeassistant/restart" -X POST \
+            --header "Authorization: Bearer $ACCESS_TOKEN"
 
           echo "DONE" > /config/.storage/.intialized
         fi
@@ -134,11 +144,11 @@ controllers:
         env:
           TZ: Europe/Madrid
           ADMIN_USER:
-            configMapKeyRef:
+            secretKeyRef:
               name: home-assistant-auth
               key: user
           ADMIN_PASSWORD:
-            configMapKeyRef:
+            secretKeyRef:
               name: home-assistant-auth
               key: password
         resources:
