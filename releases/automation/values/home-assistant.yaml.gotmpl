@@ -112,6 +112,16 @@ controllers:
     replicas: 1
     strategy: RollingUpdate
     type: statefulset
+    initContainers:
+      init:
+        image:
+          repository: ghcr.io/onedr0p/home-assistant
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/sh", "/config/pre_start.sh"]
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
     containers:
       main:
         image:
@@ -145,12 +155,9 @@ controllers:
               failureThreshold: 30
               periodSeconds: 5
         lifecycle:
-          preStart:
-            exec:
-              command: ["/bin/sh", "-c", "/config/pre_start.sh"]
           postStart:
             exec:
-              command: ["/bin/sh", "-c", "/config/post_start.sh"]
+              command: ["/bin/sh", "/config/post_start.sh"]
 
 serviceAccount:
   create: true
