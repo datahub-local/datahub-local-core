@@ -52,25 +52,25 @@ configMaps:
       pre_start.sh: |
         #!/bin/bash
 
-        echo "Init pre_start"
-
-        exec >> /config/logs/pre_start.log 2>&1
+        exec > >(tee /config/logs/pre_start.log) 2>&1
 
         if [ ! -f /config/.storage/.intialized ]; then
-          cp -f /config/auth_providers_init.yaml /config/auth_providers.yaml
-        fi
+          echo "Init pre_start"
 
-        echo "Finish pre_start"
+          cp -f /config/auth_providers_init.yaml /config/auth_providers.yaml
+
+          echo "Finish pre_start"
+        fi
 
         exit 0
       post_start.sh: |
         #!/bin/bash
 
-        echo "Init post_start"
-
-        exec >> /config/logs/post_start.log 2>&1
+        exec > >(tee /config/logs/post_start.log) 2>&1
 
         if [ ! -f /config/.storage/.intialized ]; then
+          echo "Init post_start"
+
           HA_URL="http://127.0.0.1:8123"
           CLIENT_ID="$HA_URL"
 
@@ -145,9 +145,9 @@ configMaps:
 
           curl -Ss "$HA_URL/api/services/homeassistant/restart" -X POST \
             --header "Authorization: Bearer $ACCESS_TOKEN"
-        fi
 
-        echo "Finish post_start"
+          echo "Finish post_start"
+        fi
 
         exit 0
 
