@@ -25,12 +25,30 @@ configMaps:
             - 10.42.0.0/16
             - 10.52.0.0/16
             - 192.168.31.0/24
+        auth_header:
+          username_header: X-Forwarded-Preferred-Username
 
 controllers:
   main:
     replicas: 1
     strategy: RollingUpdate
     type: statefulset
+    initContainers:
+      init:
+        image:
+          repository: ghcr.io/onedr0p/home-assistant
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
+        command:
+          - "sh"
+          -  "-c"
+          - |  
+              cd /tmp && \
+              git clone https://github.com/BeryJu/hass-auth-header && \
+              mv /tmp/hass-auth-header/custom_components/auth_header /config/custom_components
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
     containers:
       main:
         image:
