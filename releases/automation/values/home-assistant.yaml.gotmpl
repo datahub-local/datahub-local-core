@@ -18,6 +18,20 @@ configMaps:
   static-config:
     enabled: true
     data:
+      auth_providers_init.yaml: |
+        - type: homeassistant
+      auth_providers_final.yaml: |
+        - type: homeassistant
+        - type: trusted_networks
+          trusted_networks:
+          - 10.42.0.0/16
+          - 10.52.0.0/16
+          - 192.168.31.0/24
+          trusted_users:
+            10.42.0.0/16: admin
+            10.52.0.0/16: admin
+            192.168.31.0/24: admin
+          allow_bypass_login: true
       configuration.yaml: |
         http:
           use_x_forwarded_for: true
@@ -41,9 +55,7 @@ configMaps:
         set -e
 
         if [ ! -f /config/.storage/.intialized ]; then
-        cat <<EOF > /config/auth_providers.yaml
-        - type: trusted_networks
-        EOF
+          cp -f /config/auth_providers_init.yaml /config/auth_providers.yaml
         fi
       post_start.sh: |
         #!/bin/bash
@@ -51,15 +63,14 @@ configMaps:
         set -e
 
         if [ ! -f /config/.storage/.intialized ]; then
-          PASSWORD=$(openssl rand -hex 16)
-          HA_URL=http://127.0.0.1:8123
-          CLIENT_ID=$HA_URL
+          HA_URL="http://127.0.0.1:8123"
+          CLIENT_ID="$HA_URL"
 
           REQUEST='{
             "client_id": "'$CLIENT_ID'",
-            "name": "admin",
-            "username": "admin",
-            "password": "'$PASSWORD'",
+            "name": "'$ADMIN_USER'",
+            "username": "'$ADMIN_USER'",
+            "password": "'$ADMIN_PASSWORD'",
             "language": "en-GB"
           }'
 
@@ -91,24 +102,13 @@ configMaps:
 
           curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN"
-
-        cat <<EOF >> /config/auth_providers.yaml
-        - type: trusted_networks
-          trusted_networks:
-          - 10.42.0.0/16
-          - 10.52.0.0/16
-          - 192.168.31.0/24
-          trusted_users:
-            10.42.0.0/16: admin
-            10.52.0.0/16: admin
-            192.168.31.0/24: admin
-          allow_bypass_login: true
-        EOF
+          
+          cp -f /config/auth_providers_final.yaml /config/auth_providers.yaml
 
           curl -Ss "$HA_URL/api/onboarding/integration" -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN"
 
-          echo "$PASSWORD" > /config/.storage/.intialized
+          echo "DONE" > /config/.storage/.intialized
         fi
 
 controllers:
@@ -133,6 +133,14 @@ controllers:
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: Europe/Madrid
+          ADMIN_USER:
+            configMapKeyRef:
+              name: home-assistant-auth
+              key: user
+          ADMIN_PASSWORD:
+            configMapKeyRef:
+              name: home-assistant-auth
+              key: password
         resources:
           requests:
             memory: 300Mi
@@ -171,6 +179,10 @@ persistence:
     type: configMap
     identifier: static-config
     globalMounts:
+      - path: /config/auth_providers_init.yaml
+        subPath: auth_providers_init.yaml
+      - path: /config/auth_providers_final.yaml
+        subPath: auth_providers_final.yaml
       - path: /config/configuration.yaml
         subPath: configuration.yaml
       - path: /config/pre_start.sh
