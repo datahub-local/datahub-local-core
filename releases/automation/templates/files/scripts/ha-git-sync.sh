@@ -13,10 +13,11 @@ cd $CONFIG_DIR
 
 echo "Init $SCRIPT_NAME"
 
-if [[ -n $(git status --porcelain) ]]; then
-    echo "There are changes in configuration folder [$CONFIG_DIR]."
+echo "Fetching latest version."
+git pull
 
-    git pull
+if [[ -n $(git status --porcelain) ]]; then
+    echo "There are some changes in configuration folder."
     
     git add .
 
@@ -28,7 +29,7 @@ if [[ -n $(git status --porcelain) ]]; then
 
     git push -u origin "$GIT_BRANCH"
 else
-    echo "No changes in configuration folder [$CONFIG_DIR]."
+    echo "No changes in configuration folder."
 fi
 
 echo "Finish $SCRIPT_NAME"
