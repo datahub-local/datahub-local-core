@@ -18,8 +18,6 @@ cd $CONFIG_DIR
 if [ ! -f .storage/.intialized ]; then
   echo "Init post_start"
 
-
-
   REQUEST='{
     "client_id": "'$CLIENT_ID'",
     "name": "'$ADMIN_USER'",
@@ -93,4 +91,6 @@ if [ ! -f .storage/.intialized ]; then
     --header "Authorization: Bearer $ACCESS_TOKEN"
 
   echo "Finish post_start"
+else
+  echo "Home Assistant already initialized"
 fi
