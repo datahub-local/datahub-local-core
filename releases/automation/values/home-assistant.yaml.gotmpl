@@ -99,14 +99,6 @@ persistence:
     size: 1Gi
     globalMounts:
       - path: /config
-  logs:
-    type: emptyDir
-    globalMounts:
-      - path: /config/logs
-  tts:
-    type: emptyDir
-    globalMounts:
-      - path: /config/tts
   tmp:
     type: emptyDir
 

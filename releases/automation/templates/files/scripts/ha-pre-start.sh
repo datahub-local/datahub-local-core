@@ -11,7 +11,7 @@ GIT_REPO="git@github.com:datahub-local/datahub-local-home-assistant-config.git"
 
 cd $CONFIG_DIR
 
-if [[ -z "$( ls -A '.' )" ]]; then
+if [[ ! -f ".HA_VERSION" ]]; then
     echo "Init pre_start"
 
     echo "Configuring git"
