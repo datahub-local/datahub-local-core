@@ -6,41 +6,27 @@ set -e
 
 ########################################
 CONFIG_DIR=/config
+SSH_KEY=/etc/ssh_gh_deploy_key
+
 GIT_REPO="git@github.com:datahub-local/datahub-local-home-assistant-config.git"
 GIT_BRANCH="main"
+export GIT_USER_EMAIL="bot@datahub-local.alvsanand.com"
+export GIT_USER_NAME="Datahub.local Bot"
+export GIT_SSH_COMMAND="eval \$(ssh-agent -s) > /dev/null && ssh-add $SSH_KEY && ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ########################################
 
 cd $CONFIG_DIR
 
 echo "Init $SCRIPT_NAME"
 
-if [[ ! -f "$HOME/.ssh/ssh_gh_deploy_key" ]]; then
-    echo "Creating ssh_gh_deploy_key"
-
-    mkdir -p $HOME/.ssh || true
-    cp /etc/ssh_gh_deploy_key $HOME/.ssh/ssh_gh_deploy_key
-    
-    chmod 400 $HOME/.ssh/ssh_gh_deploy_key
-    echo >> $HOME/.ssh/ssh_gh_deploy_key # Ensure has a newline at the end of file
-fi
-
 if [[ ! -f ".HA_VERSION" ]]; then
-
     echo "Configuring git"
 
-    git config --global user.email "bot@datahub-local.alvsanand.com"
-    git config --global user.name "Datahub.local Bot"
+    echo "Removing all files from folder"
 
-    git config --global core.sshCommand "ssh -i $HOME/.ssh/ssh_gh_deploy_key -o IdentitiesOnly=yes -o 'StrictHostKeyChecking=no' -F /dev/null"
+    rm -rf * .*
 
-    echo "Cloning git repo"
-
-    rm -Rf lost+found || true
     git clone --quiet "$GIT_REPO" .
-
-    echo "Installing HACS"
-
-    wget -O - https://get.hacs.xyz | bash -
 
     echo "Copying initial auth_providers"
 
