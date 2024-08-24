@@ -6,7 +6,5 @@ kind: PrometheusRule
 metadata:
   name: '{{ include "prometheus.ruleName" (list $dot $ruleName) }}'
 spec:
-  groups:
-{{ $value | toYaml | indent 4 }}
-
+  groups: {{- $value | toYaml | nindent 4 }}
 #{{- end }}

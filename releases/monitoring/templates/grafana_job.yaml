@@ -43,5 +43,4 @@ kind: ConfigMap
 metadata:
   name: {{ template "grafana.configMapJobSetupGrafana" . }}
 data:
-  setup-grafana.sh: |
-{{ .Files.Get "files/scripts/setup-grafana.sh" | indent 4 }}
+  setup-grafana.sh: | {{- .Files.Get "files/scripts/setup-grafana.sh" | nindent 4 }}

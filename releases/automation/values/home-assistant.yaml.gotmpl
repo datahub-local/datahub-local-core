@@ -5,6 +5,7 @@
 # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
 
 defaultPodOptions:
+  hostNetwork: true # Fix https://github.com/k3s-io/k3s/discussions/2997
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -15,138 +16,13 @@ defaultPodOptions:
       type: RuntimeDefault
 
 configMaps:
-  static-config:
+  scripts:
     enabled: true
     data:
-      auth_providers_init.yaml: |
-        - type: homeassistant
-      auth_providers_final.yaml: |
-        - type: homeassistant
-        - type: trusted_networks
-          trusted_networks:
-          - 192.168.31.0/24
-          trusted_users:
-            192.168.31.0/24: admin
-          allow_bypass_login: true
-      configuration.yaml: |
-        logger:
-          default: info
-        http:
-          use_x_forwarded_for: true
-          trusted_proxies:
-            - 10.42.0.0/16
-            - 10.52.0.0/16
-        homeassistant:
-          name: Datahub.local
-          
-          unit_system: metric
-          currency: EUR
-          country: ES
-          
-          auth_providers: !include auth_providers.yaml
-          
-          debug: false
-      pre_start.sh: |
-        #!/bin/bash
-
-        exec > >(tee /config/logs/pre_start.log) 2>&1
-
-        if [ ! -f /config/.storage/.intialized ]; then
-          echo "Init pre_start"
-
-          cp -f /config/auth_providers_init.yaml /config/auth_providers.yaml
-
-          echo "Finish pre_start"
-        fi
-
-        exit 0
-      post_start.sh: |
-        #!/bin/bash
-
-        exec > >(tee /config/logs/post_start.log) 2>&1
-
-        if [ ! -f /config/.storage/.intialized ]; then
-          echo "Init post_start"
-
-          HA_URL="http://127.0.0.1:8123"
-          CLIENT_ID="$HA_URL"
-
-          REQUEST='{
-            "client_id": "'$CLIENT_ID'",
-            "name": "'$ADMIN_USER'",
-            "username": "'$ADMIN_USER'",
-            "password": "'$ADMIN_PASSWORD'",
-            "language": "en-GB"
-          }'
-
-          sleep 10
-
-          echo "Creating user"
-
-          RESPONSE=$(curl -Ss "$HA_URL/api/onboarding/users" \
-            --header "Content-Type: application/json" \
-            -X POST \
-            --data "$REQUEST")
-          
-          AUTH_CODE=$(echo "$RESPONSE" | jq -r '.auth_code')
-
-          sleep 1
-
-          echo "Getting token"
-
-          RESPONSE=$(curl -Ss "$HA_URL/auth/token" -X POST \
-            -d "client_id=$CLIENT_ID&code=$AUTH_CODE&grant_type=authorization_code")
-          
-          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
-
-          sleep 1
-
-          echo "Executing onboarding/core_config"
-
-          curl -Ss "$HA_URL/api/onboarding/core_config" -X POST \
-            --header "Authorization: Bearer $ACCESS_TOKEN"
-
-          sleep 1
-
-          echo "Executing onboarding/analytics"
-
-          curl -Ss "$HA_URL/api/onboarding/analytics" -X POST \
-            --header "Authorization: Bearer $ACCESS_TOKEN"
-
-          sleep 1
-
-          REQUEST='{
-            "client_id": "'$CLIENT_ID'",
-            "redirect_uri": "'$CLIENT_ID'"
-          }'
-
-          echo "Executing onboarding/integration"
-
-          curl -Ss "$HA_URL/api/onboarding/integration" \
-            --header "Content-Type: application/json" \
-            --header "Authorization: Bearer $ACCESS_TOKEN" \
-            -X POST \
-            --data "$REQUEST"
-
-          sleep 1
-
-          ADMIN_ID=$(cat /config/.storage/auth | jq -r '.data.users[] | select(.name == "'$ADMIN_USER'") | .id')
-          
-          cat /config/auth_providers_final.yaml | sed 's/admin/'$ADMIN_ID'/g' > /config/auth_providers.yaml
-
-          echo "Created /config/auth_providers.yaml" && cat /config/auth_providers.yaml
-
-          echo "DONE" > /config/.storage/.intialized
-
-          echo "Rebooting"
-
-          curl -Ss "$HA_URL/api/services/homeassistant/restart" -X POST \
-            --header "Authorization: Bearer $ACCESS_TOKEN"
-
-          echo "Finish post_start"
-        fi
-
-        exit 0
+#{{- range $path := readDir "../templates/files/scripts/" }}
+#{{- $scriptName := regexReplaceAll "(^.*/)(.*)$" $path "${2}" }}
+      {{ $scriptName }}: | {{- readFile $path | nindent 10}}
+#{{- end }}
 
 controllers:
   main:
@@ -156,9 +32,9 @@ controllers:
     initContainers:
       init:
         image:
-          repository: ghcr.io/onedr0p/home-assistant
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
-        command: ["/bin/sh", "/config/pre_start.sh"]
+          repository: homeassistant/home-assistant
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "homeassistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/bash", "/usr/local/ha-scripts/ha-pre-start.sh"]
         resources:
           requests:
             memory: 100Mi
@@ -166,10 +42,11 @@ controllers:
     containers:
       main:
         image:
-          repository: ghcr.io/onedr0p/home-assistant
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/onedr0p/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
+          repository: homeassistant/home-assistant
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "homeassistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
-          TZ: Europe/Madrid
+          TZ: "Europe/Madrid"
+          HOME_ASSISTANT__HACS_INSTALL: "true"
           ADMIN_USER:
             secretKeyRef:
               name: home-assistant-auth
@@ -207,27 +84,23 @@ controllers:
         lifecycle:
           postStart:
             exec:
-              command: ["/bin/sh", "/config/post_start.sh"]
+              command: ["/bin/bash", "/usr/local/ha-scripts/ha-post-start.sh"]
 
 serviceAccount:
   create: true
 
 persistence:
-  static-config:
+  scripts:
     type: configMap
-    identifier: static-config
+    identifier: scripts
     globalMounts:
-      - path: /config/auth_providers_init.yaml
-        subPath: auth_providers_init.yaml
-      - path: /config/auth_providers_final.yaml
-        subPath: auth_providers_final.yaml
-      - path: /config/configuration.yaml
-        subPath: configuration.yaml
-      - path: /config/pre_start.sh
-        subPath: pre_start.sh
-      - path: /config/post_start.sh
-        subPath: post_start.sh
-
+      - path: /usr/local/ha-scripts
+  ssh-key:
+    type: secret
+    name: home-assistant-auth
+    globalMounts:
+      - path: /etc/ssh_gh_deploy_key
+        subPath: gh_deploy_key
   config:
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
