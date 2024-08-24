@@ -32,6 +32,10 @@ if [[ ! -f ".HA_VERSION" ]]; then
 
     git clone --quiet "$GIT_REPO" .
 
+    echo "Installing HACS"
+
+    wget -O - https://get.hacs.xyz | bash -
+
     echo "Copying initial auth_providers"
 
     cp auth_providers.init.yaml.tpl auth_providers.yaml
