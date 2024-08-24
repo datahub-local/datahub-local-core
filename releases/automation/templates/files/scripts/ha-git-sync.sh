@@ -12,7 +12,7 @@ GIT_REPO="git@github.com:datahub-local/datahub-local-home-assistant-config.git"
 GIT_BRANCH="main"
 export GIT_USER_EMAIL="bot@datahub-local.alvsanand.com"
 export GIT_USER_NAME="Datahub.local Bot"
-export GIT_SSH_COMMAND="eval \$(ssh-agent -s) > /dev/null && ssh-add $SSH_KEY && ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ########################################
 
 cd $CONFIG_DIR
