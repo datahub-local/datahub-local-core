@@ -15,9 +15,9 @@ CLIENT_ID="$HA_URL"
 
 cd $CONFIG_DIR
 
-if [ ! -f .storage/.intialized ]; then
-  echo "Init post_start"
+echo "Init $SCRIPT_NAME"
 
+if [ ! -f .storage/.intialized ]; then
   REQUEST='{
     "client_id": "'$CLIENT_ID'",
     "name": "'$ADMIN_USER'",
@@ -89,8 +89,8 @@ if [ ! -f .storage/.intialized ]; then
 
   curl -Ss "$HA_URL/api/services/homeassistant/restart" -X POST \
     --header "Authorization: Bearer $ACCESS_TOKEN"
-
-  echo "Finish post_start"
 else
   echo "Home Assistant already initialized"
 fi
+
+echo "Finish $SCRIPT_NAME"

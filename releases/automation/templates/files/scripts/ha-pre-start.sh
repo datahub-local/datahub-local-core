@@ -12,13 +12,18 @@ GIT_BRANCH="main"
 
 cd $CONFIG_DIR
 
+echo "Init $SCRIPT_NAME"
+
 if [[ ! -f "$HOME/.ssh/ssh_gh_deploy_key" ]]; then
+
+    echo "Creating ssh_gh_deploy_key"
+
+    mkdir -p $HOME/.ssh || true
     cp /etc/ssh_gh_deploy_key $HOME/.ssh/ssh_gh_deploy_key
     chmod 400 $HOME/.ssh/ssh_gh_deploy_key
 fi
 
 if [[ ! -f ".HA_VERSION" ]]; then
-    echo "Init pre_start"
 
     echo "Configuring git"
 
@@ -40,8 +45,8 @@ if [[ ! -f ".HA_VERSION" ]]; then
 
     cp auth_providers.init.yaml.tpl auth_providers.yaml
     mkdir lost+found
-
-    echo "Finish pre_start"
 else
     echo "Home Assistant already initialized"
 fi
+
+echo "Finish $SCRIPT_NAME"

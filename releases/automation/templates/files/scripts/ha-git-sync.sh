@@ -11,6 +11,8 @@ GIT_BRANCH="main"
 
 cd $CONFIG_DIR
 
+echo "Init $SCRIPT_NAME"
+
 if [[ -n $(git status --porcelain) ]]; then
     echo "There are changes in configuration folder [$CONFIG_DIR]."
 
@@ -28,3 +30,5 @@ if [[ -n $(git status --porcelain) ]]; then
 else
     echo "No changes in configuration folder [$CONFIG_DIR]."
 fi
+
+echo "Finish $SCRIPT_NAME"
