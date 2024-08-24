@@ -7,6 +7,7 @@ set -e
 ########################################
 CONFIG_DIR=/config
 GIT_REPO="git@github.com:datahub-local/datahub-local-home-assistant-config.git"
+GIT_BRANCH="main"
 ########################################
 
 cd $CONFIG_DIR
@@ -23,6 +24,7 @@ if [[ ! -f ".HA_VERSION" ]]; then
 
     echo "Cloning git repo"
 
+    rm -Rf lost+found || true
     git clone --quiet "$GIT_REPO" .
 
     echo "Installing HACS"
@@ -32,6 +34,7 @@ if [[ ! -f ".HA_VERSION" ]]; then
     echo "Copying initial auth_providers"
 
     cp auth_providers.init.yaml.tpl auth_providers.yaml
+    mkdir lost+found
 
     echo "Finish pre_start"
 else

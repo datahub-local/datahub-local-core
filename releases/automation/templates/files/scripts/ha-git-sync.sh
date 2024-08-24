@@ -6,6 +6,7 @@ set -e
 
 ########################################
 CONFIG_DIR=/config
+GIT_BRANCH="main"
 ########################################
 
 cd $CONFIG_DIR
@@ -23,7 +24,7 @@ if [[ -n $(git status --porcelain) ]]; then
 
     echo "Pushing commit to remote."
 
-    git push -u origin main
+    git push -u origin "$GIT_BRANCH"
 else
     echo "No changes in configuration folder [$CONFIG_DIR]."
 fi
