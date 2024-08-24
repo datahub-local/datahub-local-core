@@ -20,7 +20,7 @@ cd $CONFIG_DIR
 echo "Init $SCRIPT_NAME"
 
 echo "Configure SSH."
-eval $(ssh-agent -s) > /dev/null && cat $SSH_KEY | ssh-add -k -
+eval $(ssh-agent -s) > /dev/null && (cat $SSH_KEY && echo) | ssh-add -k -
 
 echo "Fetching latest version."
 git pull
