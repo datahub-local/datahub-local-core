@@ -12,6 +12,11 @@ GIT_BRANCH="main"
 
 cd $CONFIG_DIR
 
+if [[ ! -f "$HOME/.ssh/ssh_gh_deploy_key" ]]; then
+    cp /etc/ssh_gh_deploy_key $HOME/.ssh/ssh_gh_deploy_key
+    chmod 400 $HOME/.ssh/ssh_gh_deploy_key
+fi
+
 if [[ ! -f ".HA_VERSION" ]]; then
     echo "Init pre_start"
 
