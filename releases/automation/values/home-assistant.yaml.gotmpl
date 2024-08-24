@@ -6,14 +6,6 @@
 
 defaultPodOptions:
   hostNetwork: true # Fix https://github.com/k3s-io/k3s/discussions/2997
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
-    fsGroupChangePolicy: OnRootMismatch
-    seccompProfile:
-      type: RuntimeDefault
 
 configMaps:
   scripts:
@@ -46,7 +38,6 @@ controllers:
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "homeassistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: "Europe/Madrid"
-          HOME_ASSISTANT__HACS_INSTALL: "true"
           ADMIN_USER:
             secretKeyRef:
               name: home-assistant-auth
