@@ -90,7 +90,7 @@ persistence:
     type: secret
     name: home-assistant-auth
     globalMounts:
-      - path: /etc/ssh_gh_deploy_key
+      - path: /root/.ssh/ssh_gh_deploy_key
         subPath: gh_deploy_key
   config:
     type: persistentVolumeClaim
