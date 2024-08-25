@@ -35,10 +35,10 @@ controllers:
             value: "10.42.0.0/16,10.43.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
-      resources:
-        requests:
-          memory: 100Mi
-          cpu: 100m
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
 
 serviceAccount:
   create: true
