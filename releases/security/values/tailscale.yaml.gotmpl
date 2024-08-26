@@ -15,11 +15,15 @@ defaultPodOptions:
 controllers:
   main:
     strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
     containers:
       main:
         image:
           repository: ghcr.io/tailscale/tailscale
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/tailscale/tailscale") }}{{ $value }}{{ end }}{{ end }}'
+        args:
+          - --snat-subnet-routes=false
         env:
           - name: TS_KUBE_SECRET
             value: tailscale-auth-current
