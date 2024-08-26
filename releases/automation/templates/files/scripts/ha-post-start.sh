@@ -79,9 +79,10 @@ if [ ! -f .storage/.intialized ]; then
 
   ADMIN_ID=$(cat .storage/auth | jq -r '.data.users[] | select(.name == "'$ADMIN_USER'") | .id')
   
-  cat auth_providers.final.yaml.tpl | sed 's/ADMIN_ID/'$ADMIN_ID'/g' > auth_providers.yaml
+  cp configuration.yaml configuration.yaml.old
+  cat configuration.yaml | sed -r 's/#?(.+): +(.+) #ADMIN_ID/\1: '$ADMIN_ID' #ADMIN_ID/g' > configuration.yaml
 
-  echo "Created auth_providers.yaml" && cat auth_providers.yaml
+  echo "Updated configuration.yaml" && cat configuration.yaml
 
   echo "DONE" > .storage/.intialized
 

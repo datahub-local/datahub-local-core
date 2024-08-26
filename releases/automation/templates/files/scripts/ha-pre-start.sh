@@ -10,21 +10,28 @@ SSH_KEY=/etc/ssh_gh_deploy_key
 
 GIT_REPO="git@github.com:datahub-local/datahub-local-home-assistant-config.git"
 GIT_BRANCH="main"
-export GIT_USER_EMAIL="bot@datahub-local.alvsanand.com"
-export GIT_USER_NAME="Datahub.local Bot"
-export GIT_USER_NAME="Datahub.local Bot"
-export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+GIT_USER_EMAIL="bot@datahub-local.alvsanand.com"
+GIT_USER_NAME="Datahub.local Bot"
+GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ########################################
 
 cd $CONFIG_DIR
 
 echo "Init $SCRIPT_NAME"
 
-echo "Configure SSH."
-eval $(ssh-agent -s) > /dev/null && (cat $SSH_KEY && echo) | ssh-add -k -
-
 if [[ ! -f ".HA_VERSION" ]]; then
     echo "Configuring git"
+
+    echo "Configure bashrc."
+
+    cat >> $HOME/.bashrc <<EOF
+eval \$(ssh-agent -s) > /dev/null && (cat $SSH_KEY && echo) | ssh-add -k -
+export GIT_USER_EMAIL="$GIT_USER_EMAIL"
+export GIT_USER_NAME="$GIT_USER_NAME"
+export GIT_SSH_COMMAND="$GIT_SSH_COMMAND"
+EOF
+
+    source $HOME/.bashrc
 
     echo "Removing all files from folder"
 
@@ -36,9 +43,10 @@ if [[ ! -f ".HA_VERSION" ]]; then
 
     wget -O - https://get.hacs.xyz | bash -
 
-    echo "Copying initial auth_providers"
-
-    cp auth_providers.init.yaml.tpl auth_providers.yaml
+    echo "Disable trusted_users"
+    cp configuration.yaml configuration.yaml.old
+    cat configuration.yaml.old | sed -r 's/#?(.+): +(.+) #ADMIN_ID/#\1: \2 #ADMIN_ID/g' > configuration.yaml
+    
     mkdir lost+found
 else
     echo "Home Assistant already initialized"

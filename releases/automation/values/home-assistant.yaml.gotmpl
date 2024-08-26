@@ -31,7 +31,10 @@ controllers:
         image:
           repository: homeassistant/home-assistant
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "homeassistant/home-assistant") }}{{ $value }}{{ end }}{{ end }}'
-        command: ["/bin/bash", "/usr/local/ha-scripts/ha-pre-start.sh"]
+        command:
+          - "/bin/bash"
+          - "-i"
+          - "/usr/local/ha-scripts/ha-pre-start.sh"
         resources:
           requests:
             memory: 100Mi
@@ -80,7 +83,10 @@ controllers:
         lifecycle:
           postStart:
             exec:
-              command: ["/bin/bash", "/usr/local/ha-scripts/ha-post-start.sh"]
+              command:
+                - "/bin/bash"
+                - "-i"
+                - "/usr/local/ha-scripts/ha-post-start.sh"
       code-server:
         image:
           repository: ghcr.io/coder/code-server
@@ -123,6 +129,8 @@ persistence:
     globalMounts:
       - path: /config
   tmp:
+    type: emptyDir
+  root:
     type: emptyDir
 
 service:
