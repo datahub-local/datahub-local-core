@@ -22,8 +22,6 @@ controllers:
         image:
           repository: ghcr.io/tailscale/tailscale
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/tailscale/tailscale") }}{{ $value }}{{ end }}{{ end }}'
-        args:
-          - --snat-subnet-routes=false
         env:
           - name: TS_KUBE_SECRET
             value: tailscale-auth-current
@@ -39,6 +37,8 @@ controllers:
             value: "10.42.0.0/16,10.43.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
+          - name: TS_EXTRA_ARGS
+            value: --snat-subnet-routes=false
         resources:
           requests:
             memory: 100Mi
