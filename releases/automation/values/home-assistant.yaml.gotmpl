@@ -8,7 +8,7 @@ defaultPodOptions:
   hostNetwork: true # Fix https://github.com/k3s-io/k3s/discussions/2997
 
   securityContext:
-    runAsNonRoot: false
+    runAsUser: 0
 
 configMaps:
   scripts:
@@ -144,7 +144,7 @@ ingress:
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Home Assistant"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name: {{ .Values.release_name }}-home-assistant"
+      gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-home-assistant"
       gethomepage.dev/description: "Open source home automation that puts local control and privacy first."
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "si-homeassistant"
@@ -168,7 +168,7 @@ ingress:
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Home Assistant (Code)"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name: {{ .Values.release_name }}-home-assistant"
+      gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-home-assistant"
       gethomepage.dev/description: ""
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "si-codeium"
