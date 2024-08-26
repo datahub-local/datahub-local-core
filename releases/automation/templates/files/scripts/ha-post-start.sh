@@ -80,7 +80,7 @@ if [ ! -f .storage/.intialized ]; then
   ADMIN_ID=$(cat .storage/auth | jq -r '.data.users[] | select(.name == "'$ADMIN_USER'") | .id')
   
   cp configuration.yaml configuration.yaml.old
-  cat configuration.yaml | sed -r 's/#?(.+): +(.+) #ADMIN_ID/\1: '$ADMIN_ID' #ADMIN_ID/g' > configuration.yaml
+  cat configuration.yaml.old | sed -r 's/#?(.+): +(.+) #ADMIN_ID/\1: '$ADMIN_ID' #ADMIN_ID/g' > configuration.yaml
 
   echo "Updated configuration.yaml" && cat configuration.yaml
 
