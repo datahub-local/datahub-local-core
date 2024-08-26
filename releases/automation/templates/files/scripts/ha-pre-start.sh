@@ -24,11 +24,12 @@ if [[ ! -f ".HA_VERSION" ]]; then
 
     echo "Configure bashrc."
 
+    git config --global user.email "$GIT_USER_EMAIL"
+    git config --global user.name "$GIT_USER_NAME"
+    git config --global core.sshCommand "$GIT_SSH_COMMAND"
+
     cat >> $HOME/.bashrc <<EOF
 eval \$(ssh-agent -s) > /dev/null && (cat $SSH_KEY && echo) | ssh-add -k -
-export GIT_USER_EMAIL="$GIT_USER_EMAIL"
-export GIT_USER_NAME="$GIT_USER_NAME"
-export GIT_SSH_COMMAND="$GIT_SSH_COMMAND"
 EOF
 
     source $HOME/.bashrc
