@@ -35,7 +35,7 @@ usage() {
 }
 
 # Function to upload changes: pull, commit, and push
-upload() {
+upload() {    
     git pull
 
     if [[ -n $(git status --porcelain) ]]; then
@@ -70,7 +70,6 @@ download() {
 
     git pull
 }
-
 
 ########################################
 

@@ -78,6 +78,22 @@ controllers:
           postStart:
             exec:
               command: ["/bin/bash", "/usr/local/ha-scripts/ha-post-start.sh"]
+      code-server:
+        image:
+          repository: ghcr.io/coder/code-server
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/coder/code-server") }}{{ $value }}{{ end }}{{ end }}'
+        args:
+          - --auth
+          - none
+          - --user-data-dir
+          - "/config/.vscode"
+          - --extensions-dir
+          - "/config/.vscode"
+          - --port
+          - "8080"
+          - "/config"
+        env:
+          TZ: Europe/Madrid
 
 serviceAccount:
   create: true
@@ -112,6 +128,8 @@ service:
     ports:
       http:
         port: 8123
+      code-server:
+        port: 8080
 
 ingress:
   main:
@@ -137,6 +155,29 @@ ingress:
             service:
               name: "{{ .Values.release_name }}-automation-home-assistant"
               port: 8123
+  main-code:
+    enabled: true
+
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Home Assistant (Code)"
+      gethomepage.dev/description: ""
+      gethomepage.dev/group: "Automation"
+      gethomepage.dev/icon: "si-codeium"
+
+    className: "traefik"
+
+    hosts:
+      - host: "automation-home-assistant-code.{{ .StateValues.ingress_hostname }}"
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: "{{ .Values.release_name }}-automation-home-assistant"
+              port: 8080
 
 serviceMonitor:
   main:
