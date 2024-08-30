@@ -10,15 +10,14 @@ prometheusOperator:
 prometheus:
   ingress:
     enabled: true
-    ingressClassName: "traefik"
+    ingressClassName: "nginx"
     hosts:
       - "monitoring-prometheus.{{ .StateValues.ingress_hostname }}"
     paths:
       - /
     secureBackends: true
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Prometheus"
@@ -65,15 +64,14 @@ alertmanager:
 
   ingress:
     enabled: true
-    ingressClassName: "traefik"
+    ingressClassName: "nginx"
     hosts:
       - "monitoring-alertmanager.{{ .StateValues.ingress_hostname }}"
     paths:
       - /
     secureBackends: true
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Alertmanager"
@@ -126,14 +124,12 @@ grafana:
     passwordKey: password
   ingress:
     enabled: true
-    ingressClassName: "traefik"
+    ingressClassName: "nginx"
     hosts:
       - "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
     path: /
     secureBackends: true
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grafana"
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"

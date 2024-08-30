@@ -23,13 +23,11 @@ metrics:
 
 consoleIngress:
   enabled: true
-  ingressClassName: "traefik"
+  ingressClassName: "nginx"
   path: /
   hosts:
     - "data-minio.{{ .StateValues.ingress_hostname }}"
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
     gethomepage.dev/href: "https://data-minio.{{ .StateValues.ingress_hostname }}/login"

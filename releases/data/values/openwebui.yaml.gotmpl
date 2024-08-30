@@ -11,11 +11,9 @@ persistence:
 
 ingress:
   enabled: true
-  class: "traefik"
+  class: "nginx"
   host: "data-openwebui.{{ .StateValues.ingress_hostname }}"
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Open WebUI"
     gethomepage.dev/pod-selector: "app.kubernetes.io/instance=open-webui"

@@ -16,7 +16,7 @@ releases:
     namespace: default
     chart: "."
     values:
-      - ../../values/global.yaml
+      - ../../values/global.yaml.gotmpl
       - values/default.yaml.gotmpl
   - name: "{{ .Values.release_name }}-tailscale"
     namespace: security

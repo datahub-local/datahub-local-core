@@ -7,7 +7,7 @@ releases:
     namespace: data
     chart: "."
     values:
-      - ../../values/global.yaml
+      - ../../values/global.yaml.gotmpl
       - values/default.yaml.gotmpl
       - values/superset.yaml.gotmpl
       #{{- if isFile "/helm-values/security.yaml" }}

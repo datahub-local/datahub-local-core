@@ -1,9 +1,0 @@
-# Common values shared for all charts
-release_name: datahub-local-core
-
-ingress_hostname: homelab.alvsanand.com
-ingress_port: 443
-
-security_enabled: true
-
-security_admin_user: "admin"

@@ -12,7 +12,7 @@ defaultPodOptions:
         - "frontend"
   securityContext:
     fsGroup: 82
-  
+
 configMaps:
   config:
     enabled: true
@@ -131,8 +131,7 @@ ingress:
     enabled: true
 
     annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
 
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Grocy"
@@ -140,7 +139,7 @@ ingress:
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "grocy.svg"
 
-    className: "traefik"
+    className: "nginx"
 
     hosts:
       - host: "other-grocy.{{ .StateValues.ingress_hostname }}"

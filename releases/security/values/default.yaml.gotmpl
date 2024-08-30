@@ -1,3 +1,3 @@
-#{{ $security_admin_user := (readFile "../../../values/global.yaml" | fromYaml).security_admin_user }}
+#{{ $security_admin_user := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).security_admin_user }}
 
 postgress_user: "{{ $security_admin_user }}"

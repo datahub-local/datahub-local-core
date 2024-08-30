@@ -2,7 +2,7 @@
 environments:
   default:
     values:
-      - ../../values/global.yaml
+      - ../../values/global.yaml.gotmpl
       - ../../values/_version.yaml
       #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml

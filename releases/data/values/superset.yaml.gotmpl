@@ -126,14 +126,12 @@ extraConfigs:
 
 ingress:
   enabled: true
-  className: "traefik"
+  className: "nginx"
   path: /
   pathType: Prefix
   hosts:
     - "data-superset.{{ .StateValues.ingress_hostname }}"
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Superset"
     gethomepage.dev/pod-selector: "app=superset"

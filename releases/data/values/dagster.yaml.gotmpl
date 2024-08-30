@@ -110,11 +110,10 @@ ingress:
 
   apiVersion: "networking.k8s.io/v1/Ingress"
 
-  ingressClassName: "traefik"
+  ingressClassName: "nginx"
 
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ if .Values.security_enabled }}security-security-oauth2@kubernetescrd{{ end }}"
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Dagster"
