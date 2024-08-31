@@ -5,7 +5,7 @@ image:
 
 config:
   extraArgs:
-    - -kubeconfig=/home/headlamp/.config/Headlamp/kubeconfigs/config
+    - -kubeconfig=/home/headlamp/.kube/config
 
 podAnnotations:
   reloader.stakater.com/auto: "true"
@@ -27,7 +27,7 @@ initContainers:
   - command:
       - /bin/sh
       - /scripts/create-kubeconfig.sh
-      - /home/headlamp/.config/Headlamp/kubeconfigs/config
+      - /home/headlamp/.kube/config
     image: 'ghcr.io/headlamp-k8s/headlamp:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}'
     imagePullPolicy: IfNotPresent
     name: headlamp-init
@@ -51,7 +51,7 @@ ingress:
     #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Headlamp "
+    gethomepage.dev/name: "Headlamp"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=headlamp"
     gethomepage.dev/description: "A Kubernetes web UI that is fully-featured, user-friendly and extensible."
     gethomepage.dev/group: "Monitoring"

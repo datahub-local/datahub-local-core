@@ -10,10 +10,17 @@ security_enabled: true
 
 security_admin_user: "admin"
 
+################################################################################################
+# How to use it, add this to the ingress annotations. Remove replace if not needed.
+################################################################################################
+# {{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "/static-plugins|/manifest.json" | nindent 4 }}{{ end }}
 security_oauth2_annotations:
-  nginx.ingress.kubernetes.io/auth-response-headers: Authorization
   nginx.ingress.kubernetes.io/auth-signin: https://security-oauth2.{{ $ingress_hostname }}/oauth2/start?rd=https://$host$escaped_request_uri
   nginx.ingress.kubernetes.io/auth-url: https://security-oauth2.{{ $ingress_hostname }}/oauth2/auth
+  nginx.ingress.kubernetes.io/auth-snippet: |
+    if ( $request_uri ~* "^SOME_REGEX_TO_SKIP" ) {
+        return 200;
+    }
   nginx.ingress.kubernetes.io/configuration-snippet: |
     auth_request_set $name_upstream_1 $upstream_cookie__oauth2_proxy_1;
 
