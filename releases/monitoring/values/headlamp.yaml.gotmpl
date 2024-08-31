@@ -5,8 +5,10 @@ image:
 
 config:
   extraArgs:
-    - -kubeconfig=/home/headlamp/.kube/config
+    - -kubeconfig=/home/headlamp/.config/Headlamp/kubeconfigs/config
 
+podAnnotations:
+  reloader.stakater.com/auto: "true"
 
 volumeMounts:
   - name: script-volume
