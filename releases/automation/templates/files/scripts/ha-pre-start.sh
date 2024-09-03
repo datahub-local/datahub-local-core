@@ -19,7 +19,7 @@ cd $CONFIG_DIR
 
 echo "Init $SCRIPT_NAME"
 
-if [[ ! -f ".HA_VERSION" ]]; then
+if [[ ! -f "$HOME/.bashrc" ]]; then
     echo "Configuring git"
 
     echo "Configure bashrc."
@@ -31,7 +31,9 @@ if [[ ! -f ".HA_VERSION" ]]; then
     cat >> $HOME/.bashrc <<EOF
 eval \$(ssh-agent -s) > /dev/null && (cat $SSH_KEY && echo) | ssh-add -k -
 EOF
+fi
 
+if [[ ! -f ".HA_VERSION" ]]; then
     source $HOME/.bashrc
 
     echo "Removing all files from folder"
