@@ -1,0 +1,107 @@
+#
+# IMPORTANT NOTE
+#
+# This chart inherits from our common library chart. You can check the default values/options here:
+# https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    type: statefulset
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      main:
+        image:
+          repository: ghcr.io/mealie-recipes/mealie
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/mealie-recipes/mealie") }}{{ $value }}{{ end }}{{ end }}'
+        env:
+          ALLOW_SIGNUP: "false"
+          PUID: 1000
+          PGID: 1000
+          BASE_URL: "https://other-mealie.{{ .StateValues.ingress_hostname }}/"
+          TZ: "Europe/Madrid"
+
+          MAX_WORKERS: 1
+          WEB_CONCURRENCY: 1
+
+          OIDC_AUTH_ENABLED: "true"
+          OIDC_SIGNUP_ENABLED: "true"
+          OIDC_CONFIGURATION_URL: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
+          OIDC_CLIENT_ID: "mealie"
+          OIDC_AUTO_REDIRECT: "true"
+          OIDC_ADMIN_GROUP: ""
+
+          DB_ENGINE: postgres
+          POSTGRES_USER:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: user
+          POSTGRES_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+          POSTGRES_SERVER: "{{ $.Values.release_name }}-data-postgresql-hl"
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: mealie
+
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
+
+serviceAccount:
+  create: true
+
+persistence:
+  persistence:
+    enabled: true
+
+    accessMode: ReadWriteOnce
+    size: 2Gi
+    advancedMounts:
+      main:
+        main:
+          - path: /app/data/
+            readOnly: false
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 9000
+
+ingress:
+  main:
+    enabled: true
+
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Mealie"
+      gethomepage.dev/description: "A self hosted recipe manager and meal planner."
+      gethomepage.dev/group: "Other"
+      gethomepage.dev/icon: "https://raw.githubusercontent.com/mealie-recipes/mealie/mealie-next/docs/docs/assets/img/favicon.png"
+
+    className: "nginx"
+
+    hosts:
+      - host: "other-mealie.{{ .StateValues.ingress_hostname }}"
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: "{{ .Values.release_name }}-mealie"
+              port: 9000
