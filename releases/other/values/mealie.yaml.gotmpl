@@ -16,21 +16,21 @@ controllers:
           repository: ghcr.io/mealie-recipes/mealie
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/mealie-recipes/mealie") }}{{ $value }}{{ end }}{{ end }}'
         env:
-          ALLOW_SIGNUP: "false"
           PUID: 1000
           PGID: 1000
-          BASE_URL: "https://other-mealie.{{ .StateValues.ingress_hostname }}/"
-          TZ: "Europe/Madrid"
-
           MAX_WORKERS: 1
           WEB_CONCURRENCY: 1
+          TZ: "Europe/Madrid"
 
+          BASE_URL: "https://other-mealie.{{ .StateValues.ingress_hostname }}/"
+
+          ALLOW_SIGNUP: "false"
           OIDC_AUTH_ENABLED: "true"
           OIDC_SIGNUP_ENABLED: "true"
           OIDC_CONFIGURATION_URL: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
           OIDC_CLIENT_ID: "mealie"
-          OIDC_AUTO_REDIRECT: "true"
-          OIDC_ADMIN_GROUP: ""
+          OIDC_GROUPS_CLAIM: "groups"
+          OIDC_ADMIN_GROUP: '{{ (split "|" (split "," .StateValues.security_github_organizations)._0)._0 }}'
 
           DB_ENGINE: postgres
           POSTGRES_USER:
