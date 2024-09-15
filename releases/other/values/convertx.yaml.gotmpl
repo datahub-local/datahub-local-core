@@ -13,14 +13,14 @@ defaultPodOptions:
 volumeMounts:
   - name: data
     mountPath: /app/data
-    
+
 volumes:
   - name: data
     emptyDir: {}
 
 controllers:
   main:
-    strategy: Recreate
+    strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
