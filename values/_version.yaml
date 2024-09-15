@@ -4,7 +4,6 @@ container_image_version:
   ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.8.7
   ghcr.io/gethomepage/homepage: v0.9.9
-  ghcr.io/headlamp-k8s/headlamp: v0.25.1
   ghcr.io/mealie-recipes/mealie: v1.12.0
   ghcr.io/tailscale/tailscale: v1.72.1
   homeassistant/home-assistant: 2024.9.1
@@ -30,7 +29,7 @@ helm_chart_version:
   dagster/dagster: 1.8.0
   grafana/loki: 6.10.0
   grafana/promtail: 6.16.4
-  headlamp/headlamp: 0.24.1
+  headlamp/headlamp: 0.25.0
   jameswynn/homepage: 1.2.3
   minio-oficial/minio: 5.2.0
   nessie/nessie: 0.95.0
