@@ -10,9 +10,17 @@ defaultPodOptions:
     runAsUser: 1000
     runAsGroup: 1000
 
+volumeMounts:
+  - name: data
+    mountPath: /app/data
+    
+volumes:
+  - name: data
+    emptyDir: {}
+
 controllers:
   main:
-    strategy: RollingUpdate
+    strategy: Recreate
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
@@ -40,8 +48,11 @@ controllers:
               failureThreshold: 30
               periodSeconds: 5
 
-serviceAccount:
-  create: true
+persistence:
+  data:
+    type: emptyDir
+    globalMounts:
+      - path: /app/data
 
 service:
   main:
