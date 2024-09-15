@@ -7,7 +7,7 @@
 controllers:
   main:
     type: statefulset
-    strategy: Recreate
+    strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
     containers:

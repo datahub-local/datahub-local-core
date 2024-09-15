@@ -22,7 +22,7 @@ configMaps:
 controllers:
   main:
     replicas: 1
-    strategy: Recreate
+    strategy: RollingUpdate
     type: statefulset
     annotations:
       reloader.stakater.com/auto: "true"
