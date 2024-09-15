@@ -8,7 +8,7 @@ prometheus_rules:
           annotations:
             description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server'
             summary: One or more nodes have a high CPUs temperature'
-          expr: avg(node_hwmon_temp_celsius) by (instance) > 55
+          expr: avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance) > 55
           for: 5m
           labels:
             severity: warning
@@ -16,7 +16,7 @@ prometheus_rules:
           annotations:
             description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server'
             summary: One or more nodes have a extreme CPUs temperature'
-          expr: avg(node_hwmon_temp_celsius) by (instance) > 60
+          expr: avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance) > 60
           for: 5m
           labels:
             severity: critical
