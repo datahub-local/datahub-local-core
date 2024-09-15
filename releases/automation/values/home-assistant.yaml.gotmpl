@@ -54,6 +54,10 @@ controllers:
             secretKeyRef:
               name: home-assistant-auth
               key: password
+          CAMERA_PASSWORD:
+            secretKeyRef:
+              name: home-assistant-auth
+              key: camera_password
         resources:
           requests:
             memory: 300Mi
