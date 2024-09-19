@@ -36,4 +36,4 @@ security_oauth2_annotations:
       if ngx.var.name_upstream_1 ~= "" then
         ngx.header["Set-Cookie"] = "_oauth2_proxy=" .. ngx.var.name_upstream_1 .. ngx.var.auth_cookie:match("(; .*)")
       end
-    }s
+    }
