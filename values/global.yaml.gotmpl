@@ -19,18 +19,18 @@ security_oauth2_annotations:
         return 200;
     }
 
-    set $auth_header $http_authorization;
+    # set $auth_header $http_authorization;
 
-    if ( $request_uri ~* ^/basic-auth/([^/]+)/(.*)$ ) {
-      set $basic_auth $1;
-      set $auth_header "Basic ${basic_auth}";
-    }
+    # if ( $request_uri ~* ^/basic-auth/([^/]+)/(.*)$ ) {
+    #   set $basic_auth $1;
+    #   set $auth_header "Basic ${basic_auth}";
+    # }
 
-    proxy_set_header Authorization $auth_header;
+    # proxy_set_header Authorization $auth_header;
   nginx.ingress.kubernetes.io/configuration-snippet: |
     auth_request_set $name_upstream_1 $upstream_cookie__oauth2_proxy;
 
-    rewrite ^(/auth-basic/[^/]+)/(.*)$ /$2 break;
+    # rewrite ^(/auth-basic/[^/]+)/(.*)$ /$2 break;
 
     access_by_lua_block {
       if ngx.var.name_upstream_1 ~= "" then
