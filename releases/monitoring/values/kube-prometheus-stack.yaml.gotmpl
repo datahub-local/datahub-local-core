@@ -141,18 +141,20 @@ prometheus-node-exporter:
   extraArgs:
     - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
     - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
-    - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+    - --collector.textfile.directory=/var/lib/node_exporter
+
+  securityContext:
+    privileged: true
+    runAsUser: 0
 
   sidecars:
     - name: node-exporter-textfiles-smartmon
-      image: quay.io/galexrt/node-exporter-textfiles:main
+      image: ghcr.io/datahub-local/node-exporter-textfiles:latest
       env:
         - name: SCRIPT
           value: "smartmon.py"
-        - name: OUTPUT_FILENAME
-          value: "textfile_collector/smartmon"
         - name: INTERVAL
-          value: "900"
+          value: "60"
       resources:
         limits:
           cpu: 100m
@@ -160,9 +162,6 @@ prometheus-node-exporter:
         requests:
           cpu: 100m
           memory: 128Mi
-      securityContext:
-        privileged: true
-        runAsUser: 0
 
   sidecarVolumeMount:
     - name: collector-textfiles
