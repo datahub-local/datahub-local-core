@@ -151,12 +151,12 @@ prometheus-node-exporter:
 
   sidecars:
     - name: node-exporter-textfiles-smartmon
-      image: ghcr.io/datahub-local/node-exporter-textfiles:latest
+      image: ghcr.io/datahub-local/node-exporter-textfiles:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/node-exporter-textfiles") }}{{ $value }}{{ end }}{{ end }}
       env:
         - name: SCRIPT
           value: "smartmon.py"
         - name: INTERVAL
-          value: "60"
+          value: "120"
       resources:
         limits:
           cpu: 100m

@@ -6,6 +6,7 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v0.9.9
   ghcr.io/mealie-recipes/mealie: v1.12.0
   ghcr.io/tailscale/tailscale: v1.72.1
+  ghcr.io/datahub-local/node-exporter-textfiles: v202409211853
   homeassistant/home-assistant: 2024.9.1
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -21,6 +22,7 @@ helm_chart_repository:
   prometheus-community: https://prometheus-community.github.io/helm-charts
   robusta: https://robusta-charts.storage.googleapis.com
   superset: http://apache.github.io/superset/
+  vmware-tanzu: https://vmware-tanzu.github.io/helm-charts/
   trino: https://trinodb.github.io/charts
 helm_chart_version:
   bitnami/postgresql: 15.5.21
@@ -38,4 +40,5 @@ helm_chart_version:
   prometheus-community/kube-prometheus-stack: 61.8.0
   robusta/robusta: 0.16.1
   superset/superset: 0.12.11
+  vmware-tanzu/velero: 7.2.1
   trino/trino: 0.27.0
