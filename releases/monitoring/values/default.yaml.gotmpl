@@ -20,6 +20,22 @@ prometheus_rules:
           for: 5m
           labels:
             severity: critical
+        - alert: HighHDDTemperature
+          annotations:
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature in your HDD and you must shutdown the server'
+            summary: One or more nodes have a high HDDs temperature'
+          expr: avg(avg_over_time(smartmon_temperature_celcius[1m])) by (instance) > 70
+          for: 5m
+          labels:
+            severity: warning
+        - alert: ExtremeHDDTemperature
+          annotations:
+            description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature in your HDD and you must shutdown the server'
+            summary: One or more nodes have a extreme HDDs temperature'
+          expr: avg(avg_over_time(smartmon_temperature_celcius[1m])) by (instance) > 95
+          for: 5m
+          labels:
+            severity: critical
         - alert: ArgoAppNotSynced
           expr: |
             argocd_app_sync_total{phase="Error"} == 1
