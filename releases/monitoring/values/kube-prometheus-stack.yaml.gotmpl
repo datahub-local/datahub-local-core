@@ -144,7 +144,6 @@ prometheus-node-exporter:
     - --collector.textfile.directory=/var/lib/node_exporter
 
   securityContext:
-    privileged: true
     runAsUser: 0
 
   sidecars:
@@ -162,6 +161,8 @@ prometheus-node-exporter:
         requests:
           cpu: 100m
           memory: 128Mi
+      securityContext:
+        privileged: true
 
   sidecarVolumeMount:
     - name: collector-textfiles
