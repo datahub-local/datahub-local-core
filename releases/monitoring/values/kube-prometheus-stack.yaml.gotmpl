@@ -144,6 +144,9 @@ prometheus-node-exporter:
     - --collector.textfile.directory=/var/lib/node_exporter
 
   securityContext:
+    fsGroup: 0
+    runAsGroup: 0
+    runAsNonRoot: false
     runAsUser: 0
 
   sidecars:
