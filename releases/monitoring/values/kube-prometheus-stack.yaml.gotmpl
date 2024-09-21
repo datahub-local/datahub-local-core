@@ -146,9 +146,6 @@ prometheus-node-exporter:
   sidecars:
     - name: node-exporter-textfiles-smartmon
       image: quay.io/galexrt/node-exporter-textfiles:main
-      volumeMounts:
-        - name: tmp
-          mountPath: /tmp
       env:
         - name: SCRIPT
           value: "smartmon.py"
