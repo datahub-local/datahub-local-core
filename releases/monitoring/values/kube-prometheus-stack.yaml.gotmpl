@@ -136,3 +136,41 @@ grafana:
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
       gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "grafana.png"
+
+prometheus-node-exporter:
+  extraArgs:
+    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+    - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+
+  sidecars:
+    - name: node-exporter-textfiles-smartmon
+      image: quay.io/galexrt/node-exporter-textfiles:main
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      env:
+        - name: SCRIPT
+          value: "smartmon.py"
+        - name: OUTPUT_FILENAME
+          value: "textfile_collector/smartmon"
+        - name: INTERVAL
+          value: "900"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+  sidecarVolumeMount:
+    - name: collector-textfiles
+      mountPath: /var/lib/node_exporter/
+      readOnly: false
+
+  sidecarHostVolumeMounts:
+    - name: host-dev
+      hostPath: /dev
+      mountPath: /dev
+      readOnly: true
