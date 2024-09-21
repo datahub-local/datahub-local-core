@@ -25,7 +25,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 16450,
   "graphTooltip": 1,
-  "id": 146,
+  "id": 181,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -135,7 +135,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 9,
         "x": 6,
         "y": 1
       },
@@ -225,8 +225,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 9,
+        "x": 15,
         "y": 1
       },
       "id": 4,
@@ -266,108 +266,6 @@
       ],
       "title": "Cluster Memory usage",
       "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
-      "id": 61,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": false
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "8.0.6",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance)",
-          "format": "time_series",
-          "interval": "$resolution",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Cluster CPU Temperature",
-      "type": "timeseries"
     },
     {
       "datasource": {
@@ -576,7 +474,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 5,
         "x": 6,
         "y": 6
       },
@@ -655,8 +553,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
-        "x": 9,
+        "w": 4,
+        "x": 11,
         "y": 6
       },
       "id": 12,
@@ -736,8 +634,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
-        "x": 12,
+        "w": 4,
+        "x": 15,
         "y": 6
       },
       "id": 9,
@@ -817,8 +715,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
-        "x": 15,
+        "w": 5,
+        "x": 19,
         "y": 6
       },
       "id": 10,
@@ -863,6 +761,210 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 0,
+        "y": 9
+      },
+      "id": 61,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance)",
+          "format": "time_series",
+          "interval": "$resolution",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster CPU Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 11,
+        "y": 9
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.0.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "avg(avg_over_time(smartmon_temperature_celcius[1m])) by (instance)",
+          "format": "time_series",
+          "interval": "$resolution",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster HDD Temperature",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
@@ -872,7 +974,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 16
       },
       "id": 41,
       "panels": [],
@@ -952,7 +1054,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 10
+        "y": 17
       },
       "id": 27,
       "options": {
@@ -1091,7 +1193,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 10
+        "y": 17
       },
       "id": 59,
       "options": {
@@ -1217,7 +1319,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 10
+        "y": 17
       },
       "id": 58,
       "options": {
@@ -1264,7 +1366,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 24
       },
       "id": 33,
       "panels": [],
@@ -1344,7 +1446,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 18
+        "y": 25
       },
       "id": 32,
       "options": {
@@ -1460,7 +1562,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 18
+        "y": 25
       },
       "id": 45,
       "options": {
@@ -1563,7 +1665,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 18
+        "y": 25
       },
       "id": 46,
       "options": {
@@ -1612,7 +1714,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 32
       },
       "id": 35,
       "panels": [],
@@ -1675,8 +1777,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1692,7 +1793,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 26
+        "y": 33
       },
       "id": 17,
       "options": {
@@ -1788,8 +1889,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1830,7 +1930,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 26
+        "y": 33
       },
       "id": 57,
       "options": {
@@ -1914,8 +2014,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1956,7 +2055,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 26
+        "y": 33
       },
       "id": 60,
       "options": {
@@ -2027,8 +2126,8 @@
       {
         "current": {
           "selected": false,
-          "text": "v1.30.1+k3s1",
-          "value": "v1.30.1+k3s1"
+          "text": "v1.31.0+k3s1",
+          "value": "v1.31.0+k3s1"
         },
         "datasource": {
           "type": "prometheus",
@@ -2053,7 +2152,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "5m",
           "value": "5m"
         },
