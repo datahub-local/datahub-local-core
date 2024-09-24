@@ -1,0 +1,46 @@
+# https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml
+
+configuration:
+  backupStorageLocation:
+    - name: velero-s3-backup
+      provider: aws
+      bucket: datahub-local-test
+      prefix: backup/velero
+      default: true
+      credential:
+        name: velero-auth
+        key: s3_credentials
+      config:
+        s3ForcePathStyle: true
+        s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+  volumeSnapshotLocation:
+    - name: velero-s3-backup
+      provider: aws
+      bucket: datahub-local-test
+      prefix: backup/velero
+      default: true
+      credential:
+        name: velero-auth
+        key: s3_credentials
+      config:
+        s3ForcePathStyle: true
+        s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.8.1
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+metrics:
+  enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+  nodeAgentPodMonitor:
+    enabled: true
+
+  prometheusRule:
+    enabled: true
