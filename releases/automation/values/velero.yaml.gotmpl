@@ -1,30 +1,24 @@
 # https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml
 
+s3-configuration: &s3-configuration
+  name: velero-s3-backup
+  provider: aws
+  bucket: datahub-local-test
+  prefix: backup/velero
+  default: true
+  credential:
+    name: velero-auth
+    key: s3-credentials
+  config:
+    region: minio
+    s3ForcePathStyle: true
+    s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+
 configuration:
   backupStorageLocation:
-    - name: velero-s3-backup
-      provider: aws
-      bucket: datahub-local-test
-      prefix: backup/velero
-      default: true
-      credential:
-        name: velero-auth
-        key: s3_credentials
-      config:
-        s3ForcePathStyle: true
-        s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+    - *s3-configuration
   volumeSnapshotLocation:
-    - name: velero-s3-backup
-      provider: aws
-      bucket: datahub-local-test
-      prefix: backup/velero
-      default: true
-      credential:
-        name: velero-auth
-        key: s3_credentials
-      config:
-        s3ForcePathStyle: true
-        s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+    - *s3-configuration
 
 initContainers:
   - name: velero-plugin-for-aws
