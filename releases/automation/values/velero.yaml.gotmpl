@@ -19,10 +19,16 @@ configuration:
     - *s3-configuration
   volumeSnapshotLocation:
     - *s3-configuration
+  features: EnableCSI
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.8.1
+    image: velero/velero-plugin-for-aws:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "velero/velero-plugin-for-aws") }}{{ $value }}{{ end }}{{ end }}
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+  - name: velero-plugin-for-csi
+    image: velero/velero-plugin-for-csi:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "velero/velero-plugin-for-aws") }}{{ $value }}{{ end }}{{ end }}
     volumeMounts:
       - mountPath: /target
         name: plugins
