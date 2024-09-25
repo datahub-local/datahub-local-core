@@ -9,7 +9,6 @@ container_image_version:
   ghcr.io/tailscale/tailscale: v1.72.1
   homeassistant/home-assistant: 2024.9.1
   velero/velero-plugin-for-aws: v1.10.1
-  velero/velero-plugin-for-csi: v0.7.1
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
