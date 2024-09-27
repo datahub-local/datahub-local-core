@@ -39,7 +39,7 @@ extraEnvVars:
   - name: OPENID_PROVIDER_URL
     value: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
   - name: OAUTH_PROVIDER_NAME
-    value: "Github"
+    value: "IAM"
   - name: OAUTH_SCOPES
     value: "openid email profile"
   - name: "DATABASE_URL"

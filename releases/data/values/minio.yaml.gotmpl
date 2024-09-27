@@ -49,7 +49,7 @@ oidc:
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
   scopes: "openid,profile,email"
   redirectUri: "https://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
-  displayName: "Github"
+  displayName: "IAM"
 #{{- end }}
 
 existingSecret: "minio-root-credentials"
