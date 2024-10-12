@@ -117,7 +117,7 @@ ingress:
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Dagster"
-    gethomepage.dev/pod-selector: "app=minio"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=dagster"
     gethomepage.dev/description: "The data orchestration platform built for productivity."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "si-octopusdeploy"
