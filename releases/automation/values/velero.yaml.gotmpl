@@ -7,7 +7,7 @@ s3-configuration: &s3-configuration
   prefix: backup/velero
   default: true
   credential:
-    name: velero-auth
+    name: backup-velero-auth
     key: s3_credentials
   config:
     region: minio
@@ -48,8 +48,8 @@ metrics:
     enabled: true
 
 extraObjects:
-  - kind: VolumeSnapshotClass
-    apiVersion: snapshot.storage.k8s.io/v1
+  - apiVersion: snapshot.storage.k8s.io/v1
+    kind: VolumeSnapshotClass
     metadata:
       name: longhorn-snapshot-vsc
       labels:
@@ -58,3 +58,15 @@ extraObjects:
     deletionPolicy: Delete
     parameters:
       type: bak
+  - apiVersion: longhorn.io/v1beta2
+    kind: Setting
+    metadata:
+      name: backup-target
+      namespace: kube-system
+    value: s3://datahub-local-test
+  - apiVersion: longhorn.io/v1beta2
+    kind: Setting
+    metadata:
+      name: backup-target-credential-secret
+      namespace: kube-system
+    value: backup-longhorn-auth
