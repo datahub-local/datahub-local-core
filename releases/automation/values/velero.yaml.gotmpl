@@ -4,7 +4,6 @@ s3-configuration: &s3-configuration
   name: velero-s3-backup
   provider: aws
   bucket: datahub-local-test
-  prefix: backup/velero
   default: true
   credential:
     name: backup-velero-auth
@@ -63,7 +62,7 @@ extraObjects:
     metadata:
       name: backup-target
       namespace: kube-system
-    value: s3://datahub-local-test
+    value: s3://datahub-local-test/backup/longhorn
   - apiVersion: longhorn.io/v1beta2
     kind: Setting
     metadata:
