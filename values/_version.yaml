@@ -2,12 +2,12 @@ container_image_version:
   ghcr.io/c4illin/convertx: v0.3.3
   ghcr.io/coder/code-server: 4.93.1
   ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
-  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.8.10
+  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.8.11
   ghcr.io/datahub-local/node-exporter-textfiles: v202409211914
   ghcr.io/gethomepage/homepage: v0.9.9
   ghcr.io/mealie-recipes/mealie: v1.12.0
   ghcr.io/tailscale/tailscale: v1.74.1
-  homeassistant/home-assistant: 2024.10.1
+  homeassistant/home-assistant: 2024.10.2
   velero/velero-plugin-for-aws: v1.10.1
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
