@@ -72,10 +72,8 @@ metrics:
 
 schedules:
   automation-home-assistant:
-    disabled: true
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
-    paused: false
     template:
       ttl: "240h"
       storageLocation: default
@@ -85,10 +83,8 @@ schedules:
       includedResources:
         - persistentVolumeClaims
   data-postgres:
-    disabled: true
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
-    paused: false
     template:
       ttl: "240h"
       storageLocation: default
