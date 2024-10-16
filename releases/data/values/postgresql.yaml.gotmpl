@@ -18,9 +18,9 @@ primary:
 
   podAnnotations:
     backup.velero.io/backup-volumes: backup
-    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "PGPASSWORD=$POSTGRES_PASSWORD pg_dump -U username -d dbname -h 127.0.0.1 > /scratch/backup.sql"]'
+    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "PGPASSWORD=$POSTGRES_PASSWORD pg_dumpall -U $POSTGRES_USER -h 127.0.0.1 --no-role-passwords > /scratch/backup.sql"]'
     pre.hook.backup.velero.io/timeout: 3m
-    post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/backup.sql\" ] && PGPASSWORD=$POSTGRES_PASSWORD psql -U username -h 127.0.0.1 -d dbname -f /scratch/backup.sql && rm -f /scratch/backup.sql;"]'
+    post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/backup.sql\" ] && PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h 127.0.0.1 -f /scratch/backup.sql && rm -f /scratch/backup.sql;"]'
 
   extraVolumes:
     - name: backup

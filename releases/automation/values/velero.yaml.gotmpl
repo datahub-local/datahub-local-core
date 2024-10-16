@@ -74,9 +74,10 @@ schedules:
   automation-home-assistant:
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
+    paused: false
     template:
       ttl: "240h"
-      storageLocation: default
+      storageLocation: velero-s3-backup
       snapshotVolumes: true
       includedNamespaces:
         - automation
@@ -87,7 +88,7 @@ schedules:
     useOwnerReferencesInBackup: false
     template:
       ttl: "240h"
-      storageLocation: default
+      storageLocation: velero-s3-backup
       snapshotVolumes: false
       includedNamespaces:
         - data
