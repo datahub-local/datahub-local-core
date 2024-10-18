@@ -21,23 +21,30 @@ metrics:
 
     interval: 30s
 
-consoleIngress:
+ingress:
   enabled: true
   ingressClassName: "nginx"
   path: /
   hosts:
     - "data-minio.{{ .StateValues.ingress_hostname }}"
+
+consoleIngress:
+  enabled: true
+  ingressClassName: "nginx"
+  path: /
+  hosts:
+    - "data-minio-console.{{ .StateValues.ingress_hostname }}"
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Minio"
-    gethomepage.dev/href: "https://data-minio.{{ .StateValues.ingress_hostname }}/login"
+    gethomepage.dev/href: "https://data-minio-console.{{ .StateValues.ingress_hostname }}/login"
     gethomepage.dev/pod-selector: "app=minio"
     gethomepage.dev/description: "The Object Store for AI Data Infrastructure."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "minio.svg"
 
 environment:
-  MINIO_BROWSER_REDIRECT_URL: "https://data-minio.{{ .StateValues.ingress_hostname }}/"
+  MINIO_BROWSER_REDIRECT_URL: "https://data-minio-console.{{ .StateValues.ingress_hostname }}/"
   MINIO_PROMETHEUS_URL: "http://{{ $.Values.release_name }}-kube-pr-prometheus.monitoring.svc.cluster.local:9090"
   MINIO_IDENTITY_OPENID_ROLE_POLICY: consoleAdmin
 

@@ -78,6 +78,7 @@ schedules:
     template:
       ttl: "240h"
       storageLocation: velero-s3-backup
+      volumeSnapshotLocations: velero-s3-backup
       snapshotVolumes: true
       includedNamespaces:
         - automation
@@ -89,8 +90,10 @@ schedules:
     template:
       ttl: "240h"
       storageLocation: velero-s3-backup
+      volumeSnapshotLocations: velero-s3-backup
       snapshotVolumes: false
       defaultVolumesToFsBackup: true
+      defaultVolumesToRestic: true
       includedNamespaces:
         - data
       labelSelector:

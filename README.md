@@ -57,8 +57,6 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             kind: "*"
             jqPathExpressions:
             - ".spec.template.spec.initContainers[] | .resources | select(length==0)"
-          - group: "snapshot.storage.k8s.io/v1"
-            kind: "VolumeSnapshot"
     EOF
     ```
 
