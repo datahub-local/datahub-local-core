@@ -29,6 +29,7 @@ controllers:
           OIDC_SIGNUP_ENABLED: "true"
           OIDC_CONFIGURATION_URL: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
           OIDC_CLIENT_ID: "mealie"
+          OIDC_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
           OIDC_GROUPS_CLAIM: "groups"
           OIDC_ADMIN_GROUP: '{{ (split "|" (split "," .StateValues.security_github_organizations)._0)._0 }}'
 
