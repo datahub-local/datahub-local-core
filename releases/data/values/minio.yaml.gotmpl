@@ -55,7 +55,7 @@ oidc:
   clientId: "minio"
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
   scopes: "openid,profile,email"
-  redirectUri: "https://data-minio.{{ .StateValues.ingress_hostname }}/oauth_callback"
+  redirectUri: "https://data-minio-console.{{ .StateValues.ingress_hostname }}/oauth_callback"
   displayName: "IAM"
 #{{- end }}
 
