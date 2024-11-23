@@ -25,7 +25,6 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 16450,
   "graphTooltip": 1,
-  "id": 178,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1111,6 +1110,77 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 0,
+        "y": 9
+      },
+      "id": 61,
+      "options": {
+        "displayMode": "lcd",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(time() - node_boot_time_seconds{job=\"node-exporter\"})",
+          "instant": false,
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster Nodes Uptime",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -1164,8 +1234,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 0,
+        "w": 6,
+        "x": 5,
         "y": 9
       },
       "id": 59,
@@ -1259,8 +1329,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
+        "w": 7,
+        "x": 11,
         "y": 9
       },
       "id": 60,
@@ -1299,8 +1369,8 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 7,
+        "w": 18,
         "x": 0,
         "y": 17
       },
@@ -1355,8 +1425,8 @@
       {
         "current": {
           "selected": false,
-          "text": "v1.31.0+k3s1",
-          "value": "v1.31.0+k3s1"
+          "text": "v1.31.1+k3s1",
+          "value": "v1.31.1+k3s1"
         },
         "datasource": {
           "type": "prometheus",
@@ -1381,9 +1451,9 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "1m",
-          "value": "1m"
+          "selected": true,
+          "text": "5m",
+          "value": "5m"
         },
         "hide": 0,
         "includeAll": false,
@@ -1406,7 +1476,7 @@
             "value": "30s"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "1m",
             "value": "1m"
           },
@@ -1416,7 +1486,7 @@
             "value": "3m"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "5m",
             "value": "5m"
           }
