@@ -94,8 +94,7 @@ schedules:
       volumeSnapshotLocations:
         - velero-s3-backup
       snapshotVolumes: false
-      defaultVolumesToFsBackup: true
-      defaultVolumesToRestic: true
+      defaultVolumesToFsBackup: false
       snapshotMoveData: true
       includedNamespaces:
         - data
