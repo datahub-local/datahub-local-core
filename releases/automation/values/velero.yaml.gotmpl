@@ -71,7 +71,7 @@ metrics:
           severity: warning
 
 schedules:
-  automation-home-assistant:
+  backup-daily-snapshot:
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
     paused: false
@@ -81,11 +81,14 @@ schedules:
       volumeSnapshotLocations:
         - velero-s3-backup
       snapshotVolumes: true
-      includedNamespaces:
-        - automation
       includedResources:
         - persistentVolumeClaims
-  data-postgres:
+      includedNamespaces:
+        - "*"
+      labelSelector:
+        matchLabels:
+          backup-daily-snapshot: "true"
+  backup-daily-fs:
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
     template:
@@ -97,10 +100,10 @@ schedules:
       defaultVolumesToFsBackup: false
       snapshotMoveData: true
       includedNamespaces:
-        - data
+        - "*"
       labelSelector:
         matchLabels:
-          app.kubernetes.io/name: postgresql
+          backup-daily-fs: "true"
 
 extraObjects:
   - apiVersion: snapshot.storage.k8s.io/v1

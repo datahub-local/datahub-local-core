@@ -16,6 +16,9 @@ primary:
   persistence:
     size: 4Gi
 
+  labels:
+    backup-daily-snapshot: "true"
+
   podAnnotations:
     backup.velero.io/backup-volumes: backup
     pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "PGPASSWORD=$POSTGRES_PASSWORD pg_dumpall -U $POSTGRES_USER -h 127.0.0.1 --no-role-passwords > /scratch/backup.sql"]'
