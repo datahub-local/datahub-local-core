@@ -398,7 +398,7 @@
             "uid": "${datasource}"
           },
           "exemplar": false,
-          "expr": "sum(velero_volume_snapshot_success_total{schedule=~\"$schedule\"}) / sum(velero_volume_snapshot_attempt_total{schedule=~\"$schedule\"})\n",
+          "expr": "sum(velero_volume_snapshot_success_total{schedule=~\"$schedule\"}) / clamp_min(sum(velero_volume_snapshot_attempt_total{schedule=~\"$schedule\"}),1)\n",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
