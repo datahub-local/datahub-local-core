@@ -27,8 +27,9 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
       backup.velero.io/backup-volumes: config
-    labels:
-      backup-daily-snapshot: "true"
+    pod:
+      labels:
+        backup.velero.io/custom-backup-daily-snapshot: "true"
     initContainers:
       init:
         image:

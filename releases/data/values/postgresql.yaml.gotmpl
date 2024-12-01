@@ -16,8 +16,8 @@ primary:
   persistence:
     size: 4Gi
 
-  labels:
-    backup-daily-snapshot: "true"
+  podLabels:
+    backup.velero.io/custom-backup-daily-snapshot: "true"
 
   podAnnotations:
     backup.velero.io/backup-volumes: backup

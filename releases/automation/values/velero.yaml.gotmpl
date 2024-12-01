@@ -87,7 +87,7 @@ schedules:
         - "*"
       labelSelector:
         matchLabels:
-          backup-daily-snapshot: "true"
+          backup.velero.io/custom-backup-daily-snapshot: "true"
   backup-daily-fs:
     schedule: "0 0 * * *"
     useOwnerReferencesInBackup: false
@@ -103,7 +103,7 @@ schedules:
         - "*"
       labelSelector:
         matchLabels:
-          backup-daily-fs: "true"
+          backup.velero.io/custom-backup-daily-fs: "true"
 
 extraObjects:
   - apiVersion: snapshot.storage.k8s.io/v1
