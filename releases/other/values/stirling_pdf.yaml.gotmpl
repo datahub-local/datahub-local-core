@@ -1,0 +1,24 @@
+# https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/charts/stirling-pdf/values.yamll
+
+envs:
+  - name: SECURITY_ENABLELOGIN
+    value: "false"
+
+ingress:
+  enabled: true
+
+  annotations:
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
+
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Stirling-PDF"
+    gethomepage.dev/description: "Locally hosted web application that allows you to perform various operations on PDF files."
+    gethomepage.dev/group: "Other"
+    gethomepage.dev/icon: "sh-stirling-pdf"
+
+  className: "nginx"
+
+  pathType: Prefix
+  hosts:
+    - name: "other-stirling-pdf.{{ .StateValues.ingress_hostname }}"
+      path: /

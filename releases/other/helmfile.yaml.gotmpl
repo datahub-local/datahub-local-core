@@ -36,3 +36,9 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
     values:
       - values/convertx.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-other-stirling-pdf"
+    namespace: other
+    chart: "stirling-pdf/stirling-pdf-chart"
+    version: '{{ .StateValues.helm_chart_version | get "stirling-pdf/stirling-pdf-chart" }}'
+    values:
+      - values/stirling_pdf.yaml.gotmpl
