@@ -61,7 +61,7 @@ config:
             href: https://login.tailscale.com/
             description: The easiest, most secure way to use WireGuard and 2FA.
             namespace: security
-            podSelector: app.kubernetes.io/name={{ .Values.release_name }}-tailscale
+            app: {{ .Values.release_name }}-tailscale
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
