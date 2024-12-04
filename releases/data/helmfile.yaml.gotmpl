@@ -55,13 +55,13 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "dagster/dagster" }}'
     values:
       - values/dagster.yaml.gotmpl
-  - name: "ollama"
+  - name: "{{ .Values.release_name }}-data-ollama"
     namespace: data
     chart: "ollama/ollama"
     version: '{{ .StateValues.helm_chart_version | get "ollama/ollama" }}'
     values:
       - values/ollama.yaml.gotmpl
-  - name: "open-webui"
+  - name: "{{ .Values.release_name }}-data-open-webui"
     namespace: data
     chart: "open-webui/open-webui"
     version: '{{ .StateValues.helm_chart_version | get "open-webui/open-webui" }}'
