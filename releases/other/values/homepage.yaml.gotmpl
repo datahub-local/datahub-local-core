@@ -12,26 +12,30 @@ config:
     layout:
       - System:
           style: row
-          columns: 4
-      - Monitoring:
+          columns: 2
+      - Security:
           style: row
-          columns: 4
+          columns: 2
       - Automation:
           style: row
-          columns: 4
-      - Other:
+          columns: 2
+      - Monitoring:
           style: row
-          columns: 4
+          columns: 2
       - Data:
           style: row
-          columns: 4
+          columns: 2
+      - Other:
+          style: row
+          columns: 2
   bookmarks:
     - DataHub.local:
         - Github:
-            - href: https://github.com/datahub-local
-        - TailScale:
-            - icon: si-tailscale
-              href: https://login.tailscale.com/
+            - icon: si-github
+              href: https://github.com/datahub-local
+        - GH Pages:
+            - icon: si-markdown
+              href: https://datahub-local.alvsanand.com/
     - Tools:
         - ChatGPT:
             - icon: chatgpt.svg
@@ -50,6 +54,13 @@ config:
               href: https://www.recetasgratis.net/
   services:
     - System:
+    - Security:
+        - Tailscalse:
+            icon: si-tailscale
+            href: https://login.tailscale.com/
+            description: The easiest, most secure way to use WireGuard and 2FA.
+            namespace: security
+            podSelector: app.kubernetes.io/name={{ .Values.release_name }}-tailscale
     - Monitoring:
     - Automation:
     - Other:
@@ -101,12 +112,6 @@ ingress:
     enabled: true
     annotations:
       #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Homepage"
-      gethomepage.dev/description: "A highly customizable homepage (or startpage / application dashboard) with Docker and service API integrations."
-      gethomepage.dev/group: "Other"
-      gethomepage.dev/icon: "homepage.png"
     ingressClassName: "nginx"
     hosts:
       - host: "{{ .StateValues.ingress_hostname }}"
