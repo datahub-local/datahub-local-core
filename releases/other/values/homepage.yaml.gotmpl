@@ -11,23 +11,25 @@ config:
     base: "https://{{ .StateValues.ingress_hostname }}"
     layout:
       - System:
-          style: row
-          columns: 2
+          useEqualHeights: true
       - Security:
-          style: row
-          columns: 2
+          useEqualHeights: true
       - Automation:
           style: row
-          columns: 2
+          columns: 4
+          useEqualHeights: true
       - Monitoring:
           style: row
-          columns: 2
+          columns: 4
+          useEqualHeights: true
       - Data:
           style: row
-          columns: 2
+          columns: 4
+          useEqualHeights: true
       - Other:
           style: row
-          columns: 2
+          columns: 4
+          useEqualHeights: true
   bookmarks:
     - DataHub.local:
         - Github:
@@ -53,18 +55,13 @@ config:
             - icon: mdi-chef-hat
               href: https://www.recetasgratis.net/
   services:
-    - System:
     - Security:
-        - Tailscalse:
+        - Tailscale:
             icon: si-tailscale
             href: https://login.tailscale.com/
             description: The easiest, most secure way to use WireGuard and 2FA.
             namespace: security
             podSelector: app.kubernetes.io/name={{ .Values.release_name }}-tailscale
-    - Monitoring:
-    - Automation:
-    - Other:
-    - Data:
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
