@@ -16,20 +16,13 @@ sinksConfig:
       name: "Telegram sink"
       bot_token: "{{`{{ env.TELEGRAM_TOKEN }}`}}"
       chat_id: "{{`{{ env.TELEGRAM_CHAT_ID }}`}}"
+      scope:
+        include:
+          - severity: HIGH
 
 customPlaybooks:
   - actions:
       - node_restart_silencer: {}
-    triggers:
-      - on_prometheus_alert: {}
-  - actions:
-      - severity_silencer:
-          severity: info
-    triggers:
-      - on_prometheus_alert: {}
-  - actions:
-      - severity_silencer:
-          severity: warning
     triggers:
       - on_prometheus_alert: {}
 
