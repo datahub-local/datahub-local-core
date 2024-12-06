@@ -8,7 +8,6 @@ controllers:
   main:
     replicas: 1
     strategy: RollingUpdate
-    type: statefulset
     annotations:
       reloader.stakater.com/auto: "true"
     containers:
@@ -39,6 +38,7 @@ controllers:
           - "/bin/bash"
           - "-i"
           - |
+              sleep 10 && \              
               kopia server start \
                 --log-level=debug \
                 --insecure \
@@ -67,7 +67,7 @@ controllers:
               failureThreshold: 30
               periodSeconds: 5
         lifecycle:
-          preStart:
+          postStart:
             exec:
               command:
                 - "/bin/bash"
