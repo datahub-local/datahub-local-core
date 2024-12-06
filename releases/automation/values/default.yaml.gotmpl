@@ -1,1 +1,4 @@
-#{{ $security_admin_user := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).security_admin_user }}
+#{{ $release_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).release_name }}
+
+backup_s3_endpoint: http://{{ $release_name }}-data-minio.data.svc.cluster.local:9000
+backup_s3_bucket: datahub-local-test

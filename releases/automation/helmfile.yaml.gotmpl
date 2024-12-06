@@ -24,3 +24,9 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "vmware-tanzu/velero" }}'
     values:
       - values/velero.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-kopia"
+    namespace: other
+    chart: "bjw-s/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    values:
+      - values/kopia.yaml.gotmpl

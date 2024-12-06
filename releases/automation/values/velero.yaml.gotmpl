@@ -3,7 +3,7 @@
 s3-configuration: &s3-configuration
   name: velero-s3-backup
   provider: aws
-  bucket: datahub-local-test
+  bucket: {{ .Values.backup_s3_bucket }}
   default: true
   credential:
     name: backup-velero-auth
@@ -11,7 +11,7 @@ s3-configuration: &s3-configuration
   config:
     region: minio
     s3ForcePathStyle: true
-    s3Url: http://{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000
+    s3Url: {{ .Values.backup_s3_endpoint }}
 
 configuration:
   backupStorageLocation:
@@ -121,7 +121,7 @@ extraObjects:
     metadata:
       name: backup-target
       namespace: kube-system
-    value: s3://datahub-local-test@minio/backups/longhorn
+    value: s3://{{ .Values.backup_s3_bucket }}@minio/backups/longhorn
   - apiVersion: longhorn.io/v1beta2
     kind: Setting
     metadata:
