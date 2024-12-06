@@ -35,8 +35,9 @@ controllers:
             memory: 300Mi
             cpu: 300m
         command:
-          - "/bin/bash"
-          - "-i"
+          - /usr/bin/env
+          - bash
+          - "-c"
           - |
               sleep 10 && \              
               kopia server start \
@@ -70,8 +71,9 @@ controllers:
           postStart:
             exec:
               command:
-                - "/bin/bash"
-                - "-i"
+                - /usr/bin/env
+                - bash
+                - "-c"
                 - |
                   kopia repository connect s3 \
                         --log-level=debug \
