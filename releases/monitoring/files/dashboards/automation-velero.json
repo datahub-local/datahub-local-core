@@ -289,7 +289,7 @@
         "x": 12,
         "y": 1
       },
-      "id": 26,
+      "id": 22,
       "maxDataPoints": 100,
       "options": {
         "minVizHeight": 75,
@@ -314,7 +314,7 @@
             "uid": "${datasource}"
           },
           "exemplar": false,
-          "expr": "sum(velero_backup_deletion_success_total{schedule=~\"$schedule\"}) / sum(velero_backup_deletion_attempt_total{schedule=~\"$schedule\"})",
+          "expr": "sum(velero_backup_success_total{schedule=~\"$schedule\"}) / sum(velero_backup_attempt_total{schedule=~\"$schedule\"})",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -323,7 +323,7 @@
           "refId": "A"
         }
       ],
-      "title": "Backup Deletion Success Rate",
+      "title": "Backup Success Rate",
       "type": "gauge"
     },
     {
@@ -379,7 +379,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Current"
+              "options": "Last *"
             },
             "properties": [
               {
@@ -397,11 +397,13 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-background"
+                  "type": "color-background",
+                  "wrapText": false
                 }
               },
               {
-                "id": "custom.align"
+                "id": "custom.align",
+                "value": "auto"
               },
               {
                 "id": "thresholds",
@@ -422,6 +424,10 @@
                     }
                   ]
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           }
@@ -611,7 +617,7 @@
         "x": 12,
         "y": 6
       },
-      "id": 22,
+      "id": 26,
       "maxDataPoints": 100,
       "options": {
         "minVizHeight": 75,
@@ -635,8 +641,9 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
+          "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(velero_backup_success_total{schedule=~\"$schedule\"}) / sum(velero_backup_attempt_total{schedule=~\"$schedule\"})",
+          "expr": "sum(velero_backup_deletion_success_total{schedule=~\"$schedule\"}) /  clamp_min(sum(velero_backup_deletion_attempt_total{schedule=~\"$schedule\"}),1)",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -645,7 +652,7 @@
           "refId": "A"
         }
       ],
-      "title": "Backup Success Rate",
+      "title": "Backup Deletion Success Rate",
       "type": "gauge"
     },
     {
@@ -1036,7 +1043,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2728,6 +2736,6 @@
   "timezone": "",
   "title": "Homelab / Automation / Velero",
   "uid": "EbXSjT24k",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
