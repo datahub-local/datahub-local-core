@@ -43,6 +43,7 @@ controllers:
           - |
               sleep 10 && kopia server start \
                 --log-level=debug \
+                --address="http://0.0.0.0:51515" \
                 --insecure \
                 --without-password \
                 --password=$REPOSITORY_PASSWORD
@@ -104,7 +105,7 @@ ingress:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Kopia"
       gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-kopia"
-      gethomepage.dev/description: "Cross-platform backup tool for Windows, macOS & Linux with fast, incremental backups, client-side end-to-end encryption, compression and data deduplication. CLI and GUI included."
+      gethomepage.dev/description: "Cross-platform backup tool for Windows, macOS & Linux."
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-kopia"
 
