@@ -26,6 +26,8 @@ controllers:
               key: AWS_SECRET_ACCESS_KEY
           AWS_ENDPOINTS:
             value:  "{{ .Values.backup_s3_endpoint }}"
+          AWS_S3_BUCKET:
+            value:  "{{ .Values.backup_s3_bucket }}"
           REPOSITORY_PASSWORD:
             secretKeyRef:
               name: backup-kopia-auth
@@ -39,8 +41,7 @@ controllers:
           - bash
           - "-c"
           - |
-              sleep 10 && \              
-              kopia server start \
+              sleep 10 && kopia server start \
                 --log-level=debug \
                 --insecure \
                 --without-password \
@@ -76,10 +77,12 @@ controllers:
                 - "-c"
                 - |
                   kopia repository connect s3 \
-                        --log-level=debug \
-                        --endpoint={{ .Values.backup_s3_endpoint }} \
-                        --bucket={{ .Values.backup_s3_bucket }} --prefix=kopia/data/ \
-                        "--access-key=$AWS_ACCESS_KEY_ID" "--secret-access-key=$AWS_SECRET_ACCESS_KEY"
+                    --log-level=debug \
+                    --endpoint=$AWS_ENDPOINTS \
+                    --bucket=$AWS_S3_BUCKET --prefix=kopia/data/ \
+                    --access-key=$AWS_ACCESS_KEY_ID \
+                    --secret-access-key=$AWS_SECRET_ACCESS_KEY \
+                    --password=$REPOSITORY_PASSWORD
 
 serviceAccount:
   create: true
@@ -103,7 +106,7 @@ ingress:
       gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-kopia"
       gethomepage.dev/description: "Cross-platform backup tool for Windows, macOS & Linux with fast, incremental backups, client-side end-to-end encryption, compression and data deduplication. CLI and GUI included."
       gethomepage.dev/group: "Automation"
-      gethomepage.dev/icon: "si-kopia"
+      gethomepage.dev/icon: "sh-kopia"
 
     className: "nginx"
 
