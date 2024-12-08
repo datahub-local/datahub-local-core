@@ -7,8 +7,8 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v0.9.12
   ghcr.io/mealie-recipes/mealie: v2.3.0
   ghcr.io/tailscale/tailscale: v1.76.6
-  homeassistant/home-assistant: 2024.11.3
-  kopia/kopia: 20241125.0.234320
+  homeassistant/home-assistant: 2024.12.1
+  kopia/kopia: 20241207.0.113027
   velero/velero-plugin-for-aws: v1.11.0
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
