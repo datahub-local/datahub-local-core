@@ -5,10 +5,10 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.9.2
   ghcr.io/datahub-local/node-exporter-textfiles: v202409211914
   ghcr.io/gethomepage/homepage: v0.9.12
-  ghcr.io/mealie-recipes/mealie: v2.3.0
-  ghcr.io/tailscale/tailscale: v1.76.6
-  homeassistant/home-assistant: 2024.12.1
-  kopia/kopia: 20241207.0.113027
+  ghcr.io/mealie-recipes/mealie: v2.4.0
+  ghcr.io/tailscale/tailscale: v1.78.3
+  homeassistant/home-assistant: 2024.12.3
+  kopia/kopia: 20241210.0.20112
   velero/velero-plugin-for-aws: v1.11.0
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
