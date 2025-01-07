@@ -4,10 +4,10 @@ container_image_version:
   ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.9.2
   ghcr.io/datahub-local/node-exporter-textfiles: v202409211914
-  ghcr.io/gethomepage/homepage: v0.10.6
+  ghcr.io/gethomepage/homepage: v0.10.7
   ghcr.io/mealie-recipes/mealie: v2.4.1
   ghcr.io/tailscale/tailscale: v1.78.3
-  homeassistant/home-assistant: 2024.12.5
+  homeassistant/home-assistant: 2025.1.0
   kopia/kopia: 20241210.0.41831
   velero/velero-plugin-for-aws: v1.11.1
 helm_chart_repository:
