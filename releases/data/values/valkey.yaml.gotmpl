@@ -27,13 +27,6 @@ primary:
 metrics:
   enabled: true
 
-  extraEnvVars:
-    - name: REDIS_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: valkey-admin-credentials
-          key: password
-
   podMonitor:
     enabled: true
 
