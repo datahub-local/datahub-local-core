@@ -1,4 +1,4 @@
-#{{ $default_model := index (readFile "./ollama.yaml.gotmpl" | fromYaml).ollama.models 0 }}
+#{{ $default_model := index (readFile "./ollama.yaml.gotmpl" | fromYaml).ollama.models.pull 0 }}
 
 ollama:
   enabled: false

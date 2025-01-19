@@ -4,10 +4,11 @@ ollama:
     type: "nvidia"
     number: 1
   models:
-    - llama3.2:3b
-    - phi3.5
-    - deepseek-coder-v2:16b
-    - starcoder2:3b
+    pull:
+      - llama3.2:3b
+      - phi3.5
+      - deepseek-coder-v2:16b
+      - starcoder2:3b
 
 updateStrategy:
   type: Recreate
