@@ -4,7 +4,7 @@ auth:
   existingSecret: "valkey-admin-credentials"
   existingSecretPasswordKey: "password"
 
-master:
+primary:
   resourcesPreset: "small"
   persistence:
     size: 2Gi
@@ -12,6 +12,17 @@ master:
   extraFlags:
     - "--maxmemory 512mb"
     - "--maxmemory-policy volatile-ttl"
+
+  initContainers:
+    - name: repair-valkey
+      image: docker.io/bitnami/valkey:8.0
+      command: ["sh", "-c", "test -f /data/appendonly.aof && valkey-check-aof --fix  /data/appendonly.aof"]
+      volumeMounts:
+        - name: empty-dir
+          mountPath: /tmp
+          subPath: tmp-dir
+        - name: valkey-data
+          mountPath: /data
 
 metrics:
   enabled: true

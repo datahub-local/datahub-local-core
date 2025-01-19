@@ -65,7 +65,7 @@ secretEnv:
 
 extraSecretEnv:
   SUPERSET_SECRET_KEY: "{{ .StateValues.security_github_client_id }}"
-  REDIS_HOST: "{{ .Values.release_name }}-data-valkey-master"
+  REDIS_HOST: "{{ .Values.release_name }}-data-valkey-primary"
   REDIS_PORT: "6379"
   REDIS_PROTO: "redis"
   REDIS_DB: "1"
