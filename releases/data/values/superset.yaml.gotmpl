@@ -92,6 +92,8 @@ extraEnvRaw:
 
 bootstrapScript: |
   #!/bin/bash
+  apt update && apt install -y build-essential
+
   pip install Authlib psycopg2 trino
 
 extraConfigs:
