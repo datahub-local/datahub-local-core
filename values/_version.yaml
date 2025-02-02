@@ -8,7 +8,7 @@ container_image_version:
   ghcr.io/mealie-recipes/mealie: v2.5.0
   ghcr.io/tailscale/tailscale: v1.78.3
   homeassistant/home-assistant: 2025.1.4
-  kopia/kopia: 20250124.0.152009
+  kopia/kopia: 20250128.0.193716
   velero/velero-plugin-for-aws: v1.11.1
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -31,16 +31,16 @@ helm_chart_version:
   bitnami/postgresql: 16.4.5
   bitnami/valkey: 2.2.3
   bjw-s/app-template: 3.6.1
-  dagster/dagster: 1.9.10
+  dagster/dagster: 1.9.11
   grafana/loki: 6.25.0
   grafana/promtail: 6.16.6
   headlamp/headlamp: 0.28.0
   jameswynn/homepage: 2.0.1
   minio-oficial/minio: 5.4.0
-  nessie/nessie: 0.102.2
+  nessie/nessie: 0.102.4
   ollama/ollama: 1.4.0
   open-webui/open-webui: 5.4.0
-  prometheus-community/kube-prometheus-stack: 68.3.2
+  prometheus-community/kube-prometheus-stack: 68.4.4
   robusta/robusta: 0.20.0
   stirling-pdf/stirling-pdf-chart: 1.5.0
   superset/superset: 0.14.0
