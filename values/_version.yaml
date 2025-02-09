@@ -5,10 +5,10 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.9.2
   ghcr.io/datahub-local/node-exporter-textfiles: v202409211914
   ghcr.io/gethomepage/homepage: v0.10.9
-  ghcr.io/mealie-recipes/mealie: v2.5.0
-  ghcr.io/tailscale/tailscale: v1.78.3
-  homeassistant/home-assistant: 2025.1.4
-  kopia/kopia: 20250124.0.152009
+  ghcr.io/mealie-recipes/mealie: v2.6.0
+  ghcr.io/tailscale/tailscale: v1.80.0
+  homeassistant/home-assistant: 2025.2.1
+  kopia/kopia: 20250203.0.153817
   velero/velero-plugin-for-aws: v1.11.1
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -28,19 +28,19 @@ helm_chart_repository:
   trino: https://trinodb.github.io/charts
   vmware-tanzu: https://vmware-tanzu.github.io/helm-charts/
 helm_chart_version:
-  bitnami/postgresql: 16.4.5
+  bitnami/postgresql: 16.4.6
   bitnami/valkey: 2.2.3
-  bjw-s/app-template: 3.6.1
-  dagster/dagster: 1.9.10
-  grafana/loki: 6.25.0
+  bjw-s/app-template: 3.7.0
+  dagster/dagster: 1.9.11
+  grafana/loki: 6.25.1
   grafana/promtail: 6.16.6
-  headlamp/headlamp: 0.28.0
+  headlamp/headlamp: 0.28.1
   jameswynn/homepage: 2.0.1
   minio-oficial/minio: 5.4.0
-  nessie/nessie: 0.102.2
-  ollama/ollama: 1.4.0
-  open-webui/open-webui: 5.4.0
-  prometheus-community/kube-prometheus-stack: 68.3.2
+  nessie/nessie: 0.102.5
+  ollama/ollama: 1.4.1
+  open-webui/open-webui: 5.10.0
+  prometheus-community/kube-prometheus-stack: 69.2.0
   robusta/robusta: 0.20.0
   stirling-pdf/stirling-pdf-chart: 1.5.0
   superset/superset: 0.14.0
