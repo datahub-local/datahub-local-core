@@ -15,7 +15,7 @@ helm_chart_repository:
   bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
   grafana: https://grafana.github.io/helm-charts
-  headlamp: https://headlamp-k8s.github.io/headlamp/
+  headlamp: https://kubernetes-sigs.github.io/headlamp/
   jameswynn: https://jameswynn.github.io/helm-charts
   minio-oficial: https://charts.min.io/
   nessie: https://charts.projectnessie.org/
