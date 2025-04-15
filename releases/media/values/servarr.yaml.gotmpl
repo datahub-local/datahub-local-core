@@ -1,0 +1,240 @@
+# https://github.com/fonzdm/servarr/blob/main/servarr/values.yaml
+
+global:
+  apikey: &apikey "{{ .StateValues.security_github_client_secret }}"
+  storageClassName: &storageClassName "longhorn-no-replica"
+
+metrics:
+  enabled: &metricsEnabled true
+
+dash:
+  username:
+  password:
+  mail:
+  countryCode: "US"
+  preferredLanguage: "en"
+
+torrent:
+  username:
+  password:
+
+volumes:
+  storageClass: *storageClassName
+  downloads:
+    name: &downloads-volume downloads-volume
+    size: 10Gi
+  media:
+    name: &media-volume media-volume
+    size: 50Gi
+  torrentConfig:
+    name: &torrentConfig torrent-config
+    size: 250Mi
+
+sonarr:
+  crd:
+    verify:
+      enabled: false
+
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  workload:
+    main:
+      podSpec:
+        containers:
+          main:
+            env:
+              SONARR__API_KEY: *apikey
+  ingress:
+    sonarr-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Sonarr"
+        gethomepage.dev/description: "Smart PVR for newsgroup and bittorrent users"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "si-sonarr"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-sonarr.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      storageClass: *storageClassName
+    media:
+      existingClaim: *media-volume
+    downloads:
+      existingClaim: *downloads-volume
+
+radarr:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  workload:
+    main:
+      podSpec:
+        containers:
+          main:
+            env:
+              RADARR__API_KEY: *apikey
+  ingress:
+    radarr-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Radarr"
+        gethomepage.dev/description: "Movie organizer/manager for usenet and torrent users"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "si-radarr"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-radarr.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      storageClass: *storageClassName
+    media:
+      existingClaim: *media-volume
+    downloads:
+      existingClaim: *downloads-volume
+
+jellyfin:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  ingress:
+   radarr-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "jellyfin"
+        gethomepage.dev/description: "The Free Software Media System - Server Backend & API"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "si-jellyfin"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-jellyfin.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      storageClass: *storageClassName
+    media:
+      existingClaim: *media-volume
+
+jellyseerr:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  ingress:
+    jellyseerr-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "jellyseerr"
+        gethomepage.dev/description: "Open-source media request and discovery manager for Jellyfin, Plex, and Emby"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "sh-jellyseerr"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-jellyseerr.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      storageClass: *storageClassName
+    media:
+      existingClaim: *media-volume
+
+qbittorrent:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  ingress:
+    qbittorrent-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "qbittorrent"
+        gethomepage.dev/description: "BitTorrent client"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "si-qbittorrent"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-qbittorrent.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      existingClaim: *torrentConfig
+    downloads:
+      existingClaim: *downloads-volume
+
+prowlarr:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  workload:
+    main:
+      podSpec:
+        containers:
+          main:
+            env:
+              PROWLARR__API_KEY: *apikey
+  ingress:
+    prowlarr-ing:
+      annotations:
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
+
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "prowlarr"
+        gethomepage.dev/description: "Prowlarr is an indexer manager/proxy built on the popular *arrs"
+        gethomepage.dev/group: "Media"
+        gethomepage.dev/icon: "si-prowlarr"
+      ingressClassName: "nginx"
+      hosts:
+        - host: "media-prowlarr.{{ .StateValues.ingress_hostname }}"
+          paths:
+            - path: /
+              pathType: Prefix
+  persistence:
+    config:
+      storageClass: *storageClassName
+
+flaresolverr:
+  crd:
+    verify:
+      enabled: false
+  metrics:
+    main:
+      enabled: *metricsEnabled
+  persistence:
+    config:
+      storageClass: *storageClassName

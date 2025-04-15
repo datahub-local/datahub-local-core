@@ -1,0 +1,4 @@
+apiVersion: v2
+name: datahub-local-core-media
+type: application
+version: 0.0.0
