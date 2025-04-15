@@ -33,7 +33,7 @@ helm_chart_version:
   bitnami/valkey: 3.0.1
   bjw-s/app-template: 3.7.3
   dagster/dagster: 1.10.10
-  datahub-local/servarr: 1.0.2
+  datahub-local/servarr: 0.1.0
   grafana/loki: 6.29.0
   grafana/promtail: 6.16.6
   headlamp/headlamp: 0.28.0
