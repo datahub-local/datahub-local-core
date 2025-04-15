@@ -14,7 +14,7 @@ commonLabels:
 releases:
   - name: "{{ .Values.release_name }}-media-servarr"
     namespace: other
-    chart: "oci://ghcr.io/fonzdm/servarr/servarr"
-    version: '{{ .StateValues.helm_chart_version | get "fonzdm/servarr" }}'
+    chart: "datahub-local/servarr"
+    version: '{{ .StateValues.helm_chart_version | get "datahub-local/servarr" }}'
     values:
       - values/servarr.yaml.gotmpl

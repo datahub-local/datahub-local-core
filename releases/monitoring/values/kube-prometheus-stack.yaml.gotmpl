@@ -24,7 +24,7 @@ prometheus:
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
       gethomepage.dev/description: "Monitoring system and time series database."
       gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "prometheus.png"
+      gethomepage.dev/icon: "si-prometheus"
   prometheusSpec:
     externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
     routePrefix: /
@@ -78,7 +78,7 @@ alertmanager:
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
       gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
       gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "alertmanager.png"
+      gethomepage.dev/icon: "si-prometheus"
 
 defaultRules:
   rules:
@@ -136,7 +136,7 @@ grafana:
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
       gethomepage.dev/description: "The open and composable observability and data visualization platform."
       gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "grafana.png"
+      gethomepage.dev/icon: "si-grafana"
 
 prometheus-node-exporter:
   extraArgs:

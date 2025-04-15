@@ -14,6 +14,7 @@ helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
   bjw-s: https://bjw-s.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
+  datahub-local: https://datahub-local.github.io/servarr
   grafana: https://grafana.github.io/helm-charts
   headlamp: https://kubernetes-sigs.github.io/headlamp/
   jameswynn: https://jameswynn.github.io/helm-charts
@@ -32,6 +33,7 @@ helm_chart_version:
   bitnami/valkey: 3.0.1
   bjw-s/app-template: 3.7.3
   dagster/dagster: 1.10.10
+  datahub-local/servarr: 1.0.2
   grafana/loki: 6.29.0
   grafana/promtail: 6.16.6
   headlamp/headlamp: 0.28.0
@@ -46,4 +48,3 @@ helm_chart_version:
   superset/superset: 0.14.2
   trino/trino: 1.38.0
   vmware-tanzu/velero: 8.7.2
-  fonzdm/servarr: 1.0.2

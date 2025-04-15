@@ -1,4 +1,4 @@
-# https://github.com/fonzdm/servarr/blob/main/servarr/values.yaml
+# https://github.com/datahub-local/servarr/blob/main/servarr/values.yaml
 
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret }}"
@@ -115,7 +115,7 @@ jellyfin:
     main:
       enabled: *metricsEnabled
   ingress:
-   radarr-ing:
+    radarr-ing:
       annotations:
         #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
 
