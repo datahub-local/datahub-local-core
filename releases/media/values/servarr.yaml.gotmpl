@@ -3,6 +3,9 @@
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret }}"
   storageClassName: &storageClassName "longhorn-no-replica"
+  podOptions: &podOptions
+    nodeSelector:
+      kubernetes.io/arch: arm64
 
 metrics:
   enabled: &metricsEnabled true
@@ -69,6 +72,8 @@ sonarr:
     downloads:
       existingClaim: *downloads-volume
 
+  podOptions: *podOptions
+
 radarr:
   crd:
     verify:
@@ -107,6 +112,8 @@ radarr:
     downloads:
       existingClaim: *downloads-volume
 
+  podOptions: *podOptions
+
 jellyfin:
   crd:
     verify:
@@ -135,6 +142,8 @@ jellyfin:
       storageClass: *storageClassName
     media:
       existingClaim: *media-volume
+
+  podOptions: *podOptions
 
 jellyseerr:
   crd:
@@ -165,6 +174,8 @@ jellyseerr:
     media:
       existingClaim: *media-volume
 
+  podOptions: *podOptions
+
 qbittorrent:
   crd:
     verify:
@@ -193,6 +204,8 @@ qbittorrent:
       existingClaim: *torrentConfig
     downloads:
       existingClaim: *downloads-volume
+
+  podOptions: *podOptions
 
 prowlarr:
   crd:
@@ -228,6 +241,8 @@ prowlarr:
     config:
       storageClass: *storageClassName
 
+  podOptions: *podOptions
+
 flaresolverr:
   crd:
     verify:
@@ -238,3 +253,5 @@ flaresolverr:
   persistence:
     config:
       storageClass: *storageClassName
+
+  podOptions: *podOptions
