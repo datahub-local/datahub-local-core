@@ -117,14 +117,11 @@ extraObjects:
     parameters:
       type: bak
   - apiVersion: longhorn.io/v1beta2
-    kind: Setting
+    kind: BackupTarget
     metadata:
-      name: backup-target
+      name: default
       namespace: kube-system
-    value: s3://{{ .Values.backup_s3_bucket }}@minio/backups/longhorn
-  - apiVersion: longhorn.io/v1beta2
-    kind: Setting
-    metadata:
-      name: backup-target-credential-secret
-      namespace: kube-system
-    value: backup-longhorn-auth
+    spec:
+      backupTargetURL: s3://{{ .Values.backup_s3_bucket }}@minio/backups/longhorn
+      credentialSecret: backup-longhorn-auth
+      pollInterval: 5m0s
