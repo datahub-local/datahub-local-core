@@ -86,7 +86,8 @@ defaultRules:
 
 grafana:
   assertNoLeakedSecrets: false
-  deploymentStrategy: Recreate
+  deploymentStrategy:
+   type: Recreate
   persistence:
     enabled: true
     size: 2Gi
