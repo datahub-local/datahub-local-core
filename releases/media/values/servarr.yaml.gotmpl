@@ -10,14 +10,14 @@ global:
 metrics:
   enabled: &metricsEnabled true
 
-dash:
-  username:
-  password:
-  mail:
+dash: # Set easy credentials because it is authenticated by reverse proxy.
+  username: admin
+  password: password
+  mail: admin@example.com
   countryCode: "US"
   preferredLanguage: "en"
 
-torrent:
+torrent: # Set easy credentials because it is authenticated by reverse proxy.
   username: admin
   password: password
 
@@ -230,7 +230,7 @@ prowlarr:
         gethomepage.dev/name: "prowlarr"
         gethomepage.dev/description: "Prowlarr is an indexer manager/proxy built on the popular *arrs"
         gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "si-prowlarr"
+        gethomepage.dev/icon: "sh-prowlarr"
       ingressClassName: "nginx"
       hosts:
         - host: "media-prowlarr.{{ .StateValues.ingress_hostname }}"
