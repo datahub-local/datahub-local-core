@@ -55,10 +55,8 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             kind: "*"
             jqPathExpressions:
             - ".spec.template.spec.containers[] | .resources | select(length==0)"
-          - group: "*"
-            kind: "*"
-            jqPathExpressions:
             - ".spec.template.spec.initContainers[] | .resources | select(length==0)"
+            - ".spec.template.spec.hostUsers"
     EOF
     ```
 
