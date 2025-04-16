@@ -57,7 +57,7 @@ sonarr:
         gethomepage.dev/name: "Sonarr"
         gethomepage.dev/description: "Smart PVR for newsgroup and bittorrent users"
         gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "si-sonarr"
+        gethomepage.dev/icon: "sh-sonarr"
       ingressClassName: "nginx"
       hosts:
         - host: "media-sonarr.{{ .StateValues.ingress_hostname }}"
@@ -97,7 +97,7 @@ radarr:
         gethomepage.dev/name: "Radarr"
         gethomepage.dev/description: "Movie organizer/manager for usenet and torrent users"
         gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "si-radarr"
+        gethomepage.dev/icon: "sh-radarr"
       ingressClassName: "nginx"
       hosts:
         - host: "media-radarr.{{ .StateValues.ingress_hostname }}"
@@ -130,7 +130,7 @@ jellyfin:
         gethomepage.dev/name: "jellyfin"
         gethomepage.dev/description: "The Free Software Media System - Server Backend & API"
         gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "si-jellyfin"
+        gethomepage.dev/icon: "sh-jellyfin"
       ingressClassName: "nginx"
       hosts:
         - host: "media-jellyfin.{{ .StateValues.ingress_hostname }}"
@@ -192,7 +192,7 @@ qbittorrent:
         gethomepage.dev/name: "qbittorrent"
         gethomepage.dev/description: "BitTorrent client"
         gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "si-qbittorrent"
+        gethomepage.dev/icon: "sh-qbittorrent"
       ingressClassName: "nginx"
       hosts:
         - host: "media-qbittorrent.{{ .StateValues.ingress_hostname }}"
