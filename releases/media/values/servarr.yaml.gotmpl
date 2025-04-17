@@ -1,5 +1,7 @@
 # https://github.com/datahub-local/servarr/blob/main/servarr/values.yaml
 
+argoCD: true
+
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "longhorn-no-replica"
