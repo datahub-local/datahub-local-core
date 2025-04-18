@@ -5,6 +5,48 @@ argoCD: true
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "longhorn-no-replica"
+
+  resources:
+    sonarr: &sonarrResources
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+
+    radarr: &radarrResources
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+
+    jellyfin: &jellyfinResources
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+
+    jellyseerr: &jellyseerrResources
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+
+    qbittorrent: &qbittorrentResources
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+
+    prowlarr: &prowlarrResources
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    flaresolverr: &flaresolverrResources
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    exportarr: &exportarrResources
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+
   podOptions: &podOptions
     nodeSelector:
       kubernetes.io/arch: arm64
@@ -39,7 +81,6 @@ sonarr:
   crd:
     verify:
       enabled: false
-
   metrics:
     main:
       enabled: *metricsEnabled
@@ -50,6 +91,12 @@ sonarr:
           main:
             env:
               SONARR__API_KEY: *apikey
+            resources: *sonarrResources
+    exportarr:
+      podSpec:
+        containers:
+          exportarr:
+            resources: *exportarrResources
   ingress:
     sonarr-ing:
       annotations:
@@ -91,6 +138,12 @@ radarr:
           main:
             env:
               RADARR__API_KEY: *apikey
+            resources: *radarrResources
+    exportarr:
+      podSpec:
+        containers:
+          exportarr:
+            resources: *exportarrResources
   ingress:
     radarr-ing:
       annotations:
@@ -122,9 +175,12 @@ jellyfin:
   crd:
     verify:
       enabled: false
-  metrics:
+  workload:
     main:
-      enabled: *metricsEnabled
+      podSpec:
+        containers:
+          main:
+            resources: *jellyfinResources
   ingress:
     radarr-ing:
       annotations:
@@ -154,9 +210,12 @@ jellyseerr:
   crd:
     verify:
       enabled: false
-  metrics:
+  workload:
     main:
-      enabled: *metricsEnabled
+      podSpec:
+        containers:
+          main:
+            resources: *jellyseerrResources
   ingress:
     jellyseerr-ing:
       annotations:
@@ -186,9 +245,14 @@ qbittorrent:
   crd:
     verify:
       enabled: false
-  metrics:
+  workload:
     main:
-      enabled: *metricsEnabled
+      podSpec:
+        containers:
+          main:
+            resources: *qbittorrentResources
+          exportarr:
+            resources: *exportarrResources
   ingress:
     qbittorrent-ing:
       annotations:
@@ -228,6 +292,12 @@ prowlarr:
           main:
             env:
               PROWLARR__API_KEY: *apikey
+            resources: *prowlarrResources
+    exportarr:
+      podSpec:
+        containers:
+          exportarr:
+            resources: *exportarrResources
   ingress:
     prowlarr-ing:
       annotations:
@@ -255,9 +325,12 @@ flaresolverr:
   crd:
     verify:
       enabled: false
-  metrics:
+  workload:
     main:
-      enabled: *metricsEnabled
+      podSpec:
+        containers:
+          main:
+            resources: *flaresolverrResources
   persistence:
     config:
       storageClass: *storageClassName
