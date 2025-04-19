@@ -42,11 +42,6 @@ global:
         cpu: "500m"
         memory: "512Mi"
 
-    exportarr: &exportarrResources
-      limits:
-        cpu: "250m"
-        memory: "256Mi"
-
   podOptions: &podOptions
     nodeSelector:
       kubernetes.io/arch: arm64
@@ -92,11 +87,6 @@ sonarr:
             env:
               SONARR__API_KEY: *apikey
             resources: *sonarrResources
-    exportarr:
-      podSpec:
-        containers:
-          exportarr:
-            resources: *exportarrResources
   ingress:
     sonarr-ing:
       annotations:
@@ -139,11 +129,6 @@ radarr:
             env:
               RADARR__API_KEY: *apikey
             resources: *radarrResources
-    exportarr:
-      podSpec:
-        containers:
-          exportarr:
-            resources: *exportarrResources
   ingress:
     radarr-ing:
       annotations:
@@ -182,7 +167,7 @@ jellyfin:
           main:
             resources: *jellyfinResources
   ingress:
-    radarr-ing:
+    jellyfin-ing:
       annotations:
         #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
 
@@ -251,8 +236,6 @@ qbittorrent:
         containers:
           main:
             resources: *qbittorrentResources
-          exportarr:
-            resources: *exportarrResources
   ingress:
     qbittorrent-ing:
       annotations:
@@ -293,11 +276,6 @@ prowlarr:
             env:
               PROWLARR__API_KEY: *apikey
             resources: *prowlarrResources
-    exportarr:
-      podSpec:
-        containers:
-          exportarr:
-            resources: *exportarrResources
   ingress:
     prowlarr-ing:
       annotations:
