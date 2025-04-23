@@ -42,6 +42,11 @@ global:
         cpu: "500m"
         memory: "512Mi"
 
+    exportarr: &exportarrResources
+      limits:
+        cpu: "250m"
+        memory: "256Mi"
+
   podOptions: &podOptions
     nodeSelector:
       kubernetes.io/arch: arm64
@@ -87,6 +92,8 @@ sonarr:
             env:
               SONARR__API_KEY: *apikey
             resources: *sonarrResources
+          exportarr:
+            resources: *exportarrResources
   ingress:
     sonarr-ing:
       annotations:
@@ -129,6 +136,8 @@ radarr:
             env:
               RADARR__API_KEY: *apikey
             resources: *radarrResources
+          exportarr:
+            resources: *exportarrResources
   ingress:
     radarr-ing:
       annotations:
@@ -276,6 +285,8 @@ prowlarr:
             env:
               PROWLARR__API_KEY: *apikey
             resources: *prowlarrResources
+          exportarr:
+            resources: *exportarrResources
   ingress:
     prowlarr-ing:
       annotations:
