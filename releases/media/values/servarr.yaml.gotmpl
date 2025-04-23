@@ -90,7 +90,7 @@ sonarr:
         containers:
           main:
             env:
-              SONARR__API_KEY: *apikey
+              SONARR__AUTH__APIKEY: *apikey
             resources: *sonarrResources
           exportarr:
             resources: *exportarrResources
@@ -134,7 +134,7 @@ radarr:
         containers:
           main:
             env:
-              RADARR__API_KEY: *apikey
+              RADARR__AUTH__APIKEY: *apikey
             resources: *radarrResources
           exportarr:
             resources: *exportarrResources
@@ -283,7 +283,8 @@ prowlarr:
         containers:
           main:
             env:
-              PROWLARR__API_KEY: *apikey
+              PROWLARR__AUTH__APIKEY: *apikey
+              PROWLARR__AUTH__METHOD: External
             resources: *prowlarrResources
           exportarr:
             resources: *exportarrResources
