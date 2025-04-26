@@ -12,6 +12,8 @@ security_admin_user: "admin"
 
 # { {- if .Values.security_enabled } }{ { .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "/static-plugins|/manifest.json" | nindent 4 } }{ { end } }
 security_oauth2_annotations:
+  nginx.ingress.kubernetes.io/enable-cors: "true"
+  nginx.ingress.kubernetes.io/cors-allow-origin: https://{{ $ingress_hostname }}
   nginx.ingress.kubernetes.io/auth-signin: https://security-oauth2.{{ $ingress_hostname }}/oauth2/start?rd=https://$host$escaped_request_uri
   nginx.ingress.kubernetes.io/auth-url: https://security-oauth2.{{ $ingress_hostname }}/oauth2/auth
   nginx.ingress.kubernetes.io/auth-snippet: |
@@ -25,6 +27,8 @@ security_oauth2_annotations:
     #   set $basic_auth $1;
     #   set $auth_header "Basic ${basic_auth}";
     # }
+
+    Access-Control-Allow-Origin
 
     # proxy_set_header Authorization $auth_header;
   nginx.ingress.kubernetes.io/configuration-snippet: |
