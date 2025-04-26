@@ -73,7 +73,7 @@ singleBinary:
     # Finally, since the chart does not create a PersistentVolumeClaim and uses volumeClaimTemplates within the statefulset to create it dynamically.
     # it is necessary to execute following command (kustomize does not work since it does not initially create a PersistentVolumeClaim to be patched).
     # > kubectl patch pvc storage-loki-0 -n observability -p '{"spec":{"resources":{"requests":{"storage":"2Gi"}}}}'
-    size: 5Gi
+    size: 10Gi
 
 chunksCache:
   # -- Specifies whether memcached based chunks-cache should be enabled
