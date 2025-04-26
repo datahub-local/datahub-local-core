@@ -5,12 +5,13 @@ argoCD: true
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "longhorn-no-replica"
+  authMethod: External
 
   resources:
     sonarr: &sonarrResources
       limits:
-        cpu: "1"
-        memory: "1Gi"
+        cpu: "2"
+        memory: "2Gi"
 
     radarr: &radarrResources
       limits:
@@ -29,8 +30,8 @@ global:
 
     qbittorrent: &qbittorrentResources
       limits:
-        cpu: "1"
-        memory: "1Gi"
+        cpu: "500m"
+        memory: "512Mi"
 
     prowlarr: &prowlarrResources
       limits:
@@ -39,8 +40,8 @@ global:
 
     flaresolverr: &flaresolverrResources
       limits:
-        cpu: "500m"
-        memory: "512Mi"
+        cpu: "1"
+        memory: "1Gi"
 
     exportarr: &exportarrResources
       limits:
@@ -89,12 +90,8 @@ sonarr:
       podSpec:
         containers:
           main:
-            env:
-              SONARR__AUTH__APIKEY: *apikey
             resources: *sonarrResources
           exportarr:
-            env:
-              API_KEY: *apikey
             resources: *exportarrResources
   ingress:
     sonarr-ing:
@@ -135,13 +132,8 @@ radarr:
       podSpec:
         containers:
           main:
-            env:
-              RADARR__API_KEY: *apikey
-              RADARR__AUTH__APIKEY: *apikey
             resources: *radarrResources
           exportarr:
-            env:
-              API_KEY: *apikey
             resources: *exportarrResources
   ingress:
     radarr-ing:
@@ -287,14 +279,8 @@ prowlarr:
       podSpec:
         containers:
           main:
-            env:
-              PROWLARR__API_KEY: *apikey
-              PROWLARR__AUTH__APIKEY: *apikey
-              PROWLARR__AUTH__METHOD: External
             resources: *prowlarrResources
           exportarr:
-            env:
-              API_KEY: *apikey
             resources: *exportarrResources
   ingress:
     prowlarr-ing:
