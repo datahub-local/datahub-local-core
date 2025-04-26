@@ -10,7 +10,7 @@ global:
   resources:
     sonarr: &sonarrResources
       limits:
-        cpu: "2"
+        cpu: "1"
         memory: "2Gi"
 
     radarr: &radarrResources
@@ -20,7 +20,7 @@ global:
 
     jellyfin: &jellyfinResources
       limits:
-        cpu: "2"
+        cpu: "1"
         memory: "2Gi"
 
     jellyseerr: &jellyseerrResources
@@ -41,7 +41,7 @@ global:
     flaresolverr: &flaresolverrResources
       limits:
         cpu: "1"
-        memory: "1Gi"
+        memory: "3Gi"
 
     exportarr: &exportarrResources
       limits:
