@@ -28,8 +28,6 @@ security_oauth2_annotations:
     #   set $auth_header "Basic ${basic_auth}";
     # }
 
-    Access-Control-Allow-Origin
-
     # proxy_set_header Authorization $auth_header;
   nginx.ingress.kubernetes.io/configuration-snippet: |
     auth_request_set $name_upstream_1 $upstream_cookie__oauth2_proxy;
