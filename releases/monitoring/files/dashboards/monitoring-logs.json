@@ -19,9 +19,8 @@
   "description": "Log Viewer Dashboard for Loki",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": 13639,
   "graphTooltip": 0,
-  "id": 39,
+  "id": 175,
   "links": [
     {
       "$$hashKey": "object:59",
@@ -62,6 +61,7 @@
             "axisLabel": "",
             "axisPlacement": "hidden",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
@@ -93,8 +93,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -121,17 +120,19 @@
           "showLegend": false
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "7.1.0",
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
+          "direction": "backward",
           "editorMode": "code",
           "expr": "sum(count_over_time({job=~\"$app\", pod=~\"$pod\"} |= \"$search\" [$__interval]))",
           "legendFormat": "",
@@ -139,12 +140,17 @@
           "refId": "A"
         }
       ],
+      "title": "",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "loki",
         "uid": "P8E80F9AEF21F6940"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 25,
@@ -156,40 +162,50 @@
       "maxDataPoints": "",
       "options": {
         "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
         "enableLogDetails": true,
         "prettifyLogMessage": false,
         "showCommonLabels": false,
         "showLabels": false,
         "showTime": true,
-        "sortOrder": "Descending",
+        "sortOrder": "Ascending",
         "wrapLogMessage": false
       },
+      "pluginVersion": "11.6.1",
       "targets": [
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "editorMode": "code",
-          "expr": "{job=~\"$app\", pod=~\"$pod\"} |= \"$search\" | logfmt",
+          "direction": "forward",
+          "editorMode": "builder",
+          "expr": "{job=~\"$app\", pod=~\"$pod\", container=~\"$container\"} |= `$search` | logfmt",
           "hide": false,
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
         }
       ],
+      "title": "",
       "transparent": true,
       "type": "logs"
     }
   ],
+  "preload": false,
   "refresh": false,
-  "schemaVersion": 39,
+  "schemaVersion": 41,
+  "tags": [
+    "Homelab",
+    "Monitoring",
+    "Logs",
+    "loki"
+  ],
   "templating": {
     "list": [
       {
         "allValue": ".+",
         "current": {
-          "selected": true,
           "text": "data/dagster",
           "value": "data/dagster"
         },
@@ -198,10 +214,8 @@
           "uid": "P8E80F9AEF21F6940"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "App",
-        "multi": false,
         "name": "app",
         "options": [],
         "query": {
@@ -212,17 +226,12 @@
         },
         "refresh": 2,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "allValue": ".+",
         "current": {
-          "selected": true,
           "text": "All",
           "value": "$__all"
         },
@@ -231,10 +240,8 @@
           "uid": "P8E80F9AEF21F6940"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "pod",
-        "multi": false,
         "name": "pod",
         "options": [],
         "query": {
@@ -245,17 +252,39 @@
         },
         "refresh": 2,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       },
       {
+        "allValue": ".+",
         "current": {
-          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
+        },
+        "definition": "",
+        "includeAll": true,
+        "label": "container",
+        "name": "container",
+        "options": [],
+        "query": {
+          "label": "container",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{job=~\"$app\", pod=~\"$pod\"}",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
           "text": "",
           "value": ""
         },
-        "hide": 0,
         "label": "String Match",
         "name": "search",
         "options": [
@@ -266,7 +295,6 @@
           }
         ],
         "query": "",
-        "skipUrlSync": false,
         "type": "textbox"
       }
     ]
@@ -276,7 +304,6 @@
     "to": "now"
   },
   "timepicker": {
-    "hidden": false,
     "refresh_intervals": [
       "10s",
       "30s",
@@ -291,12 +318,6 @@
   },
   "timezone": "browser",
   "title": "Homelab / Monitoring / Logs",
-  "tags": [
-    "Homelab",
-    "Monitoring",
-    "Logs",
-    "loki"
-  ],  "uid": "liz0yRCZz",
-  "version": 1,
-  "weekStart": ""
+  "uid": "liz0yRCZz",
+  "version": 1
 }
