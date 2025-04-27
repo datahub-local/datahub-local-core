@@ -41,16 +41,25 @@ global:
     flaresolverr: &flaresolverrResources
       limits:
         cpu: "1"
-        memory: "3Gi"
+        memory: "2Gi"
 
     exportarr: &exportarrResources
       limits:
         cpu: "250m"
         memory: "256Mi"
 
-  podOptions: &podOptions
+  podOptionsArm: &podOptionsArm
     nodeSelector:
       kubernetes.io/arch: arm64
+
+  podOptionsAmd: &podOptionsAmd
+    nodeSelector:
+      kubernetes.io/arch: amd64
+
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
 
 metrics:
   enabled: &metricsEnabled true
@@ -118,7 +127,7 @@ sonarr:
     downloads:
       existingClaim: *downloads-volume
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 radarr:
   crd:
@@ -160,7 +169,7 @@ radarr:
     downloads:
       existingClaim: *downloads-volume
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 jellyfin:
   crd:
@@ -195,7 +204,7 @@ jellyfin:
     media:
       existingClaim: *media-volume
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 jellyseerr:
   crd:
@@ -230,7 +239,7 @@ jellyseerr:
     media:
       existingClaim: *media-volume
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 qbittorrent:
   crd:
@@ -265,7 +274,7 @@ qbittorrent:
     downloads:
       existingClaim: *downloads-volume
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 prowlarr:
   crd:
@@ -303,7 +312,7 @@ prowlarr:
     config:
       storageClass: *storageClassName
 
-  podOptions: *podOptions
+  podOptions: *podOptionsArm
 
 flaresolverr:
   crd:
@@ -319,4 +328,4 @@ flaresolverr:
     config:
       storageClass: *storageClassName
 
-  podOptions: *podOptions
+  podOptions: *podOptionsAmd
