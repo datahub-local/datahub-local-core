@@ -7,8 +7,8 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v0.10.9
   ghcr.io/mealie-recipes/mealie: v2.5.0
   ghcr.io/tailscale/tailscale: v1.82.0
-  homeassistant/home-assistant: 2025.4.3
-  kopia/kopia: 20250417.0.171927
+  homeassistant/home-assistant: 2025.4.4
+  kopia/kopia: 20250426.0.200120
   velero/velero-plugin-for-aws: v1.12.0
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -29,10 +29,10 @@ helm_chart_repository:
   trino: https://trinodb.github.io/charts
   vmware-tanzu: https://vmware-tanzu.github.io/helm-charts/
 helm_chart_version:
-  bitnami/postgresql: 16.6.3
-  bitnami/valkey: 3.0.1
+  bitnami/postgresql: 16.6.6
+  bitnami/valkey: 3.0.2
   bjw-s/app-template: 3.7.3
-  dagster/dagster: 1.10.11
+  dagster/dagster: 1.10.12
   datahub-local/servarr: 0.4.0
   grafana/loki: 6.29.0
   grafana/promtail: 6.16.6
@@ -40,11 +40,11 @@ helm_chart_version:
   jameswynn/homepage: 2.0.2
   minio-oficial/minio: 5.4.0
   nessie/nessie: 0.103.3
-  ollama/ollama: 1.14.0
+  ollama/ollama: 1.15.0
   open-webui/open-webui: 6.4.0
-  prometheus-community/kube-prometheus-stack: 70.7.0
+  prometheus-community/kube-prometheus-stack: 70.8.0
   robusta/robusta: 0.22.0
-  stirling-pdf/stirling-pdf-chart: 1.9.0
+  stirling-pdf/stirling-pdf-chart: 1.9.1
   superset/superset: 0.14.2
   trino/trino: 1.38.0
-  vmware-tanzu/velero: 9.0.0
+  vmware-tanzu/velero: 9.0.1
