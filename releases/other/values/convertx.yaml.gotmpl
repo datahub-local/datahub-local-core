@@ -30,9 +30,11 @@ controllers:
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/c4illin/convertx") }}{{ $value }}{{ end }}{{ end }}'
         env:
           - name: ACCOUNT_REGISTRATION
-            value: false
+            value: "false"
+          - name: ALLOW_UNAUTHENTICATED
+            value: "false"
           - name: HTTP_ALLOWED
-            value: true
+            value: "true"
         resources:
           requests:
             memory: 100Mi
