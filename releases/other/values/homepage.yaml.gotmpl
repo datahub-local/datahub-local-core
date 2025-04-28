@@ -4,6 +4,7 @@ image:
 
 env:
   LOG_LEVEL: "info"
+  HOMEPAGE_ALLOWED_HOSTS: "{{ .StateValues.ingress_hostname }}"
 
 config:
   settings:
