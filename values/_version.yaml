@@ -8,7 +8,7 @@ container_image_version:
   ghcr.io/mealie-recipes/mealie: v2.5.0
   ghcr.io/tailscale/tailscale: v1.82.0
   homeassistant/home-assistant: 2025.4.4
-  kopia/kopia: 20250426.0.200120
+  kopia/kopia: 20250427.0.61136
   velero/velero-plugin-for-aws: v1.12.0
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
@@ -42,9 +42,9 @@ helm_chart_version:
   nessie/nessie: 0.103.3
   ollama/ollama: 1.15.0
   open-webui/open-webui: 6.4.0
-  prometheus-community/kube-prometheus-stack: 70.8.0
+  prometheus-community/kube-prometheus-stack: 70.10.0
   robusta/robusta: 0.22.0
   stirling-pdf/stirling-pdf-chart: 1.9.1
   superset/superset: 0.14.2
   trino/trino: 1.38.0
-  vmware-tanzu/velero: 9.0.1
+  vmware-tanzu/velero: 9.0.2
