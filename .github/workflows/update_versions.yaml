@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: read
   pull-requests: write
 
 env:
@@ -37,6 +38,6 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: bump version of Helm Charts until ${{ steps.vars.outputs.current_date }}'
+          commit-message: "chore: bump version of Helm Charts until ${{ steps.vars.outputs.current_date }}"
           branch: "chore/bump_versions_${{ steps.vars.outputs.current_date }}"
-          title: 'Bump versions of Helm Charts (${{ steps.vars.outputs.current_date }})'
+          title: "Bump versions of Helm Charts (${{ steps.vars.outputs.current_date }})"
