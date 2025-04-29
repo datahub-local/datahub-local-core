@@ -172,6 +172,8 @@ radarr:
   podOptions: *podOptionsArm
 
 jellyfin:
+  chartContext:
+    appUrl: "https://media-jellyfin.{{ .StateValues.ingress_hostname }}"
   crd:
     verify:
       enabled: false
