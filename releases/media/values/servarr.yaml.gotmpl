@@ -115,11 +115,6 @@ sonarr:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-sonarr"
       ingressClassName: "nginx"
-      hosts:
-        - host: ""
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       storageClass: *storageClassName
