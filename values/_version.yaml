@@ -29,6 +29,7 @@ helm_chart_repository:
   trino: https://trinodb.github.io/charts
   vmware-tanzu: https://vmware-tanzu.github.io/helm-charts/
 helm_chart_version:
+  8gears/n8n: 1.0.6
   bitnami/postgresql: 16.6.6
   bitnami/valkey: 3.0.2
   bjw-s-labs/app-template: 3.7.3

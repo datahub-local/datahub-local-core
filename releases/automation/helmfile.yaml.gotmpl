@@ -30,3 +30,9 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/kopia.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-n8n"
+    namespace: other
+    chart: "oci://8gears.container-registry.com/library/n8n"
+    version: '{{ .StateValues.helm_chart_version | get "8gears/n8n" }}'
+    values:
+      - values/n8n.yaml.gotmpl
