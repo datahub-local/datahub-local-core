@@ -6,6 +6,7 @@ global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "longhorn-no-replica"
   authMethod: External
+  ingressHostPattern: "media-SERVICE.{{ .StateValues.ingress_hostname }}"
 
   resources:
     sonarr: &sonarrResources
@@ -115,7 +116,7 @@ sonarr:
         gethomepage.dev/icon: "sh-sonarr"
       ingressClassName: "nginx"
       hosts:
-        - host: "media-sonarr.{{ .StateValues.ingress_hostname }}"
+        - host: ""
           paths:
             - path: /
               pathType: Prefix
@@ -156,11 +157,6 @@ radarr:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-radarr"
       ingressClassName: "nginx"
-      hosts:
-        - host: "media-radarr.{{ .StateValues.ingress_hostname }}"
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       storageClass: *storageClassName
@@ -172,8 +168,6 @@ radarr:
   podOptions: *podOptionsArm
 
 jellyfin:
-  chartContext:
-    appUrl: "https://media-jellyfin.{{ .StateValues.ingress_hostname }}"
   crd:
     verify:
       enabled: false
@@ -195,11 +189,6 @@ jellyfin:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-jellyfin"
       ingressClassName: "nginx"
-      hosts:
-        - host: "media-jellyfin.{{ .StateValues.ingress_hostname }}"
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       storageClass: *storageClassName
@@ -230,11 +219,6 @@ jellyseerr:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-jellyseerr"
       ingressClassName: "nginx"
-      hosts:
-        - host: "media-jellyseerr.{{ .StateValues.ingress_hostname }}"
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       storageClass: *storageClassName
@@ -265,11 +249,6 @@ qbittorrent:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-qbittorrent"
       ingressClassName: "nginx"
-      hosts:
-        - host: "media-qbittorrent.{{ .StateValues.ingress_hostname }}"
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       existingClaim: *torrentConfig
@@ -305,11 +284,6 @@ prowlarr:
         gethomepage.dev/group: "Media"
         gethomepage.dev/icon: "sh-prowlarr"
       ingressClassName: "nginx"
-      hosts:
-        - host: "media-prowlarr.{{ .StateValues.ingress_hostname }}"
-          paths:
-            - path: /
-              pathType: Prefix
   persistence:
     config:
       storageClass: *storageClassName
