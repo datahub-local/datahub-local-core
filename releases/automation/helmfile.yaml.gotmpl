@@ -14,8 +14,8 @@ commonLabels:
 releases:
   - name: "{{ .Values.release_name }}-automation-home-assistant"
     namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/home-assistant.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-velero"
@@ -26,7 +26,7 @@ releases:
       - values/velero.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-kopia"
     namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/kopia.yaml.gotmpl

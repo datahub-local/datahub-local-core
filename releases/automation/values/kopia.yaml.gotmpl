@@ -2,7 +2,7 @@
 # IMPORTANT NOTE
 #
 # This chart inherits from our common library chart. You can check the default values/options here:
-# https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
 controllers:
   main:
@@ -25,9 +25,9 @@ controllers:
               name: backup-kopia-auth
               key: AWS_SECRET_ACCESS_KEY
           AWS_ENDPOINTS:
-            value:  "{{ .Values.backup_s3_endpoint }}"
+            value: "{{ .Values.backup_s3_endpoint }}"
           AWS_S3_BUCKET:
-            value:  "{{ .Values.backup_s3_bucket }}"
+            value: "{{ .Values.backup_s3_bucket }}"
           REPOSITORY_PASSWORD:
             secretKeyRef:
               name: backup-kopia-auth
@@ -41,12 +41,12 @@ controllers:
           - bash
           - "-c"
           - |
-              sleep 10 && kopia server start \
-                --log-level=debug \
-                --address="http://0.0.0.0:51515" \
-                --insecure \
-                --without-password \
-                --password=$REPOSITORY_PASSWORD
+            sleep 10 && kopia server start \
+              --log-level=debug \
+              --address="http://0.0.0.0:51515" \
+              --insecure \
+              --without-password \
+              --password=$REPOSITORY_PASSWORD
         probes:
           liveness:
             enabled: true

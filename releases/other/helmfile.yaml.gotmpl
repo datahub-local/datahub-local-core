@@ -20,20 +20,20 @@ releases:
       - values/homepage.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-it-tools"
     namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/it_tools.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mealie"
     namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/mealie.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-convertx"
     namespace: other
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/convertx.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-stirling-pdf"

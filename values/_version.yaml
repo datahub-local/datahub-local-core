@@ -12,7 +12,7 @@ container_image_version:
   velero/velero-plugin-for-aws: v1.12.0
 helm_chart_repository:
   bitnami: https://charts.bitnami.com/bitnami
-  bjw-s: https://bjw-s.github.io/helm-charts
+  bjw-s-labs: https://bjw-s-labs.github.io/helm-charts
   dagster: https://dagster-io.github.io/helm
   datahub-local: https://datahub-local.github.io/servarr
   grafana: https://grafana.github.io/helm-charts
@@ -31,7 +31,7 @@ helm_chart_repository:
 helm_chart_version:
   bitnami/postgresql: 16.6.6
   bitnami/valkey: 3.0.2
-  bjw-s/app-template: 3.7.3
+  bjw-s-labs/app-template: 3.7.3
   dagster/dagster: 1.10.12
   datahub-local/servarr: 0.5.0
   grafana/loki: 6.29.0

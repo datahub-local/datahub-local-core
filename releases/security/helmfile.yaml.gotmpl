@@ -20,7 +20,7 @@ releases:
       - values/default.yaml.gotmpl
   - name: "{{ .Values.release_name }}-tailscale"
     namespace: security
-    chart: "bjw-s/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s/app-template" }}'
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/tailscale.yaml.gotmpl
