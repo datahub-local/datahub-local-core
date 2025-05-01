@@ -166,6 +166,12 @@ jellyfin:
   crd:
     verify:
       enabled: false
+  securityContext:
+    container:
+      runAsNonRoot: false
+      privileged: true
+    runAsUser: 0
+    runAsGroup: 0
   workload:
     main:
       podSpec:
@@ -189,6 +195,26 @@ jellyfin:
       storageClass: *storageClassName
     media:
       existingClaim: *media-volume
+    device-rga:
+      enabled: true
+      type: hostPath
+      mountPath: /dev/rga
+      hostPath: /dev/rga
+    device-dri:
+      enabled: true
+      type: hostPath
+      mountPath: /dev/dri
+      hostPath: /dev/dri
+    device-dma-heap:
+      enabled: true
+      type: hostPath
+      mountPath: /dev/dma_heap
+      hostPath: /dev/dma_heap
+    device-mpp-service:
+      enabled: true
+      type: hostPath
+      mountPath: /dev/mpp_service
+      hostPath: /dev/mpp_service
 
   podOptions: *podOptionsArm
 
