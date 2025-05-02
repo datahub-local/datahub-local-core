@@ -6,11 +6,10 @@ _shared_config:
 
 main:
   config:
+    webhook_url: *url
+    vue_app_url_base_api: *url
+    
     n8n:
-      host: *hostname
-      port: 443
-      protocol: https
-
       basic_auth_active: false
     db:
       type: postgresdb
@@ -19,21 +18,25 @@ main:
         port: 5432
         pool:
           size: 10
-
-    vue:
-      app_url_base_api: *url
-
     external:
       storage:
         s3:
           host: http://{{ .Values.release_name }}-data-minio:9000
           protocol: http
           bucket_name: datahub-local-n8n
+    queue:
+      health:
+        check:
+          active: true
+      bull:
+        redis:
+          host: "{{ .Values.release_name }}-data-valkey.data.svc.cluster.local"
+          port: 6379
   secret:
     n8n:
       encryption_key: "{{ .StateValues.security_github_client_secret }}"
 
-  extraEnv:
+  extraEnv: &extraEnv
     DB_POSTGRESDB_USER:
       valueFrom:
         secretKeyRef:
@@ -59,6 +62,14 @@ main:
       memory: 2048Mi
     requests:
       memory: 512Mi
+
+worker:
+  enabled: true
+  extraEnv: *extraEnv
+
+webhook:
+  enabled: true
+  extraEnv: *extraEnv
 
 ingress:
   enabled: true

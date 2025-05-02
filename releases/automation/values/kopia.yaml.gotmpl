@@ -83,7 +83,7 @@ controllers:
                     --bucket=$AWS_S3_BUCKET --prefix=kopia/data/ \
                     --access-key=$AWS_ACCESS_KEY_ID \
                     --secret-access-key=$AWS_SECRET_ACCESS_KEY \
-                    --password=$REPOSITORY_PASSWORD
+                    --password=$REPOSITORY_PASSWORD || true
 
 serviceAccount:
   create: true
