@@ -1,4 +1,4 @@
 #{{ $release_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).release_name }}
 
 backup_s3_endpoint: "data-minio.homelab.alvsanand.com"
-backup_s3_bucket: datahub-local-test
+backup_s3_bucket: datahub-local-backup

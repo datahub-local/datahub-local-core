@@ -1,7 +1,17 @@
 # https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 
+_shared_config:
+  hostname: &hostname automation-n8n.{{ .StateValues.ingress_hostname }}
+  url: &url https://automation-n8n.{{ .StateValues.ingress_hostname }}
+
 main:
   config:
+    n8n:
+      host: *hostname
+      port: 443
+      protocol: https
+
+      basic_auth_active: false
     db:
       type: postgresdb
       postgresdb:
@@ -9,9 +19,19 @@ main:
         port: 5432
         pool:
           size: 10
+
+    vue:
+      app_url_base_api: *url
+
+    external:
+      storage:
+        s3:
+          host: http://{{ .Values.release_name }}-data-minio:9000
+          protocol: http
+          bucket_name: datahub-local-n8n
   secret:
     n8n:
-      encryption_key: "<your-secure-encryption-key>"
+      encryption_key: "{{ .StateValues.security_github_client_secret }}"
 
   extraEnv:
     DB_POSTGRESDB_USER:
@@ -24,7 +44,16 @@ main:
         secretKeyRef:
           name: postgresql-admin-credentials
           key: password
-  
+    N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: backup-kopia-auth
+          key: AWS_ACCESS_KEY_ID
+    N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET:
+      valueFrom:
+        secretKeyRef:
+          name: backup-kopia-auth
+          key: AWS_SECRET_ACCESS_KEY
   resources:
     limits:
       memory: 2048Mi
@@ -42,15 +71,14 @@ ingress:
     gethomepage.dev/description: "Fair-code workflow automation platform with native AI capabilities."
     gethomepage.dev/group: "Automation"
     gethomepage.dev/icon: "sh-n8n"
-  
+
   className: nginx
 
   hosts:
-    - host: "automation-n8n.{{ .StateValues.ingress_hostname }}"
+    - host: *hostname
       paths:
         - /
 
   tls: {}
-
 
 extraManifests: []
