@@ -21,7 +21,7 @@ main:
     external:
       storage:
         s3:
-          host: http://{{ .Values.release_name }}-data-minio:9000
+          host: "{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000"
           protocol: http
           bucket_name: datahub-local-n8n
     queue:
@@ -30,7 +30,7 @@ main:
           active: true
       bull:
         redis:
-          host: "{{ .Values.release_name }}-data-valkey.data.svc.cluster.local"
+          host: "{{ .Values.release_name }}-data-valkey-headless.data.svc.cluster.local"
           port: 6379
   secret:
     n8n:
