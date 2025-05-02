@@ -10,7 +10,7 @@ main:
     vue_app_url_base_api: *url
     executions_mode: queue
     n8n:
-      basic_auth_active: false
+      runners_enabled: true
     db:
       type: postgresdb
       postgresdb:
@@ -35,6 +35,10 @@ main:
   secret:
     n8n:
       encryption_key: "{{ .StateValues.security_github_client_secret }}"
+      
+      # Set easy credentials because it is authenticated by reverse proxy.
+      basic-auth-user: admin
+      basic-auth-password: password
 
   extraEnv: &extraEnv
     DB_POSTGRESDB_USER:
