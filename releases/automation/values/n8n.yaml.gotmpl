@@ -57,6 +57,11 @@ main:
         secretKeyRef:
           name: backup-kopia-auth
           key: AWS_SECRET_ACCESS_KEY
+    QUEUE_BULL_REDIS_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: valkey-admin-credentials
+          key: password
   resources:
     limits:
       memory: 2048Mi
