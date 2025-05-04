@@ -11,7 +11,7 @@ main:
     webhook_url: *url
     vue_app_url_base_api: *url
 
-    external_hook_files: /n8n-config-scripts
+    external_hook_files: /n8n-config-scripts/n8n-ready-hook.js
 
     executions_mode: queue
     n8n:
@@ -135,7 +135,5 @@ extraManifests:
     metadata:
       name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
     data:
-#{{- range $path := readDir "../files/scripts/n8n/" }}
-#{{- $scriptName := regexReplaceAll "(^.*/)(.*)$" $path "${2}" }}
-      {{ $scriptName }}: | {{- readFile $path | nindent 8}}
-#{{- end }}
+      n8n-ready-hook.js: |
+        {{- readFile "../files/scripts/n8n/n8n-ready-hook.js" | nindent 8 }}
