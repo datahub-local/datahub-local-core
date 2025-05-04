@@ -84,20 +84,6 @@ main:
           name: valkey-admin-credentials
           key: password
 
-  initContainers:
-    init:
-      image:
-        image: python:3.12
-        tag: latest
-      command:
-        - "/bin/bash"
-        - "-i"
-        - "/usr/local/n8n-scripts/n8n-setup.sh"
-      resources:
-        requests:
-          memory: 100Mi
-          cpu: 100m
-
   extraVolumes:
     - name: n8n-config-scripts-volume
       configMap:
