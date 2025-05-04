@@ -135,5 +135,7 @@ extraManifests:
     metadata:
       name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
     data:
-      n8n-setup.sh: |
-        {{- readFile "../files/scripts/n8n/n8n-ready-hook.js" | nindent 8 }}
+#{{- range $path := readDir "../files/scripts/n8n/" }}
+#{{- $scriptName := regexReplaceAll "(^.*/)(.*)$" $path "${2}" }}
+      {{ $scriptName }}: | {{- readFile $path | nindent 8}}
+#{{- end }}
