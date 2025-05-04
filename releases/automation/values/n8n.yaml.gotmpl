@@ -4,6 +4,10 @@ _shared_config:
   hostname: &hostname automation-n8n.{{ .StateValues.ingress_hostname }}
   url: &url https://automation-n8n.{{ .StateValues.ingress_hostname }}
 
+image:
+  repository: n8nio/n8n
+  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
+
 main:
   config:
     generic_timezone: UTC
