@@ -107,15 +107,15 @@ module.exports = {
                           Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])
                       );
 
-                      const forwardedUser = headers['x-forwarded-user'];
-                      logger.debug('[OAuth2 Proxy] X-Forwarded-User value: ' + forwardedUser);
+                      const forwardedUser = headers['x-auth-request-user'];
+                      logger.debug('[OAuth2 Proxy] X-Auth-Request-User value: ' + forwardedUser);
 
                       if (!forwardedUser) {
-                          logger.info('[OAuth2 Proxy] Missing X-Forwarded-User header, returning 401');
+                          logger.info('[OAuth2 Proxy] Missing X-Auth-Request-User header, returning 401');
 
                           res.status(401).json({
                               code: 401,
-                              message: 'Missing X-Forwarded-User header'
+                              message: 'Missing X-Auth-Request-User header'
                           });
                           return;
                       } else {
