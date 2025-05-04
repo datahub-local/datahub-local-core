@@ -85,7 +85,7 @@ main:
           key: password
 
   extraVolumes:
-    - name: n8n-config-scripts-volume
+    - name: n8n-config-scripts
       configMap:
         name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
 
