@@ -15,8 +15,6 @@ main:
     webhook_url: *url
     vue_app_url_base_api: *url
 
-    external_hook_files: /n8n-config-scripts/n8n-ready-hook.js
-
     executions_mode: queue
     n8n:
       runners_enabled: true
@@ -25,8 +23,6 @@ main:
       hide_usage_page: true
       diagnostics_enabled: false
       version_notifications_enabled: false
-
-      ready: n8n-ready-hook.js
 
     queue:
       health:
@@ -62,6 +58,9 @@ main:
       oauth2_proxy_middleware_enabled: true
 
   extraEnv: &extraEnv
+    EXTERNAL_HOOK_FILES: /n8n-config-scripts/n8n-ready-hook.js
+    N8N_READY: n8n-ready-hook.js
+
     DB_POSTGRESDB_USER:
       valueFrom:
         secretKeyRef:
@@ -72,6 +71,7 @@ main:
         secretKeyRef:
           name: postgresql-admin-credentials
           key: password
+
     N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
       valueFrom:
         secretKeyRef:
@@ -82,6 +82,7 @@ main:
         secretKeyRef:
           name: backup-kopia-auth
           key: AWS_SECRET_ACCESS_KEY
+
     QUEUE_BULL_REDIS_PASSWORD:
       valueFrom:
         secretKeyRef:
@@ -115,7 +116,7 @@ webhook:
 ingress:
   enabled: true
   annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(?!auth(?!\\/token)).*" | nindent 4 }}{{ end }}
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "n8n"
