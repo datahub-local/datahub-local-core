@@ -4,6 +4,35 @@ _shared_config:
   hostname: &hostname automation-n8n.{{ .StateValues.ingress_hostname }}
   url: &url https://automation-n8n.{{ .StateValues.ingress_hostname }}
 
+  env: &sharedEnv
+    DB_POSTGRESDB_USER:
+      valueFrom:
+        secretKeyRef:
+          name: postgresql-admin-credentials
+          key: user
+    DB_POSTGRESDB_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: postgresql-admin-credentials
+          key: password
+
+    N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: backup-kopia-auth
+          key: AWS_ACCESS_KEY_ID
+    N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET:
+      valueFrom:
+        secretKeyRef:
+          name: backup-kopia-auth
+          key: AWS_SECRET_ACCESS_KEY
+
+    QUEUE_BULL_REDIS_PASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: valkey-admin-credentials
+          key: password
+
 image:
   repository: n8nio/n8n
   tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
@@ -57,37 +86,13 @@ main:
       instance_owner_password: Password01
       oauth2_proxy_middleware_enabled: true
 
-  extraEnv: &extraEnv
-    EXTERNAL_HOOK_FILES: /n8n-config-scripts/n8n-ready-hook.js
-    N8N_READY: n8n-ready-hook.js
+  extraEnv:
+    <<: *sharedEnv
 
-    DB_POSTGRESDB_USER:
-      valueFrom:
-        secretKeyRef:
-          name: postgresql-admin-credentials
-          key: user
-    DB_POSTGRESDB_PASSWORD:
-      valueFrom:
-        secretKeyRef:
-          name: postgresql-admin-credentials
-          key: password
-
-    N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
-      valueFrom:
-        secretKeyRef:
-          name: backup-kopia-auth
-          key: AWS_ACCESS_KEY_ID
-    N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET:
-      valueFrom:
-        secretKeyRef:
-          name: backup-kopia-auth
-          key: AWS_SECRET_ACCESS_KEY
-
-    QUEUE_BULL_REDIS_PASSWORD:
-      valueFrom:
-        secretKeyRef:
-          name: valkey-admin-credentials
-          key: password
+    EXTERNAL_HOOK_FILES:
+      value: /n8n-config-scripts/n8n-ready-hook.js
+    N8N_READY:
+      value: n8n-ready-hook.js
 
   extraVolumes:
     - name: n8n-config-scripts
@@ -105,13 +110,13 @@ main:
     requests:
       memory: 512Mi
 
-worker:
-  enabled: true
-  extraEnv: *extraEnv
+# worker:
+#   enabled: true
+#   extraEnv: *sharedEnv
 
-webhook:
-  enabled: true
-  extraEnv: *extraEnv
+# webhook:
+#   enabled: true
+#   extraEnv: *sharedEnv
 
 ingress:
   enabled: true
