@@ -4,43 +4,7 @@ _shared_config:
   hostname: &hostname automation-n8n.{{ .StateValues.ingress_hostname }}
   url: &url https://automation-n8n.{{ .StateValues.ingress_hostname }}
 
-main:
-  config:
-    webhook_url: *url
-    vue_app_url_base_api: *url
-    executions_mode: queue
-    n8n:
-      runners_enabled: true
-    db:
-      type: postgresdb
-      postgresdb:
-        host: "{{ $.Values.release_name }}-data-postgresql-hl.data.svc.cluster.local"
-        port: 5432
-        pool:
-          size: 10
-    external:
-      storage:
-        s3:
-          host: "{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000"
-          protocol: http
-          bucket_name: datahub-local-n8n
-    queue:
-      health:
-        check:
-          active: true
-      bull:
-        redis:
-          host: "{{ .Values.release_name }}-data-valkey-headless.data.svc.cluster.local"
-          port: 6379
-  secret:
-    n8n:
-      encryption_key: "{{ .StateValues.security_github_client_secret }}"
-      
-      # Set easy credentials because it is authenticated by reverse proxy.
-      basic-auth-user: admin
-      basic-auth-password: password
-
-  extraEnv: &extraEnv
+  env: &sharedEnv
     DB_POSTGRESDB_USER:
       valueFrom:
         secretKeyRef:
@@ -51,6 +15,7 @@ main:
         secretKeyRef:
           name: postgresql-admin-credentials
           key: password
+
     N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
       valueFrom:
         secretKeyRef:
@@ -61,29 +26,102 @@ main:
         secretKeyRef:
           name: backup-kopia-auth
           key: AWS_SECRET_ACCESS_KEY
+
     QUEUE_BULL_REDIS_PASSWORD:
       valueFrom:
         secretKeyRef:
           name: valkey-admin-credentials
           key: password
+
+image:
+  repository: n8nio/n8n
+  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
+
+main:
+  config:
+    generic_timezone: UTC
+
+    webhook_url: *url
+    vue_app_url_base_api: *url
+
+    executions_mode: queue
+    n8n:
+      runners_enabled: true
+      offload_manual_executions_to_workers: true
+
+      hide_usage_page: true
+      diagnostics_enabled: false
+      version_notifications_enabled: false
+
+    queue:
+      health:
+        check:
+          active: true
+      bull:
+        redis:
+          host: "{{ .Values.release_name }}-data-valkey-headless.data.svc.cluster.local"
+          port: 6379
+
+    db:
+      type: postgresdb
+      postgresdb:
+        host: "{{ $.Values.release_name }}-data-postgresql-hl.data.svc.cluster.local"
+        port: 5432
+        pool:
+          size: 10
+
+    external:
+      storage:
+        s3:
+          host: "{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000"
+          protocol: http
+          bucket_name: datahub-local-n8n
+  secret:
+    n8n:
+      encryption_key: "{{ .StateValues.security_github_client_secret }}"
+
+    custom:
+      # Set easy credentials because it is authenticated by reverse proxy.
+      instance_owner_email: admin@example.com
+      instance_owner_password: Password01
+      oauth2_proxy_middleware_enabled: true
+
+  extraEnv:
+    <<: *sharedEnv
+
+    EXTERNAL_HOOK_FILES:
+      value: /n8n-config-scripts/n8n-ready-hook.js
+    N8N_READY:
+      value: n8n-ready-hook.js
+
+  extraVolumes:
+    - name: n8n-config-scripts
+      configMap:
+        name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
+
+  extraVolumeMounts:
+    - name: n8n-config-scripts
+      mountPath: /n8n-config-scripts
+      readOnly: true
+
   resources:
     limits:
       memory: 2048Mi
     requests:
       memory: 512Mi
 
-worker:
-  enabled: true
-  extraEnv: *extraEnv
+# worker:
+#   enabled: true
+#   extraEnv: *sharedEnv
 
-webhook:
-  enabled: true
-  extraEnv: *extraEnv
+# webhook:
+#   enabled: true
+#   extraEnv: *sharedEnv
 
 ingress:
   enabled: true
   annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(?!auth(?!\\/token)).*" | nindent 4 }}{{ end }}
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "n8n"
@@ -101,4 +139,11 @@ ingress:
 
   tls: {}
 
-extraManifests: []
+extraManifests:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
+    data:
+      n8n-ready-hook.js: |
+        {{- readFile "../files/scripts/n8n/n8n-ready-hook.js" | nindent 8 }}

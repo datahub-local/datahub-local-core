@@ -14,7 +14,7 @@ configMaps:
   scripts:
     enabled: true
     data:
-#{{- range $path := readDir "../templates/files/scripts/" }}
+#{{- range $path := readDir "../files/scripts/ha/" }}
 #{{- $scriptName := regexReplaceAll "(^.*/)(.*)$" $path "${2}" }}
       {{ $scriptName }}: | {{- readFile $path | nindent 10}}
 #{{- end }}
