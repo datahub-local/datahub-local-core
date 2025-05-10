@@ -34,6 +34,9 @@ controllers:
               key: REPOSITORY_PASSWORD
         resources:
           requests:
+            memory: 100Mi
+            cpu: 100m
+          limits:
             memory: 300Mi
             cpu: 300m
         command:

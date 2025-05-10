@@ -52,6 +52,9 @@ controllers:
           requests:
             memory: 100Mi
             cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
         probes:
           liveness:
             enabled: true
@@ -67,11 +70,12 @@ serviceAccount:
   create: true
 
 persistence:
-  persistence:
+  data:
     enabled: true
 
     accessMode: ReadWriteOnce
     size: 2Gi
+    storageClass: longhorn
     advancedMounts:
       main:
         main:

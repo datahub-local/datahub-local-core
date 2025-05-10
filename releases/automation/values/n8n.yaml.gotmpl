@@ -105,10 +105,12 @@ main:
       readOnly: true
 
   resources:
-    limits:
-      memory: 2048Mi
     requests:
       memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2048Mi
+      cpu: 1
 
 # worker:
 #   enabled: true

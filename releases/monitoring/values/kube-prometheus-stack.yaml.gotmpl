@@ -90,6 +90,7 @@ grafana:
     type: Recreate
   persistence:
     enabled: true
+    storageClass: longhorn
     size: 2Gi
   grafana.ini:
     server:
@@ -160,10 +161,10 @@ prometheus-node-exporter:
         - name: INTERVAL
           value: "60"
       resources:
-        limits:
-          cpu: 300m
-          memory: 196Mi
         requests:
+          cpu: 100m
+          memory: 100Mi
+        limits:
           cpu: 300m
           memory: 196Mi
       securityContext:

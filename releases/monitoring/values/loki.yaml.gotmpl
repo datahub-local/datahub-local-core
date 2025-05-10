@@ -65,6 +65,7 @@ singleBinary:
       value: 3750MiB
   persistence:
     enabled: true
+    storageclass: nfs
     # Since kubernetes 1.24 the Volume Expansion is Stable.
     # https://kubernetes.io/blog/2022/05/05/volume-expansion-ga/
     # Make sure the 'storageclass' has 'allowVolumeExpansion' to resize the volume from the initial size.
@@ -73,7 +74,7 @@ singleBinary:
     # Finally, since the chart does not create a PersistentVolumeClaim and uses volumeClaimTemplates within the statefulset to create it dynamically.
     # it is necessary to execute following command (kustomize does not work since it does not initially create a PersistentVolumeClaim to be patched).
     # > kubectl patch pvc storage-loki-0 -n observability -p '{"spec":{"resources":{"requests":{"storage":"2Gi"}}}}'
-    size: 10Gi
+    size: 30Gi
 
 chunksCache:
   # -- Specifies whether memcached based chunks-cache should be enabled

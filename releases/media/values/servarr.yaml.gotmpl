@@ -4,7 +4,7 @@ argoCD: true
 
 global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
-  storageClassName: &storageClassName "longhorn-no-replica"
+  storageClassName: &storageClassName "nfs"
   authMethod: External
   ingressHostPattern: "media-SERVICE.{{ .StateValues.ingress_hostname }}"
 
@@ -80,10 +80,10 @@ volumes:
   storageClass: *storageClassName
   downloads:
     name: &downloads-volume downloads-volume
-    size: 10Gi
+    size: 50Gi
   media:
     name: &media-volume media-volume
-    size: 50Gi
+    size: 200Gi
   torrentConfig:
     name: &torrentConfig torrent-config
     size: 250Mi
