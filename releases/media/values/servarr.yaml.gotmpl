@@ -60,6 +60,7 @@ global:
     tolerations:
       - effect: NoSchedule
         key: datahub.local/role
+        operator: "Equal"
         value: nas
 
 metrics:

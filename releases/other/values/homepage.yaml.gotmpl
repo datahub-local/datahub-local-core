@@ -37,9 +37,6 @@ config:
           useEqualHeights: true
   bookmarks:
     - DataHub.local:
-        - TrueNas:
-            - icon: "sh-truenas-scale"
-              href: https://datahublocal-nas.homelab.alvsanand.com/
         - Github:
             - icon: "sh-github"
               href: https://github.com/datahub-local
@@ -63,13 +60,17 @@ config:
             - icon: mdi-chef-hat
               href: https://www.recetasgratis.net/
   services:
+    - System:
+        - TrueNas:
+            icon: "sh-truenas-scale"
+            href: https://datahublocal-nas.homelab.alvsanand.com/
     - Security:
         - Tailscale:
             icon: "sh-tailscale"
             href: https://login.tailscale.com/
             description: The easiest, most secure way to use WireGuard and 2FA.
             namespace: security
-            app: {{ .Values.release_name }}-tailscale
+            app: "{{ .Values.release_name }}-tailscale"
   widgets:
     - logo:
         icon: https://datahub-local.alvsanand.com/assets/img/logo.png
