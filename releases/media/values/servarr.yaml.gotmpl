@@ -58,9 +58,9 @@ global:
       kubernetes.io/arch: amd64
 
     tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
+      - effect: NoSchedule
+        key: datahub.local/role
+        value: nas
 
 metrics:
   enabled: &metricsEnabled true
