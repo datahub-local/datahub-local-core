@@ -12,10 +12,10 @@ globalConfig:
 disableCloudRouting: true
 
 sinksConfig:
-  - telegram_sink:
-      name: "Telegram sink"
-      bot_token: "{{`{{ env.TELEGRAM_TOKEN }}`}}"
-      chat_id: "{{`{{ env.TELEGRAM_CHAT_ID }}`}}"
+  - slack_sink:
+      name: slack_sink
+      slack_channel: "{{`{{ env.SLACK_CHANNEL }}`}}"
+      api_key: "{{`{{ env.SLACK_API_KEY }}`}}"
       scope:
         include:
           - severity: HIGH
@@ -39,13 +39,13 @@ runner:
         secretKeyRef:
           name: robusta-auth
           key: account_id
-    - name: TELEGRAM_TOKEN
+    - name: SLACK_CHANNEL
       valueFrom:
         secretKeyRef:
-          name: telegram-auth
-          key: token
-    - name: TELEGRAM_CHAT_ID
+          name: slack-auth
+          key: slack_channel
+    - name: SLACK_API_KEY
       valueFrom:
         secretKeyRef:
-          name: telegram-auth
-          key: monitoring_chat_id
+          name: slack-auth
+          key: api_key
