@@ -1113,7 +1113,7 @@
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -1468,5 +1468,5 @@
   "timezone": "browser",
   "title": "Homelab / Homepage",
   "uid": "fdmr8yqdx4jcwf",
-  "version": 1
+  "version": 2
 }
