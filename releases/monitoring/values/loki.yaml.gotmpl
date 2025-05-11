@@ -65,7 +65,7 @@ singleBinary:
       value: 3750MiB
   persistence:
     enabled: true
-    storageclass: nfs
+    storageClass: nfs
     # Since kubernetes 1.24 the Volume Expansion is Stable.
     # https://kubernetes.io/blog/2022/05/05/volume-expansion-ga/
     # Make sure the 'storageclass' has 'allowVolumeExpansion' to resize the volume from the initial size.
