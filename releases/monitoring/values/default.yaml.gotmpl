@@ -38,7 +38,7 @@ prometheus_rules:
             severity: critical
         - alert: ArgoAppNotSynced
           expr: |
-            argocd_app_sync_total{phase="Error"} == 1
+            argocd_app_sync_total{phase=~"Error|Failed"} >= 1
           for: 5m
           labels:
             severity: error
@@ -48,7 +48,7 @@ prometheus_rules:
               The application '{{`{{$labels.name}}`}}' failed its synchronization in Argo CD. Please, review the error in https://automation-argo-cd.{{ $ingress_hostname }}/applications/automation/{{`{{$labels.name}}`}}
         - alert: ArgoAppNotSynced
           expr: |
-            argocd_app_sync_total{phase="Succeeded"} == 1
+            argocd_app_sync_total{phase="Succeeded"} >= 1
           for: 5m
           labels:
             severity: info
