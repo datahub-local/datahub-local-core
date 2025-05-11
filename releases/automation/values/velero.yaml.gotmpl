@@ -3,7 +3,7 @@
 s3-configuration: &s3-configuration
   name: velero-s3-backup
   provider: aws
-  bucket: {{ .Values.backup_s3_bucket }}
+  bucket: {{.Values.backup_s3_bucket}}
   default: true
   credential:
     name: backup-velero-auth
@@ -26,10 +26,10 @@ nodeAgent:
     - key: nvidia.com/gpu
       operator: Exists
       effect: NoSchedule
-      - effect: NoSchedule
-        key: datahub.local/role
-        operator: "Equal"
-        value: nas
+    - effect: NoSchedule
+      key: datahub.local/role
+      operator: "Equal"
+      value: nas
 
 initContainers:
   - name: velero-plugin-for-aws
