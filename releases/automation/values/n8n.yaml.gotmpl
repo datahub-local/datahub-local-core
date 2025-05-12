@@ -89,10 +89,17 @@ main:
   extraEnv:
     <<: *sharedEnv
 
+    #{{- if .Values.security_enabled }}
     EXTERNAL_HOOK_FILES:
       value: /n8n-config-scripts/n8n-ready-hook.js
     N8N_READY:
       value: n8n-ready-hook.js
+    #{{ end }}
+    CREDENTIALS_OVERWRITE_DATA:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: CREDENTIALS_OVERWRITE_DATA
 
   extraVolumes:
     - name: n8n-config-scripts
@@ -123,7 +130,7 @@ main:
 ingress:
   enabled: true
   annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(webhook|rest)/.*" | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "n8n"
@@ -142,6 +149,7 @@ ingress:
   tls: {}
 
 extraManifests:
+  #{{- if .Values.security_enabled }}
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -149,3 +157,4 @@ extraManifests:
     data:
       n8n-ready-hook.js: |
         {{- readFile "../files/scripts/n8n/n8n-ready-hook.js" | nindent 8 }}
+    #{{ end }}

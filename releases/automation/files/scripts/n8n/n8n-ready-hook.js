@@ -10,7 +10,7 @@ const {
 const {
   issueCookie
 } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'))
-const ignoreAuthRegexp = /^\/(assets|healthz|webhook)/;
+const ignoreAuthRegexp = /^\/(assets|healthz|webhook|rest)/;
 
 module.exports = {
   n8n: {
