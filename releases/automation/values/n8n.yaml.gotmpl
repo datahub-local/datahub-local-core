@@ -105,7 +105,7 @@ main:
         name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
     - name: n8n-secrets
       secret:
-        name: n8n-secrets
+        secretName: n8n-secrets
 
   extraVolumeMounts:
     - name: n8n-config-scripts
