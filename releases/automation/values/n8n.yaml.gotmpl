@@ -50,6 +50,7 @@ main:
       offload_manual_executions_to_workers: true
 
       hide_usage_page: true
+      hiring_banner_enabled: false
       diagnostics_enabled: false
       version_notifications_enabled: false
 
@@ -99,6 +100,16 @@ main:
       value: n8n-ready-hook.js
     #{{ end }}
 
+  podLabels:
+    backup.velero.io/custom-backup-daily-fs: "true"
+
+  podAnnotations:
+    backup.velero.io/backup-volumes: backup
+    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "n8n export:credentials --all --decrypted | gzip > /scratch/credentials_backup.json.gz"]'
+    pre.hook.backup.velero.io/timeout: 60m
+    post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/credentials_backup.json.gz\" ] && gunzip /scratch/credentials_backup.json.gz && n8n import:credentials --input /scratch/credentials_backup.json && rm -f /scratch/credentials_backup.json;"]'
+
+
   extraVolumes:
     - name: n8n-config-scripts
       configMap:
@@ -106,6 +117,9 @@ main:
     - name: n8n-secrets
       secret:
         secretName: n8n-secrets
+    - name: backup
+      emptyDir:
+        sizeLimit: 100MBi
 
   extraVolumeMounts:
     - name: n8n-config-scripts
