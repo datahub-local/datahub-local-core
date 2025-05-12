@@ -76,6 +76,9 @@ main:
           host: "{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000"
           protocol: http
           bucket_name: datahub-local-n8n
+
+    custom:
+      credentials_file: /n8n-secrets/credentials.json
   secret:
     n8n:
       encryption_key: "{{ .StateValues.security_github_client_secret }}"
@@ -95,20 +98,21 @@ main:
     N8N_READY:
       value: n8n-ready-hook.js
     #{{ end }}
-    CREDENTIALS_OVERWRITE_DATA:
-      valueFrom:
-        secretKeyRef:
-          name: n8n-secrets
-          key: CREDENTIALS_OVERWRITE_DATA
 
   extraVolumes:
     - name: n8n-config-scripts
       configMap:
         name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
+    - name: n8n-secrets
+      secret:
+        name: n8n-secrets
 
   extraVolumeMounts:
     - name: n8n-config-scripts
       mountPath: /n8n-config-scripts
+      readOnly: true
+    - name: n8n-secrets
+      mountPath: /n8n-secrets
       readOnly: true
 
   resources:
