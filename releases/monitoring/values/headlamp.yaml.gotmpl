@@ -45,7 +45,7 @@ ingress:
           type: Prefix
 
   annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
+    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(static-plugins|manifest.json|clusters/).*" | nindent 4 }}{{ end }}
 
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Headlamp"

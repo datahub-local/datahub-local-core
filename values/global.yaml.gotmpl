@@ -10,10 +10,9 @@ security_enabled: true
 
 security_admin_user: "admin"
 
-# { {- if .Values.security_enabled } }{ { .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "/static-plugins|/manifest.json" | nindent 4 } }{ { end } }
+# use '| replace "SOME_REGEX_TO_SKIP" "(static-plugins|manifest.json|clusters/).*"' before nindent to skip some urls
 security_oauth2_annotations:
   nginx.ingress.kubernetes.io/enable-cors: "true"
-  nginx.ingress.kubernetes.io/cors-allow-origin: https://{{ $ingress_hostname }}
   nginx.ingress.kubernetes.io/auth-signin: https://security-oauth2.{{ $ingress_hostname }}/oauth2/start?rd=https://$host$escaped_request_uri
   nginx.ingress.kubernetes.io/auth-url: https://security-oauth2.{{ $ingress_hostname }}/oauth2/auth
   nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Access-Token, Set-Cookie, Authorization
