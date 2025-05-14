@@ -23,7 +23,7 @@ primary:
         - | 
           for file in $(find /data -name "*.aof"); do
             echo "Repairing $file";
-            valkey-check-aof --fix $file;
+            yes | valkey-check-aof --fix $file;
             if [ $? -ne 0 ]; then
               echo "Repairing $file failed";
               exit 1;
