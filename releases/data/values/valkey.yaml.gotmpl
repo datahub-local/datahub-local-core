@@ -17,7 +17,7 @@ primary:
   initContainers:
     - name: repair-valkey
       image: docker.io/bitnami/valkey:8.0
-      command: ["sh", "-c", "test -f /data/appendonly.aof && valkey-check-aof --fix  /data/appendonly.aof || true"]
+      command: ["sh", "-c", "for file in /data/appendonly.aof*; do valkey-check-aof --fix "$file"; done"]
       volumeMounts:
         - name: empty-dir
           mountPath: /tmp
