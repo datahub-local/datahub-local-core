@@ -12,7 +12,7 @@ const {
 } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'))
 const { exec } = require('child_process');
 
-const ignoreAuthRegexp = /^\/(assets|healthz|webhook|rest)/;
+const ignoreAuthRegexp = /^\/(assets|api|healthz|webhook|rest)/;
 
 module.exports = {
     n8n: {
@@ -170,7 +170,7 @@ module.exports = {
 
                 try {
                     const command = `n8n import:credentials --input ${CUSTOM_CREDENTIALS_FILE}`;
-                    
+
                     exec(command, (error, stdout, stderr) => {
                         if (error) {
                             logger.error(`[InitCrendentials] Error executing command: ${error.message}`);
