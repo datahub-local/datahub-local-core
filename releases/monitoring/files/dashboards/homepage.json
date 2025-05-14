@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 34,
+  "id": 76,
   "links": [],
   "panels": [
     {
@@ -1339,6 +1339,293 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Table containing the list of Alerts",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": false
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 157
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 94
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "CRITICAL": {
+                        "color": "#f2495cb3",
+                        "index": 3
+                      },
+                      "ERROR": {
+                        "color": "#ff9830b3",
+                        "index": 2
+                      },
+                      "INFO": {
+                        "color": "transparent",
+                        "index": 0
+                      },
+                      "WARNING": {
+                        "color": "#fade2ab3",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Alert Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 230
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 164
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 124
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 0,
+        "y": 17
+      },
+      "id": 62,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"}",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Alerts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "instance",
+              "version",
+              "alertname",
+              "severity",
+              "namespace",
+              "pod"
+            ],
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Time",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "ALERTS_FOR_STATE"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": "1000"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "ALERTS": true,
+              "ALERTS_FOR_STATE": true,
+              "Time": false,
+              "Value": false,
+              "Value #B": false,
+              "Value #C": false,
+              "__name__": true,
+              "alertmanager_build_info": true,
+              "alertname": false,
+              "app_kubernetes_io_instance": true,
+              "app_kubernetes_io_name": true,
+              "apps_kubernetes_io_pod_index": true,
+              "cluster": true,
+              "container": true,
+              "controller_revision_hash": true,
+              "instance": true,
+              "job": true,
+              "namespace": false,
+              "node": true,
+              "severity": false,
+              "statefulset_kubernetes_io_pod_name": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "ALERTS_FOR_STATE": 4,
+              "Time": 0,
+              "alertname": 3,
+              "instance": 1,
+              "namespace": 5,
+              "pod": 6,
+              "severity": 2
+            },
+            "renameByName": {
+              "ALERTS_FOR_STATE": "Time",
+              "Time": "",
+              "Value": "Last reload",
+              "Value #B": "Last reload",
+              "Value #C": "Last reload successfull",
+              "alertname": "Alert Name",
+              "instance": "Instance",
+              "namespace": "Namespace",
+              "pod": "Pod",
+              "severity": "Severity",
+              "version": "Version"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Time"
+              }
+            ]
+          }
+        },
+        {
+          "id": "formatString",
+          "options": {
+            "outputFormat": "Upper Case",
+            "stringField": "Severity"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -1347,7 +1634,7 @@
         "h": 7,
         "w": 18,
         "x": 0,
-        "y": 17
+        "y": 25
       },
       "id": 57,
       "options": {
@@ -1468,5 +1755,5 @@
   "timezone": "browser",
   "title": "Homelab / Homepage",
   "uid": "fdmr8yqdx4jcwf",
-  "version": 2
+  "version": 1
 }

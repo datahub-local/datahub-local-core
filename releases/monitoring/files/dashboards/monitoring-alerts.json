@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 41,
+  "id": 77,
   "links": [],
   "panels": [
     {
@@ -4030,7 +4030,7 @@
             "$__all"
           ]
         },
-        "definition": "query_result(ALERTS{alertstate=\"firing\", severity=~\"critical|warning|error|info\"})",
+        "definition": "query_result(ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"})",
         "includeAll": true,
         "label": "Severity",
         "multi": true,
@@ -4038,7 +4038,7 @@
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(ALERTS{alertstate=\"firing\", severity=~\"critical|warning|error|info\"})",
+          "query": "query_result(ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -4055,5 +4055,5 @@
   "timezone": "browser",
   "title": "Homelab / Monitoring / Alerts",
   "uid": "alertmanager",
-  "version": 9
+  "version": 1
 }
