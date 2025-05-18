@@ -31,11 +31,11 @@ controllers:
             value: "TOKEN-1234567890"
         resources:
           requests:
-            memory: 1Gi
-            cpu: 500m
-          limits:
             memory: 300Mi
             cpu: 300m
+          limits:
+            memory: 1Gi
+            cpu: 1
 
 serviceAccount:
   default:
