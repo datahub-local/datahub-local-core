@@ -10,6 +10,8 @@ controllers:
     strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
     containers:
       main:
         image:
@@ -89,7 +91,8 @@ controllers:
                     --password=$REPOSITORY_PASSWORD || true
 
 serviceAccount:
-  create: true
+  default:
+    enabled: true
 
 service:
   main:

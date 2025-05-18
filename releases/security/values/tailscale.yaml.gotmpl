@@ -17,6 +17,8 @@ controllers:
     strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
     containers:
       main:
         image:
@@ -48,7 +50,8 @@ controllers:
             cpu: 300m
 
 serviceAccount:
-  create: true
+  default:
+    enabled: true
 
 rawResources:
   role:

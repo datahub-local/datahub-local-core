@@ -10,6 +10,8 @@ controllers:
     strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
     containers:
       main:
         image:
@@ -67,7 +69,8 @@ controllers:
               periodSeconds: 5
 
 serviceAccount:
-  create: true
+  default:
+    enabled: true
 
 persistence:
   data:

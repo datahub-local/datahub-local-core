@@ -27,6 +27,8 @@ controllers:
     annotations:
       reloader.stakater.com/auto: "true"
       backup.velero.io/backup-volumes: config
+    serviceAccount:
+      identifier: default
     pod:
       labels:
         backup.velero.io/custom-backup-daily-snapshot: "true"
@@ -119,7 +121,8 @@ controllers:
           TZ: Europe/Madrid
 
 serviceAccount:
-  create: true
+  default:
+    enabled: true
 
 persistence:
   scripts:
