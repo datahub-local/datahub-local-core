@@ -13,26 +13,32 @@ commonLabels:
 
 releases:
   - name: "{{ .Values.release_name }}-automation-home-assistant"
-    namespace: other
+    namespace: automation
     chart: "bjw-s-labs/app-template"
     version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/home-assistant.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-velero"
-    namespace: other
+    namespace: automation
     chart: "vmware-tanzu/velero"
     version: '{{ .StateValues.helm_chart_version | get "vmware-tanzu/velero" }}'
     values:
       - values/velero.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-kopia"
-    namespace: other
+    namespace: automation
     chart: "bjw-s-labs/app-template"
     version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/kopia.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-n8n"
-    namespace: other
+    namespace: automation
     chart: "oci://8gears.container-registry.com/library/n8n"
     version: '{{ .StateValues.helm_chart_version | get "8gears/n8n" }}'
     values:
       - values/n8n.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-n8n-chromium"
+    namespace: automation
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    values:
+      - values/n8n-chromium.yaml.gotmpl
