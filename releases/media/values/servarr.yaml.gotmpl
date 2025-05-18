@@ -182,7 +182,7 @@ jellyfin:
   ingress:
     jellyfin-ing:
       annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "nginx.ingress.kubernetes.io/auth-response-headers" "#nginx.ingress.kubernetes.io/auth-response-headers" | nindent 8 }}{{ end }}
+        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "nginx.ingress.kubernetes.io/auth-response-headers" "disabled.nginx.ingress.kubernetes.io/auth-response-headers" | nindent 8 }}{{ end }}
 
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "jellyfin"
