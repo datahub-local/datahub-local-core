@@ -83,7 +83,7 @@ main:
 
     custom:
       credentials_file: /n8n-secrets/credentials.json
-      external_modules: "@extractus/article-extractor"
+      extra_modules: "@extractus/article-extractor"
       community_nodes: "n8n-nodes-puppeteer"
   secret:
     n8n:
@@ -115,6 +115,9 @@ main:
   command: &command
     - sh
     - /n8n-config-scripts/n8n-start.sh
+
+  readinessProbe: &readinessProbe
+    initialDelaySeconds: 180
 
   podSecurityContext: &podSecurityContext
     runAsNonRoot: false
@@ -162,6 +165,7 @@ worker:
   enabled: true
   command: *command
   podSecurityContext: *podSecurityContext
+  readinessProbe: *readinessProbe
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
@@ -171,6 +175,7 @@ webhook:
   enabled: true
   command: *command
   podSecurityContext: *podSecurityContext
+  readinessProbe: *readinessProbe
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
