@@ -79,10 +79,11 @@ main:
           bucket_name: datahub-local-n8n
 
     node:
-      function_allow_external: "@extractus/article-extractor"
+      function_allow_external: "*"
 
     custom:
       credentials_file: /n8n-secrets/credentials.json
+      external_modules: "@extractus/article-extractor"
   secret:
     n8n:
       encryption_key: "{{ .StateValues.security_github_client_secret }}"
@@ -114,6 +115,12 @@ main:
     - sh
     - /n8n-config-scripts/n8n-start.sh
 
+  podSecurityContext: &podSecurityContext
+    runAsNonRoot: false
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
 
@@ -122,7 +129,6 @@ main:
     pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "n8n export:credentials --all --decrypted | gzip > /scratch/credentials_backup.json.gz"]'
     pre.hook.backup.velero.io/timeout: 60m
     post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/credentials_backup.json.gz\" ] && gunzip /scratch/credentials_backup.json.gz && n8n import:credentials --input /scratch/credentials_backup.json && rm -f /scratch/credentials_backup.json;"]'
-
 
   extraVolumes: &extraVolumes
     - name: n8n-config-scripts
@@ -154,6 +160,7 @@ main:
 worker:
   enabled: true
   command: *command
+  podSecurityContext: *podSecurityContext
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
@@ -162,11 +169,11 @@ worker:
 webhook:
   enabled: true
   command: *command
+  podSecurityContext: *podSecurityContext
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
-
 
 ingress:
   enabled: true
