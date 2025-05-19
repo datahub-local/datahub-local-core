@@ -110,20 +110,9 @@ main:
       value: n8n-ready-hook.js
     #{{ end }}
 
-  lifecycle: &lifecycle
-    postStart:
-      exec:
-        command:
-          - /usr/bin/env
-          - bash
-          - "-c"
-          - |
-            if [ -n "$NODE_FUNCTION_ALLOW_EXTERNAL" ]; then
-              IFS=',' read -ra libs <<< "$NODE_FUNCTION_ALLOW_EXTERNAL"
-              for lib in "${libs[@]}"; do
-                npm install "$lib"
-              done
-            fi
+  command: &command
+    - sh
+    - /n8n-config-scripts/n8n-start.sh
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
@@ -135,7 +124,7 @@ main:
     post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/credentials_backup.json.gz\" ] && gunzip /scratch/credentials_backup.json.gz && n8n import:credentials --input /scratch/credentials_backup.json && rm -f /scratch/credentials_backup.json;"]'
 
 
-  extraVolumes:
+  extraVolumes: &extraVolumes
     - name: n8n-config-scripts
       configMap:
         name: "{{ .Values.release_name }}-automation-n8n-config-scripts"
@@ -146,7 +135,7 @@ main:
       emptyDir:
         sizeLimit: 100Mi
 
-  extraVolumeMounts:
+  extraVolumeMounts: &extraVolumeMounts
     - name: n8n-config-scripts
       mountPath: /n8n-config-scripts
       readOnly: true
@@ -164,13 +153,20 @@ main:
 
 worker:
   enabled: true
+  command: *command
+
   extraEnv: *sharedEnv
-  lifecycle: *lifecycle
+  extraVolumes: *extraVolumes
+  extraVolumeMounts: *extraVolumeMounts
 
 webhook:
   enabled: true
+  command: *command
+
   extraEnv: *sharedEnv
-  lifecycle: *lifecycle
+  extraVolumes: *extraVolumes
+  extraVolumeMounts: *extraVolumeMounts
+
 
 ingress:
   enabled: true
