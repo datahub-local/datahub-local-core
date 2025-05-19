@@ -198,4 +198,6 @@ extraManifests:
     data:
       n8n-ready-hook.js: |
         {{- readFile "../files/scripts/n8n/n8n-ready-hook.js" | nindent 8 }}
+      n8n-start.sh: |
+        {{- readFile "../files/scripts/n8n/n8n-start.sh" | nindent 8 }}
   #{{ end }}
