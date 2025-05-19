@@ -12,14 +12,13 @@ if [ -n "$CUSTOM_EXTRA_MODULES" ]; then
 fi
 
 if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then
-  
-  for lib in $(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g"); do
-    COMUNITY_NODES_PATH="$N8N_COMUNITY_NODES_PATH/node_modules/$lib"
-    mkdir -p "$COMUNITY_NODES_PATH"
+  mkdir -p "$N8N_COMUNITY_NODES_PATH"
+  cd "$N8N_COMUNITY_NODES_PATH"
 
+  for lib in $(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g"); do
     echo "Installing community node: $lib"
 
-    npm i --prefix "$COMUNITY_NODES_PATH" "$lib" || echo "Error Installing community node: $lib"
+    npm i "$lib" || echo "Error Installing community node: $lib"
   done
 fi
 
