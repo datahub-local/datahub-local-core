@@ -78,6 +78,9 @@ main:
           protocol: http
           bucket_name: datahub-local-n8n
 
+    node:
+      function_allow_external: "@extractus/article-extractor"
+
     custom:
       credentials_file: /n8n-secrets/credentials.json
   secret:
@@ -106,6 +109,21 @@ main:
     N8N_READY:
       value: n8n-ready-hook.js
     #{{ end }}
+
+  lifecycle: &lifecycle
+    postStart:
+      exec:
+        command:
+          - /usr/bin/env
+          - bash
+          - "-c"
+          - |
+            if [ -n "$NODE_FUNCTION_ALLOW_EXTERNAL" ]; then
+              IFS=',' read -ra libs <<< "$NODE_FUNCTION_ALLOW_EXTERNAL"
+              for lib in "${libs[@]}"; do
+                npm install "$lib"
+              done
+            fi
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
@@ -147,10 +165,12 @@ main:
 worker:
   enabled: true
   extraEnv: *sharedEnv
+  lifecycle: *lifecycle
 
 webhook:
   enabled: true
   extraEnv: *sharedEnv
+  lifecycle: *lifecycle
 
 ingress:
   enabled: true
