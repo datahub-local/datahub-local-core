@@ -1,6 +1,6 @@
 #!/bin/sh
 
-N8N_NODE_MODULES_PATH=/usr/local/lib/node_modules/n8n/node_modules
+N8N_NODE_MODULES_PATH=$HOME/node_modules
 N8N_COMUNITY_NODES_PATH=$HOME/.n8n/nodes
 
 if [ -n "$CUSTOM_EXTRA_MODULES" ]; then

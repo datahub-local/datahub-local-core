@@ -120,12 +120,6 @@ main:
   readinessProbe: &readinessProbe
     initialDelaySeconds: 180
 
-  podSecurityContext: &podSecurityContext
-    runAsNonRoot: false
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
 
@@ -165,7 +159,6 @@ main:
 worker:
   enabled: true
   command: *command
-  podSecurityContext: *podSecurityContext
   readinessProbe: *readinessProbe
 
   extraEnv: *sharedEnv
@@ -175,7 +168,6 @@ worker:
 webhook:
   enabled: true
   command: *command
-  podSecurityContext: *podSecurityContext
   readinessProbe: *readinessProbe
 
   extraEnv: *sharedEnv
