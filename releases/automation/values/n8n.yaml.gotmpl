@@ -122,7 +122,9 @@ main:
     - /n8n-config-scripts/n8n-start.sh
 
   readinessProbe: &readinessProbe
-    initialDelaySeconds: 120
+    initialDelaySeconds: 180
+  livenessProbe: &livenessProbe
+    initialDelaySeconds: 180
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
@@ -164,6 +166,7 @@ worker:
   enabled: true
   command: *command
   readinessProbe: *readinessProbe
+  livenessProbe: *livenessProbe
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
@@ -173,6 +176,7 @@ webhook:
   enabled: true
   command: *command
   readinessProbe: *readinessProbe
+  livenessProbe: *livenessProbe
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
