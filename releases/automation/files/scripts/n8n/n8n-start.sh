@@ -11,8 +11,6 @@ if [ -n "$CUSTOM_EXTRA_MODULES" ]; then
 fi
 
 if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then
-  mkdir -p "${N8N_COMUNITY_NODES_PATH}" && cd "${N8N_COMUNITY_NODES_PATH}"
-
   for lib in $(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g"); do
     echo "Installing community node: $lib"
 

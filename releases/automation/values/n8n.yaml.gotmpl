@@ -45,14 +45,16 @@ main:
     vue_app_url_base_api: *url
 
     executions_mode: queue
+    offload_manual_executions_to_workers: true
     n8n:
+      log_level: info
       runners_enabled: true
-      offload_manual_executions_to_workers: true
 
       hide_usage_page: true
       hiring_banner_enabled: false
       diagnostics_enabled: false
       version_notifications_enabled: false
+      enforce_settings_file_permissions: false
 
       custom_extensions: /home/node/node_modules
 
@@ -120,7 +122,7 @@ main:
     - /n8n-config-scripts/n8n-start.sh
 
   readinessProbe: &readinessProbe
-    initialDelaySeconds: 180
+    initialDelaySeconds: 120
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
