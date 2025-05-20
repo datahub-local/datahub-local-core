@@ -87,8 +87,8 @@ main:
 
     custom:
       credentials_file: /n8n-secrets/credentials.json
-      extra_modules: "@extractus/article-extractor"
-      community_nodes: "n8n-nodes-puppeteer"
+      # extra_modules: "@extractus/article-extractor"
+      community_nodes: "n8n-nodes-puppeteer,n8n-nodes-webpage-content-extractor"
   secret:
     n8n:
       encryption_key: "{{ .StateValues.security_github_client_secret }}"
