@@ -1,13 +1,12 @@
 #!/bin/sh
 
 N8N_NODE_MODULES_PATH=$HOME/node_modules
-N8N_COMUNITY_NODES_PATH=$HOME/.n8n/nodes
 
 if [ -n "$CUSTOM_EXTRA_MODULES" ]; then
   for lib in $(echo "$CUSTOM_EXTRA_MODULES" | sed "s/,/ /g"); do
     echo "Installing extra library: $lib"
 
-    npm i --prefix "$N8N_NODE_MODULES_PATH" "$lib" || echo "Error Installing extra library: $lib"
+    npm i "$lib" || echo "Error Installing extra library: $lib"
   done
 fi
 
