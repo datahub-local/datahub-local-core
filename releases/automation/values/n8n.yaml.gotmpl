@@ -120,6 +120,11 @@ main:
   command: &command
     - sh
     - /n8n-config-scripts/n8n-start.sh
+  podSecurityContext: &podSecurityContext
+    runAsNonRoot: false
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
 
   readinessProbe: &readinessProbe
     initialDelaySeconds: 180
@@ -164,7 +169,10 @@ main:
 
 worker:
   enabled: true
+  
   command: *command
+  podSecurityContext: *podSecurityContext
+
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
 
@@ -174,7 +182,10 @@ worker:
 
 webhook:
   enabled: true
+  
   command: *command
+  podSecurityContext: *podSecurityContext
+
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
 
