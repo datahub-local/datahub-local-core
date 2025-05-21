@@ -33,6 +33,13 @@ _shared_config:
           name: valkey-admin-credentials
           key: password
 
+    BACKUP_GITHUB_REPO_OWNER:
+      value: "datahub-local"
+    BACKUP_GITHUB_REPO_NAME:
+      value: "datahub-local-workflows"
+    BACKUP_GITHUB_REPO_PATH:
+      value: "n8n"
+
 image:
   repository: n8nio/n8n
   tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
@@ -102,13 +109,6 @@ main:
   extraEnv:
     <<: *sharedEnv
 
-    BACKUP_GITHUB_REPO_OWNER:
-      value: "datahub-local"
-    BACKUP_GITHUB_REPO_NAME:
-      value: "datahub-local-workflows"
-    BACKUP_GITHUB_REPO_PATH:
-      value: "n8n"
-
     #{{- if .Values.security_enabled }}
     EXTERNAL_HOOK_FILES:
       value: /n8n-config-scripts/n8n-ready-hook.js
@@ -168,7 +168,7 @@ main:
 
 worker:
   enabled: true
-  
+
   command: *command
   podSecurityContext: *podSecurityContext
 
@@ -189,7 +189,7 @@ worker:
 
 webhook:
   enabled: true
-  
+
   command: *command
   podSecurityContext: *podSecurityContext
 
