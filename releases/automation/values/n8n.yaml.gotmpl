@@ -16,6 +16,12 @@ _shared_config:
           name: postgresql-admin-credentials
           key: password
 
+    N8N_LICENSE_ACTIVATION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: N8N_LICENSE_ACTIVATION_KEY
+
     N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY:
       valueFrom:
         secretKeyRef:
