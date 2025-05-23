@@ -286,6 +286,6 @@ extraManifests:
          - automation
        selector:
          matchLabels:
-           app.kubernetes.io/component: server
-           app.kubernetes.io/instance: argo-cd
-           app.kubernetes.io/name: worker
+           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+           app.kubernetes.io/name: n8n
+           app.kubernetes.io/type: master
