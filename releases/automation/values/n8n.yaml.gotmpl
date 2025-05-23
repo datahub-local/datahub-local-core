@@ -247,3 +247,58 @@ extraManifests:
       n8n-start.sh: |
         {{- readFile "../files/scripts/n8n/n8n-start.sh" | nindent 8 }}
   #{{ end }}
+
+  -  apiVersion: monitoring.coreos.com/v1
+     kind: ServiceMonitor
+     metadata:
+       name: "{{ .Values.release_name }}-automation-n8n"
+     spec:
+       endpoints:
+       - honorLabels: false
+         interval: 30s
+         path: /metrics
+         port: http-metrics
+       namespaceSelector:
+         matchNames:
+         - automation
+       selector:
+         matchLabels:
+           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+           app.kubernetes.io/name: n8n
+           app.kubernetes.io/type: master
+  -  apiVersion: monitoring.coreos.com/v1
+     kind: ServiceMonitor
+     metadata:
+       name: "{{ .Values.release_name }}-automation-n8n-webhook"
+     spec:
+       endpoints:
+       - honorLabels: false
+         interval: 30s
+         path: /metrics
+         port: http-metrics
+       namespaceSelector:
+         matchNames:
+         - automation
+       selector:
+         matchLabels:
+           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+           app.kubernetes.io/name: n8n
+           app.kubernetes.io/type: webhook
+  -  apiVersion: monitoring.coreos.com/v1
+     kind: ServiceMonitor
+     metadata:
+       name: "{{ .Values.release_name }}-automation-n8n-worker"
+     spec:
+       endpoints:
+       - honorLabels: false
+         interval: 30s
+         path: /metrics
+         port: http-metrics
+       namespaceSelector:
+         matchNames:
+         - automation
+       selector:
+         matchLabels:
+           app.kubernetes.io/component: server
+           app.kubernetes.io/instance: argo-cd
+           app.kubernetes.io/name: worker
