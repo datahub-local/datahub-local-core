@@ -61,6 +61,11 @@ main:
     offload_manual_executions_to_workers: true
     n8n:
       log_level: info
+      metrics: true
+      metrics_include_api_endpoints: true
+      metrics_include_queue_metrics: true
+      metrics_include_workflow_id_label: true
+
       runners_enabled: true
 
       hide_usage_page: true
