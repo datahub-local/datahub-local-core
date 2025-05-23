@@ -274,24 +274,6 @@ extraManifests:
   -  apiVersion: monitoring.coreos.com/v1
      kind: ServiceMonitor
      metadata:
-       name: "{{ .Values.release_name }}-automation-n8n-webhook"
-     spec:
-       endpoints:
-       - honorLabels: false
-         interval: 30s
-         path: /metrics
-         targetPort: 5678
-       namespaceSelector:
-         matchNames:
-         - automation
-       selector:
-         matchLabels:
-           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
-           app.kubernetes.io/name: n8n
-           app.kubernetes.io/type: webhook
-  -  apiVersion: monitoring.coreos.com/v1
-     kind: ServiceMonitor
-     metadata:
        name: "{{ .Values.release_name }}-automation-n8n-worker"
      spec:
        endpoints:

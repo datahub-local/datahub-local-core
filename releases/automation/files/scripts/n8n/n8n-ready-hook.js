@@ -12,7 +12,7 @@ const {
 } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'))
 const { exec } = require('child_process');
 
-const ignoreAuthRegexp = /^\/(assets|api|healthz|webhook|rest)/;
+const ignoreAuthRegexp = /^\/(api|assets|healthz|metrics|rest|webhook)/;
 
 module.exports = {
     n8n: {
