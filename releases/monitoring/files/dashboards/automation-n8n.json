@@ -1449,7 +1449,12 @@
   ],
   "preload": false,
   "schemaVersion": 41,
-  "tags": [],
+  "tags": [
+    "Homelab",
+    "Automation",
+    "n8n",
+    "prometheus"
+  ],
   "templating": {
     "list": []
   },
