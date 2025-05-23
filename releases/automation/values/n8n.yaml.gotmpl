@@ -258,7 +258,7 @@ extraManifests:
      metadata:
        name: "{{ .Values.release_name }}-automation-n8n"
      spec:
-       endpoints:
+       podMetricsEndpoints:
        - path: /metrics
          port: http
        namespaceSelector:
@@ -274,7 +274,7 @@ extraManifests:
      metadata:
        name: "{{ .Values.release_name }}-automation-n8n-worker"
      spec:
-       endpoints:
+       podMetricsEndpoints:
        - path: /metrics
          port: http
        namespaceSelector:
