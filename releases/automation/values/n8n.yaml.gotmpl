@@ -254,15 +254,13 @@ extraManifests:
   #{{ end }}
 
   -  apiVersion: monitoring.coreos.com/v1
-     kind: ServiceMonitor
+     kind: PodMonitor
      metadata:
        name: "{{ .Values.release_name }}-automation-n8n"
      spec:
        endpoints:
-       - honorLabels: false
-         interval: 30s
-         path: /metrics
-         targetPort: 5678
+       - path: /metrics
+         port: http
        namespaceSelector:
          matchNames:
          - automation
@@ -272,15 +270,13 @@ extraManifests:
            app.kubernetes.io/name: n8n
            app.kubernetes.io/type: master
   -  apiVersion: monitoring.coreos.com/v1
-     kind: ServiceMonitor
+     kind: PodMonitor
      metadata:
        name: "{{ .Values.release_name }}-automation-n8n-worker"
      spec:
        endpoints:
-       - honorLabels: false
-         interval: 30s
-         path: /metrics
-         targetPort: 5678
+       - path: /metrics
+         port: http
        namespaceSelector:
          matchNames:
          - automation
