@@ -1,11 +1,11 @@
 container_image_version:
-  ghcr.io/c4illin/convertx: v0.12.1
+  ghcr.io/c4illin/convertx: v0.13.0
   ghcr.io/coder/code-server: 4.100.2
-  ghcr.io/corentinth/it-tools: 2024.5.13-a0bc346
+  ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.9.2
-  ghcr.io/datahub-local/node-exporter-textfiles: v202505311806
-  ghcr.io/gethomepage/homepage: v1.2.0
-  ghcr.io/mealie-recipes/mealie: v2.5.0
+  ghcr.io/datahub-local/node-exporter-textfiles: v202506010754
+  ghcr.io/gethomepage/homepage: v1.3.0
+  ghcr.io/mealie-recipes/mealie: v2.8.0
   ghcr.io/tailscale/tailscale: v1.84.0
   homeassistant/home-assistant: 2025.5.3
   kopia/kopia: 20250531.0.61850

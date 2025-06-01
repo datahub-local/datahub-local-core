@@ -156,8 +156,8 @@ prometheus-node-exporter:
     - name: node-exporter-textfiles-smartmon
       image: ghcr.io/datahub-local/node-exporter-textfiles:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/node-exporter-textfiles") }}{{ $value }}{{ end }}{{ end }}
       env:
-        - name: SCRIPT
-          value: "smartmon.py"
+        - name: SCRIPTS
+          value: "nutmon.py,smartmon.py"
         - name: INTERVAL
           value: "60"
       resources:
