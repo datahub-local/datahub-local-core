@@ -74,7 +74,6 @@
           "refId": "A"
         }
       ],
-      "transparent": true,
       "type": "text"
     },
     {
@@ -4357,7 +4356,6 @@
       },
       "id": 54,
       "mode": "markdown",
-      "transparent": true,
       "type": "text"
     },
     {

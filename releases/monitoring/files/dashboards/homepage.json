@@ -1159,7 +1159,6 @@
         }
       ],
       "title": "Status",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -1228,7 +1227,6 @@
         }
       ],
       "title": "Battery Runtime",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -1919,5 +1917,5 @@
   "timezone": "browser",
   "title": "Homelab / Homepage",
   "uid": "fdmr8yqdx4jcwf",
-  "version": 1
+  "version": 2
 }

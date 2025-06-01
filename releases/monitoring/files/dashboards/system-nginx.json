@@ -555,7 +555,6 @@
         }
       ],
       "title": "HTTP 1/2xx (2m)",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -636,7 +635,6 @@
         }
       ],
       "title": "HTTP 3xx (2m)",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -717,7 +715,6 @@
         }
       ],
       "title": "HTTP 4xx (2m)",
-      "transparent": true,
       "type": "stat"
     },
     {
@@ -798,7 +795,6 @@
         }
       ],
       "title": "HTTP 5xx (2m)",
-      "transparent": true,
       "type": "stat"
     },
     {

@@ -2131,7 +2131,6 @@
           }
         }
       ],
-      "transparent": true,
       "type": "table"
     },
     {
@@ -2546,7 +2545,6 @@
           }
         }
       ],
-      "transparent": true,
       "type": "table"
     },
     {
