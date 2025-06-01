@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 370,
+  "id": 372,
   "links": [],
   "panels": [
     {
@@ -1065,6 +1065,7 @@
         },
         "refresh": 1,
         "regex": "",
+        "sort": 1,
         "type": "query"
       }
     ]
@@ -1077,5 +1078,5 @@
   "timezone": "",
   "title": "Homelab / System / UPS",
   "uid": "j4a-DMWRk",
-  "version": 5
+  "version": 2
 }
