@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 76,
+  "id": 363,
   "links": [],
   "panels": [
     {
@@ -61,7 +61,7 @@
         "content": "<div class=\"text-center\">\n  <img style=\"height:80px\" src=\"https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Kubernetes_logo_without_workmark.svg/1200px-Kubernetes_logo_without_workmark.svg.png\">\n  <h2 style=\"padding-top:15px\">$k8s_version</h2>\n</div>",
         "mode": "html"
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "title": "",
       "type": "text"
     },
@@ -133,7 +133,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -222,7 +222,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -292,11 +292,114 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 4,
         "x": 12,
         "y": 1
       },
       "id": 7,
+      "maxDataPoints": 100,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto",
+        "text": {}
+      },
+      "pluginVersion": "12.0.0+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_node_storage_capacity_bytes)",
+          "format": "time_series",
+          "interval": "$resolution",
+          "intervalFactor": 1,
+          "legendFormat": "Used",
+          "metric": "",
+          "range": true,
+          "refId": "A",
+          "step": 10
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_node_storage_reservation_bytes)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Reserved",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Longhorn Cluster Storage",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "dark-orange",
+                "value": 65
+              },
+              {
+                "color": "dark-red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 16,
+        "y": 1
+      },
+      "id": 63,
       "maxDataPoints": 100,
       "options": {
         "minVizHeight": 75,
@@ -314,7 +417,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -322,19 +425,19 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "exemplar": true,
-          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_volume_capacity_bytes)",
+          "exemplar": false,
+          "expr": "network_ups_tools_battery_charge",
           "format": "time_series",
-          "interval": "$resolution",
+          "instant": true,
+          "interval": "10s",
           "intervalFactor": 1,
           "legendFormat": "",
-          "metric": "",
-          "range": true,
+          "range": false,
           "refId": "A",
           "step": 10
         }
       ],
-      "title": "Longhorn Cluster Storage Usage/Capacity",
+      "title": "UPS Battery Charge",
       "type": "gauge"
     },
     {
@@ -401,7 +504,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -485,7 +588,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -565,7 +668,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -643,7 +746,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -723,7 +826,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -803,7 +906,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -884,7 +987,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -893,7 +996,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum (longhorn_node_storage_usage_bytes)",
+          "expr": "sum (longhorn_volume_actual_size_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "legendFormat": "",
@@ -945,87 +1048,6 @@
         "x": 14,
         "y": 6
       },
-      "id": 58,
-      "maxDataPoints": 100,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.6.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "sum (longhorn_node_storage_reservation_bytes)",
-          "format": "time_series",
-          "interval": "$resolution",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A",
-          "step": 10
-        }
-      ],
-      "title": "Reserved",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 2,
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 2,
-        "x": 16,
-        "y": 6
-      },
       "id": 14,
       "maxDataPoints": 100,
       "options": {
@@ -1046,7 +1068,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -1055,7 +1077,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum (longhorn_node_storage_reservation_bytes)",
+          "expr": "sum (longhorn_node_storage_capacity_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "intervalFactor": 1,
@@ -1066,6 +1088,147 @@
         }
       ],
       "title": "Total",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": " * OL - On line (mains is present)\n * OB - On battery (mains is not present)\n * LB - Low battery\n * HB - High battery\n * RB - The battery needs to be replaced\n * CHRG - The battery is charging\n * DISCHRG - The battery is discharging (inverter is providing load power)\n * BYPASS - UPS bypass circuit is active -- no battery protection is available\n * CAL - UPS is currently performing runtime calibration (on battery)\n * OFF - UPS is offline and is not supplying power to the load\n * OVER - UPS is overloaded\n * TRIM - UPS is trimming incoming voltage (called \"buck\" in some hardware)\n * BOOST - UPS is boosting incoming voltage\n * FSD and SD - Forced Shutdown",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 16,
+        "y": 6
+      },
+      "id": 64,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "network_ups_tools_ups_status == 1",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "{{flag}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Status",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-red"
+              },
+              {
+                "color": "dark-green",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 18,
+        "y": 6
+      },
+      "id": 65,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0+security-01",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "network_ups_tools_battery_runtime",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Battery Runtime",
+      "transparent": true,
       "type": "stat"
     },
     {
@@ -1126,7 +1289,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -1134,10 +1297,11 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
+          "exemplar": false,
           "expr": "((time() - node_boot_time_seconds{job=\"node-exporter\"}) / 86400)\n  * on(instance) group_left(nodename)\n    node_uname_info{job=\"node-exporter\"}",
-          "instant": false,
+          "instant": true,
           "legendFormat": "{{nodename}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1205,7 +1369,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 8,
         "x": 5,
         "y": 9
       },
@@ -1223,7 +1387,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -1302,8 +1466,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
-        "x": 11,
+        "w": 8,
+        "x": 13,
         "y": 9
       },
       "id": 60,
@@ -1320,7 +1484,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -1337,6 +1501,37 @@
       ],
       "title": "Cluster HDD Temperature",
       "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 0,
+        "y": 17
+      },
+      "id": 57,
+      "options": {
+        "folderUID": "",
+        "includeVars": false,
+        "keepTime": false,
+        "maxItems": 30,
+        "query": "",
+        "showFolderNames": true,
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "Homelab"
+        ]
+      },
+      "pluginVersion": "12.0.0+security-01",
+      "title": "Dashboards",
+      "type": "dashlist"
     },
     {
       "datasource": {
@@ -1471,9 +1666,9 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 18,
-        "x": 0,
+        "h": 9,
+        "w": 15,
+        "x": 6,
         "y": 17
       },
       "id": 62,
@@ -1492,7 +1687,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "11.6.1",
+      "pluginVersion": "12.0.0+security-01",
       "targets": [
         {
           "datasource": {
@@ -1624,37 +1819,6 @@
         }
       ],
       "type": "table"
-    },
-    {
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 18,
-        "x": 0,
-        "y": 25
-      },
-      "id": 57,
-      "options": {
-        "folderUID": "",
-        "includeVars": false,
-        "keepTime": false,
-        "maxItems": 30,
-        "query": "",
-        "showFolderNames": true,
-        "showHeadings": false,
-        "showRecentlyViewed": false,
-        "showSearch": true,
-        "showStarred": false,
-        "tags": [
-          "Homelab"
-        ]
-      },
-      "pluginVersion": "11.6.1",
-      "title": "Dashboards",
-      "type": "dashlist"
     }
   ],
   "preload": false,
@@ -1682,8 +1846,8 @@
       },
       {
         "current": {
-          "text": "v1.31.1+k3s1",
-          "value": "v1.31.1+k3s1"
+          "text": "v1.32.4+k3s1",
+          "value": "v1.32.4+k3s1"
         },
         "datasource": {
           "type": "prometheus",
