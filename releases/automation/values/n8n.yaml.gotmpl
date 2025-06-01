@@ -192,14 +192,27 @@ worker:
 
   resources:
     requests:
-      memory: 256Mi
-      cpu: 250m
+      memory: 512Mi
+      cpu: 500m
     limits:
-      memory: 2048Mi
+      memory: 4098Mi
       cpu: 1
 
 webhook:
   enabled: true
+
+  autoscaling:
+    enabled: true
+    maxReplicas: 3
+
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+  tolerations:
+    - effect: NoSchedule
+      key: datahub.local/role
+      operator: "Equal"
+      value: nas
 
   command: *command
   podSecurityContext: *podSecurityContext
@@ -207,7 +220,11 @@ webhook:
   readinessProbe: *readinessProbe
   livenessProbe: *livenessProbe
 
-  extraEnv: *sharedEnv
+  extraEnv:
+    <<: *sharedEnv
+
+    NODE_OPTIONS:
+      value: "--max-old-space-size=3072"
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
@@ -252,36 +269,35 @@ extraManifests:
       n8n-start.sh: |
         {{- readFile "../files/scripts/n8n/n8n-start.sh" | nindent 8 }}
   #{{ end }}
-
-  -  apiVersion: monitoring.coreos.com/v1
-     kind: PodMonitor
-     metadata:
-       name: "{{ .Values.release_name }}-automation-n8n"
-     spec:
-       podMetricsEndpoints:
-       - path: /metrics
-         port: http
-       namespaceSelector:
-         matchNames:
-         - automation
-       selector:
-         matchLabels:
-           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
-           app.kubernetes.io/name: n8n
-           app.kubernetes.io/type: master
-  -  apiVersion: monitoring.coreos.com/v1
-     kind: PodMonitor
-     metadata:
-       name: "{{ .Values.release_name }}-automation-n8n-worker"
-     spec:
-       podMetricsEndpoints:
-       - path: /metrics
-         port: http
-       namespaceSelector:
-         matchNames:
-         - automation
-       selector:
-         matchLabels:
-           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
-           app.kubernetes.io/name: n8n
-           app.kubernetes.io/type: master
+  - apiVersion: monitoring.coreos.com/v1
+    kind: PodMonitor
+    metadata:
+      name: "{{ .Values.release_name }}-automation-n8n"
+    spec:
+      podMetricsEndpoints:
+        - path: /metrics
+          port: http
+      namespaceSelector:
+        matchNames:
+          - automation
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+          app.kubernetes.io/name: n8n
+          app.kubernetes.io/type: master
+  - apiVersion: monitoring.coreos.com/v1
+    kind: PodMonitor
+    metadata:
+      name: "{{ .Values.release_name }}-automation-n8n-worker"
+    spec:
+      podMetricsEndpoints:
+        - path: /metrics
+          port: http
+      namespaceSelector:
+        matchNames:
+          - automation
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+          app.kubernetes.io/name: n8n
+          app.kubernetes.io/type: master
