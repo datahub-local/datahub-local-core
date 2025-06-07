@@ -137,9 +137,9 @@ main:
     fsGroup: 0
 
   readinessProbe: &readinessProbe
-    initialDelaySeconds: 180
+    initialDelaySeconds: 120
   livenessProbe: &livenessProbe
-    initialDelaySeconds: 180
+    initialDelaySeconds: 120
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
