@@ -6,7 +6,7 @@ container_image_version:
   ghcr.io/datahub-local/node-exporter-textfiles: v202506071548
   ghcr.io/gethomepage/homepage: v1.3.2
   ghcr.io/mealie-recipes/mealie: v2.8.0
-  ghcr.io/tailscale/tailscale: v1.84.1
+  ghcr.io/tailscale/tailscale: v1.84.0
   homeassistant/home-assistant: 2025.5.3
   kopia/kopia: 20250531.0.61850
   n8nio/n8n: 1.95.2
