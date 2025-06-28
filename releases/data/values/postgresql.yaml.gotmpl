@@ -22,7 +22,7 @@ primary:
 
   podAnnotations:
     backup.velero.io/backup-volumes: backup
-    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "PGPASSWORD=$POSTGRES_PASSWORD pg_dumpall -U $POSTGRES_USER -h 127.0.0.1 --no-role-passwords | gzip > /scratch/backup.sql.gz"]'
+    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "PGPASSWORD=$(cat $POSTGRES_PASSWORD_FILE) pg_dumpall -U $POSTGRES_USER -h 127.0.0.1 --no-role-passwords | gzip > /scratch/backup.sql.gz"]'
     pre.hook.backup.velero.io/timeout: 60m
     post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/backup.sql.gz\" ] && gunzip -c /scratch/backup.sql.gz | PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -h 127.0.0.1 -f /scratch/backup.sql && rm -f /scratch/backup.sql.gz;"]'
 

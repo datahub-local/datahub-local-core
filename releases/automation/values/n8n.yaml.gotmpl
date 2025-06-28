@@ -168,6 +168,9 @@ main:
     - name: n8n-secrets
       mountPath: /n8n-secrets
       readOnly: true
+    - name: backup
+      mountPath: /scratch/
+      readOnly: true
 
   resources:
     requests:
