@@ -146,9 +146,9 @@ main:
 
   podAnnotations:
     backup.velero.io/backup-volumes: backup
-    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "n8n export:credentials --all --decrypted | gzip > /scratch/credentials_backup.json.gz"]'
+    pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "n8n export:credentials --all --decrypted | gzip > /scratch/n8n_n8n_credentials_backup.json.gz && n8n export:workflow --all --decrypted | gzip > /scratch/n8n_workflow_backup.json.gz"]'
     pre.hook.backup.velero.io/timeout: 60m
-    post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/credentials_backup.json.gz\" ] && gunzip /scratch/credentials_backup.json.gz && n8n import:credentials --input /scratch/credentials_backup.json && rm -f /scratch/credentials_backup.json;"]'
+    post.hook.restore.velero.io/command: '["/bin/bash", "-c", "[ -f \"/scratch/n8n_credentials_backup.json.gz\" ] && gunzip /scratch/n8n_credentials_backup.json.gz && n8n import:credentials --input /scratch/n8n_credentials_backup.json && rm -f /scratch/n8n_credentials_backup.json; [ -f \"/scratch/n8n_workflow_backup.json.gz\" ] && gunzip /scratch/n8n_workflow_backup.json.gz && n8n import:workflow --input /scratch/n8n_workflow_backup.json && rm -f /scratch/n8n_workflow_backup.json;"]'
 
   extraVolumes: &extraVolumes
     - name: n8n-config-scripts
