@@ -41,4 +41,10 @@ releases:
     chart: "stirling-pdf/stirling-pdf-chart"
     version: '{{ .StateValues.helm_chart_version | get "stirling-pdf/stirling-pdf-chart" }}'
     values:
-      - values/stirling_pdf.yaml.gotmpl
+      - values/mazanoke.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-other-mazanoke"
+    namespace: other
+    chart: "bjw-s-labs/app-template"
+    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    values:
+      - values/mazanoke.yaml.gotmpl
