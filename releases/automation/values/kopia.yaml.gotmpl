@@ -85,7 +85,7 @@ controllers:
                   kopia repository connect s3 \
                     --log-level=debug \
                     --endpoint=$AWS_ENDPOINTS \
-                    --bucket=$AWS_S3_BUCKET --prefix=kopia/data/ \
+                    --bucket=$AWS_S3_BUCKET --prefix=kopia/ \
                     --access-key=$AWS_ACCESS_KEY_ID \
                     --secret-access-key=$AWS_SECRET_ACCESS_KEY \
                     --password=$REPOSITORY_PASSWORD || true
