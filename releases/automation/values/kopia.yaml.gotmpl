@@ -4,8 +4,89 @@
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
+configMaps:
+  nginx:
+    enabled: true
+    data:
+      nginx.conf: |
+        events {}
+
+        http {
+          server {
+            listen 80;
+
+            location / {
+              root /usr/share/nginx/html;
+              index index.html;
+            }
+            
+            #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+            location /{{ $ns }}/ {
+              proxy_pass       http://{{ $.Values.release_name }}-automation-kopia:{{ add 51515 $index }}/;
+              proxy_set_header Host             $host;
+              proxy_set_header X-Real-IP        $remote_addr;
+              proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+
+              # Adjust the HTML content to serve UI under /{{ $ns }}/
+              sub_filter_types text/html;
+              sub_filter_once off;
+              sub_filter 'href="/' 'href="/{{ $ns }}/';
+              sub_filter 'src="/'  'src="/{{ $ns }}/';
+              sub_filter 'action="/' 'action="/{{ $ns }}/';
+            }
+            #{{- end }}
+          }
+        }
+
+      index.html: |
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Kopia Servers</title>
+        </head>
+        <body>
+          <h1>Index of Kopia Servers by namespace</h1>
+          #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+          <p>
+            <a href="/{{ $ns }}/" target="_blank" rel="noopener noreferrer">{{ $ns }}</a>
+          </p>
+          #{{- end }}
+        </body>
+        </html>
+
+
 controllers:
-  main:
+  nginx:
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    containers:
+      main:
+        image:
+          repository: nginx
+          tag: stable
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 100m
+          limits:
+            memory: 300Mi
+            cpu: 300m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
+  #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+  kopia-{{ $ns }}:
     replicas: 1
     strategy: RollingUpdate
     annotations:
@@ -16,7 +97,7 @@ controllers:
       main:
         image:
           repository: kopia/kopia
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "kopia/kopia") }}{{ $value }}{{ end }}{{ end }}'
+          tag: '{{ range $key,$value := $.StateValues.container_image_version }}{{ if (eq $key "kopia/kopia") }}{{ $value }}{{ end }}{{ end }}'
         env:
           AWS_ACCESS_KEY_ID:
             secretKeyRef:
@@ -27,9 +108,9 @@ controllers:
               name: backup-kopia-auth
               key: AWS_SECRET_ACCESS_KEY
           AWS_ENDPOINTS:
-            value: "{{ .Values.backup_s3_endpoint }}"
+            value: "{{ $.Values.backup_s3_endpoint }}"
           AWS_S3_BUCKET:
-            value: "{{ .Values.backup_s3_bucket }}"
+            value: "{{ $.Values.backup_s3_bucket }}"
           REPOSITORY_PASSWORD:
             secretKeyRef:
               name: backup-kopia-auth
@@ -48,10 +129,11 @@ controllers:
           - |
             sleep 10 && kopia server start \
               --log-level=debug \
-              --address="http://0.0.0.0:51515" \
+              --address="http://0.0.0.0:51515/" \
               --insecure \
               --without-password \
-              --password=$REPOSITORY_PASSWORD
+              --password=$REPOSITORY_PASSWORD \
+              --ui-title-prefix "{{ $ns }}"
         probes:
           liveness:
             enabled: true
@@ -85,21 +167,31 @@ controllers:
                   kopia repository connect s3 \
                     --log-level=debug \
                     --endpoint=$AWS_ENDPOINTS \
-                    --bucket=$AWS_S3_BUCKET --prefix=kopia/ \
+                    --bucket=$AWS_S3_BUCKET --prefix=kopia/{{ $ns }}/ \
                     --access-key=$AWS_ACCESS_KEY_ID \
                     --secret-access-key=$AWS_SECRET_ACCESS_KEY \
                     --password=$REPOSITORY_PASSWORD || true
+    #{{- end }}
 
 serviceAccount:
   default:
     enabled: true
 
 service:
-  main:
-    controller: main
+  nginx:
+    controller: "nginx"
+    ports:
+      http:
+        port: 80
+  #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+  kopia-{{ $ns }}:
+    controller: "kopia-{{ $ns }}"
     ports:
       http:
         port: 51515
+        targetPort: {{ add 51515 $index }}
+  #{{- end }}
+
 
 ingress:
   main:
@@ -124,4 +216,4 @@ ingress:
             pathType: Prefix
             service:
               name: "{{ .Values.release_name }}-automation-kopia"
-              port: 51515
+              port: 80
