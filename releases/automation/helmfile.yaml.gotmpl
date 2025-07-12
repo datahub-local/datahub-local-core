@@ -18,7 +18,7 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
     values:
       - values/home-assistant.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-automation-velero"
+  - name: "velero"
     namespace: automation
     chart: "vmware-tanzu/velero"
     version: '{{ .StateValues.helm_chart_version | get "vmware-tanzu/velero" }}'
