@@ -19,23 +19,6 @@ configMaps:
               root /usr/share/nginx/html;
               index index.html;
             }
-            
-            #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
-            location /{{ $ns }}/ {
-              proxy_pass       http://{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}:51515/;
-              proxy_set_header Host             $host;
-              proxy_set_header X-Real-IP        $remote_addr;
-              proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-
-              # Adjust the HTML content to serve UI under /{{ $ns }}/
-              sub_filter_types text/html;
-              sub_filter_once off;
-              sub_filter 'href="/' 'href="/{{ $ns }}/';
-              sub_filter 'src="/'  'src="/{{ $ns }}/';
-              sub_filter 'action="/' 'action="/{{ $ns }}/';
-            }
-            #{{- end }}
           }
         }
 
@@ -47,11 +30,11 @@ configMaps:
         </head>
         <body>
           <h1>Index of Kopia Servers by namespace</h1>
-          #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+          {{- range $index, $ns := .Values.kopia_backup_namespaces }}
           <p>
-            <a href="/{{ $ns }}/" target="_blank" rel="noopener noreferrer">{{ $ns }}</a>
+            <a href="https://automation-kopia.{{ $.StateValues.ingress_hostname }}-server{{ $ns }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
           </p>
-          #{{- end }}
+          {{- end }}
         </body>
         </html>
 
@@ -205,7 +188,7 @@ service:
 
 
 ingress:
-  main:
+  nginx:
     enabled: true
 
     annotations:
@@ -226,5 +209,23 @@ ingress:
           - path: /
             pathType: Prefix
             service:
-              name: "{{ .Values.release_name }}-automation-kopia"
+              name: "{{ .Values.release_name }}-automation-kopia-nginx"
               port: 80
+  #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
+  server-{{ $ns }}:
+    enabled: true
+
+    annotations:
+      #{{- if $.Values.security_enabled }}{{ $.Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(?!auth(?!\\/token)).*" | nindent 6 }}{{ end }}
+
+    className: "nginx"
+
+    hosts:
+      - host: "automation-kopia.{{ $.StateValues.ingress_hostname }}-server-{{ $ns }}"
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: "{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}"
+              port: 51515
+  #{{- end }}
