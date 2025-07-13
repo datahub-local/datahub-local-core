@@ -5,7 +5,7 @@
 # https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
 configMaps:
-  nginx:
+  nginx-config:
     enabled: true
     data:
       nginx.conf: |
@@ -55,7 +55,6 @@ configMaps:
         </body>
         </html>
 
-
 controllers:
   nginx:
     strategy: RollingUpdate
@@ -85,6 +84,7 @@ controllers:
             spec:
               failureThreshold: 30
               periodSeconds: 5
+    
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
   kopia-{{ $ns }}:
     replicas: 1
@@ -172,6 +172,18 @@ controllers:
                     --secret-access-key=$AWS_SECRET_ACCESS_KEY \
                     --password=$REPOSITORY_PASSWORD || true
     #{{- end }}
+    
+persistence:
+  nginx-config:
+    type: configMap
+    identifier: nginx-config
+    globalMounts:
+      - path:  /etc/nginx/nginx.conf
+        subPath: nginx.conf
+        readOnly: true
+      - path: /usr/share/nginx/html/index.html
+        subPath: index.html
+        readOnly: true
 
 serviceAccount:
   default:
