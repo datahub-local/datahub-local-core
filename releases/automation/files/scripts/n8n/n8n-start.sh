@@ -17,7 +17,7 @@ fi
 if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then  
   for lib in $(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g"); do
     echo "Installing community node: $lib"
-    su $NODE_USER -c "cd && pnpm install $lib" || echo "Error Installing community node: $lib"
+    su $NODE_USER -c "cd && pnpm install --dangerously-allow-all-builds $lib" || echo "Error Installing community node: $lib"
   done
 fi
 
