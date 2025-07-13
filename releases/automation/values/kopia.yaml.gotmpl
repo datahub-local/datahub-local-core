@@ -25,17 +25,72 @@ configMaps:
       index.html: |
         <!DOCTYPE html>
         <html>
-        <head>
-          <title>Kopia Servers</title>
-        </head>
-        <body>
-          <h1>Index of Kopia Servers by namespace</h1>
-          {{- range $index, $ns := .Values.kopia_backup_namespaces }}
-          <p>
-            <a href="https://automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
-          </p>
-          {{- end }}
-        </body>
+          <head>
+            <title>Kopia Servers</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap');
+              body {
+                font-family: 'Roboto', Arial, sans-serif;
+                background: #23272f;
+                color: #e0e0e0;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 60px auto;
+                background: #292d36;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                padding: 32px 40px 24px 40px;
+              }
+              h1 {
+                color: #fff;
+                font-size: 2rem;
+                font-weight: 500;
+                margin-bottom: 24px;
+                letter-spacing: 0.5px;
+                text-align: center;
+              }
+              .server-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+              }
+              .server-list li {
+                margin: 16px 0;
+                text-align: center;
+              }
+              .server-link {
+                display: inline-block;
+                background: #3a4051;
+                color: #fff;
+                text-decoration: none;
+                padding: 12px 32px;
+                border-radius: 4px;
+                font-size: 1.1rem;
+                font-weight: 500;
+                transition: background 0.2s, box-shadow 0.2s;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+              }
+              .server-link:hover {
+                background: #4b5368;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Index of Kopia Servers by namespace</h1>
+              <ul class="server-list">
+                {{- range $index, $ns := .Values.kopia_backup_namespaces }}
+                <li>
+                  <a class="server-link" href="https://automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
+                </li>
+                {{- end }}
+              </ul>
+            </div>
+          </body>
         </html>
 
 controllers:
