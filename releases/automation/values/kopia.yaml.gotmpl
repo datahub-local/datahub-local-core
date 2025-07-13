@@ -22,7 +22,7 @@ configMaps:
             
             #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
             location /{{ $ns }}/ {
-              proxy_pass       http://{{ $.Values.release_name }}-automation-kopia:{{ add 51515 $index }}/;
+              proxy_pass       http://{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}:51515/;
               proxy_set_header Host             $host;
               proxy_set_header X-Real-IP        $remote_addr;
               proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
@@ -86,7 +86,7 @@ controllers:
               periodSeconds: 5
     
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
-  kopia-{{ $ns }}:
+  server-{{ $ns }}:
     replicas: 1
     strategy: RollingUpdate
     annotations:
@@ -196,8 +196,8 @@ service:
       http:
         port: 80
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
-  kopia-{{ $ns }}:
-    controller: "kopia-{{ $ns }}"
+  server-{{ $ns }}:
+    controller: "server-{{ $ns }}"
     ports:
       http:
         port: 51515
