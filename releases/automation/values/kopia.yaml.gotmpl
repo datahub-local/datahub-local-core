@@ -32,7 +32,7 @@ configMaps:
           <h1>Index of Kopia Servers by namespace</h1>
           {{- range $index, $ns := .Values.kopia_backup_namespaces }}
           <p>
-            <a href="https://automation-kopia.{{ $.StateValues.ingress_hostname }}-server{{ $ns }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
+            <a href="https://automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
           </p>
           {{- end }}
         </body>
@@ -221,7 +221,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "automation-kopia.{{ $.StateValues.ingress_hostname }}-server-{{ $ns }}"
+      - host: "automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}"
         paths:
           - path: /
             pathType: Prefix
