@@ -10,14 +10,14 @@ if [ -n "$CUSTOM_EXTRA_MODULES" ]; then
   for lib in $(echo "$CUSTOM_EXTRA_MODULES" | sed "s/,/ /g"); do
     echo "Installing extra library: $lib"
 
-    pnpm add "$lib" || echo "Error Installing extra library: $lib"
+    pnpm add --shamefully-hoist --node-linker=hoisted --dangerously-allow-all-builds "$lib" || echo "Error Installing extra library: $lib"
   done
 fi
 
 if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then  
   for lib in $(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g"); do
     echo "Installing community node: $lib"
-    su $NODE_USER -c "cd && pnpm install --dangerously-allow-all-builds $lib" || echo "Error Installing community node: $lib"
+    su $NODE_USER -c "cd && pnpm install --shamefully-hoist --node-linker=hoisted --dangerously-allow-all-builds $lib" || echo "Error Installing community node: $lib"
   done
 fi
 
