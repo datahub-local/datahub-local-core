@@ -5,6 +5,17 @@ global:
   veleroNamespace: automation
   clusterName: "{{ $cluster_name }}"
 
+apiService:
+  deployment:
+    nodeSelector:
+      kubernetes.io/arch: amd64
+
+    tolerations:
+      - effect: NoSchedule
+        key: datahub.local/role
+        operator: "Equal"
+        value: nas
+
 exposure:
   mode: ingress
 
@@ -17,15 +28,14 @@ exposure:
 
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "Velero-UI"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name={{ .Values.release_name }}-automation-vui"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=vui"
         gethomepage.dev/description: "VUI is a web-based dashboard for managing Velero resources"
         gethomepage.dev/group: "Automation"
         gethomepage.dev/icon: "sh-velero"
     spec:
       tls:
-      - hosts:
-        - "automation-vui.{{ .StateValues.ingress_hostname }}"
-
+        - hosts:
+            - "automation-vui.{{ .StateValues.ingress_hostname }}"
 
 auth:
   enabled: false # Done by reverse proxy
