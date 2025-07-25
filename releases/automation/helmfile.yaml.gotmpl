@@ -23,7 +23,7 @@ releases:
     chart: "vmware-tanzu/velero"
     version: '{{ .StateValues.helm_chart_version | get "vmware-tanzu/velero" }}'
     values:
-      - values/vui.yaml.gotmpl
+      - values/velero.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-kopia"
     namespace: automation
     chart: "bjw-s-labs/app-template"
@@ -35,7 +35,7 @@ releases:
     chart: "seriohub/vui"
     version: '{{ .StateValues.helm_chart_version | get "seriohub/vui" }}'
     values:
-      - values/velero.yaml.gotmpl
+      - values/vui.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-n8n"
     namespace: automation
     chart: "oci://8gears.container-registry.com/library/n8n"
