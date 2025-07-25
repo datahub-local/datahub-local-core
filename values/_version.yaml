@@ -26,6 +26,7 @@ helm_chart_repository:
   open-webui: https://helm.openwebui.com
   prometheus-community: https://prometheus-community.github.io/helm-charts
   robusta: https://robusta-charts.storage.googleapis.com
+  seriohub: https://seriohub.github.io/velero-helm
   stirling-pdf: https://stirling-tools.github.io/Stirling-PDF-chart
   superset: https://apache.github.io/superset/
   trino: https://trinodb.github.io/charts
@@ -47,6 +48,7 @@ helm_chart_version:
   open-webui/open-webui: 6.22.0
   prometheus-community/kube-prometheus-stack: 75.10.0
   robusta/robusta: 0.25.0
+  seriohub/vui: 1.0.5
   stirling-pdf/stirling-pdf-chart: 2.0.2
   superset/superset: 0.14.2
   trino/trino: 1.39.1

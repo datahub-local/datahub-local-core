@@ -14,11 +14,11 @@ postgress_user: "{{ $security_admin_user }}"
 postgress_database: "postgres"
 postgress_extra_databases:
   dagster: dagster
+  mealie: mealie
+  n8n: n8n
   nessie: nessie
   openwebui: openwebui
   superset: superset
-  mealie: mealie
-  n8n: n8n
 
 trino_user: "{{ $security_admin_user }}"
 

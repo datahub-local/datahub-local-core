@@ -1,6 +1,7 @@
 # Values for robusta chart. See https://github.com/robusta-dev/robusta/blob/master/helm/robusta/values.yaml
+#{{ $cluster_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).cluster_name }}
 
-clusterName: homelab.alvsanand.com
+clusterName: "{{ $cluster_name }}"
 
 globalConfig:
   signing_key: "{{`{{ env.ROBUSTA_SIGNING_KEY }}`}}"
