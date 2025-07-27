@@ -186,7 +186,8 @@ worker:
 
   autoscaling:
     enabled: true
-    maxReplicas: 3
+    minReplicas: 2
+    maxReplicas: 5
 
   nodeSelector:
     kubernetes.io/arch: amd64
