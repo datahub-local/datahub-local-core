@@ -60,7 +60,7 @@ main:
     executions_mode: queue
     offload_manual_executions_to_workers: true
     n8n:
-      log_level: info
+      log_level: debug
       metrics: true
       metrics_include_api_endpoints: true
       metrics_include_queue_metrics: true
@@ -185,6 +185,7 @@ worker:
   enabled: true
 
   replicaCount: 2
+  concurrency: 4
 
   nodeSelector:
     kubernetes.io/arch: amd64
