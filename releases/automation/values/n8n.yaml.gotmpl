@@ -204,7 +204,11 @@ worker:
   readinessProbe: {}
   livenessProbe: {}
 
-  extraEnv: *sharedEnv
+  extraEnv:
+    <<: *sharedEnv
+
+    NODE_OPTIONS:
+      value: "--max-old-space-size=3072"
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
@@ -227,9 +231,6 @@ webhook:
 
   extraEnv:
     <<: *sharedEnv
-
-    NODE_OPTIONS:
-      value: "--max-old-space-size=3072"
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
