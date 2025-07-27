@@ -139,8 +139,6 @@ main:
     fsGroup: 0
 
   readinessProbe: &readinessProbe
-    httpGet:
-      path: /healthz/readiness
     initialDelaySeconds: 120
   livenessProbe: &livenessProbe
     initialDelaySeconds: 120
@@ -201,8 +199,16 @@ worker:
   command: *command
   podSecurityContext: *podSecurityContext
 
-  readinessProbe: {}
-  livenessProbe: {}
+  readinessProbe:
+    <<: *readinessProbe
+    httpGet: {}
+    tcpSocket:
+      port: 5678
+  livenessProbe:
+    <<: *livenessProbe
+    httpGet: {}
+    tcpSocket:
+      port: 5678
 
   extraEnv:
     <<: *sharedEnv
