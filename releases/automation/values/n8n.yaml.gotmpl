@@ -139,9 +139,15 @@ main:
     fsGroup: 0
 
   readinessProbe: &readinessProbe
+    httpGet:
+      path: /healthz/readiness
+
     initialDelaySeconds: 120
+    timeoutSeconds: 30
   livenessProbe: &livenessProbe
     initialDelaySeconds: 120
+    periodSeconds: 120
+    timeoutSeconds: 30
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
@@ -200,7 +206,9 @@ worker:
   podSecurityContext: *podSecurityContext
 
   readinessProbe: *readinessProbe
-  livenessProbe: *livenessProbe
+  livenessProbe:
+    <<: *livenessProbe
+    failureThreshold: 10
 
   extraEnv: *sharedEnv
   extraVolumes: *extraVolumes
