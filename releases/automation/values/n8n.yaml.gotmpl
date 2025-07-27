@@ -140,10 +140,12 @@ main:
 
   readinessProbe: &readinessProbe
     initialDelaySeconds: 120
+    httpGet: {}
     tcpSocket:
       port: 5678
   livenessProbe: &livenessProbe
     initialDelaySeconds: 120
+    httpGet: {}
     tcpSocket:
       port: 5678
 
