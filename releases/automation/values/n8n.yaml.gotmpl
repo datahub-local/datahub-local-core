@@ -58,6 +58,7 @@ main:
     vue_app_url_base_api: *url
 
     executions_mode: queue
+    offload_manual_executions_to_workers: true
     n8n:
       log_level: debug
       metrics: true
@@ -127,6 +128,8 @@ main:
     N8N_READY:
       value: n8n-ready-hook.js
     #{{ end }}
+    OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS:
+      value: "true"
 
   command: &command
     - sh
@@ -229,6 +232,8 @@ worker:
 webhook:
   enabled: true
 
+  replicaCount: 2
+
   command: *command
   podSecurityContext: *podSecurityContext
 
@@ -237,6 +242,8 @@ webhook:
 
   extraEnv:
     <<: *sharedEnv
+    N8N_DISABLE_PRODUCTION_MAIN_PROCESS:
+      value: "true"
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
