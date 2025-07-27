@@ -138,16 +138,8 @@ main:
     runAsGroup: 0
     fsGroup: 0
 
-  readinessProbe: &readinessProbe
-    initialDelaySeconds: 120
-    httpGet: {}
-    tcpSocket:
-      port: 5678
-  livenessProbe: &livenessProbe
-    initialDelaySeconds: 120
-    httpGet: {}
-    tcpSocket:
-      port: 5678
+  readinessProbe: &readinessProbe {}
+  livenessProbe: &livenessProbe {}
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
