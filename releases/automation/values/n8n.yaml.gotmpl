@@ -138,8 +138,18 @@ main:
     runAsGroup: 0
     fsGroup: 0
 
-  readinessProbe: &readinessProbe {}
-  livenessProbe: &livenessProbe {}
+  readinessProbe: &readinessProbe
+    initialDelaySeconds: 120
+
+    periodSeconds: 600
+    failureThreshold: 5
+    timeoutSeconds: 60
+  livenessProbe: &livenessProbe
+    initialDelaySeconds: 120
+
+    periodSeconds: 600
+    failureThreshold: 5
+    timeoutSeconds: 60
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
