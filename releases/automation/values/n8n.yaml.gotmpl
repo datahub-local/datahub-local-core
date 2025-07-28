@@ -217,7 +217,7 @@ worker:
     <<: *sharedEnv
 
     NODE_OPTIONS:
-      value: "--max-old-space-size=3072"
+      value: "--max-old-space-size=7680" # Mb RAM - 512
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
