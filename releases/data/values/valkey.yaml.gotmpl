@@ -40,9 +40,9 @@ metrics:
   enabled: true
   exporter:
     env:
-      - name: REDIS_EXPORTER_BASIC_AUTH_USERNAME
+      - name: REDIS_USER
         value: ""
-      - name: REDIS_EXPORTER_BASIC_AUTH_PASSWORD
+      - name: REDIS_PASSWORD
         valueFrom:
           secretKeyRef:
             name: valkey-admin-credentials
