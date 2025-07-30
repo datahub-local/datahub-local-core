@@ -18,14 +18,14 @@ releases:
     chart: "cnpg/cloudnative-pg"
     version: '{{ .StateValues.helm_chart_version | get "cnpg/cloudnative-pg" }}'
     values: []
-  - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
-    namespace: data
-    chart: "cnpg/cluster"
-    version: '{{ .StateValues.helm_chart_version | get "cnpg/cluster" }}'
-    needs:
-      - "{{ .Values.release_name }}-data-cloudnative-pg"
-    values:
-      - values/cloudnative-pg-cluster.yaml.gotmpl
+  # - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
+  #   namespace: data
+  #   chart: "cnpg/cluster"
+  #   version: '{{ .StateValues.helm_chart_version | get "cnpg/cluster" }}'
+  #   needs:
+  #     - "{{ .Values.release_name }}-data-cloudnative-pg"
+  #   values:
+  #     - values/cloudnative-pg-cluster.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
     chart: "groundhog2k/valkey"
