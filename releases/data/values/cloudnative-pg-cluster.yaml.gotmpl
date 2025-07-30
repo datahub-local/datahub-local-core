@@ -29,15 +29,6 @@ cluster:
   monitoring:
     enabled: true
 
-  barmanObjectStore:
-    s3Credentials:
-      accessKeyId:
-        name: backup-s3-auth
-        key: AWS_ACCESS_KEY_ID
-      secretAccessKey:
-        name: backup-s3-auth
-        key: AWS_SECRET_ACCESS_KEY
-
 backups:
   enabled: true
 
@@ -51,7 +42,7 @@ backups:
     secretKey: "AWS_SECRET_ACCESS_KEY"
   secret:
     create: false
-    name: backup-s3-auth
+    name: backup-kopia-auth
 
   scheduledBackups:
     - name: daily-backup # Daily at midnight
