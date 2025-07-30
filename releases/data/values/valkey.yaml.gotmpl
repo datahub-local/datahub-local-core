@@ -33,9 +33,6 @@ extraInitContainers:
           fi
         done
     volumeMounts:
-      - name: empty-dir
-        mountPath: /tmp
-        subPath: tmp-dir
       - name: valkey-data
         mountPath: /data
 
