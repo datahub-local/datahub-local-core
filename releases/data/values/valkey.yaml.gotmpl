@@ -40,6 +40,8 @@ metrics:
   enabled: true
   exporter:
     env:
+      - name: REDIS_EXPORTER_BASIC_AUTH_USERNAME
+        value: ""
       - name: REDIS_EXPORTER_BASIC_AUTH_PASSWORD
         valueFrom:
           secretKeyRef:
