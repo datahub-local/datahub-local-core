@@ -38,9 +38,10 @@ extraInitContainers:
 
 metrics:
   enabled: true
-  env:
-    - name: REDIS_EXPORTER_BASIC_AUTH_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: valkey-admin-credentials
-          key: password
+  exporter:
+    env:
+      - name: REDIS_EXPORTER_BASIC_AUTH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: valkey-admin-credentials
+            key: password
