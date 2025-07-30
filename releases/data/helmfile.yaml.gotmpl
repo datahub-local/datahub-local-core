@@ -13,16 +13,21 @@ releases:
       #{{- if isFile "/helm-values/security.yaml" }}
       - /helm-values/security.yaml
       #{{- end }}
-  - name: "{{ .Values.release_name }}-data-postgresql"
+  - name: "{{ .Values.release_name }}-data-cloudnative-pg"
     namespace: data
-    chart: "bitnami/postgresql"
-    version: '{{ .StateValues.helm_chart_version | get "bitnami/postgresql" }}'
+    chart: "cnpg/cloudnative-pg"
+    version: '{{ .StateValues.helm_chart_version | get "cnpg/cloudnative-pg" }}'
+    values: []
+  - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
+    namespace: data
+    chart: "cnpg/cluster"
+    version: '{{ .StateValues.helm_chart_version | get "cnpg/cluster" }}'
     values:
-      - values/postgresql.yaml.gotmpl
+      - values/cloudnative-pg-cluster.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
-    chart: "bitnami/valkey"
-    version: '{{ .StateValues.helm_chart_version | get "bitnami/valkey" }}'
+    chart: "groundhog2k/valkey"
+    version: '{{ .StateValues.helm_chart_version | get "groundhog2k/valkey" }}'
     values:
       - values/valkey.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-minio"

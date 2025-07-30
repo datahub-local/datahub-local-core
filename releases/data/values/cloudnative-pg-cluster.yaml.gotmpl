@@ -1,0 +1,60 @@
+# https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/values.yaml
+
+type: postgresql
+mode: standalone
+
+cluster:
+  instances: 1
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+
+  storage:
+    size: 5Gi
+    storageClass: "longhorn"
+
+  walStorage:
+    enabled: true
+    size: 1Gi
+    storageClass: "longhorn"
+
+  enableSuperuserAccess: true
+  superuserSecret: "postgresql-admin-credentials"
+
+  monitoring:
+    enabled: true
+
+  barmanObjectStore:
+    s3Credentials:
+      accessKeyId:
+        name: backup-s3-auth
+        key: AWS_ACCESS_KEY_ID
+      secretAccessKey:
+        name: backup-s3-auth
+        key: AWS_SECRET_ACCESS_KEY
+
+backups:
+  enabled: true
+
+  endpointURL: "https://{{ .Values.backup_s3_endpoint }}"
+  destinationPath: "/postgresql-cn"
+  provider: s3
+  s3:
+    bucket: "{{ $.Values.backup_s3_bucket }}"
+    path: "/"
+    accessKey: "AWS_ACCESS_KEY_ID"
+    secretKey: "AWS_SECRET_ACCESS_KEY"
+  secret:
+    create: false
+    name: backup-s3-auth
+
+  scheduledBackups:
+    - name: daily-backup # Daily at midnight
+      schedule: "0 0 0 * * *" # Daily at midnight
+      backupOwnerReference: self
+  retentionPolicy: "30d"

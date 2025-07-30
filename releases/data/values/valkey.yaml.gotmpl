@@ -1,46 +1,44 @@
-architecture: standalone
+# https://github.com/groundhog2k/helm-charts/blob/master/charts/valkey/values.yaml
 
-auth:
-  existingSecret: "valkey-admin-credentials"
-  existingSecretPasswordKey: "password"
+image:
+  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "valkey/valkey") }}{{ $value }}{{ end }}{{ end }}' 
 
-primary:
-  resourcesPreset: "small"
-  persistence:
-    storageClass: longhorn
-    size: 2Gi
+resources:
+  limits:
+    cpu: 750m
+    memory: 1536Mi
+  requests:
+    cpu: 750m
+    memory: 1536Mi
 
-  extraFlags:
-    - "--maxmemory 512mb"
-    - "--maxmemory-policy volatile-ttl"
+storage:
+  storageClass: longhorn
+  requestedSize: 2Gi
 
-  initContainers:
-    - name: repair-valkey
-      image: docker.io/bitnami/valkey:8.0
-      command:
-        - "sh"
-        - "-c"
-        - | 
-          for file in $(find /data -name "*.aof"); do
-            echo "Repairing $file";
-            yes | valkey-check-aof --fix $file;
-            if [ $? -ne 0 ]; then
-              echo "Repairing $file failed";
-              exit 1;
-            fi
-          done
-      volumeMounts:
-        - name: empty-dir
-          mountPath: /tmp
-          subPath: tmp-dir
-        - name: valkey-data
-          mountPath: /data
+extraSecretValkeyConfigs:
+ - valkey-config
+
+extraInitContainers:
+  - name: repair-valkey
+    image: 'docker.io/valkey/valkey:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "valkey/valkey") }}{{ $value }}{{ end }}{{ end }}'
+    command:
+      - "sh"
+      - "-c"
+      - |
+        for file in $(find /data -name "*.aof"); do
+          echo "Repairing $file";
+          yes | valkey-check-aof --fix $file;
+          if [ $? -ne 0 ]; then
+            echo "Repairing $file failed";
+            exit 1;
+          fi
+        done
+    volumeMounts:
+      - name: empty-dir
+        mountPath: /tmp
+        subPath: tmp-dir
+      - name: valkey-data
+        mountPath: /data
 
 metrics:
   enabled: true
-
-  podMonitor:
-    enabled: true
-
-  serviceMonitor:
-    enabled: true
