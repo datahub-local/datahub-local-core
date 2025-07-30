@@ -1,7 +1,7 @@
 # https://github.com/groundhog2k/helm-charts/blob/master/charts/valkey/values.yaml
 
 image:
-  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "valkey/valkey") }}{{ $value }}{{ end }}{{ end }}' 
+  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "valkey/valkey") }}{{ $value }}{{ end }}{{ end }}'
 
 resources:
   limits:
@@ -15,8 +15,7 @@ storage:
   storageClass: longhorn
   requestedSize: 2Gi
 
-extraSecretValkeyConfigs:
- - valkey-config
+extraSecretValkeyConfigs: valkey-config
 
 extraInitContainers:
   - name: repair-valkey
