@@ -3,6 +3,26 @@
 tls:
   enabled: false
 
+statefulset:
+  replicas: 1
+
+resources:
+  cpu:
+    cores: 1
+  memory:
+    container:
+      max: 2.5Gi
+
+storage:
+  persistentVolume:
+    storageClass: longhorn-no-replica
+    size: 2Gi
+
+monitoring:
+  enabled: true
+
+  enableHttp2: true
+
 console:
   ingress:
     enabled: true
@@ -24,18 +44,3 @@ console:
         paths:
           - path: /
             pathType: Prefix
-
-resources:
-  cpu:
-    cores: 1
-  memory:
-    container:
-      max: 2.5Gi
-
-storage:
-  persistentVolume:
-    storageClass: longhorn-no-replica
-    size: 2Gi
-
-monitoring:
-  enabled: true
