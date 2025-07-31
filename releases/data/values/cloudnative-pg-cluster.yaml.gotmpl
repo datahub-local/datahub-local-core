@@ -8,10 +8,10 @@ cluster:
 
   resources:
     limits:
-      cpu: 1000m
+      cpu: '1'
       memory: 4Gi
     requests:
-      cpu: 1000m
+      cpu: '1'
       memory: 4Gi
 
   storage:
@@ -50,4 +50,5 @@ backups:
     - name: daily-backup # Daily at midnight
       schedule: "0 0 0 * * *" # Daily at midnight
       backupOwnerReference: self
+      method: barmanObjectStore
   retentionPolicy: "30d"
