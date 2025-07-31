@@ -95,7 +95,7 @@ postgresql:
   enabled: false
 
   postgresqlHost: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-rw"
-  postgresqlUsername: "{{ $.StateValues.postgress_user}}"
+  postgresqlUsername: "{{ $.StateValues.postgres_user}}"
   postgresqlDatabase: dagster
 
 redis:
