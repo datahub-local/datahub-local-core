@@ -41,7 +41,7 @@ prometheus_rules:
             argocd_app_sync_total{phase=~"Error|Failed"} >= 1
           for: 5m
           labels:
-            severity: error
+            severity: critical
           annotations:
             summary: "Argo CD could not synchronize application '{{`{{$labels.name}}`}}'"
             description: |

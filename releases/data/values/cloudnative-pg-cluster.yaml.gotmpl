@@ -28,6 +28,10 @@ cluster:
 
   monitoring:
     enabled: true
+    prometheusRule:
+      excludeRules:
+       - CNPGClusterHACritical
+       - CNPGClusterHAWarning
 
 backups:
   enabled: true
