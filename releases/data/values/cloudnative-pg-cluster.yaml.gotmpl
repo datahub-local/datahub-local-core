@@ -38,11 +38,9 @@ backups:
   s3:
     bucket: "{{ $.Values.backup_s3_bucket }}"
     path: "/"
-    accessKey: "AWS_ACCESS_KEY_ID"
-    secretKey: "AWS_SECRET_ACCESS_KEY"
   secret:
     create: false
-    name: backup-kopia-auth
+    name: backup-cloudnative-pg-auth
 
   scheduledBackups:
     - name: daily-backup # Daily at midnight
