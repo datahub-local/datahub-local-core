@@ -94,7 +94,7 @@ runLauncher:
 postgresql:
   enabled: false
 
-  postgresqlHost: "{{ $.Values.release_name }}-data-postgresql-hl"
+  postgresqlHost: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-rw"
   postgresqlUsername: "{{ $.StateValues.postgress_user}}"
   postgresqlDatabase: dagster
 

@@ -70,7 +70,7 @@ extraSecretEnv:
   REDIS_PROTO: "redis"
   REDIS_DB: "1"
   REDIS_CELERY_DB: "0"
-  DB_HOST: "{{ $.Values.release_name }}-data-postgresql-hl"
+  DB_HOST: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-rw"
   DB_PORT: "5432"
   DB_USER: "{{ .StateValues.postgress_user }}"
   DB_NAME: "{{ .StateValues.postgress_extra_databases.superset }}"
@@ -106,7 +106,7 @@ extraConfigs:
       allow_file_upload: true
       allow_run_async : true
       database_name: postgresql-{{ $key }}
-      sqlalchemy_uri: postgresql://{{ $.StateValues.postgress_user}}@datahub-local-core-data-postgresql-hl:5432/{{ $value }}
+      sqlalchemy_uri: postgresql://{{ $.StateValues.postgress_user}}@datahub-local-core-data-cloudnative-pg-cluster-rw:5432/{{ $value }}
       tables: []
     {{- end }}
     - allow_ctas: true

@@ -33,14 +33,18 @@ backups:
   enabled: true
 
   endpointURL: "https://{{ .Values.backup_s3_endpoint }}"
-  destinationPath: "/postgresql-cn"
   provider: s3
   s3:
     bucket: "{{ $.Values.backup_s3_bucket }}"
-    path: "/"
+    path: "/postgresql-cn/"
   secret:
     create: false
     name: backup-cloudnative-pg-auth
+
+  wal:
+    encryption:
+  data:
+    encryption:
 
   scheduledBackups:
     - name: daily-backup # Daily at midnight
