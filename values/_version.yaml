@@ -27,6 +27,7 @@ helm_chart_repository:
   ollama: https://otwld.github.io/ollama-helm/
   open-webui: https://helm.openwebui.com
   prometheus-community: https://prometheus-community.github.io/helm-charts
+  redpanda: https://charts.redpanda.com
   robusta: https://robusta-charts.storage.googleapis.com
   seriohub: https://seriohub.github.io/velero-helm
   stirling-pdf: https://stirling-tools.github.io/Stirling-PDF-chart
@@ -50,6 +51,7 @@ helm_chart_version:
   ollama/ollama: 1.24.0
   open-webui/open-webui: 6.29.0
   prometheus-community/kube-prometheus-stack: 75.15.0
+  redpanda/redpanda: 25.1.1
   robusta/robusta: 0.26.0
   seriohub/vui: 1.0.5
   stirling-pdf/stirling-pdf-chart: 2.1.0

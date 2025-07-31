@@ -74,3 +74,9 @@ releases:
     version: '{{ .StateValues.helm_chart_version | get "open-webui/open-webui" }}'
     values:
       - values/openwebui.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-redpanda"
+    namespace: data
+    chart: "redpanda/redpanda"
+    version: '{{ .StateValues.helm_chart_version | get "redpanda/redpanda" }}'
+    values:
+      - values/redpanda.yaml.gotmpl
