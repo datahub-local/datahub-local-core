@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 363,
+  "id": 617,
   "links": [],
   "panels": [
     {
@@ -61,7 +61,7 @@
         "content": "<div class=\"text-center\">\n  <img style=\"height:80px\" src=\"https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Kubernetes_logo_without_workmark.svg/1200px-Kubernetes_logo_without_workmark.svg.png\">\n  <h2 style=\"padding-top:15px\">$k8s_version</h2>\n</div>",
         "mode": "html"
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "title": "",
       "type": "text"
     },
@@ -93,7 +93,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgba(50, 172, 45, 0.97)"
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 0
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -133,7 +134,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -182,7 +183,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-green"
+                "color": "dark-green",
+                "value": 0
               },
               {
                 "color": "dark-orange",
@@ -222,7 +224,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -270,7 +272,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "dark-green"
+                "color": "dark-green",
+                "value": 0
               },
               {
                 "color": "dark-yellow",
@@ -314,7 +317,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -323,11 +326,11 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_node_storage_capacity_bytes)",
+          "expr": "sum (longhorn_node_storage_usage_bytes) / sum (longhorn_node_storage_capacity_bytes-longhorn_node_storage_reservation_bytes)",
           "format": "time_series",
           "interval": "$resolution",
           "intervalFactor": 1,
-          "legendFormat": "Used",
+          "legendFormat": "Reserved",
           "metric": "",
           "range": true,
           "refId": "A",
@@ -339,10 +342,10 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum (longhorn_volume_actual_size_bytes) / sum (longhorn_node_storage_reservation_bytes)",
+          "expr": "sum (longhorn_disk_usage_bytes) / sum (longhorn_disk_capacity_bytes)",
           "hide": false,
           "instant": false,
-          "legendFormat": "Reserved",
+          "legendFormat": "Usage",
           "range": true,
           "refId": "B"
         }
@@ -377,7 +380,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-green"
+                "color": "dark-green",
+                "value": 0
               },
               {
                 "color": "dark-orange",
@@ -417,7 +421,7 @@
         "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -466,7 +470,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "green",
@@ -504,7 +509,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -550,7 +555,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "dark-red",
@@ -588,7 +594,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -634,7 +640,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -668,7 +675,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -712,7 +719,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -746,7 +754,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -792,7 +800,8 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -826,7 +835,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -872,7 +881,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -906,7 +916,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -953,7 +963,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -987,7 +998,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1034,7 +1045,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1068,7 +1080,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1106,7 +1118,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1141,7 +1154,7 @@
         "textMode": "name",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1173,7 +1186,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-red"
+                "color": "dark-red",
+                "value": 0
               },
               {
                 "color": "dark-green",
@@ -1209,7 +1223,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1244,7 +1258,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1287,7 +1302,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1354,7 +1369,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1385,7 +1401,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1451,7 +1467,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1482,7 +1499,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1527,7 +1544,7 @@
           "Homelab"
         ]
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "title": "Dashboards",
       "type": "dashlist"
     },
@@ -1557,7 +1574,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -1685,7 +1703,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "12.0.0+security-01",
+      "pluginVersion": "12.1.0",
       "targets": [
         {
           "datasource": {
@@ -1844,8 +1862,8 @@
       },
       {
         "current": {
-          "text": "v1.32.4+k3s1",
-          "value": "v1.32.4+k3s1"
+          "text": "v1.33.1+k3s1",
+          "value": "v1.33.1+k3s1"
         },
         "datasource": {
           "type": "prometheus",
@@ -1917,5 +1935,5 @@
   "timezone": "browser",
   "title": "Homelab / Homepage",
   "uid": "fdmr8yqdx4jcwf",
-  "version": 2
+  "version": 1
 }
