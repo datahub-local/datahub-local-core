@@ -57,6 +57,8 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             - ".spec.template.spec.containers[] | .resources | select(length==0)"
             - ".spec.template.spec.initContainers[] | .resources | select(length==0)"
             - ".spec.template.spec.hostUsers"
+            - ".spec.volumeClaimTemplates[].apiVersion"
+            - ".spec.volumeClaimTemplates[].kind"
     EOF
     ```
 

@@ -36,23 +36,27 @@ prometheus_rules:
           for: 5m
           labels:
             severity: critical
-        - alert: ArgoAppNotSynced
+        - alert: ArgoAppMissing
           expr: |
-            argocd_app_sync_total{phase=~"Error|Failed"} >= 1
-          for: 5m
+            absent(argocd_app_info) == 1
+          for: 15m
           labels:
             severity: critical
           annotations:
-            summary: "Argo CD could not synchronize application '{{`{{$labels.name}}`}}'"
-            description: |
-              The application '{{`{{$labels.name}}`}}' failed its synchronization in Argo CD. Please, review the error in https://automation-argo-cd.{{ $ingress_hostname }}/applications/automation/{{`{{$labels.name}}`}}
+            summary: "[Argo CD] No reported applications"
+            description: >
+              Argo CD has not reported any applications data for the past 15 minutes which
+              means that it must be down or not functioning properly.  This needs to be
+              resolved for this cloud to continue to maintain state.
         - alert: ArgoAppNotSynced
           expr: |
-            argocd_app_sync_total{phase="Succeeded"} >= 1
-          for: 5m
+            argocd_app_info{sync_status!="Synced"} == 1
+          for: 12h
           labels:
-            severity: info
+            severity: warning
           annotations:
-            summary: "Argo CD synchronized application '{{`{{$labels.name}}`}}'"
-            description: |
-              Application '{{`{{$labels.name}}`}}' was synchronized in Argo CD.
+            summary: "[{{`{{$labels.name}}`}}] Application not synchronized"
+            description: >
+              The application [{{`{{$labels.name}}`}} has not been synchronized for over
+              12 hours which means that the state of this cloud has drifted away from the
+              state inside Git.
