@@ -164,7 +164,7 @@ module.exports = {
                 }
 
                 if (this.dbCollections.Credentials.findAllPersonalCredentials().length > 0) {
-                    logger.info('[InitCrendentials] Credentials already ini tialized, skipping import');
+                    logger.info('[InitCrendentials] Credentials already initialized, skipping import');
                     return;
                 }
 
