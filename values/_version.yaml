@@ -1,4 +1,5 @@
 container_image_version:
+  ghcr.io/browserless/chromium: v2.31.0
   ghcr.io/c4illin/convertx: v0.14.1
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.102.2

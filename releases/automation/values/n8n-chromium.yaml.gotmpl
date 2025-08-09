@@ -25,7 +25,7 @@ controllers:
       main:
         image:
           repository: ghcr.io/browserless/chromium
-          tag: latest
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/browserless/chromium") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TOKEN:
             value: "TOKEN-1234567890"

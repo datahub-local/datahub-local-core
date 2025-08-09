@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 617,
+  "id": 745,
   "links": [],
   "panels": [
     {
@@ -1409,9 +1409,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance)",
+          "expr": "avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance) * on(instance) group_left(nodename) node_uname_info{job=\"node-exporter\"}",
           "instant": false,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{nodename}}",
           "range": true,
           "refId": "A"
         }
@@ -1507,9 +1507,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "avg(avg_over_time(smartmon_temperature_celcius[1m])) by (instance)",
+          "expr": "avg(avg_over_time(smartmon_temperature_celcius[1m])) by (instance) * on(instance) group_left(nodename) node_uname_info{job=\"node-exporter\"}",
           "instant": false,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{nodename}}",
           "range": true,
           "refId": "A"
         }
