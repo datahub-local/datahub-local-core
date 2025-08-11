@@ -423,7 +423,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "network_ups_tools_battery_runtime{ups=\"$ups\"}",
+          "expr": "avg_over_time(network_ups_tools_battery_runtime{ups=\"$ups\"}[30m])",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -667,7 +667,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "network_ups_tools_battery_runtime{ups=\"$ups\"}",
+          "expr": "avg_over_time(network_ups_tools_battery_runtime{ups=\"$ups\"}[30m])",
           "instant": true,
           "interval": "",
           "legendFormat": "",
