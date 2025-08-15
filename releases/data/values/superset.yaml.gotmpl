@@ -94,7 +94,7 @@ bootstrapScript: |
   #!/bin/bash
   apt update && apt install -y build-essential
 
-  pip install Authlib psycopg2 trino
+  uv pip install Authlib psycopg2 trino
 
 extraConfigs:
   import_datasources.yaml: |

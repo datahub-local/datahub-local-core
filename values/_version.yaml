@@ -4,7 +4,7 @@ container_image_version:
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.103.0
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
-  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.5
+  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.6
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.4.5
   ghcr.io/mealie-recipes/mealie: v3.0.2
