@@ -15,6 +15,6 @@ releases:
   - name: "{{ .Values.release_name }}-media-servarr"
     namespace: media
     chart: "datahub-local/servarr"
-    version: '{{ .StateValues.helm_chart_version | get "datahub-local/servarr" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "servarr").version }}'
     values:
       - values/servarr.yaml.gotmpl

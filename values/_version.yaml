@@ -12,50 +12,98 @@ container_image_version:
   homeassistant/home-assistant: 2025.7.4
   kopia/kopia: 20250724.0.1107
   n8nio/n8n: 1.105.2
-  valkey/valkey: 8.1.3
+  valkey/valkey: 8.1.2
   velero/velero-plugin-for-aws: v1.12.2
-helm_chart_repository:
-  bjw-s-labs: https://bjw-s-labs.github.io/helm-charts
-  cnpg: https://cloudnative-pg.github.io/charts
-  dagster: https://dagster-io.github.io/helm
-  datahub-local: https://datahub-local.github.io/servarr
-  grafana: https://grafana.github.io/helm-charts
-  groundhog2k: https://groundhog2k.github.io/helm-charts/
-  headlamp: https://kubernetes-sigs.github.io/headlamp/
-  jameswynn: https://jameswynn.github.io/helm-charts
-  minio-oficial: https://charts.min.io/
-  nessie: https://charts.projectnessie.org/
-  ollama: https://otwld.github.io/ollama-helm/
-  open-webui: https://helm.openwebui.com
-  prometheus-community: https://prometheus-community.github.io/helm-charts
-  redpanda: https://charts.redpanda.com
-  robusta: https://robusta-charts.storage.googleapis.com
-  seriohub: https://seriohub.github.io/velero-helm
-  stirling-pdf: https://stirling-tools.github.io/Stirling-PDF-chart
-  superset: https://apache.github.io/superset/
-  trino: https://trinodb.github.io/charts
-  vmware-tanzu: https://vmware-tanzu.github.io/helm-charts/
 helm_chart_version:
-  8gears/n8n: 1.0.10
-  bjw-s-labs/app-template: 4.2.0
-  cnpg/cloudnative-pg: 0.25.0
-  cnpg/cluster: 0.3.1
-  dagster/dagster: 1.11.4
-  datahub-local/servarr: 0.7.2
-  grafana/loki: 6.34.0
-  grafana/promtail: 6.17.0
-  groundhog2k/valkey: 2.1.0
-  headlamp/headlamp: 0.33.0
-  jameswynn/homepage: 2.1.0
-  minio-oficial/minio: 5.4.0
-  nessie/nessie: 0.104.3
-  ollama/ollama: 1.25.0
-  open-webui/open-webui: 7.0.1
-  prometheus-community/kube-prometheus-stack: 75.15.1
-  redpanda/redpanda: 25.1.1
-  robusta/robusta: 0.26.0
-  seriohub/vui: 1.0.6
-  stirling-pdf/stirling-pdf-chart: 2.1.0
-  superset/superset: 0.14.2
-  trino/trino: 1.40.0
-  vmware-tanzu/velero: 10.0.11
+  n8n:
+    ref: 8gears/n8n
+    repository: oci://8gears.container-registry.com/library
+    version: 1.0.9
+  app-template:
+    ref: bjw-s-labs/app-template
+    repository: https://bjw-s-labs.github.io/helm-charts
+    version: 4.2.0
+  cloudnative-pg:
+    ref: cnpg/cloudnative-pg
+    repository: https://cloudnative-pg.github.io/charts
+    version: 0.25.0
+  cluster:
+    ref: cnpg/cluster
+    repository: https://cloudnative-pg.github.io/charts
+    version: 0.3.1
+  dagster:
+    ref: dagster/dagster
+    repository: https://dagster-io.github.io/helm
+    version: 1.11.4
+  servarr:
+    ref: datahub-local/servarr
+    repository: https://datahub-local.github.io/servarr
+    version: 0.7.2
+  loki:
+    ref: grafana/loki
+    repository: https://grafana.github.io/helm-charts
+    version: 6.34.0
+  promtail:
+    ref: grafana/promtail
+    repository: https://grafana.github.io/helm-charts
+    version: 6.17.0
+  valkey:
+    ref: groundhog2k/valkey
+    repository: https://groundhog2k.github.io/helm-charts
+    version: 2.1.0
+  headlamp:
+    ref: headlamp/headlamp
+    repository: https://kubernetes-sigs.github.io/headlamp
+    version: 0.33.0
+  homepage:
+    ref: jameswynn/homepage
+    repository: https://jameswynn.github.io/helm-charts
+    version: 2.1.0
+  minio:
+    ref: minio-oficial/minio
+    repository: https://charts.min.io
+    version: 5.4.0
+  nessie:
+    ref: nessie/nessie
+    repository: https://charts.projectnessie.org
+    version: 0.104.3
+  ollama:
+    ref: ollama/ollama
+    repository: https://otwld.github.io/ollama-helm
+    version: 1.25.0
+  open-webui:
+    ref: open-webui/open-webui
+    repository: https://helm.openwebui.com
+    version: 7.0.1
+  kube-prometheus-stack:
+    ref: prometheus-community/kube-prometheus-stack
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 75.15.1
+  redpanda:
+    ref: redpanda/redpanda
+    repository: https://charts.redpanda.com
+    version: 25.1.1
+  robusta:
+    ref: robusta/robusta
+    repository: https://robusta-charts.storage.googleapis.com
+    version: 0.26.0
+  vui:
+    ref: seriohub/vui
+    repository: https://seriohub.github.io/velero-helm
+    version: 1.0.6
+  stirling-pdf-chart:
+    ref: stirling-pdf/stirling-pdf-chart
+    repository: https://stirling-tools.github.io/Stirling-PDF-chart
+    version: 2.1.0
+  superset:
+    ref: superset/superset
+    repository: https://apache.github.io/superset
+    version: 0.14.2
+  trino:
+    ref: trino/trino
+    repository: https://trinodb.github.io/charts
+    version: 1.40.0
+  velero:
+    ref: vmware-tanzu/velero
+    repository: https://vmware-tanzu.github.io/helm-charts
+    version: 10.0.11

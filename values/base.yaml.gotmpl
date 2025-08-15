@@ -19,7 +19,14 @@ helmDefaults:
   force: false
 ---
 repositories:
-  #{{- range $key, $value := .Values.helm_chart_repository }}
+  #{{- $repos := dict }}
+  #{{- range $name, $chart := .Values.helm_chart_version }}
+  #{{- if not (hasPrefix "oci://" $chart.repository) }}
+  #  {{- $_ := set $repos $name $chart.repository }}
+  #{{- end }}
+  #{{- end }}
+
+  #{{- range $key, $value := $repos }}
   - name: "{{ $key }}"
     url: "{{ $value }}"
   #{{- end }}

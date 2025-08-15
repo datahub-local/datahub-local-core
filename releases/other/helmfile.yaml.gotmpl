@@ -15,36 +15,36 @@ releases:
   - name: "{{ .Values.release_name }}-other-homepage"
     namespace: other
     chart: "jameswynn/homepage"
-    version: '{{ .StateValues.helm_chart_version | get "jameswynn/homepage" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "homepage").version }}'
     values:
       - values/homepage.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-it-tools"
     namespace: other
     chart: "bjw-s-labs/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/it_tools.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mealie"
     namespace: other
     chart: "bjw-s-labs/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/mealie.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-convertx"
     namespace: other
     chart: "bjw-s-labs/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/convertx.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-stirling-pdf"
     namespace: other
     chart: "stirling-pdf/stirling-pdf-chart"
-    version: '{{ .StateValues.helm_chart_version | get "stirling-pdf/stirling-pdf-chart" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "stirling-pdf-chart").version }}'
     values:
       - values/mazanoke.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mazanoke"
     namespace: other
     chart: "bjw-s-labs/app-template"
-    version: '{{ .StateValues.helm_chart_version | get "bjw-s-labs/app-template" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/mazanoke.yaml.gotmpl

@@ -15,34 +15,34 @@ releases:
   - name: "{{ .Values.release_name }}-kube-prometheus-stack"
     namespace: monitoring
     chart: "prometheus-community/kube-prometheus-stack"
-    version: '{{ .StateValues.helm_chart_version | get "prometheus-community/kube-prometheus-stack" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "kube-prometheus-stack").version }}'
     values:
       - values/kube-prometheus-stack.yaml.gotmpl
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-loki"
     namespace: monitoring
     chart: "grafana/loki"
-    version: '{{ .StateValues.helm_chart_version | get "grafana/loki" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "loki").version }}'
     values:
       - values/loki.yaml.gotmpl
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-promtail"
     namespace: monitoring
     chart: "grafana/promtail"
-    version: '{{ .StateValues.helm_chart_version | get "grafana/promtail" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "promtail").version }}'
     values:
       - values/promtail.yaml.gotmpl
     disableValidationOnInstall: true
   - name: "{{ .Values.release_name }}-headlamp"
     namespace: monitoring
     chart: "headlamp/headlamp"
-    version: '{{ .StateValues.helm_chart_version | get "headlamp/headlamp" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "headlamp").version }}'
     values:
       - values/headlamp.yaml.gotmpl
   - name: "{{ .Values.release_name }}-robusta"
     namespace: monitoring
     chart: "robusta/robusta"
-    version: '{{ .StateValues.helm_chart_version | get "robusta/robusta" }}'
+    version: '{{ (.StateValues.helm_chart_version | get "robusta").version }}'
     values:
       - values/robusta.yaml.gotmpl
     disableValidationOnInstall: true
