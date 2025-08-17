@@ -38,7 +38,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.8.1
+    version: 0.9.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
