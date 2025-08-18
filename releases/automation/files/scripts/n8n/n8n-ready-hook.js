@@ -163,7 +163,9 @@ module.exports = {
                     return;
                 }
 
-                if (this.dbCollections.Credentials.findAllPersonalCredentials().length > 0) {
+                const currentCredentials = await this.dbCollections.Credentials.findAllPersonalCredentials();
+
+                if (currentCredentials.length > 0) {
                     logger.info('[InitCrendentials] Credentials already initialized, skipping import');
                     return;
                 }
