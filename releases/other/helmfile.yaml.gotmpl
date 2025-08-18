@@ -48,3 +48,9 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/mazanoke.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-other-omni-tools"
+    namespace: other
+    chart: "bjw-s-labs/app-template"
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/omni_tools.yaml.gotmpl

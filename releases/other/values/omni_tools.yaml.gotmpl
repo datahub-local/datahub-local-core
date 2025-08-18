@@ -14,8 +14,8 @@ controllers:
     containers:
       main:
         image:
-          repository: ghcr.io/corentinth/it-tools
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/corentinth/it-tools") }}{{ $value }}{{ end }}{{ end }}'
+          repository: iib0011/omni-tools
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "iib0011/omni-tools") }}{{ $value }}{{ end }}{{ end }}'
         resources:
           requests:
             memory: 100Mi
@@ -53,18 +53,18 @@ ingress:
       #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
 
       gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "IT-Tools"
-      gethomepage.dev/description: "Collection of handy online tools for developers, with great UX."
+      gethomepage.dev/name: "OmniTools"
+      gethomepage.dev/description: "Self-hosted collection of powerful web-based tools for everyday tasks."
       gethomepage.dev/group: "Other"
-      gethomepage.dev/icon: "sh-it-tools"
+      gethomepage.dev/icon: "sh-omnitools"
 
     className: "nginx"
 
     hosts:
-      - host: "other-it-tools.{{ .StateValues.ingress_hostname }}"
+      - host: "other-omni-tools.{{ .StateValues.ingress_hostname }}"
         paths:
           - path: /
             pathType: Prefix
             service:
-              name: "{{ .Values.release_name }}-other-it-tools"
+              name: "{{ .Values.release_name }}-other-omni-tools"
               port: 80
