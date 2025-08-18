@@ -22,7 +22,8 @@ repositories:
   #{{- $repos := dict }}
   #{{- range $name, $chart := .Values.helm_chart_version }}
   #{{- if not (hasPrefix "oci://" $chart.repository) }}
-  #  {{- $_ := set $repos $name $chart.repository }}
+    #  {{- $repoName := first (splitList "/" $chart.ref) }}
+    #  {{- $_ := set $repos $repoName $chart.repository }}
   #{{- end }}
   #{{- end }}
 
