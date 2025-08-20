@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 745,
+  "id": 787,
   "links": [],
   "panels": [
     {
@@ -1659,7 +1659,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 164
+                "value": 170
               },
               {
                 "id": "unit",
@@ -1675,7 +1675,31 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 124
+                "value": 114
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Node name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 194
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 88
               }
             ]
           }
@@ -1712,7 +1736,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"}",
+          "expr": "(\n  label_replace(ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"}, \"instance_ip\", \"$1\", \"instance\", \"([^:]+)(:[0-9]+)?$\")\n  * on(instance_ip) group_left(nodename)\n  max by(instance_ip, nodename) (\n    label_replace(node_uname_info{job=\"node-exporter\"}, \"instance_ip\", \"$1\", \"instance\", \"([^:]+)(:[0-9]+)?$\")\n  )\n)\nor\n(\n  label_replace(ALERTS_FOR_STATE{severity=~\"critical|warning|error|info\"}, \"instance_ip\", \"$1\", \"instance\", \"([^:]+)(:[0-9]+)?$\")\n  unless on(instance_ip)\n  max by(instance_ip) (\n    label_replace(node_uname_info{job=\"node-exporter\"}, \"instance_ip\", \"$1\", \"instance\", \"([^:]+)(:[0-9]+)?$\")\n  )\n)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "",
@@ -1731,7 +1755,8 @@
               "alertname",
               "severity",
               "namespace",
-              "pod"
+              "pod",
+              "nodename"
             ],
             "mode": "columns"
           }
@@ -1764,13 +1789,50 @@
           "options": {}
         },
         {
+          "id": "calculateField",
+          "options": {
+            "alias": "Last Reload",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": "1000"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "include": [
+                "Value"
+              ],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "time",
+                "targetField": "Last Reload"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
               "ALERTS": true,
               "ALERTS_FOR_STATE": true,
               "Time": false,
-              "Value": false,
+              "Value": true,
               "Value #B": false,
               "Value #C": false,
               "__name__": true,
@@ -1791,12 +1853,15 @@
             },
             "includeByName": {},
             "indexByName": {
-              "ALERTS_FOR_STATE": 4,
+              "ALERTS_FOR_STATE": 5,
+              "Last Reload": 9,
               "Time": 0,
+              "Value": 8,
               "alertname": 3,
               "instance": 1,
-              "namespace": 5,
-              "pod": 6,
+              "namespace": 6,
+              "nodename": 4,
+              "pod": 7,
               "severity": 2
             },
             "renameByName": {
@@ -1808,6 +1873,7 @@
               "alertname": "Alert Name",
               "instance": "Instance",
               "namespace": "Namespace",
+              "nodename": "Node name",
               "pod": "Pod",
               "severity": "Severity",
               "version": "Version"
