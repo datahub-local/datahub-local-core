@@ -19,7 +19,7 @@ helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 1.0.10
+    version: 1.0.12
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
