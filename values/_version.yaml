@@ -2,24 +2,24 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.34.1
   ghcr.io/c4illin/convertx: v0.14.1
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.103.1
+  ghcr.io/coder/code-server: 4.103.2
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
-  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.7
+  ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.4.6
-  ghcr.io/mealie-recipes/mealie: v3.1.1
+  ghcr.io/mealie-recipes/mealie: v3.1.2
   ghcr.io/tailscale/tailscale: v1.86.5
   iib0011/omni-tools: 0.5.0
   homeassistant/home-assistant: 2025.8.3
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.108.1
+  n8nio/n8n: 1.109.1
   valkey/valkey: 8.1.3
   velero/velero-plugin-for-aws: v1.12.2
 helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 1.0.12
+    version: 1.0.13
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
@@ -35,7 +35,7 @@ helm_chart_version:
   dagster:
     ref: dagster/dagster
     repository: https://dagster-io.github.io/helm
-    version: 1.11.7
+    version: 1.11.8
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
@@ -43,7 +43,7 @@ helm_chart_version:
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
-    version: 6.37.0
+    version: 6.38.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -67,15 +67,15 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.104.5
+    version: 0.104.10
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.27.0
+    version: 1.28.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 7.6.0
+    version: 7.7.0
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
@@ -87,7 +87,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.26.1
+    version: 0.28.0
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
