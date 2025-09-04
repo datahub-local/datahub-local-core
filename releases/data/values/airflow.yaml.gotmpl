@@ -11,18 +11,6 @@ migrateDatabaseJob:
   jobAnnotations:
     "argocd.argoproj.io/hook": Sync
 
-extraSecrets:
-  "{{ .Release.Name }}-example":
-    useHelmHooks: false
-    data: |
-      AIRFLOW_VAR_HELLO_MESSAGE: "Hi!"
-
-extraConfigMaps:
-  "{{ .Release.Name }}-example":
-    useHelmHooks: false
-    data: |
-      AIRFLOW_VAR_HELLO_MESSAGE: "Hi!"
-
 extraEnv: |
   - name: "TRINO_HOST"
     value: "{{ $.Values.release_name }}-data-trino-trino:8080"
