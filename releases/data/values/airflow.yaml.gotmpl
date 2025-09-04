@@ -75,10 +75,9 @@ logs:
     enabled: false
 
 ingress:
-  web:
+  apiServer:
     enabled: true
 
-    ingressClassName: "nginx"
     annotations:
       #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
 
@@ -89,6 +88,8 @@ ingress:
       gethomepage.dev/group: "Data"
       gethomepage.dev/icon: "sh-airflow"
 
-    host: "data-airflow-api.{{ .StateValues.ingress_hostname }}"
+    ingressClassName: "nginx"
     path: "/"
     pathType: Prefix
+    hosts:
+      - name: "data-airflow-api.{{ .StateValues.ingress_hostname }}"
