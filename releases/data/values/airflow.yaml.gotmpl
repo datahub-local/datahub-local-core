@@ -28,9 +28,6 @@ extraEnv: |
         name: minio-admin-credentials
         key: accessKey
 
-workers:
-  replicas: 2
-
 postgresql:
   enabled: false
 redis:
@@ -40,11 +37,19 @@ data:
   metadataSecretName: postgresql-admin-credentials
   brokerUrlSecretName: valkey-admin-credentials
 
+workers:
+  replicas: 2
+
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClassName: longhorn-no-replica
+
 dags:
   persistence:
     enabled: true
     size: 1Gi
-    storageClassName: longhorn
+    storageClassName: longhorn-no-replica
   gitSync:
     enabled: true
 
@@ -55,6 +60,12 @@ dags:
 
     sshKeySecret: github-airflow-auth
     period: 60s
+
+triggerer:
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClassName: longhorn-no-replica
 
 cleanup:
   enabled: true
