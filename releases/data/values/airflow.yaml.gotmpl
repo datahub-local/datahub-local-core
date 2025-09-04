@@ -5,6 +5,8 @@ useStandardNaming: true
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
+  jobAnnotations:
+    "argocd.argoproj.io/hook": Sync
 migrateDatabaseJob:
   useHelmHooks: false
   applyCustomEnv: false
@@ -40,6 +42,12 @@ redis:
 data:
   metadataSecretName: postgresql-admin-credentials
   brokerUrlSecretName: valkey-admin-credentials
+
+api:
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClassName: longhorn-no-replica
 
 workers:
   replicas: 2
