@@ -32,10 +32,10 @@ helm_chart_version:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
     version: 0.3.1
-  dagster:
-    ref: dagster/dagster
-    repository: https://dagster-io.github.io/helm
-    version: 1.11.8
+  airflow:
+    ref: apache-airflow/airflow
+    repository: https://airflow.apache.org
+    version: 1.18.0
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr

@@ -1,0 +1,92 @@
+# https://github.com/apache/airflow/blob/main/chart/values.yaml
+
+useStandardNaming: true
+
+createUserJob:
+  useHelmHooks: false
+  applyCustomEnv: false
+migrateDatabaseJob:
+  useHelmHooks: false
+  applyCustomEnv: false
+  jobAnnotations:
+    "argocd.argoproj.io/hook": Sync
+
+extraSecrets:
+  "{{ .Release.Name }}-example":
+    useHelmHooks: false
+    data: |
+      AIRFLOW_VAR_HELLO_MESSAGE: "Hi!"
+
+extraConfigMaps:
+  "{{ .Release.Name }}-example":
+    useHelmHooks: false
+    data: |
+      AIRFLOW_VAR_HELLO_MESSAGE: "Hi!"
+
+extraEnv: |
+  - name: "TRINO_HOST"
+    value: "{{ $.Values.release_name }}-data-trino-trino:8080"
+  - name: "TRINO_PORT"
+    value: "8080"
+  - name: "TRINO_USER"
+    value: "{{ $.StateValues.trino_user}}"
+  - name: "S3_AWS_ENDPOINT"
+    value: "http://{{ .Values.release_name }}-data-minio:9000"
+  - name: "S3_AWS_ACCESS_KEY"
+    value: "{{ .StateValues.minio_user }}"
+  - name: "S3_AWS_SECRET_KEY"
+    valueFrom:
+      secretKeyRef:
+        name: minio-admin-credentials
+        key: accessKey
+
+workers:
+  replicas: 2
+
+postgresql:
+  enabled: false
+redis:
+  enabled: false
+
+data:
+  metadataSecretName: postgresql-admin-credentials
+  brokerUrlSecretName: valkey-admin-credentials
+
+dags:
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClassName: longhorn
+  gitSync:
+    enabled: true
+
+    repo: https://github.com/datahub-local/datahub-local-workflows.git
+    branch: main
+    rev: HEAD
+    subPath: "worfklows/dags"
+
+    sshKeySecret: github-airflow-auth
+    period: 60s
+
+cleanup:
+  enabled: true
+  schedule: "0 * * * *"
+
+ingress:
+  enabled: true
+
+  web:
+    ingressClassName: "nginx"
+    annotations:
+      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
+
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "Airflow"
+      gethomepage.dev/pod-selector: "app.kubernetes.io/name=airflow"
+      gethomepage.dev/description: "A platform to programmatically author, schedule, and monitor workflows"
+      gethomepage.dev/group: "Data"
+      gethomepage.dev/icon: "sh-airflow"
+
+    host: "data-airflow-api.{{ .StateValues.ingress_hostname }}"
+    path: "/"
+    pathType: Prefix

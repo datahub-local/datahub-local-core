@@ -56,12 +56,12 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "nessie").version }}'
     values:
       - values/nessie.yaml.gotmpl
-  - name: "dag"
+  - name: "{{ .Values.release_name }}-data-airflow"
     namespace: data
-    chart: "dagster/dagster"
-    version: '{{ (.StateValues.helm_chart_version | get "dagster").version }}'
+    chart: "apache-airflow/airflow"
+    version: '{{ (.StateValues.helm_chart_version | get "airflow").version }}'
     values:
-      - values/dagster.yaml.gotmpl
+      - values/airflow.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-ollama"
     namespace: data
     chart: "ollama/ollama"
