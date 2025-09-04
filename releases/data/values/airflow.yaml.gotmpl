@@ -64,12 +64,19 @@ dags:
 triggerer:
   persistence:
     enabled: true
-    size: 1Gi
+    size: 0.5Gi
     storageClassName: longhorn-no-replica
 
 cleanup:
   enabled: true
   schedule: "0 * * * *"
+
+logs:
+  emptyDirConfig:
+    sizeLimit: 0.5Gi
+    medium: Memory
+  persistence:
+    enabled: false
 
 ingress:
   enabled: true
