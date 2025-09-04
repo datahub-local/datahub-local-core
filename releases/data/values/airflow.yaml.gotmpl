@@ -11,6 +11,10 @@ migrateDatabaseJob:
   jobAnnotations:
     "argocd.argoproj.io/hook": Sync
 
+config:
+  core:
+    simple_auth_manager_all_admins: "True"
+
 extraEnv: |
   - name: "TRINO_HOST"
     value: "{{ $.Values.release_name }}-data-trino-trino:8080"
@@ -86,7 +90,7 @@ ingress:
       gethomepage.dev/pod-selector: "app.kubernetes.io/name=airflow"
       gethomepage.dev/description: "A platform to programmatically author, schedule, and monitor workflows"
       gethomepage.dev/group: "Data"
-      gethomepage.dev/icon: "sh-airflow"
+      gethomepage.dev/icon: "si-apacheairflow"
 
     ingressClassName: "nginx"
     path: "/"
