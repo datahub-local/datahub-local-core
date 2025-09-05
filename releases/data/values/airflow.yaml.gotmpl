@@ -53,8 +53,9 @@ data:
   metadataSecretName: postgresql-admin-credentials
   brokerUrlSecretName: valkey-admin-credentials
 
-apiServerConfig: |
-  {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 2 }}
+apiServer:
+  apiServerConfig: |
+    {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
 
 workers:
   replicas: 2
