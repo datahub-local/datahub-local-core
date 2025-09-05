@@ -18,6 +18,16 @@ config:
     simple_auth_manager_all_admins: "True"
 
 extraEnv: |
+  - name: "AIRFLOW__API__BASE_URL"
+    value: "https://data-airflow.{{ .StateValues.ingress_hostname }}"
+
+  - name: "CLIENT_ID"
+    value: "{{ .StateValues.minio_user }}"
+  - name: "CLIENT_SECRET"
+    value: "{{ .StateValues.security_github_client_secret }}"
+  - name: "OIDC_ISSUER"
+    value: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex"
+
   - name: "TRINO_HOST"
     value: "{{ $.Values.release_name }}-data-trino-trino:8080"
   - name: "TRINO_PORT"
@@ -43,11 +53,8 @@ data:
   metadataSecretName: postgresql-admin-credentials
   brokerUrlSecretName: valkey-admin-credentials
 
-api:
-  persistence:
-    enabled: true
-    size: 1Gi
-    storageClassName: longhorn-no-replica
+apiServerConfig: |
+  {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 2 }}
 
 workers:
   replicas: 2
@@ -104,4 +111,4 @@ ingress:
     path: "/"
     pathType: Prefix
     hosts:
-      - name: "data-airflow-api.{{ .StateValues.ingress_hostname }}"
+      - name: "data-airflow.{{ .StateValues.ingress_hostname }}"
