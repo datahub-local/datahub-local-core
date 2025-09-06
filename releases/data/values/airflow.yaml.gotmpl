@@ -22,7 +22,7 @@ extraEnv: |
     value: "https://data-airflow.{{ .StateValues.ingress_hostname }}"
 
   - name: "CLIENT_ID"
-    value: "{{ .StateValues.minio_user }}"
+    value: "airflow"
   - name: "CLIENT_SECRET"
     value: "{{ .StateValues.security_github_client_secret }}"
   - name: "OIDC_ISSUER"
@@ -57,8 +57,24 @@ apiServer:
   apiServerConfig: |
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
 
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
 workers:
   replicas: 2
+
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
 
   persistence:
     enabled: true
@@ -81,7 +97,33 @@ dags:
     sshKeySecret: github-airflow-auth
     period: 60s
 
+dagProcessor:
+  resources:
+    limits:
+      cpu: 256m
+      memory: 256Mi
+    requests:
+      cpu: 256m
+      memory: 256Mi
+
+statsd:
+  resources:
+    limits:
+      cpu: 256m
+      memory: 256Mi
+    requests:
+      cpu: 256m
+      memory: 256Mi
+
 triggerer:
+  resources:
+    limits:
+      cpu: 256m
+      memory: 256Mi
+    requests:
+      cpu: 256m
+      memory: 256Mi
+
   persistence:
     enabled: true
     size: 0.5Gi

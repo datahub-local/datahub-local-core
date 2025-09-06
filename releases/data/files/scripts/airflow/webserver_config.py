@@ -20,22 +20,30 @@ AUTH_ROLES_SYNC_AT_LOGIN = True
 AUTH_USER_REGISTRATION_ROLE = "Admin"
 PERMANENT_SESSION_LIFETIME = 43200
 
-PROVIDER_NAME = "dex"
+PROVIDER_NAME = "IAM"
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+
 AIRFLOW__API__BASE_URL = os.getenv("AIRFLOW__API__BASE_URL")
+
 OIDC_ISSUER = os.getenv("OIDC_ISSUER")
-OIDC_BASE_URL = f"{OIDC_ISSUER}/protocol/openid-connect"
-OIDC_TOKEN_URL = f"{OIDC_BASE_URL}/token"
-OIDC_AUTH_URL = f"{OIDC_BASE_URL}/auth"
 OIDC_METADATA_URL = f"{OIDC_ISSUER}/.well-known/openid-configuration"
+
+
+# Fetch metadata
+req = requests.get(OIDC_METADATA_URL)
+metadata = req.json()
+
+OIDC_KEYS_URL = metadata["jwks_uri"]
+OIDC_AUTH_URL = metadata["authorization_endpoint"]
+OIDC_TOKEN_URL = metadata["token_endpoint"]
 OAUTH_PROVIDERS = [
     {
         "name": PROVIDER_NAME,
         "token_key": "access_token",
         "icon": "fa-key",
         "remote_app": {
-            "api_base_url": OIDC_BASE_URL,
+            "api_base_url": OIDC_ISSUER,
             "access_token_url": OIDC_TOKEN_URL,
             "authorize_url": OIDC_AUTH_URL,
             "server_metadata_url": OIDC_METADATA_URL,
@@ -51,11 +59,9 @@ OAUTH_PROVIDERS = [
     }
 ]
 
-# Fetch public key
-req = requests.get(OIDC_ISSUER)
-key_der_base64 = req.json()["public_key"]
-key_der = b64decode(key_der_base64.encode())
-public_key = serialization.load_der_public_key(key_der)
+# Fetch public keys
+req = requests.get(OIDC_KEYS_URL)
+jwks = req.json()
 
 
 class CustomOAuthView(AuthOAuthView):
@@ -72,6 +78,16 @@ class CustomSecurityManager(FabAirflowSecurityManagerOverride):
 
     def get_oauth_user_info(self, provider, response):
         if provider == PROVIDER_NAME:
+            id_token = response["id_token"]
+
+            unverified_header = jwt.get_unverified_header(id_token)
+            kid = unverified_header["kid"]
+            public_key = None
+            for k in jwks["keys"]:
+                if k["kid"] == kid:
+                    public_key = jwt.algorithms.RSAAlgorithm.from_jwk(k)
+                    break
+
             token = response["access_token"]
             me = jwt.decode(
                 token, public_key, algorithms=["HS256", "RS256"], audience=CLIENT_ID
