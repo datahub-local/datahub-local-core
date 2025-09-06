@@ -143,7 +143,7 @@ ingress:
     annotations:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Airflow"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=airflow"
+      gethomepage.dev/pod-selector: "component=api-server,tier=airflow"
       gethomepage.dev/description: "A platform to programmatically author, schedule, and monitor workflows"
       gethomepage.dev/group: "Data"
       gethomepage.dev/icon: "si-apacheairflow"
