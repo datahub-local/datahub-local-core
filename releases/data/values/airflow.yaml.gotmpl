@@ -70,11 +70,11 @@ workers:
 
   resources:
     limits:
-      cpu: 1
-      memory: 1Gi
+      cpu: 1.5
+      memory: 1.5Gi
     requests:
-      cpu: 1
-      memory: 1Gi
+      cpu: 1.5
+      memory: 1.5Gi
 
   persistence:
     enabled: true
@@ -100,29 +100,29 @@ dags:
 dagProcessor:
   resources:
     limits:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
     requests:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
 
 statsd:
   resources:
     limits:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
     requests:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
 
 triggerer:
   resources:
     limits:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
     requests:
-      cpu: 256m
-      memory: 256Mi
+      cpu: 512m
+      memory: 512Mi
 
   persistence:
     enabled: true
