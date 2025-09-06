@@ -54,6 +54,12 @@ data:
   brokerUrlSecretName: valkey-admin-credentials
 
 apiServer:
+  args: 
+    - "bash"
+    - "-c"
+    - |
+      pip install uvicorn==0.29.0 && \ # Pinning uvicorn to avoid bug in 0.30.0 and up
+      exec airflow api-server
   apiServerConfig: |
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
   resources:
@@ -61,11 +67,11 @@ apiServer:
     # other services onto small clusters, while allowing a reasonable burst
     # via limits for short-lived heavier work.
     limits:
-      cpu: 1
-      memory: 2Gi
-    requests:
       cpu: 500m
-      memory: 256Mi
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
 workers:
   replicas: 2
