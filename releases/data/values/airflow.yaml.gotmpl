@@ -13,17 +13,6 @@ migrateDatabaseJob:
   jobAnnotations:
     "argocd.argoproj.io/hook": Sync
 
-_global:
-  logGroomerSidecar: &logGroomerSidecar
-    enabled: true
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
 # config:
 #   core:
 #     simple_auth_manager_all_admins: "True"
@@ -72,8 +61,8 @@ apiServer:
     # other services onto small clusters, while allowing a reasonable burst
     # via limits for short-lived heavier work.
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1
+      memory: 1Gi
     requests:
       cpu: 250m
       memory: 256Mi
@@ -85,7 +74,7 @@ workers:
     # Workers can be a bit heavier, but for homelabs we keep per-worker
     # requests small and limits moderate so multiple workers can run.
     limits:
-      cpu: 1000m
+      cpu: 1
       memory: 2Gi
     requests:
       cpu: 500m
@@ -96,7 +85,15 @@ workers:
     size: 2Gi
     storageClassName: longhorn-no-replica
 
-  logGroomerSidecar: *logGroomerSidecar
+  logGroomerSidecar: &logGroomerSidecar
+    enabled: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
 
 dags:
   persistence:
