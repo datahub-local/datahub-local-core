@@ -54,11 +54,11 @@ data:
   brokerUrlSecretName: valkey-admin-credentials
 
 apiServer:
-  args: 
+  args: # Pinning uvicorn to avoid bug in 0.30.0 and up
     - "bash"
     - "-c"
     - |
-      pip install uvicorn==0.29.0 && \ # Pinning uvicorn to avoid bug in 0.30.0 and up
+      pip install uvicorn==0.29.0 && \
       exec airflow api-server
   apiServerConfig: |
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
