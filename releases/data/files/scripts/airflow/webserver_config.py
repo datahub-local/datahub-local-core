@@ -51,7 +51,7 @@ OAUTH_PROVIDERS = [
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "client_kwargs": {
-                "scope": "email profile",
+                "scope": "email openid profile",
                 "code_challenge_method": "S256",
                 "response_type": "code",
             },
