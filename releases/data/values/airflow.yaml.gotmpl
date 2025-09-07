@@ -128,22 +128,21 @@ scheduler:
   resources:
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
     requests:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
 
   logGroomerSidecar: *logGroomerSidecar
 
 triggerer:
   resources:
-    # Triggerer handles task triggers; modest sizing is sufficient for homelab
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
     requests:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
 
   logGroomerSidecar: *logGroomerSidecar
 
