@@ -54,37 +54,26 @@ data:
   brokerUrlSecretName: valkey-admin-credentials
 
 apiServer:
-  args: # Pinning uvicorn to avoid bug in 0.30.0 and up
-    - "bash"
-    - "-c"
-    - |
-      pip install uvicorn==0.29.0 && \
-      exec airflow api-server
   apiServerConfig: |
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
   resources:
-    # Homelab-friendly sizing: keep requests modest so the scheduler can pack
-    # other services onto small clusters, while allowing a reasonable burst
-    # via limits for short-lived heavier work.
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1.5
+      memory: 1.5Gi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 1.5
+      memory: 1.5Gi
 
 workers:
   replicas: 2
 
   resources:
-    # Workers can be a bit heavier, but for homelabs we keep per-worker
-    # requests small and limits moderate so multiple workers can run.
     limits:
       cpu: 1
       memory: 2Gi
     requests:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1
+      memory: 2Gi
 
   persistence:
     enabled: true
@@ -98,8 +87,8 @@ workers:
         cpu: 200m
         memory: 256Mi
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: 200m
+        memory: 256Mi
 
 dags:
   persistence:
@@ -119,32 +108,29 @@ dags:
 
 dagProcessor:
   resources:
-    # Dag processor should be responsive but not overly sized on homelab
     limits:
       cpu: 500m
       memory: 512Mi
     requests:
-      cpu: 250m
+      cpu: 500m
       memory: 512Mi
 
 statsd:
   resources:
-    # Statsd is lightweight; give low request/limit to reduce overall footprint
     limits:
-      cpu: 200m
+      cpu: 250m
       memory: 256Mi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 250m
+      memory: 256Mi
 
 scheduler:
   resources:
-    # Scheduler handles task scheduling; modest sizing is sufficient for homelab
     limits:
       cpu: 500m
       memory: 512Mi
     requests:
-      cpu: 250m
+      cpu: 500m
       memory: 512Mi
 
   logGroomerSidecar: *logGroomerSidecar
@@ -156,7 +142,7 @@ triggerer:
       cpu: 500m
       memory: 512Mi
     requests:
-      cpu: 250m
+      cpu: 500m
       memory: 512Mi
 
   logGroomerSidecar: *logGroomerSidecar

@@ -93,16 +93,18 @@ class CustomSecurityManager(FabAirflowSecurityManagerOverride):
                 token, public_key, algorithms=["HS256", "RS256"], audience=CLIENT_ID
             )
 
-            userinfo = {
-                "username": me.get("preferred_username"),
-                "email": me.get("email"),
-                "first_name": me.get("given_name"),
-                "last_name": me.get("family_name"),
+            user_info = {
+                "name": me["name"],
+                "email": me["email"],
+                "id": me["preferred_username"],
+                "username": me["preferred_username"],
+                "first_name": "",
+                "last_name": "",
             }
 
-            log.info(f"user info: {userinfo}")
+            log.info(f"user info: {user_info}")
 
-            return userinfo
+            return user_info
         else:
             return {}
 
