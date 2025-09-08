@@ -12,6 +12,11 @@ const {
 } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'))
 const { exec } = require('child_process');
 
+const {
+    CUSTOM_INSTANCE_OWNER_EMAIL,
+    CUSTOM_INSTANCE_OWNER_PASSWORD
+} = process.env;
+
 const ignoreAuthRegexp = /^\/(api|assets|healthz|metrics|rest|webhook)/;
 
 module.exports = {
@@ -28,48 +33,42 @@ module.exports = {
                     return;
                 }
 
-                const {
-                    CUSTOM_INSTANCE_OWNER_EMAIL,
-                    CUSTOM_INSTANCE_OWNER_PASSWORD
-                } = process.env;
-
                 logger.info('[OwnerSetup] Attempting to set up owner with email: ' + CUSTOM_INSTANCE_OWNER_EMAIL);
 
                 assert(CUSTOM_INSTANCE_OWNER_EMAIL, "Email missing from environment");
                 assert(CUSTOM_INSTANCE_OWNER_PASSWORD, "Password missing from environment");
 
                 try {
-                    const owner = await this.dbCollections.User.findOneOrFail({
-                        where: {
-                            role: "global:owner"
-                        },
-                    });
-                    logger.debug('[OwnerSetup] Found existing owner with ID: ' + owner.id);
+                    const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
 
-                    const passwordHash = await hash(CUSTOM_INSTANCE_OWNER_PASSWORD, 10);
-                    logger.debug('[OwnerSetup] Generated password hash for owner');
+                    if (!owner) {
+                        logger.debug('[OwnerSetup] Found existing owner with ID: ' + owner.id);
 
-                    await this.dbCollections.User.save({
-                        id: owner.id,
-                        email: CUSTOM_INSTANCE_OWNER_EMAIL,
-                        firstName: "no",
-                        lastName: "name",
-                        password: passwordHash,
-                    });
-                    logger.debug('[OwnerSetup] Updated owner details successfully');
+                        const passwordHash = await hash(CUSTOM_INSTANCE_OWNER_PASSWORD, 10);
+                        logger.debug('[OwnerSetup] Generated password hash for owner');
 
-                    await this.dbCollections.Settings.update(
-                        {
-                            key: "userManagement.isInstanceOwnerSetUp"
-                        },
-                        {
-                            value: "true"
-                        },);
-                    logger.debug('[OwnerSetup] Updated settings to mark owner as set up');
+                        await this.dbCollections.User.save({
+                            id: owner.id,
+                            email: CUSTOM_INSTANCE_OWNER_EMAIL,
+                            firstName: "no",
+                            lastName: "name",
+                            password: passwordHash,
+                        });
+                        logger.debug('[OwnerSetup] Updated owner details successfully');
 
-                    config.set("userManagement.isInstanceOwnerSetUp", true);
+                        await this.dbCollections.Settings.update(
+                            {
+                                key: "userManagement.isInstanceOwnerSetUp"
+                            },
+                            {
+                                value: "true"
+                            },);
+                        logger.debug('[OwnerSetup] Updated settings to mark owner as set up');
 
-                    logger.info('[OwnerSetup] Owner setup complete');
+                        config.set("userManagement.isInstanceOwnerSetUp", true);
+
+                        logger.info('[OwnerSetup] Owner setup complete');
+                    }
                 } catch (error) {
                     logger.error('[OwnerSetup] Error during owner setup: ' + error);
                     throw error;
@@ -124,9 +123,7 @@ module.exports = {
                         logger.debug('[OAuth2Proxy] Found forwarded user: ' + forwardedUser);
 
                         try {
-                            const owner = await this.dbCollections.User.findOneBy({
-                                role: 'global:owner'
-                            });
+                            const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
 
                             if (owner) {
                                 logger.debug('[OAuth2Proxy] Found owner, attempting to issue cookie');
