@@ -78,33 +78,16 @@ class CustomSecurityManager(FabAirflowSecurityManagerOverride):
 
     def get_oauth_user_info(self, provider, response):
         if provider == PROVIDER_NAME:
-            id_token = response["id_token"]
+            user_info = response["userinfo"]
 
-            unverified_header = jwt.get_unverified_header(id_token)
-            kid = unverified_header["kid"]
-            public_key = None
-            for k in jwks["keys"]:
-                if k["kid"] == kid:
-                    public_key = jwt.algorithms.RSAAlgorithm.from_jwk(k)
-                    break
-
-            token = response["access_token"]
-            me = jwt.decode(
-                token, public_key, algorithms=["HS256", "RS256"], audience=CLIENT_ID
-            )
-
-            user_info = {
-                "name": me["name"],
-                "email": me["email"],
-                "id": me["preferred_username"],
-                "username": me["preferred_username"],
+            return {
+                "name": user_info["name"],
+                "email": user_info["email"],
+                "id": user_info["preferred_username"],
+                "username": user_info["preferred_username"],
                 "first_name": "",
                 "last_name": "",
             }
-
-            log.info(f"user info: {user_info}")
-
-            return user_info
         else:
             return {}
 
