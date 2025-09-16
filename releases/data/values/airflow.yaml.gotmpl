@@ -70,10 +70,10 @@ workers:
   resources:
     limits:
       cpu: 1
-      memory: 2Gi
+      memory: 3Gi
     requests:
       cpu: 1
-      memory: 2Gi
+      memory: 3Gi
 
   persistence:
     enabled: true
@@ -91,10 +91,6 @@ workers:
         memory: 256Mi
 
 dags:
-  persistence:
-    enabled: true
-    size: 1Gi
-    storageClassName: nfs
   gitSync:
     enabled: true
 
