@@ -49,6 +49,9 @@ postgresql:
 redis:
   enabled: false
 
+apiSecretKey: "{{ .StateValues.security_github_client_secret }}"
+jwtSecret: "{{ .StateValues.security_github_client_secret }}"
+
 data:
   metadataSecretName: postgresql-admin-credentials
   brokerUrlSecretName: valkey-admin-credentials
