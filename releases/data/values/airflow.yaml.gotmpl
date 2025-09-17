@@ -94,8 +94,8 @@ dags:
   gitSync:
     enabled: true
 
-    repo: ssh://git@github.com:datahub-local/datahub-local-workflows.git
-    branch: main
+    repo: git@github.com/datahub-local/datahub-local-workflows.git
+    ref: main
     rev: HEAD
     subPath: "workflows/airflow/dags"
 
