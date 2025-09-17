@@ -95,8 +95,11 @@ dags:
     enabled: true
 
     repo: ssh://git@github.com/datahub-local/datahub-local-workflows.git
+    
     ref: main
+    branch: main
     rev: HEAD
+    
     subPath: "workflows/airflow/dags"
 
     sshKeySecret: github-airflow-auth
