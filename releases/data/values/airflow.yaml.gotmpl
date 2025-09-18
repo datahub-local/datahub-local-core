@@ -13,9 +13,15 @@ migrateDatabaseJob:
   jobAnnotations:
     "argocd.argoproj.io/hook": Sync
 
-# config:
-#   core:
-#     simple_auth_manager_all_admins: "True"
+#{{- $numWorkers := 2 }}
+#{{- $workerConcurrency := 5 }}
+#{{- $maxMemoryPerWorker := 2 }}
+#{{- $maxMemoryPerTask := (divf (mulf 0.8 $maxMemoryPerWorker) $workerConcurrency) | printf "%.1f" }}
+
+config:
+  celery:
+    worker_concurrency: "{{ $workerConcurrency }}"
+    extra_celery_config: '{"worker_max_memory_per_child": {{ $maxMemoryPerTask }}}'
 
 extraEnv: |
   - name: "AIRFLOW__API__BASE_URL"
@@ -49,8 +55,8 @@ postgresql:
 redis:
   enabled: false
 
-apiSecretKey: "{{ .StateValues.security_github_client_secret }}"
-jwtSecret: "{{ .StateValues.security_github_client_secret }}"
+apiSecretKey: "{{ .StateValues.security_github_client_secret | trunc 32 }}"
+jwtSecret: "{{ .StateValues.security_github_client_secret | trunc 32 }}"
 
 data:
   metadataSecretName: postgresql-admin-credentials
@@ -68,15 +74,15 @@ apiServer:
       memory: 1.5Gi
 
 workers:
-  replicas: 2
+  replicas: {{$numWorkers}}
 
   resources:
     limits:
       cpu: 1
-      memory: 3Gi
+      memory: "{{ $maxMemoryPerWorker }}Gi"
     requests:
       cpu: 1
-      memory: 3Gi
+      memory: "{{ $maxMemoryPerWorker }}Gi"
 
   persistence:
     enabled: true
@@ -98,11 +104,11 @@ dags:
     enabled: true
 
     repo: ssh://git@github.com/datahub-local/datahub-local-workflows.git
-    
+
     ref: main
     branch: main
     rev: HEAD
-    
+
     subPath: "workflows/airflow/dags"
 
     sshKeySecret: github-airflow-auth
