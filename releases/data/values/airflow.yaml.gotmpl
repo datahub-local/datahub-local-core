@@ -99,6 +99,9 @@ workers:
         cpu: 200m
         memory: 256Mi
 
+  livenessProbe: &livenessProbe
+    timeoutSeconds: 40
+
 dags:
   gitSync:
     enabled: true
@@ -123,6 +126,8 @@ dagProcessor:
       cpu: 500m
       memory: 512Mi
 
+  livenessProbe: *livenessProbe
+
 statsd:
   resources:
     limits:
@@ -143,6 +148,8 @@ scheduler:
 
   logGroomerSidecar: *logGroomerSidecar
 
+  livenessProbe: *livenessProbe
+
 triggerer:
   resources:
     limits:
@@ -152,12 +159,14 @@ triggerer:
       cpu: 500m
       memory: 768Mi
 
-  logGroomerSidecar: *logGroomerSidecar
-
   persistence:
     enabled: true
     size: 0.5Gi
     storageClassName: longhorn-no-replica
+
+  logGroomerSidecar: *logGroomerSidecar
+
+  livenessProbe: *livenessProbe
 
 ingress:
   apiServer:
