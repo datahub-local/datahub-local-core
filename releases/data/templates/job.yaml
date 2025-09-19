@@ -17,7 +17,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - dockerize -wait "tcp://{{ $.Values.release_name }}-data-cloudnative-pg-cluster-rw:5432" -timeout 3000s
+            - dockerize -wait "tcp://{{ $.Values.release_name }}-data-cloudnative-pg-cluster-pooler-rw:5432" -timeout 3000s
       containers:
         - name: psql
           image: postgres:latest
@@ -31,7 +31,7 @@ spec:
           args:
             [
               "-h",
-              "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-rw",
+              "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-pooler-rw",
               "-p",
               "5432",
               "-U",
