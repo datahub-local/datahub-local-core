@@ -8,10 +8,10 @@ cluster:
 
   resources:
     limits:
-      cpu: '1'
+      cpu: "1"
       memory: 4Gi
     requests:
-      cpu: '1'
+      cpu: "1"
       memory: 4Gi
 
   storage:
@@ -30,8 +30,21 @@ cluster:
     enabled: true
     prometheusRule:
       excludeRules:
-       - CNPGClusterHACritical
-       - CNPGClusterHAWarning
+        - CNPGClusterHACritical
+        - CNPGClusterHAWarning
+
+poolers:
+  - name: rw
+    type: rw
+    poolMode: transaction
+    instances: 2
+    parameters:
+      max_client_conn: "1000"
+      default_pool_size: "25"
+    monitoring:
+      enabled: true
+      podMonitor:
+        enabled: true
 
 backups:
   enabled: true
