@@ -101,6 +101,8 @@ workers:
 
   livenessProbe: &livenessProbe
     timeoutSeconds: 40
+  startupProbe: &startupProbe
+    timeoutSeconds: 40
 
 dags:
   gitSync:
@@ -127,6 +129,7 @@ dagProcessor:
       memory: 512Mi
 
   livenessProbe: *livenessProbe
+  startupProbe: *startupProbe
 
 statsd:
   resources:
@@ -149,6 +152,7 @@ scheduler:
   logGroomerSidecar: *logGroomerSidecar
 
   livenessProbe: *livenessProbe
+  startupProbe: *startupProbe
 
 triggerer:
   resources:
@@ -167,6 +171,7 @@ triggerer:
   logGroomerSidecar: *logGroomerSidecar
 
   livenessProbe: *livenessProbe
+  startupProbe: *startupProbe
 
 ingress:
   apiServer:
