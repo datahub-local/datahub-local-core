@@ -93,15 +93,13 @@ workers:
     enabled: true
     resources:
       limits:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 100m
+        memory: 128Mi
       requests:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 100m
+        memory: 128Mi
 
   livenessProbe: &livenessProbe
-    timeoutSeconds: 40
-  startupProbe: &startupProbe
     timeoutSeconds: 40
 
 dags:
@@ -122,14 +120,13 @@ dags:
 dagProcessor:
   resources:
     limits:
-      cpu: 500m
+      cpu: 750m
       memory: 512Mi
     requests:
-      cpu: 500m
+      cpu: 750m
       memory: 512Mi
 
   livenessProbe: *livenessProbe
-  startupProbe: *startupProbe
 
 statsd:
   resources:
@@ -143,24 +140,23 @@ statsd:
 scheduler:
   resources:
     limits:
-      cpu: 500m
+      cpu: 750m
       memory: 768Mi
     requests:
-      cpu: 500m
+      cpu: 750m
       memory: 768Mi
 
   logGroomerSidecar: *logGroomerSidecar
 
   livenessProbe: *livenessProbe
-  startupProbe: *startupProbe
 
 triggerer:
   resources:
     limits:
-      cpu: 500m
+      cpu: 750m
       memory: 768Mi
     requests:
-      cpu: 500m
+      cpu: 750m
       memory: 768Mi
 
   persistence:
@@ -171,7 +167,6 @@ triggerer:
   logGroomerSidecar: *logGroomerSidecar
 
   livenessProbe: *livenessProbe
-  startupProbe: *startupProbe
 
 ingress:
   apiServer:
