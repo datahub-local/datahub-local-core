@@ -71,7 +71,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.30.0
+    version: 1.31.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
