@@ -1,8 +1,8 @@
 container_image_version:
   ghcr.io/browserless/chromium: v2.37.0
-  ghcr.io/c4illin/convertx: v0.14.1
+  ghcr.io/c4illin/convertx: v0.15.1
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.104.2
+  ghcr.io/coder/code-server: 4.104.3
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
@@ -12,7 +12,7 @@ container_image_version:
   iib0011/omni-tools: 0.6.0
   homeassistant/home-assistant: 2025.10.1
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.114.2
+  n8nio/n8n: 1.115.1
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.0
 helm_chart_version:
@@ -51,7 +51,7 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.1.4
+    version: 2.1.5
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
