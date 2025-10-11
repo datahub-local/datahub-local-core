@@ -1,5 +1,5 @@
 container_image_version:
-  ghcr.io/browserless/chromium: v2.37.0
+  ghcr.io/browserless/chromium: v2.37.1
   ghcr.io/c4illin/convertx: v0.15.1
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.104.3
@@ -7,12 +7,12 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.5.0
-  ghcr.io/mealie-recipes/mealie: v3.3.1
+  ghcr.io/mealie-recipes/mealie: v3.3.2
   ghcr.io/tailscale/tailscale: v1.88.3
   iib0011/omni-tools: 0.6.0
-  homeassistant/home-assistant: 2025.10.1
+  homeassistant/home-assistant: 2025.10.2
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.115.1
+  n8nio/n8n: 1.115.2
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.0
 helm_chart_version:
@@ -51,7 +51,7 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.1.5
+    version: 2.1.6
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -67,7 +67,7 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.105.3
+    version: 0.105.4
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
