@@ -2,17 +2,17 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.37.1
   ghcr.io/c4illin/convertx: v0.15.1
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.104.3
+  ghcr.io/coder/code-server: 4.105.0
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.5.0
   ghcr.io/mealie-recipes/mealie: v3.3.2
-  ghcr.io/tailscale/tailscale: v1.88.3
+  ghcr.io/tailscale/tailscale: v1.88.4
   iib0011/omni-tools: 0.6.0
-  homeassistant/home-assistant: 2025.10.2
+  homeassistant/home-assistant: 2025.10.3
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.115.2
+  n8nio/n8n: 1.116.1
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.0
 helm_chart_version:
@@ -23,7 +23,7 @@ helm_chart_version:
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
-    version: 4.3.0
+    version: 4.4.0
   cloudnative-pg:
     ref: cnpg/cloudnative-pg
     repository: https://cloudnative-pg.github.io/charts
@@ -43,7 +43,7 @@ helm_chart_version:
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
-    version: 6.42.0
+    version: 6.43.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -67,11 +67,11 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.105.4
+    version: 0.105.5
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.31.0
+    version: 1.32.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
