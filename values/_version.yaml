@@ -1,5 +1,5 @@
 container_image_version:
-  ghcr.io/browserless/chromium: v2.38.1
+  ghcr.io/browserless/chromium: v2.38.2
   ghcr.io/c4illin/convertx: v0.15.1
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.105.1
@@ -7,19 +7,19 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.5.0
-  ghcr.io/mealie-recipes/mealie: v3.3.2
-  ghcr.io/tailscale/tailscale: v1.88.4
+  ghcr.io/mealie-recipes/mealie: v3.4.0
+  ghcr.io/tailscale/tailscale: v1.90.6
   iib0011/omni-tools: 0.6.0
   homeassistant/home-assistant: 2025.10.4
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.117.1
+  n8nio/n8n: 1.118.1
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.0
 helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 1.0.15
+    version: 1.1.0
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
@@ -39,15 +39,15 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.17.0
+    version: 0.18.1
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
-    version: 6.44.0
+    version: 6.45.2
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
-    version: 6.17.0
+    version: 6.17.1
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
@@ -55,7 +55,7 @@ helm_chart_version:
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
-    version: 0.36.0
+    version: 0.37.0
   homepage:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
