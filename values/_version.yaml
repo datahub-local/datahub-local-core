@@ -39,7 +39,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.18.1
+    version: 0.18.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -51,7 +51,7 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.1.6
+    version: 2.2.0
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -87,7 +87,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.29.0
+    version: 0.29.1
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
