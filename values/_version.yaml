@@ -2,17 +2,17 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.38.2
   ghcr.io/c4illin/convertx: v0.15.1
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.105.1
+  ghcr.io/coder/code-server: 4.106.2
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
-  ghcr.io/gethomepage/homepage: v1.6.1
-  ghcr.io/mealie-recipes/mealie: v3.4.0
-  ghcr.io/tailscale/tailscale: v1.90.6
+  ghcr.io/gethomepage/homepage: v1.7.0
+  ghcr.io/mealie-recipes/mealie: v3.5.0
+  ghcr.io/tailscale/tailscale: v1.90.8
   iib0011/omni-tools: 0.6.0
-  homeassistant/home-assistant: 2025.11.1
+  homeassistant/home-assistant: 2025.11.3
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.119.0
+  n8nio/n8n: 1.121.2
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
@@ -51,11 +51,11 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.2.1
+    version: 2.2.2
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
-    version: 0.37.0
+    version: 0.38.0
   homepage:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
@@ -71,7 +71,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.34.0
+    version: 1.35.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
