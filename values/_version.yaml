@@ -8,11 +8,11 @@ container_image_version:
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.7.0
   ghcr.io/mealie-recipes/mealie: v3.5.0
-  ghcr.io/tailscale/tailscale: v1.90.8
+  ghcr.io/tailscale/tailscale: v1.90.9
   iib0011/omni-tools: 0.6.0
   homeassistant/home-assistant: 2025.11.3
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.121.2
+  n8nio/n8n: 1.122.4
   valkey/valkey: 8.1.4
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
@@ -87,7 +87,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.29.1
+    version: 0.29.2
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
