@@ -1,19 +1,19 @@
 container_image_version:
   ghcr.io/browserless/chromium: v2.38.2
-  ghcr.io/c4illin/convertx: v0.15.1
+  ghcr.io/c4illin/convertx: v0.16.0
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.106.2
+  ghcr.io/coder/code-server: 4.106.3
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.7.0
-  ghcr.io/mealie-recipes/mealie: v3.5.0
+  ghcr.io/mealie-recipes/mealie: v3.6.1
   ghcr.io/tailscale/tailscale: v1.90.9
   iib0011/omni-tools: 0.6.0
-  homeassistant/home-assistant: 2025.11.3
+  homeassistant/home-assistant: 2025.12.1
   kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.122.4
-  valkey/valkey: 8.1.4
+  n8nio/n8n: 1.123.3
+  valkey/valkey: 8.1.5
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
   n8n:
@@ -23,7 +23,7 @@ helm_chart_version:
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
-    version: 4.4.0
+    version: 4.5.0
   cloudnative-pg:
     ref: cnpg/cloudnative-pg
     repository: https://cloudnative-pg.github.io/charts
@@ -31,7 +31,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.3.1
+    version: 0.4.0
   airflow:
     ref: apache-airflow/airflow
     repository: https://airflow.apache.org
@@ -67,7 +67,7 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.105.7
+    version: 0.106.0
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
@@ -83,7 +83,7 @@ helm_chart_version:
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
-    version: 25.1.2
+    version: 25.2.1
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
