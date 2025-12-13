@@ -1,4 +1,8 @@
-# https://github.com/redpanda-data/redpanda-operator/blob/main/charts/redpanda/values.yaml
+# https://github.com/redpanda-data/redpanda-operator/blob/main/charts/redpanda/chart/values.yaml
+
+config:
+  node:
+    crash_loop_limit: 10
 
 tls:
   enabled: false
