@@ -14,7 +14,7 @@ persistence:
 ingress:
   enabled: true
   class: "nginx"
-  host: "data-openwebui.{{ .StateValues.ingress_hostname }}"
+  host: "data-openwebui.{{ .StateValues.gateway_hostname }}"
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Open WebUI"
@@ -39,7 +39,7 @@ extraEnvVars:
   - name: "OAUTH_CLIENT_SECRET"
     value: "{{ .StateValues.security_github_client_secret }}"
   - name: OPENID_PROVIDER_URL
-    value: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration"
+    value: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/.well-known/openid-configuration"
   - name: OAUTH_PROVIDER_NAME
     value: "IAM"
   - name: OAUTH_SCOPES

@@ -74,7 +74,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "other-mazanoke.{{ .StateValues.ingress_hostname }}"
+      - host: "other-mazanoke.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix

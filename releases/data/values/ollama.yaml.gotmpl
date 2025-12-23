@@ -42,7 +42,7 @@ ingress:
 
   # The list of hostnames to be covered with this ingress record.
   hosts:
-    - host: "data-ollama.{{ .StateValues.ingress_hostname }}"
+    - host: "data-ollama.{{ .StateValues.gateway_hostname }}"
       paths:
         - path: /
           pathType: Prefix

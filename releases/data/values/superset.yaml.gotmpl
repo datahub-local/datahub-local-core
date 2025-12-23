@@ -36,9 +36,9 @@ configOverrides:
             "remote_app": {
                 "client_id": os.environ.get("OAUTH_CLIENT_ID"),
                 "client_secret": os.environ.get("OAUTH_CLIENT_SECRET"),
-                "server_metadata_url": "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/.well-known/openid-configuration",
-                "api_base_url": "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/",
-                "redirect_uri": "https://security-dex.{{ .StateValues.ingress_hostname }}/oauth-authorized/dex",
+                "server_metadata_url": "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/.well-known/openid-configuration",
+                "api_base_url": "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/",
+                "redirect_uri": "https://security-dex.{{ .StateValues.gateway_hostname }}/oauth-authorized/dex",
                 "client_kwargs": {"scope": "openid profile email"},
             }
         }
@@ -132,7 +132,7 @@ ingress:
   path: /
   pathType: Prefix
   hosts:
-    - "data-superset.{{ .StateValues.ingress_hostname }}"
+    - "data-superset.{{ .StateValues.gateway_hostname }}"
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Superset"

@@ -4,12 +4,12 @@ image:
 
 env:
   LOG_LEVEL: "info"
-  HOMEPAGE_ALLOWED_HOSTS: "{{ .StateValues.ingress_hostname }}"
+  HOMEPAGE_ALLOWED_HOSTS: "{{ .StateValues.gateway_hostname }}"
 
 config:
   settings:
     title: "DataHub.local"
-    base: "https://{{ .StateValues.ingress_hostname }}"
+    base: "https://{{ .StateValues.gateway_hostname }}"
     layout:
       - System:
           useEqualHeights: true
@@ -130,7 +130,7 @@ ingress:
       #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
     ingressClassName: "nginx"
     hosts:
-      - host: "{{ .StateValues.ingress_hostname }}"
+      - host: "{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix

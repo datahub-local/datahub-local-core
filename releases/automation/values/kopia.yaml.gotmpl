@@ -84,7 +84,7 @@ configMaps:
               <ul class="server-list">
                 {{- range $index, $ns := .Values.kopia_backup_namespaces }}
                 <li>
-                  <a class="server-link" href="https://automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
+                  <a class="server-link" href="https://automation-kopia-server-{{ $ns }}.{{ $.StateValues.gateway_hostname }}/" target="_blank" rel="noopener noreferrer">server-{{ $ns }}</a>
                 </li>
                 {{- end }}
               </ul>
@@ -121,7 +121,7 @@ controllers:
             spec:
               failureThreshold: 30
               periodSeconds: 5
-    
+
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
   server-{{ $ns }}:
     replicas: 1
@@ -209,13 +209,13 @@ controllers:
                     --secret-access-key=$AWS_SECRET_ACCESS_KEY \
                     --password=$REPOSITORY_PASSWORD || true
     #{{- end }}
-    
+
 persistence:
   nginx-config:
     type: configMap
     identifier: nginx-config
     globalMounts:
-      - path:  /etc/nginx/nginx.conf
+      - path: /etc/nginx/nginx.conf
         subPath: nginx.conf
         readOnly: true
       - path: /usr/share/nginx/html/index.html
@@ -240,7 +240,6 @@ service:
         port: 51515
   #{{- end }}
 
-
 ingress:
   nginx:
     enabled: true
@@ -258,7 +257,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "automation-kopia.{{ .StateValues.ingress_hostname }}"
+      - host: "automation-kopia.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix
@@ -275,7 +274,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "automation-kopia-server-{{ $ns }}.{{ $.StateValues.ingress_hostname }}"
+      - host: "automation-kopia-server-{{ $ns }}.{{ $.StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix

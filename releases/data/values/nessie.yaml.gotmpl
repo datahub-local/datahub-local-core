@@ -14,7 +14,7 @@ ingress:
   className: "nginx"
   pathType: Prefix
   hosts:
-    - host: "data-nessie.{{ .StateValues.ingress_hostname }}"
+    - host: "data-nessie.{{ .StateValues.gateway_hostname }}"
       paths:
         - /
   annotations:

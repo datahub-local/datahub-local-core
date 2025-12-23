@@ -1,8 +1,8 @@
 # https://github.com/8gears/n8n-helm-chart/blob/main/charts/n8n/values.yaml
 
 _shared_config:
-  hostname: &hostname automation-n8n.{{ .StateValues.ingress_hostname }}
-  url: &url https://automation-n8n.{{ .StateValues.ingress_hostname }}
+  hostname: &hostname automation-n8n.{{ .StateValues.gateway_hostname }}
+  url: &url https://automation-n8n.{{ .StateValues.gateway_hostname }}
 
   env: &sharedEnv
     DB_POSTGRESDB_USER:

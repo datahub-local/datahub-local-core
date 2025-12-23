@@ -25,14 +25,14 @@ config:
 
 extraEnv: |
   - name: "AIRFLOW__API__BASE_URL"
-    value: "https://data-airflow.{{ .StateValues.ingress_hostname }}"
+    value: "https://data-airflow.{{ .StateValues.gateway_hostname }}"
 
   - name: "CLIENT_ID"
     value: "airflow"
   - name: "CLIENT_SECRET"
     value: "{{ .StateValues.security_github_client_secret }}"
   - name: "OIDC_ISSUER"
-    value: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex"
+    value: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex"
 
   - name: "TRINO_HOST"
     value: "{{ $.Values.release_name }}-data-trino-trino:8080"
@@ -91,7 +91,7 @@ workers:
 
   logGroomerSidecar: &logGroomerSidecar
     enabled: true
-    
+
     frequencyMinutes: 120
     resources:
       limits:
@@ -186,4 +186,4 @@ ingress:
     path: "/"
     pathType: Prefix
     hosts:
-      - name: "data-airflow.{{ .StateValues.ingress_hostname }}"
+      - name: "data-airflow.{{ .StateValues.gateway_hostname }}"

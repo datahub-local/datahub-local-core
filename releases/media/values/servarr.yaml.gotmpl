@@ -6,7 +6,7 @@ global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "nfs"
   authMethod: External
-  ingressHostPattern: "media-SERVICE.{{ .StateValues.ingress_hostname }}"
+  ingressHostPattern: "media-SERVICE.{{ .StateValues.gateway_hostname }}"
 
   resources:
     sonarr: &sonarrResources

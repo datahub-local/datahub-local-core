@@ -61,7 +61,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "other-it-tools.{{ .StateValues.ingress_hostname }}"
+      - host: "other-it-tools.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix

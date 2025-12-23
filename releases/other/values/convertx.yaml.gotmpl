@@ -82,7 +82,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "other-convertx.{{ .StateValues.ingress_hostname }}"
+      - host: "other-convertx.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix

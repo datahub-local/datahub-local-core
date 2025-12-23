@@ -23,5 +23,5 @@ ingress:
 
   pathType: Prefix
   hosts:
-    - name: "other-stirling-pdf.{{ .StateValues.ingress_hostname }}"
+    - name: "other-stirling-pdf.{{ .StateValues.gateway_hostname }}"
       path: /

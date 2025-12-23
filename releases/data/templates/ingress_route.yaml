@@ -1,0 +1,37 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: "{{ .Chart.Name }}-minio"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-minio.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: "{{ .Chart.Name }}-minio"
+          port: 9000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/description: The Object Store for AI Data Infrastructure.
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/group: Data
+    gethomepage.dev/href: https://data-minio-console.{{ .Values.gateway_hostname }}/login
+    gethomepage.dev/icon: sh-minio
+    gethomepage.dev/name: Minio
+    gethomepage.dev/pod-selector: app=minio
+  name: "{{ .Chart.Name }}-minio-console"
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-minio-console.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: "{{ .Chart.Name }}-minio-console"
+          port: 9001

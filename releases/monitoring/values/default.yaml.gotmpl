@@ -1,4 +1,4 @@
-#{{ $ingress_hostname := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).ingress_hostname }}
+#{{ $gateway_hostname := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).gateway_hostname }}
 
 prometheus_rules:
   datahub.local.rules:

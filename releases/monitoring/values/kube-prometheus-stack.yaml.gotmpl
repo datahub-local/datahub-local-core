@@ -12,7 +12,7 @@ prometheus:
     enabled: true
     ingressClassName: "nginx"
     hosts:
-      - "monitoring-prometheus.{{ .StateValues.ingress_hostname }}"
+      - "monitoring-prometheus.{{ .StateValues.gateway_hostname }}"
     paths:
       - /
     secureBackends: true
@@ -26,7 +26,7 @@ prometheus:
       gethomepage.dev/group: "Monitoring"
       gethomepage.dev/icon: "sh-prometheus"
   prometheusSpec:
-    externalUrl: "https://monitoring-prometheus.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}/"
+    externalUrl: "https://monitoring-prometheus.{{ .StateValues.gateway_hostname }}:{{ .StateValues.ingress_port }}/"
     routePrefix: /
 
     podMonitorSelectorNilUsesHelmValues: false
@@ -66,7 +66,7 @@ alertmanager:
     enabled: true
     ingressClassName: "nginx"
     hosts:
-      - "monitoring-alertmanager.{{ .StateValues.ingress_hostname }}"
+      - "monitoring-alertmanager.{{ .StateValues.gateway_hostname }}"
     paths:
       - /
     secureBackends: true
@@ -94,8 +94,8 @@ grafana:
     size: 2Gi
   grafana.ini:
     server:
-      domain: "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
-      root_url: "https://monitoring-grafana.{{ .StateValues.ingress_hostname }}:{{ .StateValues.ingress_port }}"
+      domain: "monitoring-grafana.{{ .StateValues.gateway_hostname }}"
+      root_url: "https://monitoring-grafana.{{ .StateValues.gateway_hostname }}:{{ .StateValues.ingress_port }}"
       serve_from_sub_path: true
     auth:
       disable_login_form: true
@@ -111,9 +111,9 @@ grafana:
       client_id: "grafana"
       client_secret: "{{ .StateValues.security_github_client_secret }}"
       scopes: "openid email profile groups offline_access"
-      auth_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/auth"
-      token_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/token"
-      api_url: "https://security-dex.{{ .StateValues.ingress_hostname }}/dex/userinfo"
+      auth_url: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/auth"
+      token_url: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/token"
+      api_url: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/userinfo"
     users:
       auto_assign_org_role: Admin
     #{{- else }}
@@ -129,7 +129,7 @@ grafana:
     enabled: true
     ingressClassName: "nginx"
     hosts:
-      - "monitoring-grafana.{{ .StateValues.ingress_hostname }}"
+      - "monitoring-grafana.{{ .StateValues.gateway_hostname }}"
     path: /
     secureBackends: true
     annotations:

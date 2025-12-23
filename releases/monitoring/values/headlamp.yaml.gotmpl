@@ -12,7 +12,7 @@ volumeMounts:
     mountPath: /scripts
   - name: kubeconfig-volume
     mountPath: /home/headlamp/.kube
-    
+
 volumes:
   - name: script-volume
     configMap:
@@ -25,21 +25,21 @@ initContainers:
       - /bin/sh
       - /scripts/create-kubeconfig.sh
       - /home/headlamp/.kube/config
-    image: 'ghcr.io/headlamp-k8s/headlamp:v0.24.1'
+    image: "ghcr.io/headlamp-k8s/headlamp:v0.24.1"
     imagePullPolicy: IfNotPresent
     name: headlamp-init
     volumeMounts:
-    - name: script-volume
-      mountPath: /scripts
-    - name: kubeconfig-volume
-      mountPath: /home/headlamp/.kube
+      - name: script-volume
+        mountPath: /scripts
+      - name: kubeconfig-volume
+        mountPath: /home/headlamp/.kube
 
 ingress:
   enabled: true
   ingressClassName: "nginx"
 
   hosts:
-    - host: "monitoring-headlamp.{{ .StateValues.ingress_hostname }}"
+    - host: "monitoring-headlamp.{{ .StateValues.gateway_hostname }}"
       paths:
         - path: /
           type: Prefix

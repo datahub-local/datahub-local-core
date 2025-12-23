@@ -176,7 +176,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "automation-home-assistant.{{ .StateValues.ingress_hostname }}"
+      - host: "automation-home-assistant.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix
@@ -199,7 +199,7 @@ ingress:
     className: "nginx"
 
     hosts:
-      - host: "automation-home-assistant-code.{{ .StateValues.ingress_hostname }}"
+      - host: "automation-home-assistant-code.{{ .StateValues.gateway_hostname }}"
         paths:
           - path: /
             pathType: Prefix
