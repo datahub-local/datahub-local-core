@@ -77,21 +77,22 @@ rawResources:
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "sh-convertx"
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`other-convertx.{{ .Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ .Values.release_name }}-other-convertx"
-              port: http
-          middlewares:
-            - name: oauth2-proxy-auth
-              namespace: security'
-              port: http
-        - match: Host(`other-convertx.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-          kind: Rule
-          services:
-            - name: oauth2-proxy
-              namespace: security
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`other-convertx.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-other-convertx"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security'
+                port: http
+          - match: Host(`other-convertx.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http

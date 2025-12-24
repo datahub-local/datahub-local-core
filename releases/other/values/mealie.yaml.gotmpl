@@ -99,11 +99,12 @@ rawResources:
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "sh-mealie"
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`other-mealie.{{ .Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ .Values.release_name }}-other-mealie"
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`other-mealie.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-other-mealie"
+                port: http

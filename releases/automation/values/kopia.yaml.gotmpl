@@ -248,45 +248,47 @@ rawResources:
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-kopia"
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ .Values.release_name }}-automation-kopia-nginx"
-              port: http
-          middlewares:
-            - name: oauth2-proxy-auth
-              namespace: security
-              port: http
-        - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-          kind: Rule
-          services:
-            - name: oauth2-proxy
-              namespace: security
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-automation-kopia-nginx"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+                port: http
+          - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
   server-{{ $ns }}:
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}"
-              port: http
-          middlewares:
-            - name: oauth2-proxy-auth
-              namespace: security
-              port: http
-        - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-          kind: Rule
-          services:
-            - name: oauth2-proxy
-              namespace: security
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+                port: http
+          - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   #{{- end }}

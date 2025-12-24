@@ -167,29 +167,30 @@ rawResources:
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-home-assistant"
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ .Values.release_name }}-automation-home-assistant"
-              port: http
-          middlewares:
-            - name: oauth2-proxy-auth
-              namespace: security
-              port: http
-        - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
-          kind: Rule
-          services:
-            -  name: "{{ .Values.release_name }}-automation-home-assistant"
-               port: http
-        - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-          kind: Rule
-          services:
-            - name: oauth2-proxy
-              namespace: security
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-automation-home-assistant"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+                port: http
+          - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-automation-home-assistant"
+                port: http
+          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   main-code:
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
@@ -201,23 +202,24 @@ rawResources:
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-visual-studio-code"
     spec:
-      entryPoints:
-        - websecure
-      routes:
-        - match: Host(`automation-home-code.{{ .Values.gateway_hostname }}`)
-          kind: Rule
-          services:
-            - name: "{{ .Values.release_name }}-automation-home-assistant"
-              port: code-server
-          middlewares:
-            - name: oauth2-proxy-auth
-              namespace: security
-        - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-          kind: Rule
-          services:
-            - name: oauth2-proxy
-              namespace: security
-              port: http
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-home-code.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-automation-home-assistant"
+                port: code-server
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
 
 serviceMonitor:
   main:
