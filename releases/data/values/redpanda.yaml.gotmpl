@@ -1,3 +1,4 @@
+# https://github.com/redpanda-data/redpanda-operator/blob/main/charts/console/chart/values.yaml
 # https://github.com/redpanda-data/redpanda-operator/blob/main/charts/redpanda/chart/values.yaml
 
 config:
@@ -30,22 +31,4 @@ monitoring:
 
 console:
   ingress:
-    enabled: true
-
-    className: "nginx"
-    annotations:
-      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Redpanda Console"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=redpanda"
-      gethomepage.dev/description: "Redpanda is a streaming data platform for developers. Kafka API compatible."
-      gethomepage.dev/group: "Data"
-      gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/logos/redpanda-icon-color.svg"
-
-    # The list of hostnames to be covered with this ingress record.
-    hosts:
-      - host: "data-redpanda-console.{{ .StateValues.gateway_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
+    enabled: false

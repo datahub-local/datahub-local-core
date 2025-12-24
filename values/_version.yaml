@@ -31,7 +31,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.5.0
+    version: 0.4.0
   airflow:
     ref: apache-airflow/airflow
     repository: https://airflow.apache.org

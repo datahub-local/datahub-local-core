@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{template "postgresql.jobSetup" .}}
+  generateName: '{{ include "postgresql.jobSetup" . }}'
   annotations:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
@@ -48,12 +48,12 @@ spec:
       volumes:
         - name: script-volume
           configMap:
-            name: {{template "postgresql.configMapJobSetup" .}}
+            name: '{{template "postgresql.configMapJobSetup" .}}'
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{template "postgresql.configMapJobSetup" .}}
+  name: '{{ include "postgresql.configMapJobSetup" . }}'
 data:
   setup_postgresql.sql: |
     {{- range $key, $value := .Values.postgres_extra_databases }}

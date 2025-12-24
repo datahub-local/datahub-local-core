@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   labels:
    grafana_datasource: "1"
-  name: "{{ template "grafana.configMapDataSource" $ }}-loki"
+  name: "{{ include "grafana.configMapDataSource" $ }}-loki"
 data:
   datasource.yaml: |-
     apiVersion: 1

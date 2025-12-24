@@ -1,3 +1,4 @@
+# https://github.com/otwld/ollama-helm/blob/main/values.yaml
 ollama:
   gpu:
     enabled: true
@@ -27,22 +28,36 @@ tolerations:
     effect: NoSchedule
 
 ingress:
-  enabled: true
+  enabled: false
 
-  className: "nginx"
-  annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
-
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Ollama"
-    gethomepage.dev/pod-selector: "app.kubernetes.io/name=ollama"
-    gethomepage.dev/description: "Get up and running with Llama 3, Mistral, Gemma 2, and other large language models."
-    gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "sh-ollama"
-
-  # The list of hostnames to be covered with this ingress record.
-  hosts:
-    - host: "data-ollama.{{ .StateValues.gateway_hostname }}"
-      paths:
-        - path: /
-          pathType: Prefix
+extraObjects:
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Ollama"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=ollama"
+        gethomepage.dev/description: "Get up and running with Llama 3, Mistral, Gemma 2, and other large language models."
+        gethomepage.dev/group: "Data"
+        gethomepage.dev/icon: "sh-ollama"
+      name: '{{ $.Values.release_name }}-ollama'
+      namespace: data
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`data-ollama.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: '{{ $.Values.release_name }}-ollama'
+              port: http
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+        - match: Host(`data-ollama.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http

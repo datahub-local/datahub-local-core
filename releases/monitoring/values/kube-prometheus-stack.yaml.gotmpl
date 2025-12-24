@@ -1,4 +1,4 @@
-# Values for kube-prometheus-stack chart. See https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 
 prometheusOperator:
   admissionWebhooks:
@@ -9,22 +9,7 @@ prometheusOperator:
 
 prometheus:
   ingress:
-    enabled: true
-    ingressClassName: "nginx"
-    hosts:
-      - "monitoring-prometheus.{{ .StateValues.gateway_hostname }}"
-    paths:
-      - /
-    secureBackends: true
-    annotations:
-      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Prometheus"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
-      gethomepage.dev/description: "Monitoring system and time series database."
-      gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "sh-prometheus"
+    enabled: false
   prometheusSpec:
     externalUrl: "https://monitoring-prometheus.{{ .StateValues.gateway_hostname }}:{{ .StateValues.ingress_port }}/"
     routePrefix: /
@@ -63,22 +48,7 @@ alertmanager:
       receiver: "default-receiver"
 
   ingress:
-    enabled: true
-    ingressClassName: "nginx"
-    hosts:
-      - "monitoring-alertmanager.{{ .StateValues.gateway_hostname }}"
-    paths:
-      - /
-    secureBackends: true
-    annotations:
-      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
-
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Alertmanager"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
-      gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
-      gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "sh-prometheus"
+    enabled: false
 
 defaultRules:
   rules:
@@ -126,19 +96,7 @@ grafana:
     userKey: user
     passwordKey: password
   ingress:
-    enabled: true
-    ingressClassName: "nginx"
-    hosts:
-      - "monitoring-grafana.{{ .StateValues.gateway_hostname }}"
-    path: /
-    secureBackends: true
-    annotations:
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Grafana"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
-      gethomepage.dev/description: "The open and composable observability and data visualization platform."
-      gethomepage.dev/group: "Monitoring"
-      gethomepage.dev/icon: "sh-grafana"
+    enabled: false
 
 prometheus-node-exporter:
   extraArgs:
@@ -182,3 +140,87 @@ prometheus-node-exporter:
     - name: host-dev
       hostPath: /dev
       mountPath: /dev
+
+extraManifests:
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Prometheus"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
+        gethomepage.dev/description: "Monitoring system and time series database."
+        gethomepage.dev/group: "Monitoring"
+        gethomepage.dev/icon: "sh-prometheus"
+      name: "{{ $.Values.release_name }}-kube-pr-prometheus"
+      namespace: data
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`monitoring-prometheus.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-kube-pr-prometheus"
+              port: http-web
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+        - match: Host(`monitoring-prometheus.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http
+
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Alertmanager"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
+        gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
+        gethomepage.dev/group: "Monitoring"
+        gethomepage.dev/icon: "sh-prometheus"
+      name: "{{ $.Values.release_name }}-kube-pr-alertmanager"
+      namespace: data
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`monitoring-alertmanager.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-kube-pr-alertmanager"
+              port: http-web
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+        - match: Host(`monitoring-alertmanager.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Grafana"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
+        gethomepage.dev/description: "The open and composable observability and data visualization platform."
+        gethomepage.dev/group: "Monitoring"
+        gethomepage.dev/icon: "sh-grafana"
+      name: "{{ $.Values.release_name }}-prometheus-stack-grafana"
+      namespace: data
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`monitoring-grafana.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-prometheus-stack-grafana"
+              port: http-web

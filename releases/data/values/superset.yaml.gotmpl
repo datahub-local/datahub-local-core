@@ -1,3 +1,4 @@
+# https://github.com/apache/superset/blob/master/helm/superset/values.yaml
 postgresql:
   enabled: false
 
@@ -127,20 +128,4 @@ extraConfigs:
       tables: []
 
 ingress:
-  enabled: true
-  ingressClassName: "nginx"
-  path: /
-  pathType: Prefix
-  hosts:
-    - "data-superset.{{ .StateValues.gateway_hostname }}"
-  annotations:
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Superset"
-    gethomepage.dev/pod-selector: "app=superset"
-    gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
-    gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "https://superset.apache.org/img/superset-mark-dark.svg"
-
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  enabled: false

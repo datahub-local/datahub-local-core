@@ -7,7 +7,7 @@ kind: ConfigMap
 metadata:
   labels:
     grafana_dashboard: "1"
-  name: {{ template "grafana.configMapGrafanaDashboard" $ }}-{{ $dashboardName }}
+  name: {{ include "grafana.configMapGrafanaDashboard" $ }}-{{ $dashboardName }}
 data:
   {{ $dashboardName }}.json: {{ $.Files.Get $path | toJson }}
 #{{- end }}

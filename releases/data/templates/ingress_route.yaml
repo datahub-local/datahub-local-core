@@ -2,7 +2,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: "{{ .Chart.Name }}-minio"
+  name: '{{ include "name" . }}-minio'
 spec:
   entryPoints:
     - websecure
@@ -10,8 +10,8 @@ spec:
     - match: Host(`data-minio.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
-        - name: "{{ .Chart.Name }}-minio"
-          port: 9000
+        - name: '{{ include "name" . }}-minio'
+          port: http
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -24,7 +24,7 @@ metadata:
     gethomepage.dev/icon: sh-minio
     gethomepage.dev/name: Minio
     gethomepage.dev/pod-selector: app=minio
-  name: "{{ .Chart.Name }}-minio-console"
+  name: '{{ include "name" . }}-minio-console'
   namespace: data
 spec:
   entryPoints:
@@ -33,5 +33,143 @@ spec:
     - match: Host(`data-minio-console.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
-        - name: "{{ .Chart.Name }}-minio-console"
-          port: 9001
+        - name: '{{ include "name" . }}-minio-console'
+          port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Airflow"
+    gethomepage.dev/pod-selector: "component=api-server,tier=airflow"
+    gethomepage.dev/description: "A platform to programmatically author, schedule, and monitor workflows"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-apacheairflow"
+  name: '{{ include "name" . }}-airflow-api-server'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`"data-airflow.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-airflow-api-server'
+          port: api-server
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Nessie"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=nessie"
+    gethomepage.dev/description: "Transactional Catalog for Data Lakes with Git-like semantics"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "https://projectnessie.org/img/nessie.svg"
+  name: '{{ include "name" . }}-nessie'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-nessie.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-nessie'
+          port: nessie-http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`data-nessie.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Redpanda Console"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=redpanda"
+    gethomepage.dev/description: "Redpanda is a streaming data platform for developers. Kafka API compatible."
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/logos/redpanda-icon-color.svg"
+  name: '{{ include "name" . }}-redpanda-console'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-redpanda-console.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-redpanda-console'
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`data-redpanda-console.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Superset"
+    gethomepage.dev/pod-selector: "app=superset"
+    gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "https://superset.apache.org/img/superset-mark-dark.svg"
+  name: '{{ include "name" . }}-superset'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-superset.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-superset'
+          port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Trino"
+    gethomepage.dev/href: "https://data-trino.{{ .Values.gateway_hostname }}/ui/"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=trino"
+    gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "https://trino.io/docs/current/_static/trino.svg"
+  name: '{{ include "name" . }}-trino'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`data-trino.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-trino-trino'
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`data-trino.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http

@@ -1,0 +1,36 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Headlamp"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=headlamp"
+    gethomepage.dev/description: "A Kubernetes web UI that is fully-featured, user-friendly and extensible."
+    gethomepage.dev/group: "Monitoring"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/headlamp-k8s/headlamp/main/frontend/public/favicon.ico"
+  name: '{{ include "name" . }}-headlamp'
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-headlamp'
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(static-plugins|manifest.json|clusters/).*`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-headlamp'
+          port: http
+    - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http

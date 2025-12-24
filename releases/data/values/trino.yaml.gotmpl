@@ -1,3 +1,4 @@
+# https://github.com/trinodb/charts/blob/main/charts/trino/values.yaml
 imagePullSecrets: []
 
 server:
@@ -78,20 +79,4 @@ additionalCatalogs:
     s3.path-style-access=true
 
 ingress:
-  enabled: true
-  className: "nginx"
-  hosts:
-    - host: "data-trino.{{ .StateValues.gateway_hostname }}"
-      paths:
-        - path: /
-          pathType: Prefix
-  annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
-
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Trino"
-    gethomepage.dev/href: "https://data-trino.{{ .StateValues.gateway_hostname }}/ui/"
-    gethomepage.dev/pod-selector: "app.kubernetes.io/name=trino"
-    gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
-    gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "https://trino.io/docs/current/_static/trino.svg"
+  enabled: false
