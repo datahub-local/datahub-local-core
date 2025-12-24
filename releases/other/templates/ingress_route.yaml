@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`other-homepage.{{ .Values.gateway_hostname }}`)
+    - match: Host(`{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
         - name: '{{ include "name" . }}-homepage'
@@ -15,7 +15,7 @@ spec:
       middlewares:
         - name: oauth2-proxy-auth
           namespace: security
-    - match: Host(`other-homepage.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+    - match: Host(`{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
       kind: Rule
       services:
         - name: oauth2-proxy
