@@ -88,24 +88,22 @@ service:
       http:
         port: 9000
 
-ingress:
+rawResources:
   main:
-    enabled: true
-
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
     annotations:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Mealie"
       gethomepage.dev/description: "A self hosted recipe manager and meal planner."
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "sh-mealie"
-
-    className: "nginx"
-
-    hosts:
-      - host: "other-mealie.{{ .StateValues.gateway_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              name: "{{ .Values.release_name }}-other-mealie"
-              port: 9000
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`other-mealie.{{ .Values.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ .Values.release_name }}-other-mealie"
+              port: http

@@ -7,21 +7,4 @@ envs:
     value: "false"
 
 ingress:
-  enabled: true
-
-  annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
-
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Stirling-PDF"
-    gethomepage.dev/pod-selector: "app.kubernetes.io/name=stirling-pdf-chart"
-    gethomepage.dev/description: "Locally hosted web application that allows you to perform various operations on PDF files."
-    gethomepage.dev/group: "Other"
-    gethomepage.dev/icon: "sh-stirling-pdf"
-
-  className: "nginx"
-
-  pathType: Prefix
-  hosts:
-    - name: "other-stirling-pdf.{{ .StateValues.gateway_hostname }}"
-      path: /
+  enabled: false

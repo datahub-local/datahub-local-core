@@ -1,3 +1,4 @@
+# https://github.com/jameswynn/helm-charts/blob/main/charts/homepage/values.yaml
 image:
   repository: ghcr.io/gethomepage/homepage
   tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/gethomepage/homepage") }}{{ $value }}{{ end }}{{ end }}'
@@ -125,12 +126,4 @@ enableRbac: true
 
 ingress:
   main:
-    enabled: true
-    annotations:
-      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 6 }}{{ end }}
-    ingressClassName: "nginx"
-    hosts:
-      - host: "{{ .StateValues.gateway_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
+    enabled: false

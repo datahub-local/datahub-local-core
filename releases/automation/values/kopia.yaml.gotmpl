@@ -236,45 +236,57 @@ service:
         port: 51515
   #{{- end }}
 
-ingress:
+rawResources:
   nginx:
-    enabled: true
-
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
     annotations:
-      #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(?!auth(?!\\/token)).*" | nindent 6 }}{{ end }}
-
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Kopia"
       gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-kopia"
       gethomepage.dev/description: "Cross-platform backup tool for Windows, macOS & Linux."
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-kopia"
-
-    className: "nginx"
-
-    hosts:
-      - host: "automation-kopia.{{ .StateValues.gateway_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              name: "{{ .Values.release_name }}-automation-kopia-nginx"
-              port: 80
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ .Values.release_name }}-automation-kopia-nginx"
+              port: http
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+              port: http
+        - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
   server-{{ $ns }}:
-    enabled: true
-
-    annotations:
-      #{{- if $.Values.security_enabled }}{{ $.Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(?!auth(?!\\/token)).*" | nindent 6 }}{{ end }}
-
-    className: "nginx"
-
-    hosts:
-      - host: "automation-kopia-server-{{ $ns }}.{{ $.StateValues.gateway_hostname }}"
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              name: "{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}"
-              port: 51515
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-automation-kopia-server-{{ $ns }}"
+              port: http
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+              port: http
+        - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http
   #{{- end }}

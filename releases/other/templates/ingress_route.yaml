@@ -1,0 +1,54 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: '{{ include "name" . }}-homepage'
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`other-homepage.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-homepage'
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`other-homepage.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: '{{ include "name" . }}-stirling-pdf-stirling-pdf-chart'
+
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Stirling-PDF"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=stirling-pdf-chart"
+    gethomepage.dev/description: "Locally hosted web application that allows you to perform various operations on PDF files."
+    gethomepage.dev/group: "Other"
+    gethomepage.dev/icon: "sh-stirling-pdf"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`other-stirling-pdf.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-stirling-pdf-stirling-pdf-chart'
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`other-stirling-pdf.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http

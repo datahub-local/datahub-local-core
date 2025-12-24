@@ -28,4 +28,3 @@
 {{- $name := index . 1 -}}
 {{- printf "%s-%s" $prefix $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
-

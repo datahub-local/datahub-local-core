@@ -54,3 +54,9 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/omni_tools.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-other"
+    namespace: other
+    chart: "."
+    values:
+      - ../../values/global.yaml.gotmpl
+      - values/default.yaml.gotmpl
