@@ -10,7 +10,6 @@ metadata:
     gethomepage.dev/group: "Monitoring"
     gethomepage.dev/icon: "https://raw.githubusercontent.com/headlamp-k8s/headlamp/main/frontend/public/favicon.ico"
   name: '{{ include "name" . }}-headlamp'
-  namespace: data
 spec:
   entryPoints:
     - websecure

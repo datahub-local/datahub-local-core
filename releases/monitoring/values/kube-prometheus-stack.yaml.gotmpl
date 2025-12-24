@@ -153,7 +153,6 @@ extraManifests:
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
       name: "{{ $.Values.release_name }}-kube-pr-prometheus"
-      namespace: data
     spec:
       entryPoints:
         - websecure
@@ -184,7 +183,6 @@ extraManifests:
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
       name: "{{ $.Values.release_name }}-kube-pr-alertmanager"
-      namespace: data
     spec:
       entryPoints:
         - websecure
@@ -214,7 +212,6 @@ extraManifests:
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-grafana"
       name: "{{ $.Values.release_name }}-prometheus-stack-grafana"
-      namespace: data
     spec:
       entryPoints:
         - websecure

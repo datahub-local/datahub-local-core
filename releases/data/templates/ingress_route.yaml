@@ -25,7 +25,6 @@ metadata:
     gethomepage.dev/name: Minio
     gethomepage.dev/pod-selector: app=minio
   name: '{{ include "name" . }}-minio-console'
-  namespace: data
 spec:
   entryPoints:
     - websecure
@@ -47,7 +46,6 @@ metadata:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "si-apacheairflow"
   name: '{{ include "name" . }}-airflow-api-server'
-  namespace: data
 spec:
   entryPoints:
     - websecure
@@ -69,7 +67,6 @@ metadata:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://projectnessie.org/img/nessie.svg"
   name: '{{ include "name" . }}-nessie'
-  namespace: data
 spec:
   entryPoints:
     - websecure
@@ -100,7 +97,6 @@ metadata:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/logos/redpanda-icon-color.svg"
   name: '{{ include "name" . }}-redpanda-console'
-  namespace: data
 spec:
   entryPoints:
     - websecure
@@ -131,7 +127,6 @@ metadata:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://superset.apache.org/img/superset-mark-dark.svg"
   name: '{{ include "name" . }}-superset'
-  namespace: data
 spec:
   entryPoints:
     - websecure
@@ -154,7 +149,6 @@ metadata:
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://trino.io/docs/current/_static/trino.svg"
   name: '{{ include "name" . }}-trino'
-  namespace: data
 spec:
   entryPoints:
     - websecure
