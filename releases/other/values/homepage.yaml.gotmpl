@@ -80,12 +80,10 @@ config:
         - TrueNas:
             icon: "sh-truenas-scale"
             href: https://datahublocal-nas.homelab.alvsanand.com/
-            description: Open-Source Software Defined Storage Solution.
     - Security:
         - Tailscale:
             icon: "sh-tailscale"
             href: https://login.tailscale.com/
-            description: The easiest, most secure way to use WireGuard and 2FA.
             namespace: security
             app: "{{ .Values.release_name }}-tailscale"
   widgets:

@@ -1,4 +1,5 @@
 # https://github.com/datahub-local/servarr/blob/main/servarr/values.yaml
+# https://github.com/trueforge-org/truecharts/blob/master/charts/library/common/values.yaml
 
 argoCD: true
 
@@ -6,7 +7,6 @@ global:
   apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "nfs"
   authMethod: External
-  ingressHostPattern: "media-SERVICE.{{ .StateValues.gateway_hostname }}"
 
   resources:
     sonarr: &sonarrResources
@@ -104,17 +104,36 @@ sonarr:
             resources: *sonarrResources
           exportarr:
             resources: *exportarrResources
-  ingress:
-    sonarr-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "Sonarr"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=sonarr"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-sonarr"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "Sonarr"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=sonarr"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-sonarr"
+          gethomepage.dev/href: "https://sonarr.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-sonarr"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-sonarr.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-sonarr"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-sonarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       storageClass: *storageClassName
@@ -140,17 +159,36 @@ radarr:
             resources: *radarrResources
           exportarr:
             resources: *exportarrResources
-  ingress:
-    radarr-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "Radarr"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=radarr"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-radarr"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "Radarr"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=radarr"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-radarr"
+          gethomepage.dev/href: "https://media-radarr.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-radarr"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-radarr.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-radarr"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-radarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       storageClass: *storageClassName
@@ -177,17 +215,36 @@ jellyfin:
         containers:
           main:
             resources: *jellyfinResources
-  ingress:
-    jellyfin-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "nginx.ingress.kubernetes.io/auth-response-headers" "disabled.nginx.ingress.kubernetes.io/auth-response-headers" | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "jellyfin"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=jellyfin"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-jellyfin"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "jellyfin"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=jellyfin"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-jellyfin"
+          gethomepage.dev/href: "https://media-jellyfin.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-jellyfin"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-jellyfin.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-jellyfin"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-jellyfin.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       storageClass: *storageClassName
@@ -226,17 +283,36 @@ jellyseerr:
         containers:
           main:
             resources: *jellyseerrResources
-  ingress:
-    jellyseerr-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "jellyseerr"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=jellyseerr"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-jellyseerr"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "jellyseerr"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=jellyseerr"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-jellyseerr"
+          gethomepage.dev/href: "https://media-jellyseerr.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-jellyseerr"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-jellyseerr.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-jellyseerr"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-jellyseerr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       storageClass: *storageClassName
@@ -255,17 +331,36 @@ qbittorrent:
         containers:
           main:
             resources: *qbittorrentResources
-  ingress:
-    qbittorrent-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "qbittorrent"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=qbittorrent"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-qbittorrent"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "qbittorrent"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=qbittorrent"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-qbittorrent"
+          gethomepage.dev/href: "https://media-qbittorrent.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-qbittorrent"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-qbittorrent"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       existingClaim: *torrentConfig
@@ -289,17 +384,36 @@ prowlarr:
             resources: *prowlarrResources
           exportarr:
             resources: *exportarrResources
-  ingress:
-    prowlarr-ing:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "prowlarr"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=prowlarr"
-        gethomepage.dev/group: "Media"
-        gethomepage.dev/icon: "sh-prowlarr"
-      ingressClassName: "nginx"
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "prowlarr"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=prowlarr"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-prowlarr"
+          gethomepage.dev/href: "https://media-prowlarr.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-servarr-prowlarr"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-prowlarr.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-servarr-prowlarr"
+                port: 80
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-prowlarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
   persistence:
     config:
       storageClass: *storageClassName
