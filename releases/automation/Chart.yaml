@@ -1,4 +1,4 @@
 apiVersion: v2
-name: datahub-local-core-other
+name: datahub-local-core-automation
 type: application
 version: 0.0.0

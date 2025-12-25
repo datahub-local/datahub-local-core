@@ -49,7 +49,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`"data-airflow.{{ .Values.gateway_hostname }}`)
+    - match: Host(`data-airflow.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
         - name: '{{ include "name" . }}-airflow-api-server'

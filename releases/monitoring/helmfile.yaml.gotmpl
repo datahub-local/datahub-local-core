@@ -33,7 +33,7 @@ releases:
     values:
       - values/promtail.yaml.gotmpl
     disableValidationOnInstall: true
-  - name: "{{ .Values.release_name }}-headlamp"
+  - name: "{{ .Values.release_name }}-monitoring-headlamp"
     namespace: monitoring
     chart: "headlamp/headlamp"
     version: '{{ (.StateValues.helm_chart_version | get "headlamp").version }}'
