@@ -166,6 +166,7 @@ rawResources:
       gethomepage.dev/description: "Open source home automation that puts local control and privacy first."
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-home-assistant"
+      gethomepage.dev/href: "https://automation-home-assistant.{{ .Values.gateway_hostname }}"
     spec:
       spec:
         entryPoints:
@@ -180,7 +181,7 @@ rawResources:
               - name: oauth2-proxy-auth
                 namespace: security
                 port: http
-          - match: Host(`monitoring-headlamp.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
+          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
             kind: Rule
             services:
               - name: "{{ .Values.release_name }}-automation-home-assistant"
@@ -201,12 +202,13 @@ rawResources:
       gethomepage.dev/description: "Instance of Visual Studio Code for Home Assistant"
       gethomepage.dev/group: "Automation"
       gethomepage.dev/icon: "sh-visual-studio-code"
+      gethomepage.dev/href: "https://automation-home-assistant-code.{{ .Values.gateway_hostname }}"
     spec:
       spec:
         entryPoints:
           - websecure
         routes:
-          - match: Host(`automation-home-code.{{ .Values.gateway_hostname }}`)
+          - match: Host(`automation-home-assistant-code.{{ .Values.gateway_hostname }}`)
             kind: Rule
             services:
               - name: "{{ .Values.release_name }}-automation-home-assistant"
@@ -214,7 +216,7 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          - match: Host(`automation-home-assistant-code.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
               - name: oauth2-proxy

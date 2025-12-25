@@ -12,18 +12,3 @@ jdbc:
 
 ingress:
   enabled: false
-  className: "nginx"
-  pathType: Prefix
-  hosts:
-    - host: "data-nessie.{{ .StateValues.gateway_hostname }}"
-      paths:
-        - /
-  annotations:
-    #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | nindent 4 }}{{ end }}
-
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Nessie"
-    gethomepage.dev/pod-selector: "app.kubernetes.io/name=nessie"
-    gethomepage.dev/description: "Transactional Catalog for Data Lakes with Git-like semantics"
-    gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "https://projectnessie.org/img/nessie.svg"

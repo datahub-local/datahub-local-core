@@ -41,7 +41,8 @@ extraObjects:
         gethomepage.dev/description: "Get up and running with Llama 3, Mistral, Gemma 2, and other large language models."
         gethomepage.dev/group: "Data"
         gethomepage.dev/icon: "sh-ollama"
-      name: '{{ $.Values.release_name }}-ollama'
+        gethomepage.dev/href: "https://data-ollama.{{ .StateValues.gateway_hostname }}"
+      name: "{{ $.Values.release_name }}-ollama"
     spec:
       entryPoints:
         - websecure
@@ -49,7 +50,7 @@ extraObjects:
         - match: Host(`data-ollama.{{ .StateValues.gateway_hostname }}`)
           kind: Rule
           services:
-            - name: '{{ $.Values.release_name }}-ollama'
+            - name: "{{ $.Values.release_name }}-ollama"
               port: http
           middlewares:
             - name: oauth2-proxy-auth

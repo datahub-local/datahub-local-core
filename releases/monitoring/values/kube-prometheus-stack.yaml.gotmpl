@@ -152,6 +152,7 @@ extraManifests:
         gethomepage.dev/description: "Monitoring system and time series database."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
+        gethomepage.dev/href: "https://monitoring-prometheus.{{ .Values.gateway_hostname }}"
       name: "{{ $.Values.release_name }}-kube-pr-prometheus"
     spec:
       entryPoints:
@@ -182,6 +183,7 @@ extraManifests:
         gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
+        gethomepage.dev/href: "https://monitoring-alertmanager.{{ .Values.gateway_hostname }}"
       name: "{{ $.Values.release_name }}-kube-pr-alertmanager"
     spec:
       entryPoints:
@@ -211,6 +213,7 @@ extraManifests:
         gethomepage.dev/description: "The open and composable observability and data visualization platform."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-grafana"
+        gethomepage.dev/href: "https://monitoring-grafana.{{ .Values.gateway_hostname }}"
       name: "{{ $.Values.release_name }}-prometheus-stack-grafana"
     spec:
       entryPoints:

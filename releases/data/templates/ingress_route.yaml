@@ -20,10 +20,10 @@ metadata:
     gethomepage.dev/description: The Object Store for AI Data Infrastructure.
     gethomepage.dev/enabled: "true"
     gethomepage.dev/group: Data
-    gethomepage.dev/href: https://data-minio-console.{{ .Values.gateway_hostname }}/login
     gethomepage.dev/icon: sh-minio
     gethomepage.dev/name: Minio
     gethomepage.dev/pod-selector: app=minio
+    gethomepage.dev/href: https://data-minio-console.{{ .Values.gateway_hostname }}/login
   name: '{{ include "name" . }}-minio-console'
 spec:
   entryPoints:
@@ -45,6 +45,7 @@ metadata:
     gethomepage.dev/description: "A platform to programmatically author, schedule, and monitor workflows"
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "si-apacheairflow"
+    gethomepage.dev/href: "https://data-airflow.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-airflow-api-server'
 spec:
   entryPoints:
@@ -66,6 +67,7 @@ metadata:
     gethomepage.dev/description: "Transactional Catalog for Data Lakes with Git-like semantics"
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://projectnessie.org/img/nessie.svg"
+    gethomepage.dev/href: "https://data-nessie.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-nessie'
 spec:
   entryPoints:
@@ -96,6 +98,7 @@ metadata:
     gethomepage.dev/description: "Redpanda is a streaming data platform for developers. Kafka API compatible."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/logos/redpanda-icon-color.svg"
+    gethomepage.dev/href: "https://data-redpanda-console.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-redpanda-console'
 spec:
   entryPoints:
@@ -126,6 +129,7 @@ metadata:
     gethomepage.dev/description: "Data Visualization and Data Exploration Platform"
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://superset.apache.org/img/superset-mark-dark.svg"
+    gethomepage.dev/href: "https://data-superset.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-superset'
 spec:
   entryPoints:
@@ -143,11 +147,11 @@ metadata:
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Trino"
-    gethomepage.dev/href: "https://data-trino.{{ .Values.gateway_hostname }}/ui/"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=trino"
     gethomepage.dev/description: "Fast distributed SQL query engine for big data analytics."
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://trino.io/docs/current/_static/trino.svg"
+    gethomepage.dev/href: "https://data-trino.{{ .Values.gateway_hostname }}/ui/"
   name: '{{ include "name" . }}-trino'
 spec:
   entryPoints:

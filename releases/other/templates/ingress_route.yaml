@@ -34,6 +34,7 @@ metadata:
     gethomepage.dev/description: "Locally hosted web application that allows you to perform various operations on PDF files."
     gethomepage.dev/group: "Other"
     gethomepage.dev/icon: "sh-stirling-pdf"
+    gethomepage.dev/href: "https://other-stirling-pdf.{{ .Values.gateway_hostname }}"
 spec:
   entryPoints:
     - websecure
