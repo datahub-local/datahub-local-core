@@ -203,7 +203,7 @@ extraManifests:
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-grafana"
         gethomepage.dev/href: "https://monitoring-grafana.{{ .Values.gateway_hostname }}"
-      name: "{{ $.Values.release_name }}-prometheus-stack-grafana"
+      name: "{{ $.Values.release_name }}-kube-prometheus-stack-grafana"
     spec:
       entryPoints:
         - websecure

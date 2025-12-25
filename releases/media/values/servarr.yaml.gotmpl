@@ -104,6 +104,9 @@ sonarr:
             resources: *sonarrResources
           exportarr:
             resources: *exportarrResources
+  ingress:
+    sonarr-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
@@ -159,6 +162,9 @@ radarr:
             resources: *radarrResources
           exportarr:
             resources: *exportarrResources
+  ingress:
+    radarr-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
@@ -215,6 +221,9 @@ jellyfin:
         containers:
           main:
             resources: *jellyfinResources
+  ingress:
+    jellyfin-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
@@ -283,6 +292,9 @@ jellyseerr:
         containers:
           main:
             resources: *jellyseerrResources
+  ingress:
+    jellyseerr-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
@@ -331,6 +343,9 @@ qbittorrent:
         containers:
           main:
             resources: *qbittorrentResources
+  ingress:
+    qbittorrent-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
@@ -384,6 +399,9 @@ prowlarr:
             resources: *prowlarrResources
           exportarr:
             resources: *exportarrResources
+  ingress:
+    prowlarr-ing:
+      enabled: false
   extraTpl:
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute

@@ -308,7 +308,7 @@ extraManifests:
         gethomepage.dev/group: "Automation"
         gethomepage.dev/icon: "sh-n8n"
         gethomepage.dev/href: "https://automation-n8n.{{ .Values.gateway_hostname }}"
-      name: "{{ $.Values.release_name }}-n8n"
+      name: "{{ $.Values.release_name }}-automation-n8n"
     spec:
       entryPoints:
         - websecure
@@ -316,7 +316,7 @@ extraManifests:
         - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`)
           kind: Rule
           services:
-            - name: "{{ $.Values.release_name }}-n8n"
+            - name: "{{ $.Values.release_name }}-automation-n8n"
               port: http
           middlewares:
             - name: oauth2-proxy-auth

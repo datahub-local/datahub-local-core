@@ -38,7 +38,7 @@ extraObjects:
         gethomepage.dev/group: "Data"
         gethomepage.dev/icon: "sh-ollama"
         gethomepage.dev/href: "https://data-ollama.{{ .StateValues.gateway_hostname }}"
-      name: "{{ $.Values.release_name }}-ollama"
+      name: "{{ $.Values.release_name }}-data-ollama"
     spec:
       entryPoints:
         - websecure
@@ -46,7 +46,7 @@ extraObjects:
         - match: Host(`data-ollama.{{ .StateValues.gateway_hostname }}`)
           kind: Rule
           services:
-            - name: "{{ $.Values.release_name }}-ollama"
+            - name: "{{ $.Values.release_name }}-data-ollama"
               port: http
           middlewares:
             - name: oauth2-proxy-auth

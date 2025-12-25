@@ -9,7 +9,7 @@ metadata:
     gethomepage.dev/group: "Automation"
     gethomepage.dev/icon: "sh-velero"
     gethomepage.dev/href: "https://automation-vui.{{ .Values.gateway_hostname }}"
-  name: '{{ include "name" . }}-automation'
+  name: '{{ include "name" . }}-automation-vui'
 spec:
   entryPoints:
     - websecure
