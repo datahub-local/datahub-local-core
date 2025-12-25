@@ -62,10 +62,6 @@ service:
       http:
         port: 3000
 
-ingress:
-  main:
-    enabled: false
-
 rawResources:
   main:
     apiVersion: traefik.io/v1alpha1
@@ -73,7 +69,6 @@ rawResources:
     annotations:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "Convertx"
-      gethomepage.dev/description: "Self-hosted online file converter. Supports 700+ formats"
       gethomepage.dev/group: "Other"
       gethomepage.dev/icon: "sh-convertx"
       gethomepage.dev/href: "https://other-convertx.{{ .Values.gateway_hostname }}"

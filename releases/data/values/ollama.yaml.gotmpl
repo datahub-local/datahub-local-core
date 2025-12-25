@@ -27,9 +27,6 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 
-ingress:
-  enabled: false
-
 extraObjects:
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
@@ -38,7 +35,6 @@ extraObjects:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "Ollama"
         gethomepage.dev/pod-selector: "app.kubernetes.io/name=ollama"
-        gethomepage.dev/description: "Get up and running with Llama 3, Mistral, Gemma 2, and other large language models."
         gethomepage.dev/group: "Data"
         gethomepage.dev/icon: "sh-ollama"
         gethomepage.dev/href: "https://data-ollama.{{ .StateValues.gateway_hostname }}"

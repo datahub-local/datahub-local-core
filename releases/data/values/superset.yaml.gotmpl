@@ -126,6 +126,3 @@ extraConfigs:
       database_name: trino-iceberg
       sqlalchemy_uri: trino://{{ $.StateValues.trino_user}}@{{ $.Values.release_name }}-data-trino-trino:8080/iceberg
       tables: []
-
-ingress:
-  enabled: false

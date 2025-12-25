@@ -8,8 +8,6 @@ prometheusOperator:
     enabled: false
 
 prometheus:
-  ingress:
-    enabled: false
   prometheusSpec:
     externalUrl: "https://monitoring-prometheus.{{ .StateValues.gateway_hostname }}:{{ .StateValues.ingress_port }}/"
     routePrefix: /
@@ -46,9 +44,6 @@ alertmanager:
           repeat_interval: 4h
           continue: true #
       receiver: "default-receiver"
-
-  ingress:
-    enabled: false
 
 defaultRules:
   rules:
@@ -95,8 +90,6 @@ grafana:
     existingSecret: "grafana-admin-credentials"
     userKey: user
     passwordKey: password
-  ingress:
-    enabled: false
 
 prometheus-node-exporter:
   extraArgs:
@@ -149,7 +142,6 @@ extraManifests:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "Prometheus"
         gethomepage.dev/pod-selector: "app.kubernetes.io/name=prometheus"
-        gethomepage.dev/description: "Monitoring system and time series database."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
         gethomepage.dev/href: "https://monitoring-prometheus.{{ .Values.gateway_hostname }}"
@@ -172,7 +164,6 @@ extraManifests:
             - name: oauth2-proxy
               namespace: security
               port: http
-
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
@@ -180,7 +171,6 @@ extraManifests:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "Alertmanager"
         gethomepage.dev/pod-selector: "app.kubernetes.io/name=alertmanager"
-        gethomepage.dev/description: "Handle alerts sent by client applications such as the Prometheus server."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-prometheus"
         gethomepage.dev/href: "https://monitoring-alertmanager.{{ .Values.gateway_hostname }}"
@@ -210,7 +200,6 @@ extraManifests:
         gethomepage.dev/enabled: "true"
         gethomepage.dev/name: "Grafana"
         gethomepage.dev/pod-selector: "app.kubernetes.io/name=grafana"
-        gethomepage.dev/description: "The open and composable observability and data visualization platform."
         gethomepage.dev/group: "Monitoring"
         gethomepage.dev/icon: "sh-grafana"
         gethomepage.dev/href: "https://monitoring-grafana.{{ .Values.gateway_hostname }}"

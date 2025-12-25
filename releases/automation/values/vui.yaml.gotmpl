@@ -1,4 +1,4 @@
-# Values for vui chart. See https://github.com/seriohub/velero-helm/blob/main/chart/values.yaml
+# https://github.com/seriohub/velero-helm/blob/main/chart/values.yaml
 #{{ $cluster_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).cluster_name }}
 
 global:
@@ -17,25 +17,7 @@ apiService:
         value: nas
 
 exposure:
-  mode: ingress
-
-  ingress:
-    ingressClassName: nginx
-
-    metadata:
-      annotations:
-        #{{- if .Values.security_enabled }}{{ .Values.security_oauth2_annotations | toYaml | replace "SOME_REGEX_TO_SKIP" "(static-plugins|manifest.json|clusters/).*" | nindent 8 }}{{ end }}
-
-        gethomepage.dev/enabled: "true"
-        gethomepage.dev/name: "Velero-UI"
-        gethomepage.dev/pod-selector: "app.kubernetes.io/name=vui"
-        gethomepage.dev/description: "VUI is a web-based dashboard for managing Velero resources"
-        gethomepage.dev/group: "Automation"
-        gethomepage.dev/icon: "sh-velero"
-    spec:
-      tls:
-        - hosts:
-            - "automation-vui.{{ .StateValues.gateway_hostname }}"
+  mode: clusterIP
 
 auth:
   enabled: false # Done by reverse proxy

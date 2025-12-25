@@ -1,0 +1,30 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Velero-UI"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=vui"
+    gethomepage.dev/group: "Automation"
+    gethomepage.dev/icon: "sh-velero"
+    gethomepage.dev/href: "https://automation-vui.{{ .Values.gateway_hostname }}"
+  name: '{{ include "name" . }}-automation'
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`automation-vui.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-vui-ui-clusterip-svc'
+          port: vui-ui
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+    - match: Host(`automation-vui.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy
+          namespace: security
+          port: http

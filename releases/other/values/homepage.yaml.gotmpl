@@ -11,6 +11,7 @@ config:
   settings:
     title: "DataHub.local"
     base: "https://{{ .StateValues.gateway_hostname }}"
+    statusStyle: "dot"
     layout:
       - System:
           useEqualHeights: true
@@ -36,6 +37,11 @@ config:
           style: row
           columns: 4
           useEqualHeights: true
+  kubernetes:
+    mode: cluster
+    gateway: false
+    ingress: false
+    traefik: true
   bookmarks:
     - DataHub.local:
         - Github:
@@ -113,8 +119,6 @@ config:
         longitude: -3.53941998801271
         units: metric
         cache: 5
-  kubernetes:
-    mode: cluster
 
 # The service account is necessary to allow discovery of other services
 serviceAccount:
@@ -123,7 +127,3 @@ serviceAccount:
 
 # This enables the service account to access the necessary resources
 enableRbac: true
-
-ingress:
-  main:
-    enabled: false
