@@ -127,7 +127,7 @@ sonarr:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-sonarr"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
@@ -185,7 +185,7 @@ radarr:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-radarr"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
@@ -244,7 +244,7 @@ jellyfin:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-jellyfin"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
@@ -315,7 +315,7 @@ jellyseerr:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-jellyseerr"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
@@ -366,7 +366,7 @@ qbittorrent:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-qbittorrent"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
@@ -422,7 +422,7 @@ prowlarr:
             kind: Rule
             services:
               - name: "{{ $.Values.release_name }}-media-servarr-prowlarr"
-                port: 80
+                port: main
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security

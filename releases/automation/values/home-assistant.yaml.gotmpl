@@ -179,7 +179,7 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
+          - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && (!PathPrefix(`/auth`) || PathPrefix(`/auth/token`))
             kind: Rule
             services:
               - name: "{{ .Values.release_name }}-automation-home-assistant"
