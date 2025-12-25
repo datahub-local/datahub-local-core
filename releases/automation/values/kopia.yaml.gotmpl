@@ -261,7 +261,6 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-                port: http
           - match: Host(`automation-kopia.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -285,7 +284,6 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-                port: http
           - match: Host(`automation-kopia-server-{{ $ns }}.{{ $.Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:

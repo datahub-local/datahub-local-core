@@ -78,7 +78,6 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-                port: http
           - match: Host(`other-mazanoke.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:

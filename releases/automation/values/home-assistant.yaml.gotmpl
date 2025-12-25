@@ -180,7 +180,6 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-                port: http
           - match: Host(`automation-home-assistant.{{ .Values.gateway_hostname }}`) && PathRegexp(`^/(?!auth(?!\\/token)).*`)
             kind: Rule
             services:
