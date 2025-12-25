@@ -118,7 +118,7 @@ sonarr:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-sonarr"
           gethomepage.dev/href: "https://sonarr.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-sonarr"
+        name: "{{ $.Values.release_name }}-media-servarr-sonarr"
       spec:
         entryPoints:
           - websecure
@@ -126,7 +126,7 @@ sonarr:
           - match: Host(`media-sonarr.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-sonarr"
+              - name: "{{ $.Values.release_name }}-media-servarr-sonarr"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth
@@ -176,7 +176,7 @@ radarr:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-radarr"
           gethomepage.dev/href: "https://media-radarr.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-radarr"
+        name: "{{ $.Values.release_name }}-media-servarr-radarr"
       spec:
         entryPoints:
           - websecure
@@ -184,7 +184,7 @@ radarr:
           - match: Host(`media-radarr.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-radarr"
+              - name: "{{ $.Values.release_name }}-media-servarr-radarr"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth
@@ -235,7 +235,7 @@ jellyfin:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-jellyfin"
           gethomepage.dev/href: "https://media-jellyfin.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-jellyfin"
+        name: "{{ $.Values.release_name }}-media-servarr-jellyfin"
       spec:
         entryPoints:
           - websecure
@@ -243,7 +243,7 @@ jellyfin:
           - match: Host(`media-jellyfin.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-jellyfin"
+              - name: "{{ $.Values.release_name }}-media-servarr-jellyfin"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth
@@ -306,7 +306,7 @@ jellyseerr:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-jellyseerr"
           gethomepage.dev/href: "https://media-jellyseerr.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-jellyseerr"
+        name: "{{ $.Values.release_name }}-media-servarr-jellyseerr"
       spec:
         entryPoints:
           - websecure
@@ -314,7 +314,7 @@ jellyseerr:
           - match: Host(`media-jellyseerr.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-jellyseerr"
+              - name: "{{ $.Values.release_name }}-media-servarr-jellyseerr"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth
@@ -357,7 +357,7 @@ qbittorrent:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-qbittorrent"
           gethomepage.dev/href: "https://media-qbittorrent.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-qbittorrent"
+        name: "{{ $.Values.release_name }}-media-servarr-qbittorrent"
       spec:
         entryPoints:
           - websecure
@@ -365,7 +365,7 @@ qbittorrent:
           - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-qbittorrent"
+              - name: "{{ $.Values.release_name }}-media-servarr-qbittorrent"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth
@@ -413,7 +413,7 @@ prowlarr:
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-prowlarr"
           gethomepage.dev/href: "https://media-prowlarr.{{ .Values.gateway_hostname }}"
-        name: "{{ $.Values.release_name }}-servarr-prowlarr"
+        name: "{{ $.Values.release_name }}-media-servarr-prowlarr"
       spec:
         entryPoints:
           - websecure
@@ -421,7 +421,7 @@ prowlarr:
           - match: Host(`media-prowlarr.{{ .StateValues.gateway_hostname }}`)
             kind: Rule
             services:
-              - name: "{{ $.Values.release_name }}-servarr-prowlarr"
+              - name: "{{ $.Values.release_name }}-media-servarr-prowlarr"
                 port: 80
             middlewares:
               - name: oauth2-proxy-auth

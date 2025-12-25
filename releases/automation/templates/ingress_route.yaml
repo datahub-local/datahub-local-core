@@ -17,7 +17,7 @@ spec:
     - match: Host(`automation-vui.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
-        - name: '{{ include "name" . }}-vui-ui-clusterip-svc'
+        - name: '{{ include "name" . }}-automation-vui-ui-clusterip-svc'
           port: vui-ui
       middlewares:
         - name: oauth2-proxy-auth
