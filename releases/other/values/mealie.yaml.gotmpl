@@ -42,7 +42,7 @@ controllers:
               secretKeyRef:
                 name: postgresql-admin-credentials
                 key: password
-          POSTGRES_SERVER: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-pooler-rw.data.svc.cluster.local"
+          POSTGRES_SERVER: "{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local"
           POSTGRES_PORT: 5432
           POSTGRES_DB: mealie
 

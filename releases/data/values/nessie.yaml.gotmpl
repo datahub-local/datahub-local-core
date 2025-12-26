@@ -4,7 +4,7 @@ replicaCount: 1
 versionStoreType: JDBC
 
 jdbc:
-  jdbcUrl: "jdbc:postgresql://{{ $.Values.release_name }}-data-cloudnative-pg-cluster-pooler-rw:5432/{{ .StateValues.postgres_extra_databases.nessie }}"
+  jdbcUrl: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.nessie }}"
   secret:
     name: postgresql-admin-credentials
     username: user

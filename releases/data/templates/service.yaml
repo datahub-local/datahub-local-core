@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "name" . }}-postgresql'
+spec:
+  type: ExternalName
+  externalName: '{{ include "name" . }}-cloudnative-pg-cluster-pooler-rw'
+  ports:
+    - name: pgbouncer
+      port: 5432
+      protocol: TCP
+      targetPort: pgbouncer

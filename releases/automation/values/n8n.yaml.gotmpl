@@ -88,7 +88,7 @@ main:
     db:
       type: postgresdb
       postgresdb:
-        host: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-pooler-rw.data.svc.cluster.local"
+        host: "{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local"
         port: 5432
         pool:
           size: 10
