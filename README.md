@@ -51,14 +51,19 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
               - CreateNamespace=true
               - ServerSideApply=true
           ignoreDifferences:
+          - group: "apps"
+            kind: "StatefulSet"
+            jqPathExpressions:
+            - ".spec.volumeClaimTemplates"
           - group: "*"
             kind: "*"
             jqPathExpressions:
+            - ".metadata.creationTimestamp"
             - ".spec.template.spec.containers[] | .resources | select(length==0)"
             - ".spec.template.spec.initContainers[] | .resources | select(length==0)"
             - ".spec.template.spec.hostUsers"
-            - ".spec.volumeClaimTemplates[].apiVersion"
-            - ".spec.volumeClaimTemplates[].kind"
+            - ".spec.template.metadata.creationTimestamp"
+            - ".spec.jobTemplate.spec.template.metadata.creationTimestamp"
     EOF
     ```
 

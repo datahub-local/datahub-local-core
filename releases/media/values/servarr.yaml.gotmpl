@@ -117,7 +117,7 @@ sonarr:
           gethomepage.dev/pod-selector: "app.kubernetes.io/name=sonarr"
           gethomepage.dev/group: "Media"
           gethomepage.dev/icon: "sh-sonarr"
-          gethomepage.dev/href: "https://sonarr.{{ .Values.gateway_hostname }}"
+          gethomepage.dev/href: "https://media-sonarr.{{ .Values.gateway_hostname }}"
         name: "{{ $.Values.release_name }}-media-servarr-sonarr"
       spec:
         entryPoints:
