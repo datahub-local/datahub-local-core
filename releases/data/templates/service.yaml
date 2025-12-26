@@ -4,7 +4,7 @@ metadata:
   name: '{{ include "name" . }}-postgresql'
 spec:
   type: ExternalName
-  externalName: '{{ include "name" . }}-cloudnative-pg-cluster-pooler-rw'
+  externalName: '{{ include "name" . }}-cloudnative-pg-cluster-pooler-rw.{{ .Release.Namespace }}.svc.cluster.local'
   ports:
     - name: pgbouncer
       port: 5432
