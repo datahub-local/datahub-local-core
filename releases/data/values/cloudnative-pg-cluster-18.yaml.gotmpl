@@ -1,7 +1,6 @@
 # https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/values.yaml
 
 type: postgresql
-mode: standalone
 
 cluster:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18.1-system-trixie"
@@ -34,30 +33,6 @@ cluster:
       excludeRules:
         - CNPGClusterHACritical
         - CNPGClusterHAWarning
-
-  #################################################
-  # Remove after this cluster is the primary
-  #################################################
-  bootstrap:
-    initdb:
-      import:
-        type: monolith
-        databases:
-          - "*"
-        roles:
-          - "*"
-        source:
-          externalCluster: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
-  externalClusters:
-    - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
-      connectionParameters:
-        host: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
-        user: postgres
-        dbname: postgres
-      password:
-        name: postgresql-admin-credentials
-        key: password
-  #################################################
 
 poolers:
   - name: rw
@@ -96,5 +71,24 @@ backups:
       method: barmanObjectStore
   retentionPolicy: "30d"
 
+#################################################
+# Remove after this cluster is the primary
+#################################################
+mode: recovery
 recovery:
   method: import
+  import:
+    type: monolith
+    databases:
+      - "*"
+    roles:
+      - "*"
+    source:
+      host: "{{ .Values.release_name }}-data-cloudnative-pg-cluster"
+      port: 5432
+      username: "postgres"
+      database: "postgres"
+      passwordSecret:
+        name: postgresql-admin-credentials
+        key: password
+#################################################
