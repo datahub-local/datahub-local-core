@@ -74,24 +74,24 @@ backups:
 #################################################
 # Remove after this cluster is the primary
 #################################################
-mode: recovery
-recovery:
-  method: import
-  import:
-    type: monolith
-    databases:
-      - "*"
-    roles:
-      - "*"
-    pgDumpExtraOptions:
-      - --no-privileges
-    source:
-      host: "{{ .Values.release_name }}-data-cloudnative-pg-cluster-r"
-      port: 5432
-      username: "postgres"
-      database: "postgres"
-      sslMode: disable
-      passwordSecret:
-        name: postgresql-admin-credentials
-        key: password
+# mode: recovery
+# recovery:
+#   method: import
+#   import:
+#     type: monolith
+#     databases:
+#       - "*"
+#     roles:
+#       - "*"
+#     pgDumpExtraOptions:
+#       - --no-privileges
+#     source:
+#       host: "{{ .Values.release_name }}-data-cloudnative-pg-cluster-r"
+#       port: 5432
+#       username: "postgres"
+#       database: "postgres"
+#       sslMode: disable
+#       passwordSecret:
+#         name: postgresql-admin-credentials
+#         key: password
 #################################################
