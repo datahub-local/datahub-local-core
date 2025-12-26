@@ -26,6 +26,14 @@ releases:
       - "{{ .Values.release_name }}-data-cloudnative-pg"
     values:
       - values/cloudnative-pg-cluster.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
+    namespace: data
+    chart: "cnpg/cluster"
+    version: '{{ (.StateValues.helm_chart_version | get "cluster").version }}'
+    needs:
+      - "{{ .Values.release_name }}-data-cloudnative-pg"
+    values:
+      - values/cloudnative-pg-cluster-18.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
     chart: "groundhog2k/valkey"
