@@ -81,8 +81,6 @@ recovery:
     type: monolith
     databases:
       - "*"
-    roles:
-      - "*"
     source:
       host: "{{ .Values.release_name }}-data-cloudnative-pg-cluster-r"
       port: 5432
