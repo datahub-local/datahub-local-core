@@ -21,7 +21,7 @@ cluster:
 
   walStorage:
     enabled: true
-    size: 2Gi
+    size: 3Gi
     storageClass: "longhorn"
 
   enableSuperuserAccess: true
@@ -70,7 +70,6 @@ backups:
       backupOwnerReference: self
       method: barmanObjectStore
   retentionPolicy: "30d"
-
 #################################################
 # Remove after this cluster is the primary
 #################################################
