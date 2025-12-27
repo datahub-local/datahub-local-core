@@ -60,3 +60,27 @@ prometheus_rules:
               The application [{{`{{$labels.name}}`}} has not been synchronized for over
               12 hours which means that the state of this cloud has drifted away from the
               state inside Git.
+        - alert: PVCUsageHigh
+          annotations:
+            description: 'The PVC {{`{{ $labels.persistentvolumeclaim }}`}} in namespace {{`{{ $labels.namespace }}`}} is {{`{{ printf "%.2f" $value }}`}}% full.'
+            summary: PVC is running out of space (> 75%)
+          expr: 100 * kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 75
+          for: 5m
+          labels:
+            severity: warning
+        - alert: PVCUsageCritical
+          annotations:
+            description: 'The PVC {{`{{ $labels.persistentvolumeclaim }}`}} in namespace {{`{{ $labels.namespace }}`}} is {{`{{ printf "%.2f" $value }}`}}% full.'
+            summary: PVC is running out of space (> 90%)
+          expr: 100 * kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 90
+          for: 5m
+          labels:
+            severity: critical
+        - alert: PVCUsageFull
+          annotations:
+            description: 'The PVC {{`{{ $labels.persistentvolumeclaim }}`}} in namespace {{`{{ $labels.namespace }}`}} is {{`{{ printf "%.2f" $value }}`}}% full.'
+            summary: PVC is full (> 99%)
+          expr: 100 * kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 99
+          for: 1m
+          labels:
+            severity: critical
