@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`data-minio.{{ .Values.gateway_hostname }}`)
+    - match: Host(`data-s3.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
         - name: '{{ include "name" . }}-minio'
@@ -22,13 +22,13 @@ metadata:
     gethomepage.dev/icon: sh-minio
     gethomepage.dev/name: Minio
     gethomepage.dev/pod-selector: app=minio
-    gethomepage.dev/href: https://data-minio-console.{{ .Values.gateway_hostname }}/login
+    gethomepage.dev/href: https://data-s3-console.{{ .Values.gateway_hostname }}/login
   name: '{{ include "name" . }}-minio-console'
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`data-minio-console.{{ .Values.gateway_hostname }}`)
+    - match: Host(`data-s3-console.{{ .Values.gateway_hostname }}`)
       kind: Rule
       services:
         - name: '{{ include "name" . }}-minio-console'

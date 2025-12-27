@@ -141,7 +141,7 @@ controllers:
               name: backup-kopia-auth
               key: AWS_SECRET_ACCESS_KEY
           AWS_ENDPOINTS:
-            value: "{{ $.Values.backup_s3_endpoint }}"
+            value: "{{ $.Values.s3_endpoint }}"
           AWS_S3_BUCKET:
             value: "{{ $.Values.backup_s3_bucket }}"
           REPOSITORY_PASSWORD:

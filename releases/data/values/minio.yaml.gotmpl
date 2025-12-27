@@ -30,7 +30,7 @@ consoleIngress:
   enabled: false
 
 environment:
-  MINIO_BROWSER_REDIRECT_URL: "https://data-minio-console.{{ .StateValues.gateway_hostname }}/"
+  MINIO_BROWSER_REDIRECT_URL: "https://data-s3-console.{{ .StateValues.gateway_hostname }}/"
   MINIO_PROMETHEUS_URL: "http://{{ $.Values.release_name }}-kube-pr-prometheus.monitoring.svc.cluster.local:9090"
   MINIO_IDENTITY_OPENID_ROLE_POLICY: consoleAdmin
 
@@ -41,7 +41,7 @@ oidc:
   clientId: "minio"
   clientSecret: "{{ .StateValues.security_github_client_secret }}"
   scopes: "openid,profile,email"
-  redirectUri: "https://data-minio-console.{{ .StateValues.gateway_hostname }}/oauth_callback"
+  redirectUri: "https://data-s3-console.{{ .StateValues.gateway_hostname }}/oauth_callback"
   displayName: "IAM"
 #{{- end }}
 

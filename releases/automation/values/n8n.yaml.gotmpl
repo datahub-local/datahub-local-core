@@ -96,8 +96,8 @@ main:
     external:
       storage:
         s3:
-          host: "{{ .Values.release_name }}-data-minio.data.svc.cluster.local:9000"
-          protocol: http
+          host: "{{ .Values.s3_endpoint }}"
+          protocol: https
           bucket_name: datahub-local-n8n
 
     node:

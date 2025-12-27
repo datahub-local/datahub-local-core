@@ -74,6 +74,6 @@ additionalCatalogs:
     fs.native-s3.enabled=true
     s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
     s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
-    s3.endpoint=https://data-minio.{{ .StateValues.gateway_hostname }}
+    s3.endpoint=https://{{ .Values.s3_endpoint }}
     s3.region=minio
     s3.path-style-access=true

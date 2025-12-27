@@ -50,7 +50,7 @@ poolers:
 backups:
   enabled: true
 
-  endpointURL: "https://{{ .Values.backup_s3_endpoint }}"
+  endpointURL: "https://{{ .Values.s3_endpoint }}"
   provider: s3
   s3:
     bucket: "{{ $.Values.backup_s3_bucket }}"

@@ -41,7 +41,7 @@ extraEnv: |
   - name: "TRINO_USER"
     value: "{{ $.StateValues.trino_user}}"
   - name: "S3_AWS_ENDPOINT"
-    value: "http://{{ .Values.release_name }}-data-minio:9000"
+    value: "https://{{ .Values.s3_endpoint }}"
   - name: "S3_AWS_ACCESS_KEY"
     value: "{{ .StateValues.minio_user }}"
   - name: "S3_AWS_SECRET_KEY"
