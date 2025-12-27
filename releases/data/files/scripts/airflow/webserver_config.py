@@ -11,6 +11,7 @@ import jwt
 import logging
 import os
 import requests
+import time
 
 log = logging.getLogger(__name__)
 CSRF_ENABLED = True
@@ -30,9 +31,23 @@ OIDC_ISSUER = os.getenv("OIDC_ISSUER")
 OIDC_METADATA_URL = f"{OIDC_ISSUER}/.well-known/openid-configuration"
 
 
+def fetch_oidc_config(url):
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            resp = requests.get(url, timeout=1)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            log.warning(
+                f"Failed to fetch OIDC config from {url}: {e}. Retrying in 5s..."
+            )
+            time.sleep(0.5)
+    raise Exception(f"Could not fetch OIDC config from {url}")
+
+
 # Fetch metadata
-req = requests.get(OIDC_METADATA_URL)
-metadata = req.json()
+metadata = fetch_oidc_config(OIDC_METADATA_URL)
 
 OIDC_KEYS_URL = metadata["jwks_uri"]
 OIDC_AUTH_URL = metadata["authorization_endpoint"]
@@ -60,8 +75,7 @@ OAUTH_PROVIDERS = [
 ]
 
 # Fetch public keys
-req = requests.get(OIDC_KEYS_URL)
-jwks = req.json()
+jwks = fetch_oidc_config(OIDC_KEYS_URL)
 
 
 class CustomOAuthView(AuthOAuthView):

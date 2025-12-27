@@ -67,11 +67,11 @@ apiServer:
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
   resources:
     limits:
-      cpu: 1.5
-      memory: 1.5Gi
+      cpu: 2
+      memory: 2Gi
     requests:
-      cpu: 1.5
-      memory: 1.5Gi
+      cpu: 2
+      memory: 2Gi
 
 workers:
   replicas: {{$numWorkers}}
