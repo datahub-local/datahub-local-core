@@ -11,9 +11,9 @@ container_image_version:
   ghcr.io/tailscale/tailscale: v1.92.4
   homeassistant/home-assistant: 2025.12.4
   iib0011/omni-tools: 0.6.0
-  kopia/kopia: 20250724.0.1107
-  n8nio/n8n: 1.123.9
-  valkey/valkey: 8.1.5
+  kopia/kopia: 20251215.0.232403
+  n8nio/n8n: 2.2.2
+  valkey/valkey: 9.0.1
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
   airflow:
@@ -47,7 +47,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 75.18.1
+    version: 80.10.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -55,7 +55,7 @@ helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 1.1.0
+    version: 2.0.1
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
@@ -67,7 +67,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 7.7.0
+    version: 9.0.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -103,7 +103,7 @@ helm_chart_version:
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
-    version: 10.1.3
+    version: 11.3.1
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
