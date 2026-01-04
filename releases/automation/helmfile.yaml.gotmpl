@@ -38,7 +38,7 @@ releases:
       - values/vui.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-n8n"
     namespace: automation
-    chart: '{{ (.StateValues.helm_chart_version | get "n8n").ref }}'
+    chart: "oci://8gears.container-registry.com/library/n8n"
     version: '{{ (.StateValues.helm_chart_version | get "n8n").version }}'
     values:
       - values/n8n.yaml.gotmpl
