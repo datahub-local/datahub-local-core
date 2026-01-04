@@ -13,6 +13,7 @@ garage:
 
   s3:
     api:
+      region: "{{ .Values.backup_s3_region }}"
       rootDomain: ".data-s3.homelab.alvsanand.com"
     web:
       rootDomain: ".data-s3-web.homelab.alvsanand.com"
