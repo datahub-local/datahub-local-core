@@ -9,7 +9,7 @@ s3-configuration: &s3-configuration
     name: backup-velero-auth
     key: s3_credentials
   config:
-    region: minio
+    region: homelab
     s3ForcePathStyle: true
     s3Url: "https://{{ .Values.s3_endpoint }}"
 
@@ -126,6 +126,6 @@ extraObjects:
       name: default
       namespace: kube-system
     spec:
-      backupTargetURL: s3://{{ .Values.backup_s3_bucket }}@minio/backups/longhorn
+      backupTargetURL: s3://{{ .Values.backup_s3_bucket }}@{{ .Values.s3_endpoint }}/backups/longhorn
       credentialSecret: backup-longhorn-auth
       pollInterval: 5m0s

@@ -43,12 +43,15 @@ extraEnv: |
   - name: "S3_AWS_ENDPOINT"
     value: "https://{{ .Values.s3_endpoint }}"
   - name: "S3_AWS_ACCESS_KEY"
-    value: "{{ .StateValues.minio_user }}"
+    valueFrom:
+      secretKeyRef:
+        name: s3-credentials
+        key: accessKey
   - name: "S3_AWS_SECRET_KEY"
     valueFrom:
       secretKeyRef:
-        name: minio-admin-credentials
-        key: accessKey
+        name: s3-credentials
+        key: secretKey
 
 postgresql:
   enabled: false

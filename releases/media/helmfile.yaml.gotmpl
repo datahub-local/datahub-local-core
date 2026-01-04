@@ -14,7 +14,7 @@ commonLabels:
 releases:
   - name: "{{ .Values.release_name }}-media-servarr"
     namespace: media
-    chart: "datahub-local/servarr"
+    chart: '{{ (.StateValues.helm_chart_version | get "servarr").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "servarr").version }}'
     values:
       - values/servarr.yaml.gotmpl

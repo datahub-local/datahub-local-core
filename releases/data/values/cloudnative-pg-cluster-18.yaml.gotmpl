@@ -27,6 +27,10 @@ cluster:
   enableSuperuserAccess: true
   superuserSecret: "postgresql-admin-credentials"
 
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: "homelab"
+
   monitoring:
     enabled: true
     prometheusRule:
@@ -54,7 +58,7 @@ backups:
   provider: s3
   s3:
     bucket: "{{ $.Values.backup_s3_bucket }}"
-    path: "/postgresql-cn/pg-cluster-18"
+    path: "/postgresql-cn"
   secret:
     create: false
     name: backup-cloudnative-pg-auth

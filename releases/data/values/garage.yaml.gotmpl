@@ -1,0 +1,99 @@
+# https://github.com/datahub-local/garage-helm/blob/6fa31110dd579acbdb3aadee33660525afeddc43/garage/values.yaml
+deployment:
+  replicaCount: 3
+
+garage:
+  replicationFactor: "1"
+
+  secret:
+    create: false
+    name: "garage-credentials"
+    rpcSecret: "rpcSecret"
+    adminToken: "adminToken"
+
+  s3:
+    api:
+      rootDomain: ".data-s3.homelab.alvsanand.com"
+    web:
+      rootDomain: ".data-s3-web.homelab.alvsanand.com"
+
+persistence:
+  enabled: true
+  data:
+    storageClass: nfs
+    size: 10Gi
+  meta:
+    storageClass: longhorn
+    size: 500Mi
+
+clusterConfig:
+  enabled: true
+  layout:
+    enabled: true
+    zone: dc1
+  buckets:
+    #{{- range $bucket := .StateValues.s3_buckets }}
+    - name: "{{ $bucket.name }}"
+      public: {{$bucket | get "public" false}}
+    #{{- end }}
+  keys:
+    data-key:
+      secretName: s3-credentials
+      keyId: accessKey
+      secretKey: secretKey
+      buckets:
+        #{{- range $bucket := .StateValues.s3_buckets }}
+        - "{{ $bucket.name }}"
+        #{{- end }}
+
+webui:
+  enabled: true
+
+extraResources:
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: "{{ $.Values.release_name }}-data-garage"
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`data-s3.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-data-garage-headless"
+              port: s3-api
+        - match: Host(`data-s3-web.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-data-garage-headless"
+              port: s3-web
+  - apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: "Garage - WebUI"
+        gethomepage.dev/pod-selector: "app.kubernetes.io/name=garage"
+        gethomepage.dev/group: "Data"
+        gethomepage.dev/icon: "sh-garage"
+        gethomepage.dev/href: "https://data-s3-webui.{{ .StateValues.gateway_hostname }}"
+      name: "{{ $.Values.release_name }}-data-garage-webui"
+    spec:
+      entryPoints:
+        - websecure
+      routes:
+        - match: Host(`data-s3-webui.{{ .StateValues.gateway_hostname }}`)
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-data-garage-webui"
+              port: http
+          middlewares:
+            - name: oauth2-proxy-auth
+              namespace: security
+        - match: Host(`data-s3-webui.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+          kind: Rule
+          services:
+            - name: oauth2-proxy
+              namespace: security
+              port: http

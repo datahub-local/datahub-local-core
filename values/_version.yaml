@@ -9,17 +9,17 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v1.8.0
   ghcr.io/mealie-recipes/mealie: v3.8.0
   ghcr.io/tailscale/tailscale: v1.92.4
-  iib0011/omni-tools: 0.6.0
   homeassistant/home-assistant: 2025.12.4
+  iib0011/omni-tools: 0.6.0
   kopia/kopia: 20250724.0.1107
   n8nio/n8n: 1.123.9
   valkey/valkey: 8.1.5
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
-  n8n:
-    ref: 8gears/n8n
-    repository: oci://8gears.container-registry.com/library
-    version: 1.1.0
+  airflow:
+    ref: apache-airflow/airflow
+    repository: https://airflow.apache.org
+    version: 1.18.0
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
@@ -32,26 +32,6 @@ helm_chart_version:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
     version: 0.4.0
-  airflow:
-    ref: apache-airflow/airflow
-    repository: https://airflow.apache.org
-    version: 1.18.0
-  servarr:
-    ref: datahub-local/servarr
-    repository: https://datahub-local.github.io/servarr
-    version: 0.19.1
-  loki:
-    ref: grafana/loki
-    repository: https://grafana.github.io/helm-charts
-    version: 6.49.0
-  promtail:
-    ref: grafana/promtail
-    repository: https://grafana.github.io/helm-charts
-    version: 6.17.1
-  valkey:
-    ref: groundhog2k/valkey
-    repository: https://groundhog2k.github.io/helm-charts
-    version: 2.2.3
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -60,10 +40,18 @@ helm_chart_version:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
     version: 2.1.0
-  minio:
-    ref: minio-oficial/minio
-    repository: https://charts.min.io
-    version: 5.4.0
+  kube-prometheus-stack:
+    ref: prometheus-community/kube-prometheus-stack
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 75.18.1
+  loki:
+    ref: grafana/loki
+    repository: https://grafana.github.io/helm-charts
+    version: 6.49.0
+  n8n:
+    ref: 8gears/n8n
+    repository: oci://8gears.container-registry.com/library
+    version: 1.1.0
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
@@ -76,10 +64,10 @@ helm_chart_version:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
     version: 7.7.0
-  kube-prometheus-stack:
-    ref: prometheus-community/kube-prometheus-stack
-    repository: https://prometheus-community.github.io/helm-charts
-    version: 75.18.1
+  promtail:
+    ref: grafana/promtail
+    repository: https://grafana.github.io/helm-charts
+    version: 6.17.1
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
@@ -88,10 +76,14 @@ helm_chart_version:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
     version: 0.30.0
-  vui:
-    ref: seriohub/vui
-    repository: https://seriohub.github.io/velero-helm
-    version: 1.0.6
+  garage:
+    ref: garage-helm/garage
+    repository: https://datahub-local.github.io/garage-helm
+    version: 0.2.0
+  servarr:
+    ref: datahub-local/servarr
+    repository: https://datahub-local.github.io/servarr
+    version: 0.19.1
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
@@ -104,7 +96,15 @@ helm_chart_version:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
     version: 1.41.0
+  valkey:
+    ref: groundhog2k/valkey
+    repository: https://groundhog2k.github.io/helm-charts
+    version: 2.2.3
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
     version: 10.1.3
+  vui:
+    ref: seriohub/vui
+    repository: https://seriohub.github.io/velero-helm
+    version: 1.0.6

@@ -1,8 +1,6 @@
 #{{ $security_admin_user := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).security_admin_user }}
 
-minio_user: "{{ $security_admin_user }}"
-
-minio_buckets:
+s3_buckets:
   - name: datahub-local-bronze
   - name: datahub-local-silver
   - name: datahub-local-gold

@@ -14,37 +14,37 @@ commonLabels:
 releases:
   - name: "{{ .Values.release_name }}-automation-home-assistant"
     namespace: automation
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/home-assistant.yaml.gotmpl
   - name: "velero"
     namespace: automation
-    chart: "vmware-tanzu/velero"
+    chart: '{{ (.StateValues.helm_chart_version | get "velero").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "velero").version }}'
     values:
       - values/velero.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-kopia"
     namespace: automation
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/kopia.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-vui"
     namespace: automation
-    chart: "seriohub/vui"
+    chart: '{{ (.StateValues.helm_chart_version | get "vui").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "vui").version }}'
     values:
       - values/vui.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-n8n"
     namespace: automation
-    chart: "oci://8gears.container-registry.com/library/n8n"
+    chart: '{{ (.StateValues.helm_chart_version | get "n8n").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "n8n").version }}'
     values:
       - values/n8n.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-n8n-chromium"
     namespace: automation
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/n8n-chromium.yaml.gotmpl
@@ -54,4 +54,3 @@ releases:
     values:
       - ../../values/global.yaml.gotmpl
       - values/default.yaml.gotmpl
-

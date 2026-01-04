@@ -15,12 +15,12 @@ releases:
       #{{- end }}
   - name: "{{ .Values.release_name }}-data-cloudnative-pg"
     namespace: data
-    chart: "cnpg/cloudnative-pg"
+    chart: '{{ (.StateValues.helm_chart_version | get "cloudnative-pg").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "cloudnative-pg").version }}'
     values: []
   - name: "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
     namespace: data
-    chart: "cnpg/cluster"
+    chart: '{{ (.StateValues.helm_chart_version | get "cluster").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "cluster").version }}'
     needs:
       - "{{ .Values.release_name }}-data-cloudnative-pg"
@@ -28,55 +28,55 @@ releases:
       - values/cloudnative-pg-cluster-18.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-valkey"
     namespace: data
-    chart: "groundhog2k/valkey"
+    chart: '{{ (.StateValues.helm_chart_version | get "valkey").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "valkey").version }}'
     values:
       - values/valkey.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-data-minio"
-    namespace: data
-    chart: "minio-oficial/minio"
-    version: '{{ (.StateValues.helm_chart_version | get "minio").version }}'
-    values:
-      - values/minio.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-trino"
     namespace: data
-    chart: "trino/trino"
+    chart: '{{ (.StateValues.helm_chart_version | get "trino").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "trino").version }}'
     values:
       - values/trino.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-superset"
     namespace: data
-    chart: "superset/superset"
+    chart: '{{ (.StateValues.helm_chart_version | get "superset").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "superset").version }}'
     values:
       - values/superset.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-nessie"
     namespace: data
-    chart: "nessie/nessie"
+    chart: '{{ (.StateValues.helm_chart_version | get "nessie").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "nessie").version }}'
     values:
       - values/nessie.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-airflow"
     namespace: data
-    chart: "apache-airflow/airflow"
+    chart: '{{ (.StateValues.helm_chart_version | get "airflow").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "airflow").version }}'
     values:
       - values/airflow.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-ollama"
     namespace: data
-    chart: "ollama/ollama"
+    chart: '{{ (.StateValues.helm_chart_version | get "ollama").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "ollama").version }}'
     values:
       - values/ollama.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-open-webui"
     namespace: data
-    chart: "open-webui/open-webui"
+    chart: '{{ (.StateValues.helm_chart_version | get "open-webui").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "open-webui").version }}'
     values:
       - values/openwebui.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-redpanda"
     namespace: data
-    chart: "redpanda/redpanda"
+    chart: '{{ (.StateValues.helm_chart_version | get "redpanda").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "redpanda").version }}'
     values:
       - values/redpanda.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-garage"
+    namespace: data
+    chart: '{{ (.StateValues.helm_chart_version | get "garage").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "garage").version }}'
+    values:
+      - values/garage.yaml.gotmpl

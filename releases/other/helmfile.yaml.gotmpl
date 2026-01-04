@@ -14,43 +14,43 @@ commonLabels:
 releases:
   - name: "{{ .Values.release_name }}-other-homepage"
     namespace: other
-    chart: "jameswynn/homepage"
+    chart: '{{ (.StateValues.helm_chart_version | get "homepage").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "homepage").version }}'
     values:
       - values/homepage.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-it-tools"
     namespace: other
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/it_tools.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mealie"
     namespace: other
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/mealie.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-convertx"
     namespace: other
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/convertx.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-stirling-pdf"
     namespace: other
-    chart: "stirling-pdf/stirling-pdf-chart"
+    chart: '{{ (.StateValues.helm_chart_version | get "stirling-pdf-chart").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "stirling-pdf-chart").version }}'
     values:
       - values/mazanoke.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mazanoke"
     namespace: other
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/mazanoke.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-omni-tools"
     namespace: other
-    chart: "bjw-s-labs/app-template"
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/omni_tools.yaml.gotmpl

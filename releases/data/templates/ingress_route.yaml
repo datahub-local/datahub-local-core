@@ -2,41 +2,6 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: '{{ include "name" . }}-minio'
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`data-s3.{{ .Values.gateway_hostname }}`)
-      kind: Rule
-      services:
-        - name: '{{ include "name" . }}-minio'
-          port: http
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  annotations:
-    gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Data
-    gethomepage.dev/icon: sh-minio
-    gethomepage.dev/name: Minio
-    gethomepage.dev/pod-selector: app=minio
-    gethomepage.dev/href: https://data-s3-console.{{ .Values.gateway_hostname }}/login
-  name: '{{ include "name" . }}-minio-console'
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`data-s3-console.{{ .Values.gateway_hostname }}`)
-      kind: Rule
-      services:
-        - name: '{{ include "name" . }}-minio-console'
-          port: http
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Airflow"
