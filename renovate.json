@@ -3,7 +3,9 @@
   "extends": [
     ":semanticCommits"
   ],
-  "schedule": ["* * * * 0,6"],
+  "schedule": [
+    "* * * * 0,6"
+  ],
   "automerge": false,
   "prCreation": "immediate",
   "automergeStrategy": "squash",
@@ -17,7 +19,8 @@
   "packageRules": [
     {
       "matchDatasources": [
-        "helm","docker"
+        "helm",
+        "docker"
       ],
       "matchUpdateTypes": [
         "major",
@@ -27,14 +30,8 @@
       "lockFileMaintenance": {
         "enabled": true
       },
-      "groupName": "all non-major Helm/Docker dependencies ({{ lookup (split (lowercase currentVersionTimestamp ) 't') 0 }})",
-      "groupSlug": "all-minor-patch-helm"
-    },
-    {
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "enabled": false
+      "groupName": "all Helm/Docker dependencies ({{ lookup (split (lowercase currentVersionTimestamp ) 't') 0 }})",
+      "groupSlug": "all-helm"
     }
   ],
   "customManagers": [
