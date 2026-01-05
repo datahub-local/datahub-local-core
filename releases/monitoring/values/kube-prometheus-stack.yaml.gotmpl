@@ -49,6 +49,9 @@ defaultRules:
   rules:
     kubeProxy: false
 
+  node:
+    fsSelector: 'fstype=~"ext[234]|btrfs|xfs|zfs"'
+
 grafana:
   assertNoLeakedSecrets: false
   deploymentStrategy:
