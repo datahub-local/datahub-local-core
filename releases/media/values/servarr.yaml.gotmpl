@@ -4,47 +4,73 @@
 argoCD: true
 
 global:
-  apikey: &apikey "{{ .StateValues.security_github_client_secret | trunc 32 }}"
+  apikey: "{{ .StateValues.security_github_client_secret | trunc 32 }}"
   storageClassName: &storageClassName "nfs"
   authMethod: External
 
+  ingressHostPattern: "media-SERVICE.{{ .Values.gateway_hostname }}"
+
   resources:
     sonarr: &sonarrResources
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
       limits:
         cpu: "1"
-        memory: "2Gi"
+        memory: "1Gi"
 
     radarr: &radarrResources
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
       limits:
         cpu: "1"
         memory: "1Gi"
 
     jellyfin: &jellyfinResources
-      limits:
+      requests:
         cpu: "1"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
         memory: "2Gi"
 
     jellyseerr: &jellyseerrResources
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
       limits:
         cpu: "1"
         memory: "1Gi"
 
     qbittorrent: &qbittorrentResources
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
       limits:
         cpu: "500m"
         memory: "512Mi"
 
     prowlarr: &prowlarrResources
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
       limits:
         cpu: "500m"
         memory: "512Mi"
 
     flaresolverr: &flaresolverrResources
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
       limits:
         cpu: "1"
         memory: "2Gi"
 
     exportarr: &exportarrResources
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
       limits:
         cpu: "250m"
         memory: "256Mi"
@@ -56,6 +82,10 @@ global:
   podOptionsAmd: &podOptionsAmd
     nodeSelector:
       kubernetes.io/arch: amd64
+
+  podOptionsNAS: &podOptionsNAS
+    nodeSelector:
+      kubernetes.io/hostname: datahublocal-nas
 
     tolerations:
       - effect: NoSchedule
@@ -131,6 +161,11 @@ sonarr:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-sonarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-sonarr"
+                port: main
           - match: Host(`media-sonarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -189,6 +224,11 @@ radarr:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-radarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-radarr"
+                port: main
           - match: Host(`media-radarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -248,6 +288,11 @@ jellyfin:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-jellyfin.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-jellyfin"
+                port: main
           - match: Host(`media-jellyfin.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -257,7 +302,7 @@ jellyfin:
   persistence:
     config:
       storageClass: *storageClassName
-    media:
+    data:
       existingClaim: *media-volume
     device-rga:
       enabled: true
@@ -280,7 +325,7 @@ jellyfin:
       mountPath: /dev/mpp_service
       hostPath: /dev/mpp_service
 
-  podOptions: *podOptionsArm
+  podOptions: *podOptionsAmd
 
 jellyseerr:
   crd:
@@ -319,6 +364,11 @@ jellyseerr:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-jellyseerr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-jellyseerr"
+                port: main
           - match: Host(`media-jellyseerr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -370,6 +420,17 @@ qbittorrent:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-qbittorrent"
+                port: main
+          - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
           - match: Host(`media-qbittorrent.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -426,6 +487,11 @@ prowlarr:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
+          - match: Host(`media-prowlarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-prowlarr"
+                port: main
           - match: Host(`media-prowlarr.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
             kind: Rule
             services:
@@ -439,6 +505,9 @@ prowlarr:
   podOptions: *podOptionsArm
 
 flaresolverr:
+  image:
+    repository: ghcr.io/flaresolverr/flaresolverr
+    tag: v3.4.6
   crd:
     verify:
       enabled: false
@@ -449,4 +518,4 @@ flaresolverr:
           main:
             resources: *flaresolverrResources
 
-  podOptions: *podOptionsAmd
+  podOptions: *podOptionsNAS

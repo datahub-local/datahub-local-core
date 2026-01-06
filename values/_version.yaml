@@ -83,7 +83,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.19.1
+    version: 0.20.12
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
