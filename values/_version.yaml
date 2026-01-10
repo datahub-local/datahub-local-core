@@ -9,7 +9,7 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v1.8.0
   ghcr.io/mealie-recipes/mealie: v3.8.0
   ghcr.io/tailscale/tailscale: v1.92.4
-  homeassistant/home-assistant: 2025.12.4
+  homeassistant/home-assistant: 2026.1.0
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
   n8nio/n8n: 2.2.2
@@ -67,7 +67,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 9.0.0
+    version: 10.1.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -87,7 +87,7 @@ helm_chart_version:
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
-    version: 2.2.0
+    version: 3.0.0
   superset:
     ref: superset/superset
     repository: https://apache.github.io/superset
