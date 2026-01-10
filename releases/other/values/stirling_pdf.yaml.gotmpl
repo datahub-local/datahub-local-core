@@ -1,7 +1,13 @@
-# https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/charts/stirling-pdf/values.yamll
+# https://github.com/Stirling-Tools/Stirling-PDF-chart/blob/main/charts/stirling-pdf/values.yaml
 
 envs:
   - name: SECURITY_ENABLELOGIN
     value: "false"
   - name: ALLOW_GOOGLE_VISIBILITY
     value: "false"
+
+probes:
+  liveness:
+    initialDelaySeconds: 25
+  readiness:
+    initialDelaySeconds: 30

@@ -41,7 +41,7 @@ releases:
     chart: '{{ (.StateValues.helm_chart_version | get "stirling-pdf-chart").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "stirling-pdf-chart").version }}'
     values:
-      - values/mazanoke.yaml.gotmpl
+      - values/stirling_pdf.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other-mazanoke"
     namespace: other
     chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
