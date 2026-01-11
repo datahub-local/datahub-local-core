@@ -2,17 +2,17 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.38.2
   ghcr.io/c4illin/convertx: v0.16.1
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.107.0
+  ghcr.io/coder/code-server: 4.107.1
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.8.0
-  ghcr.io/mealie-recipes/mealie: v3.8.0
-  ghcr.io/tailscale/tailscale: v1.92.4
+  ghcr.io/mealie-recipes/mealie: v3.9.2
+  ghcr.io/tailscale/tailscale: v1.92.5
   homeassistant/home-assistant: 2026.1.0
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.2.2
+  n8nio/n8n: 2.3.2
   valkey/valkey: 9.0.1
   velero/velero-plugin-for-aws: v1.13.1
 helm_chart_version:
@@ -23,7 +23,7 @@ helm_chart_version:
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
-    version: 4.5.0
+    version: 4.6.0
   cloudnative-pg:
     ref: cnpg/cloudnative-pg
     repository: https://cloudnative-pg.github.io/charts
@@ -47,7 +47,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 80.10.0
+    version: 80.13.3
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -59,11 +59,11 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.106.0
+    version: 0.106.1
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.36.0
+    version: 1.37.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -79,11 +79,11 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.30.0
+    version: 0.31.3
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.20.12
+    version: 0.21.0
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
@@ -103,7 +103,7 @@ helm_chart_version:
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
-    version: 11.3.1
+    version: 11.3.2
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
