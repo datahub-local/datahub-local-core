@@ -18,6 +18,12 @@ apiService:
 
 exposure:
   mode: clusterIP
+  clusterIP:
+    protocol: https
+    wsProtocol: wss
+    localAddress: "automation-vui.{{ .Values.gateway_hostname }}"
+    apiPort: 443
+
 
 auth:
   enabled: false # Done by reverse proxy

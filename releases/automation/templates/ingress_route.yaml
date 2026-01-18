@@ -22,6 +22,14 @@ spec:
       middlewares:
         - name: oauth2-proxy-auth
           namespace: security
+    - match: Host(`automation-vui.{{ .Values.gateway_hostname }}`) && (PathPrefix(`/ws/`) || PathPrefix(`/api/`))
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-vui-api-clusterip-svc'
+          port: vui-api
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
     - match: Host(`automation-vui.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
       kind: Rule
       services:
