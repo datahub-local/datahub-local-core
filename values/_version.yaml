@@ -6,13 +6,13 @@ container_image_version:
   ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
-  ghcr.io/gethomepage/homepage: v1.8.0
+  ghcr.io/gethomepage/homepage: v1.9.0
   ghcr.io/mealie-recipes/mealie: v3.9.2
   ghcr.io/tailscale/tailscale: v1.92.5
-  homeassistant/home-assistant: 2026.1.2
+  homeassistant/home-assistant: 2026.1.3
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.4.4
+  n8nio/n8n: 2.5.2
   valkey/valkey: 9.0.1
   velero/velero-plugin-for-aws: v1.13.2
 helm_chart_version:
@@ -47,11 +47,11 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 81.0.0
+    version: 81.2.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
-    version: 6.49.0
+    version: 6.51.0
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
@@ -63,7 +63,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.37.0
+    version: 1.38.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -79,11 +79,11 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.31.4
+    version: 0.31.5
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.22.3
+    version: 0.22.4
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
@@ -91,7 +91,7 @@ helm_chart_version:
   superset:
     ref: superset/superset
     repository: https://apache.github.io/superset
-    version: 0.15.0
+    version: 0.15.2
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
