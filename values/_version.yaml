@@ -3,7 +3,7 @@ container_image_version:
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.108.1
-  ghcr.io/corentinth/it-tools: 2024.10.22-7ca5933
+  ghcr.io/sharevb/it-tools: 2025.12.7
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.9.0

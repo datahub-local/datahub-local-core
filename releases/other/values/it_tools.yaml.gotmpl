@@ -10,8 +10,8 @@ controllers:
     containers:
       main:
         image:
-          repository: ghcr.io/corentinth/it-tools
-          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/corentinth/it-tools") }}{{ $value }}{{ end }}{{ end }}'
+          repository: ghcr.io/sharevb/it-tools
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/sharevb/it-tools") }}{{ $value }}{{ end }}{{ end }}'
         resources:
           requests:
             memory: 100Mi
@@ -39,7 +39,7 @@ service:
     controller: main
     ports:
       http:
-        port: 80
+        port: 8080
 
 rawResources:
   main:
