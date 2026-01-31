@@ -84,3 +84,42 @@ prometheus_rules:
           for: 1m
           labels:
             severity: critical
+        - alert: SpeedtestDownloadSpeedLowWarning
+          expr: |
+            (speedtest_download_bits_per_second < 0.2 * avg_over_time(speedtest_download_bits_per_second[24h]))
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Download speed dropped below 20% of 24h average"
+            description: "Current download speed is {{`{{ printf \"%.2f\" $value }}`}} bps, which is less than 20% of the average over the last 24h."
+
+        - alert: SpeedtestDownloadSpeedLowCritical
+          expr: |
+            (speedtest_download_bits_per_second < 0.05 * avg_over_time(speedtest_download_bits_per_second[24h]))
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Download speed dropped below 5% of 24h average"
+            description: "Current download speed is {{`{{ printf \"%.2f\" $value }}`}} bps, which is less than 5% of the average over the last 24h."
+
+        - alert: SpeedtestUploadSpeedLowWarning
+          expr: |
+            (speedtest_upload_bits_per_second < 0.2 * avg_over_time(speedtest_upload_bits_per_second[24h]))
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Upload speed dropped below 20% of 24h average"
+            description: "Current upload speed is {{`{{ printf \"%.2f\" $value }}`}} bps, which is less than 20% of the average over the last 24h."
+
+        - alert: SpeedtestUploadSpeedLowCritical
+          expr: |
+            (speedtest_upload_bits_per_second < 0.05 * avg_over_time(speedtest_upload_bits_per_second[24h]))
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Upload speed dropped below 5% of 24h average"
+            description: "Current upload speed is {{`{{ printf \"%.2f\" $value }}`}} bps, which is less than 5% of the average over the last 24h."

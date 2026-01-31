@@ -46,6 +46,12 @@ releases:
     values:
       - values/robusta.yaml.gotmpl
     disableValidationOnInstall: true
+  - name: "{{ .Values.release_name }}-speedtest-exporter"
+    namespace: monitoring
+    chart: 'oci://oci.trueforge.org/truecharts/speedtest-exporter'
+    version: '{{ (.StateValues.helm_chart_version | get "speedtest-exporter").version }}'
+    values:
+      - values/speedtest-exporter.yaml.gotmpl
   - name: "{{ .Values.release_name }}-monitoring"
     namespace: monitoring
     chart: "."
