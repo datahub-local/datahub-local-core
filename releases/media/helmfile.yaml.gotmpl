@@ -18,3 +18,15 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "servarr").version }}'
     values:
       - values/servarr.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-media-commafeed"
+    namespace: media
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/commafeed.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-media"
+    namespace: media
+    chart: "."
+    values:
+      - ../../values/global.yaml.gotmpl
+      - values/default.yaml.gotmpl

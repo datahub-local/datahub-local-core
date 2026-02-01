@@ -1,0 +1,9 @@
+categories:
+  Tech:
+    - url: "https://news.ycombinator.com/rss"
+      title: "Hacker News"
+    - url: "https://www.reddit.com/r/programming/.rss"
+      title: "Reddit Programming"
+  News:
+    - url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+      title: "NY Times World"

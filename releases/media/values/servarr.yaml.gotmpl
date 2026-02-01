@@ -105,16 +105,16 @@ metrics:
   enabled: &metricsEnabled true
 
 dash: # Set easy credentials because it is authenticated by reverse proxy.
-  username: admin
-  password: Password01
-  mail: admin@example.com
+  username: "{{ .StateValues.default_admin_user }}"
+  password: "{{ .StateValues.default_admin_password }}"
+  mail: "{{ .StateValues.default_admin_email }}"
   countryCode: "US"
   preferredLanguage: "en"
   preferredSubtitlesLanguages: "en,es"
 
 torrent: # Set easy credentials because it is authenticated by reverse proxy.
-  username: admin
-  password: Password01
+  username: "{{ .StateValues.default_admin_user }}"
+  password: "{{ .StateValues.default_admin_password }}"
 
 volumes:
   storageClass: *storageClassName

@@ -1,0 +1,213 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    initContainers:
+      wait-for-postgres:
+        image:
+          repository: apache/superset
+          tag: dockerize
+        command:
+          - /bin/sh
+          - -c
+          - dockerize -wait "tcp://{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local:5432" -timeout 3000s
+    containers:
+      main:
+        image:
+          repository: athou/commafeed
+          tag: 6.1.1-postgresql-jvm
+        env:
+          TZ: "Europe/Madrid"
+          QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local:5432/{{ .StateValues.postgres_extra_databases.commafeed }}"
+          QUARKUS_DATASOURCE_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: user
+          QUARKUS_DATASOURCE_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+          # Disable public registration since we're behind oauth2-proxy
+          CF_APP_ALLOWREGISTRATIONS: "false"
+          # Image proxy for privacy
+          CF_APP_IMAGEPROXYENABLED: "true"
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 200m
+          limits:
+            memory: 1Gi
+            cpu: 1
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /rest/server/get
+                port: 8082
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /rest/server/get
+                port: 8082
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 10
+  setup-job:
+    type: job
+    serviceAccount:
+      identifier: default
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/sync-wave: "10"
+    initContainers:
+      wait-for-commafeed:
+        image:
+          repository: apache/superset
+          tag: dockerize
+        command:
+          - /bin/sh
+          - -c
+          - dockerize -wait "tcp://{{ .Values.release_name }}-media-commafeed:8082" -timeout 3000s
+    containers:
+      main:
+        image:
+          repository: python
+          tag: 3.13
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir -r /scripts/setup_commafeed_requirements.txt && \
+            python /scripts/setup_commafeed.py
+        env:
+          COMMAFEED_URL: "http://{{ .Values.release_name }}-media-commafeed:8082"
+          SECRET_NAME: "{{ .Values.release_name }}-media-commafeed-api-key"
+          ADMIN_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-commafeed"
+                key: admin-username
+          ADMIN_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-commafeed"
+                key: admin-password
+          ADMIN_EMAIL:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-commafeed"
+                key: admin-email
+        envFrom:
+          - secretRef:
+              name: "{{ .Release.Name }}"
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 256Mi
+            cpu: 200m
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8082
+
+persistence:
+  data:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 512Mi
+    storageClass: longhorn-no-replica
+    globalMounts:
+      - path: /commafeed/data
+  setup-scripts:
+    enabled: true
+    type: configMap
+    identifier: main
+    advancedMounts:
+      setup-job:
+        main:
+          - path: /scripts
+secrets:
+  # Secret for configuration credentials
+  main:
+    stringData:
+      admin-username: "{{ .StateValues.default_admin_user }}"
+      admin-password: "{{ .StateValues.default_admin_password }}"
+      admin-email: "{{ .StateValues.default_admin_email }}"
+
+configMaps:
+  main:
+    enabled: true
+    includeInChecksum: false
+    data:
+      commafeed_config.yaml: |
+        {{- readFile "../files/scripts/commafeed/commafeed_config.yaml" | nindent 10 }}
+      setup_commafeed_requirements.txt: |
+        {{- readFile "../files/scripts/commafeed/requirements.txt" | nindent 10 }}
+      utils.py: |
+        {{- readFile "../files/scripts/commafeed/utils.py" | nindent 10 }}
+      setup_commafeed.py: |
+        {{- readFile "../files/scripts/commafeed/setup_commafeed.py" | nindent 10 }}
+
+rawResources:
+  ingress-route:
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "CommaFeed"
+      gethomepage.dev/group: "Media"
+      gethomepage.dev/icon: "sh-commafeed"
+      gethomepage.dev/href: "https://media-commafeed.{{ .Values.gateway_hostname }}"
+    spec:
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-commafeed.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-media-commafeed"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-commafeed.{{ .Values.gateway_hostname }}`) && PathPrefix(`/rest/`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-media-commafeed"
+                port: http
+          - match: Host(`media-commafeed.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http

@@ -1,21 +1,7 @@
 #{{ $security_admin_user := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).security_admin_user }}
 
-s3_buckets:
-  - name: datahub-local-bronze
-  - name: datahub-local-silver
-  - name: datahub-local-gold
-  - name: datahub-local-test
-  - name: datahub-local-backup
-  - name: datahub-local-n8n
-
-postgres_extra_databases:
-  airflow: airflow
-  mealie: mealie
-  n8n: n8n
-  nessie: nessie
-  openwebui: openwebui
-  superset: superset
-
-trino_user: "{{ $security_admin_user }}"
+postgres_user: "postgres"
+postgres_database: "postgres"
 
 superset_user: "{{ $security_admin_user }}"
+trino_user: "{{ $security_admin_user }}"

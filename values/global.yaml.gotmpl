@@ -41,8 +41,19 @@ security_oauth2_annotations:
       end
     }
 
-postgres_user: "postgres"
-postgres_database: "postgres"
+# Set easy credentials because it is authenticated by reverse proxy.
+default_admin_user: "admin"
+default_admin_password: "Password01"
+default_admin_email: "admin@example.com"
+
+postgres_extra_databases:
+  airflow: airflow
+  commafeed: commafeed
+  mealie: mealie
+  n8n: n8n
+  nessie: nessie
+  openwebui: openwebui
+  superset: superset
 
 kopia_backup_namespaces:
   - automation
@@ -52,5 +63,13 @@ kopia_backup_namespaces:
   - security
 
 s3_endpoint: "data-s3.homelab.alvsanand.com"
+s3_buckets:
+  - name: datahub-local-bronze
+  - name: datahub-local-silver
+  - name: datahub-local-gold
+  - name: datahub-local-test
+  - name: datahub-local-backup
+  - name: datahub-local-n8n
+
 backup_s3_bucket: datahub-local-backup
 backup_s3_region: homelab
