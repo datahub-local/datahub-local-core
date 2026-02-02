@@ -12,7 +12,7 @@ container_image_version:
   homeassistant/home-assistant: 2026.1.3
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.6.2
+  n8nio/n8n: 2.7.0
   valkey/valkey: 9.0.1
   velero/velero-plugin-for-aws: v1.13.2
 helm_chart_version:
@@ -31,7 +31,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.4.0
+    version: 0.5.0
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
