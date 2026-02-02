@@ -15,7 +15,7 @@
     if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then
       CUSTOM_COMMUNITY_NODES=$(echo "$CUSTOM_COMMUNITY_NODES" | sed "s/,/ /g")
       echo "Installing community nodes: $CUSTOM_COMMUNITY_NODES"
-      su $NODE_USER -c "cd && npm install $CUSTOM_COMMUNITY_NODES" || echo "Error Installing community nodes: $CUSTOM_COMMUNITY_NODES"
+      su $NODE_USER -c "export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true && cd && npx npm@9 install $CUSTOM_COMMUNITY_NODES" || echo "Error Installing community nodes: $CUSTOM_COMMUNITY_NODES"
     fi
     
     CMD="sh /docker-entrypoint.sh $@"
