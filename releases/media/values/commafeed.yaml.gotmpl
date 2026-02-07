@@ -184,6 +184,7 @@ rawResources:
     annotations:
       gethomepage.dev/enabled: "true"
       gethomepage.dev/name: "CommaFeed"
+      gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-media-commafeed"
       gethomepage.dev/group: "Media"
       gethomepage.dev/icon: "sh-commafeed"
       gethomepage.dev/href: "https://media-commafeed.{{ .Values.gateway_hostname }}"
