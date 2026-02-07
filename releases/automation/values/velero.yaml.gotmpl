@@ -22,6 +22,9 @@ configuration:
       volume: velero/backup
   features: EnableCSI
 
+# Disable CRD upgrade until it is fixed in the upstream chart
+upgradeCRDs: false
+
 deployNodeAgent: true
 nodeAgent:
   tolerations:
