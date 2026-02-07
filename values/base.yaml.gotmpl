@@ -4,10 +4,12 @@ environments:
     values:
       - ../../values/global.yaml.gotmpl
       - ../../values/_version.yaml
-      #{{- if isFile "/helm-values/security.yaml" }}
+      #{{- if isDir "/helm-values" }}
       - /helm-values/security.yaml
+      - /helm-values/extra-secrets.yaml
       #{{- else }}
       - ../../values/.security.test.yaml
+      - ../../values/.extra-secrets.test.yaml
       #{{- end }}
       - values/_kustomize.yaml.gotmpl
       - values/default.yaml.gotmpl

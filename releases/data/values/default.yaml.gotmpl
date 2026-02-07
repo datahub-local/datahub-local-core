@@ -1,7 +1,5 @@
-#{{ $security_admin_user := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).security_admin_user }}
-
 postgres_user: "postgres"
 postgres_database: "postgres"
 
-superset_user: "{{ $security_admin_user }}"
-trino_user: "{{ $security_admin_user }}"
+superset_user: "{{ .Values.default_admin_user }}"
+trino_user: "{{ .Values.default_admin_user }}"

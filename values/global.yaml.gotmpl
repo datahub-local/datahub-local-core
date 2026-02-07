@@ -9,43 +9,6 @@ ingress_port: 443
 
 security_enabled: true
 
-security_admin_user: "admin"
-
-# use '| replace "SOME_REGEX_TO_SKIP" "(static-plugins|manifest.json|clusters/).*"' before nindent to skip some urls
-security_oauth2_annotations:
-  nginx.ingress.kubernetes.io/enable-cors: "true"
-  nginx.ingress.kubernetes.io/auth-signin: https://security-oauth2.{{ $gateway_hostname }}/oauth2/start?rd=https://$host$escaped_request_uri
-  nginx.ingress.kubernetes.io/auth-url: https://security-oauth2.{{ $gateway_hostname }}/oauth2/auth
-  nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Access-Token, Set-Cookie, Authorization
-  nginx.ingress.kubernetes.io/auth-snippet: |
-    if ( $request_uri ~* "^/SOME_REGEX_TO_SKIP" ) {
-        return 200;
-    }
-
-    # set $auth_header $http_authorization;
-
-    # if ( $request_uri ~* ^/basic-auth/([^/]+)/(.*)$ ) {
-    #   set $basic_auth $1;
-    #   set $auth_header "Basic ${basic_auth}";
-    # }
-
-    # proxy_set_header Authorization $auth_header;
-  nginx.ingress.kubernetes.io/configuration-snippet: |
-    auth_request_set $name_upstream_1 $upstream_cookie__oauth2_proxy;
-
-    # rewrite ^(/auth-basic/[^/]+)/(.*)$ /$2 break;
-
-    access_by_lua_block {
-      if ngx.var.name_upstream_1 ~= "" then
-        ngx.header["Set-Cookie"] = "_oauth2_proxy=" .. ngx.var.name_upstream_1 .. ngx.var.auth_cookie:match("(; .*)")
-      end
-    }
-
-# Set easy credentials because it is authenticated by reverse proxy.
-default_admin_user: "admin"
-default_admin_password: "Password01"
-default_admin_email: "admin@example.com"
-
 postgres_extra_databases:
   airflow: airflow
   commafeed: commafeed
