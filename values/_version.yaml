@@ -2,17 +2,17 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.40.0
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
-  ghcr.io/coder/code-server: 4.108.2
+  ghcr.io/coder/code-server: 4.109.2
   ghcr.io/sharevb/it-tools: 2026.1.4
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.10.1
   ghcr.io/mealie-recipes/mealie: v3.10.2
-  ghcr.io/tailscale/tailscale: v1.94.1
-  homeassistant/home-assistant: 2026.2.1
+  ghcr.io/tailscale/tailscale: v1.94.2
+  homeassistant/home-assistant: 2026.2.2
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.8.2
+  n8nio/n8n: 2.8.3
   valkey/valkey: 9.0.2
   velero/velero-plugin-for-aws: v1.13.2
 helm_chart_version:
@@ -31,7 +31,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.4.0
+    version: 0.5.0
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
@@ -47,7 +47,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 81.6.3
+    version: 81.6.9
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -83,7 +83,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.22.9
+    version: 0.22.11
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
