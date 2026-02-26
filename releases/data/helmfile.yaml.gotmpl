@@ -7,12 +7,16 @@ releases:
     namespace: data
     chart: "."
     values:
+      #{{- if isDir "/helm-values" }}
+      - /helm-values/security.yaml
+      - /helm-values/extra-secrets.yaml
+      #{{- else }}
+      - ../../values/.security.test.yaml
+      - ../../values/.extra-secrets.test.yaml
+      #{{- end }}
       - ../../values/global.yaml.gotmpl
       - values/default.yaml.gotmpl
       - values/superset.yaml.gotmpl
-      #{{- if isFile "/helm-values/security.yaml" }}
-      - /helm-values/security.yaml
-      #{{- end }}
   - name: "{{ .Values.release_name }}-data-cloudnative-pg"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "cloudnative-pg").ref }}'

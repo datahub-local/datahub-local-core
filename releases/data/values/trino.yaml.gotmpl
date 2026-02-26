@@ -38,13 +38,13 @@ rules:
     {
       "catalogs": [
         {
-          "user": "{{ .StateValues.trino_user }}",
+          "user": "{{ .StateValues.default_admin_user }}",
           "catalog": ".*",
           "allow": "all"
         },
       "schemas": [
         {
-          "user": "{{ .StateValues.trino_user }}",
+          "user": "{{ .StateValues.default_admin_user }}",
           "schema": ".*",
           "owner": true
         }
