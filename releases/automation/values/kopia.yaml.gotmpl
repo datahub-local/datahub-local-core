@@ -88,6 +88,10 @@ configMaps:
           </body>
         </html>
 
+defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
 controllers:
   nginx:
     strategy: RollingUpdate

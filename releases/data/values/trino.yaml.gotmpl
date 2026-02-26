@@ -26,9 +26,15 @@ coordinator:
   jvm:
     maxHeapSize: "4G"
 
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
 worker:
   jvm:
     maxHeapSize: "4G"
+
+  nodeSelector:
+    kubernetes.io/arch: arm64
 
 serviceAccount:
   create: true

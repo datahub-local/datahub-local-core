@@ -83,6 +83,22 @@ global:
         cpu: "500m"
         memory: "512Mi"
 
+    audiobookshelf: &audiobookshelfResources
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    auralarchive: &auralarchiveResources
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
   podOptionsArm: &podOptionsArm
     nodeSelector:
       kubernetes.io/arch: arm64
@@ -584,3 +600,117 @@ bazarr:
       existingClaim: *media-volume
 
   podOptions: *podOptionsArm
+
+audiobookshelf:
+  crd:
+    verify:
+      enabled: false
+  workload:
+    main:
+      podSpec:
+        containers:
+          main:
+            resources: *audiobookshelfResources
+  ingress:
+    audiobookshelf-ing:
+      enabled: false
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "audiobookshelf"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=audiobookshelf"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-audiobookshelf"
+          gethomepage.dev/href: "https://media-audiobookshelf.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-media-servarr-audiobookshelf"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-audiobookshelf.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-audiobookshelf"
+                port: main
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-audiobookshelf.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-audiobookshelf"
+                port: main
+          - match: Host(`media-audiobookshelf.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
+  persistence:
+    config:
+      storageClass: *storageClassName
+    audiobooks:
+      existingClaim: *media-volume
+    metadata:
+      storageClass: *storageClassName
+
+  podOptions: *podOptionsArm
+
+auralarchive:
+  crd:
+    verify:
+      enabled: false
+  workload:
+    main:
+      podSpec:
+        containers:
+          main:
+            resources: *auralarchiveResources
+  ingress:
+    auralarchive-ing:
+      enabled: false
+  extraTpl:
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "auralarchive"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/name=auralarchive"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-auralarchive"
+          gethomepage.dev/href: "https://media-auralarchive.{{ .Values.gateway_hostname }}"
+        name: "{{ $.Values.release_name }}-media-servarr-auralarchive"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-auralarchive.{{ .StateValues.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-auralarchive"
+                port: main
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-auralarchive.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/api/`)
+            kind: Rule
+            services:
+              - name: "{{ $.Values.release_name }}-media-servarr-auralarchive"
+                port: main
+          - match: Host(`media-auralarchive.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
+  persistence:
+    config:
+      storageClass: *storageClassName
+    downloads:
+      existingClaim: *downloads-volume
+
+  podOptions: *podOptionsAmd

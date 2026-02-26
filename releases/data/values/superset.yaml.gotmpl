@@ -5,6 +5,9 @@ postgresql:
 redis:
   enabled: false
 
+nodeSelector:
+  kubernetes.io/arch: arm64
+
 supersetNode:
   connections:
     redis_password: true

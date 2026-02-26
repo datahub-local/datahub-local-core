@@ -53,6 +53,9 @@ extraEnv: |
         name: s3-credentials
         key: secretKey
 
+nodeSelector:
+  kubernetes.io/arch: arm64
+
 postgresql:
   enabled: false
 redis:
