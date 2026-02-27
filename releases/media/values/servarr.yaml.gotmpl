@@ -274,7 +274,7 @@ jellyfin:
   crd:
     verify:
       enabled: false
-  securityContext:
+  securityContext: &rootSecurityContext
     container:
       runAsNonRoot: false
       privileged: true
@@ -468,7 +468,7 @@ qbittorrent:
     downloads:
       existingClaim: *downloads-volume
 
-  podOptions: *podOptionsArm
+  podOptions: *podOptionsAmd
 
 prowlarr:
   crd:
@@ -663,6 +663,7 @@ auralarchive:
   crd:
     verify:
       enabled: false
+  securityContext: &rootSecurityContext
   workload:
     main:
       podSpec:
