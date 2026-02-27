@@ -1,5 +1,5 @@
 container_image_version:
-  ghcr.io/browserless/chromium: v2.40.0
+  ghcr.io/browserless/chromium: v2.42.0
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.109.2
@@ -7,19 +7,19 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.10.1
-  ghcr.io/mealie-recipes/mealie: v3.10.2
+  ghcr.io/mealie-recipes/mealie: v3.11.0
   ghcr.io/tailscale/tailscale: v1.94.2
-  homeassistant/home-assistant: 2026.2.2
+  homeassistant/home-assistant: 2026.2.3
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.8.3
-  valkey/valkey: 9.0.2
+  n8nio/n8n: 2.10.2
+  valkey/valkey: 9.0.3
   velero/velero-plugin-for-aws: v1.13.2
 helm_chart_version:
   airflow:
     ref: apache-airflow/airflow
     repository: https://airflow.apache.org
-    version: 1.18.0
+    version: 1.19.0
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
@@ -31,7 +31,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.4.0
+    version: 0.5.0
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
@@ -47,7 +47,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 82.0.0
+    version: 82.4.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -59,15 +59,15 @@ helm_chart_version:
   nessie:
     ref: nessie/nessie
     repository: https://charts.projectnessie.org
-    version: 0.107.2
+    version: 0.107.3
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.42.0
+    version: 1.46.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 12.0.1
+    version: 12.5.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -79,7 +79,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.32.0
+    version: 0.33.0
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
@@ -87,11 +87,11 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 13.13.17
+    version: 13.16.1
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
-    version: 3.0.0
+    version: 3.1.0
   superset:
     ref: superset/superset
     repository: https://apache.github.io/superset
@@ -103,11 +103,11 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.2.4
+    version: 2.2.5
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
-    version: 11.3.2
+    version: 11.4.0
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
