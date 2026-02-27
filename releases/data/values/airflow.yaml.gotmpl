@@ -13,9 +13,9 @@ migrateDatabaseJob:
   jobAnnotations:
     "argocd.argoproj.io/hook": Sync
 
-#{{- $numWorkers := 2 }}
+#{{- $numWorkers := 1 }}
 #{{- $workerConcurrency := 5 }}
-#{{- $maxMemoryPerWorker := 2 }}
+#{{- $maxMemoryPerWorker := 1 }}
 #{{- $maxMemoryPerTask := (divf (mulf 0.8 $maxMemoryPerWorker) $workerConcurrency) | printf "%.1f" }}
 
 config:
@@ -71,23 +71,26 @@ data:
 apiServer:
   apiServerConfig: |
     {{- readFile "../files/scripts/airflow/webserver_config.py" | nindent 4 }}
+  env:
+    - name: "AIRFLOW__API__WORKERS"
+      value: "1"
   resources:
     limits:
-      cpu: 2
-      memory: 2Gi
+      cpu: 1
+      memory: 1Gi
     requests:
-      cpu: 2
-      memory: 2Gi
+      cpu: 1
+      memory: 1Gi
 
 workers:
   replicas: {{$numWorkers}}
 
   resources:
     limits:
-      cpu: 1
+      cpu: 750m
       memory: "{{ $maxMemoryPerWorker }}Gi"
     requests:
-      cpu: 1
+      cpu: 750m
       memory: "{{ $maxMemoryPerWorker }}Gi"
 
   persistence:
