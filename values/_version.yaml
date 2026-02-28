@@ -1,13 +1,14 @@
 container_image_version:
+  g33kphr33k/musicgrabber: 2.2.4
   ghcr.io/browserless/chromium: v2.42.0
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
   ghcr.io/coder/code-server: 4.109.2
-  ghcr.io/sharevb/it-tools: 2026.1.4
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.10.1
   ghcr.io/mealie-recipes/mealie: v3.11.0
+  ghcr.io/sharevb/it-tools: 2026.1.4
   ghcr.io/tailscale/tailscale: v1.94.2
   homeassistant/home-assistant: 2026.2.3
   iib0011/omni-tools: 0.6.0

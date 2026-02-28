@@ -24,6 +24,12 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/commafeed.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-media-musicgrabber"
+    namespace: media
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/musicgrabber.yaml.gotmpl
   - name: "{{ .Values.release_name }}-media"
     namespace: media
     chart: "."
