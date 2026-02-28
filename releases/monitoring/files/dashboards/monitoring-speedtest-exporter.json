@@ -106,7 +106,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "speedtest_up{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_up{}",
           "interval": "",
           "legendFormat": "",
           "range": true,
@@ -183,7 +183,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "avg_over_time(speedtest_up{instance=\"$instance\", job=\"$job\"}[24h]) * 100",
+          "expr": "avg_over_time(speedtest_up{}[24h]) * 100",
           "interval": "",
           "legendFormat": "24h Uptime",
           "refId": "A"
@@ -249,7 +249,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "speedtest_server_id{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_server_id{}",
           "interval": "",
           "legendFormat": "",
           "range": true,
@@ -326,7 +326,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - timestamp(speedtest_up{instance=\"$instance\", job=\"$job\"})",
+          "expr": "time() - timestamp(speedtest_up{})",
           "instant": false,
           "interval": "",
           "legendFormat": "Last Test",
@@ -407,7 +407,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "speedtest_download_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_download_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "",
           "range": true,
@@ -485,7 +485,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_upload_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_upload_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -549,7 +549,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_ping_latency_milliseconds{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_ping_latency_milliseconds{}",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -626,7 +626,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_jitter_latency_milliseconds{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_jitter_latency_milliseconds{}",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -743,7 +743,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_download_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_download_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "Download Speed (Mbits/s)",
           "refId": "A"
@@ -754,7 +754,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_upload_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_upload_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "Upload Speed (Mbits/s)",
           "refId": "B"
@@ -871,7 +871,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_upload_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_upload_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "Upload Speed (Mbits/s)",
           "refId": "A"
@@ -975,7 +975,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_download_bits_per_second{instance=\"$instance\", job=\"$job\"}*10^-6",
+          "expr": "speedtest_download_bits_per_second{}*10^-6",
           "interval": "",
           "legendFormat": "Download Speed (Mbits/s)",
           "refId": "A"
@@ -1078,7 +1078,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_ping_latency_milliseconds{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_ping_latency_milliseconds{}",
           "interval": "",
           "legendFormat": "Ping (ms)",
           "refId": "A"
@@ -1089,7 +1089,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "speedtest_jitter_latency_milliseconds{instance=\"$instance\", job=\"$job\"}",
+          "expr": "speedtest_jitter_latency_milliseconds{}",
           "instant": false,
           "interval": "",
           "legendFormat": "Jitter (ms)",
@@ -1111,53 +1111,6 @@
   ],
   "templating": {
     "list": [
-      {
-        "allowCustomValue": true,
-        "current": {
-          "text": "10.42.11.187:9798",
-          "value": "10.42.11.187:9798"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(speedtest_up,instance)",
-        "includeAll": false,
-        "label": "Instance",
-        "name": "instance",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(speedtest_up,instance)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "current": {
-          "text": "speedtest-exporter",
-          "value": "speedtest-exporter"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(speedtest_up,job)",
-        "includeAll": false,
-        "label": "Job",
-        "name": "job",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(speedtest_up,job)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      }
     ]
   },
   "time": {
@@ -1168,5 +1121,5 @@
   "timezone": "",
   "title": "Homelab / Monitoring / Speedtest",
   "uid": "-fs18ztMz",
-  "version": 2
+  "version": 3
 }
