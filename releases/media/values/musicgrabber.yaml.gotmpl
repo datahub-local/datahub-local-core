@@ -1,0 +1,113 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# https://gitlab.com/g33kphr33k/musicgrabber
+
+controllers:
+  main:
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      dnsPolicy: "ClusterFirst"
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: datahublocal-legion-laptop
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+    serviceAccount:
+      identifier: default
+    containers:
+      main:
+        image:
+          repository: g33kphr33k/musicgrabber
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "g33kphr33k/musicgrabber") }}{{ $value }}{{ end }}{{ end }}'
+        env:
+          MUSIC_DIR: /music
+          DB_PATH: /data/music_grabber.db
+          ENABLE_MUSICBRAINZ: true
+          ENABLE_LYRICS: true
+          DEFAULT_CONVERT_TO_FLAC: true
+          SINGLES_SUBDIR: Singles
+          PLAYLISTS_SUBDIR: Playlists
+          ORGANISE_BY_ARTIST: false
+          LISTEN_ADDR: 0.0.0.0
+          LISTEN_PORT: 8080
+        resources:
+          requests:
+            memory: 500Mi
+            cpu: 500m
+          limits:
+            memory: 2Gi
+            cpu: 1
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: local-path
+    size: 128Mi
+    globalMounts:
+      - path: /data
+  music:
+    type: hostPath
+    hostPath: /mnt/c/Users/alvsa/Music/musicgrabber
+    globalMounts:
+      - path: /music
+  shm:
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 2Gi
+    globalMounts:
+      - path: /dev/shm
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+rawResources:
+  main:
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "MusicGrabber"
+      gethomepage.dev/group: "Media"
+      gethomepage.dev/icon: "sh-music-service"
+      gethomepage.dev/href: "https://media-musicgrabber.{{ .Values.gateway_hostname }}"
+    spec:
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`media-musicgrabber.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-media-musicgrabber"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`media-musicgrabber.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
