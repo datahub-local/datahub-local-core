@@ -14,6 +14,8 @@ _shared_config:
         secretKeyRef:
           name: postgresql-admin-credentials
           key: password
+    DB_POSTGRESDB_STATEMENT_TIMEOUT:
+      value: "0"
 
     N8N_LICENSE_ACTIVATION_KEY:
       valueFrom:
