@@ -80,6 +80,9 @@ main:
       block_env_access_in_node: false
       skip_auth_on_oauth_callback: true
 
+      default_cors: "true"
+      cors_allowed_origins: "*"
+
     queue:
       health:
         check:
@@ -325,6 +328,11 @@ extraManifests:
           middlewares:
             - name: oauth2-proxy-auth
               namespace: security
+        - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`) && (PathPrefix(`/rest/`) || PathPrefix(`/webhook/`)) || PathPrefix(`/form/`)) || PathPrefix(`/form-test/`))
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-automation-n8n"
+              port: http
         - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
           kind: Rule
           services:

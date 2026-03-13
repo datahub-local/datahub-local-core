@@ -17,7 +17,7 @@ const {
     CUSTOM_INSTANCE_OWNER_PASSWORD
 } = process.env;
 
-const ignoreAuthRegexp = /^\/(api|assets|healthz|metrics|rest|webhook)/;
+const ignoreAuthRegexp = /^\/(api|assets|healthz|metrics|rest|webhook|form|form-test)/;
 
 module.exports = {
     n8n: {
