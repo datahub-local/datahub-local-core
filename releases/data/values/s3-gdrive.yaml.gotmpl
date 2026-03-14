@@ -1,0 +1,105 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    containers:
+      main:
+        image:
+          repository: rclone/rclone
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "rclone/rclone") }}{{ $value }}{{ end }}{{ end }}'
+        command:
+          - /bin/sh
+          - -ec
+        args:
+          - >-
+            rclone serve s3 gdrive:/s3-gdrive
+            --addr :8080
+            --auth-key "${RCLONE_S3_ACCESS_KEY},${RCLONE_S3_SECRET_KEY}"
+            --vfs-cache-mode writes
+            --cache-dir /cache
+        env:
+          TZ: "Europe/Madrid"
+          RCLONE_CONFIG_GDRIVE_TYPE: drive
+          RCLONE_CONFIG_GDRIVE_SCOPE: drive
+          RCLONE_S3_ACCESS_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: s3-credentials
+                key: accessKey
+          RCLONE_S3_SECRET_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: s3-credentials
+                key: secretKey
+          # Expected in secret: RCLONE_DRIVE_SERVICE_ACCOUNT_CREDENTIALS (JSON credentials).
+          RCLONE_DRIVE_SERVICE_ACCOUNT_CREDENTIALS:
+            valueFrom:
+              secretKeyRef:
+                name: gdrive-rclone-credentials
+                key: jsonKey
+        envFrom:
+          - secretRef:
+              name: gdrive-rclone-credentials
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 10
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+persistence:
+  cache:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 20Gi
+    storageClass: longhorn-no-replica
+    globalMounts:
+      - path: /cache
+
+rawResources:
+  ingress-route:
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: "S3 GDrive"
+      gethomepage.dev/group: "Data"
+      gethomepage.dev/icon: "mdi-cloud-sync-outline"
+      gethomepage.dev/href: "https://data-s3-gdrive.{{ .Values.gateway_hostname }}"
+    spec:
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`data-s3-gdrive.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-data-s3-gdrive"
+                port: http

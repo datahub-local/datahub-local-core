@@ -84,3 +84,9 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "garage").version }}'
     values:
       - values/garage.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-s3-gdrive"
+    namespace: data
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/s3-gdrive.yaml.gotmpl
