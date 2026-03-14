@@ -11,7 +11,7 @@ s3-configuration: &s3-configuration
   config:
     region: homelab
     s3ForcePathStyle: true
-    s3Url: "https://{{ .Values.s3_endpoint }}"
+    s3Url: "https://{{ .Values.s3_gdrive_endpoint }}"
 
 configuration:
   backupStorageLocation:

@@ -27,7 +27,7 @@ controllers:
           TZ: "Europe/Madrid"
           RCLONE_CONFIG_GDRIVE_TYPE: drive
           RCLONE_CONFIG_GDRIVE_SCOPE: drive
-          RCLONE_CONFIG_GDRIVE_TOKEN:
+          RCLONE_CONFIG_GDRIVE_TOKEN: # rclone authorize "drive" --auth-no-open-browser
             valueFrom:
               secretKeyRef:
                 name: gdrive-rclone-credentials
@@ -94,7 +94,7 @@ controllers:
             #!/bin/bash
             set -e
 
-            #{{- range $bucket := .StateValues.s3_grive_buckets }}
+            #{{- range $bucket := .StateValues.s3_gdrive_buckets }}
             echo "Creating bucket: {{ $bucket.name }}"
             aws s3api create-bucket \
               --bucket "{{ $bucket.name }}" \

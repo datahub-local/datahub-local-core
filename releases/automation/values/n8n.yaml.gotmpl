@@ -100,13 +100,6 @@ main:
         pool:
           size: 10
 
-    external:
-      storage:
-        s3:
-          host: "{{ .Values.s3_endpoint }}"
-          protocol: https
-          bucket_name: datahub-local-n8n
-
     node:
       function_allow_external: "*"
 
