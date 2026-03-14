@@ -51,6 +51,13 @@ poolers:
       podMonitor:
         enabled: true
 
+databases:
+  # {{- range $key, $value := .Values.postgres_extra_databases }}
+  - name: "{{ $value }}"
+    ensure: "present"
+    owner: ""
+  # {{- end }}
+
 backups:
   enabled: true
 

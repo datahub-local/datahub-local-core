@@ -17,15 +17,21 @@ controllers:
           - -ec
         args:
           - >-
-            rclone serve s3 gdrive:/s3-gdrive
+            rclone serve s3 gdrive:
             --addr :8080
             --auth-key "${RCLONE_S3_ACCESS_KEY},${RCLONE_S3_SECRET_KEY}"
             --vfs-cache-mode writes
             --cache-dir /cache
+            --log-level INFO
         env:
           TZ: "Europe/Madrid"
           RCLONE_CONFIG_GDRIVE_TYPE: drive
           RCLONE_CONFIG_GDRIVE_SCOPE: drive
+          RCLONE_CONFIG_GDRIVE_TOKEN:
+            valueFrom:
+              secretKeyRef:
+                name: gdrive-rclone-credentials
+                key: RCLONE_CONFIG_GDRIVE_TOKEN
           RCLONE_S3_ACCESS_KEY:
             valueFrom:
               secretKeyRef:
@@ -36,12 +42,11 @@ controllers:
               secretKeyRef:
                 name: s3-credentials
                 key: secretKey
-          # Expected in secret: RCLONE_DRIVE_SERVICE_ACCOUNT_CREDENTIALS (JSON credentials).
-          RCLONE_DRIVE_SERVICE_ACCOUNT_CREDENTIALS:
+          RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID:
             valueFrom:
               secretKeyRef:
                 name: gdrive-rclone-credentials
-                key: jsonKey
+                key: RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID
         envFrom:
           - secretRef:
               name: gdrive-rclone-credentials
@@ -63,6 +68,67 @@ controllers:
               failureThreshold: 30
               periodSeconds: 10
 
+  setup-job:
+    type: job
+    serviceAccount:
+      identifier: default
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+    initContainers:
+      wait-for-s3-gdrive:
+        image:
+          repository: apache/superset
+          tag: dockerize
+        command:
+          - /bin/sh
+          - -c
+          - dockerize -wait "tcp://{{ .Values.release_name }}-data-s3-gdrive:8080" -timeout 3000s
+    containers:
+      main:
+        image:
+          repository: amazon/aws-cli
+          tag: latest
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            #!/bin/bash
+            set -e
+
+            #{{- range $bucket := .StateValues.s3_grive_buckets }}
+            echo "Creating bucket: {{ $bucket.name }}"
+            aws s3api create-bucket \
+              --bucket "{{ $bucket.name }}" \
+              --endpoint-url "${S3_ENDPOINT}" \
+              --region homelab || echo "Bucket {{ $bucket.name }} already exists or creation skipped"
+
+            echo "Creating .keep file in bucket: {{ $bucket.name }}"
+            aws s3api put-object \
+              --bucket "{{ $bucket.name }}" \
+              --key ".keep" \
+              --endpoint-url "${S3_ENDPOINT}" || echo "Failed to create .keep file in {{ $bucket.name }}"
+            #{{- end }}
+
+            echo "Bucket creation completed"
+        env:
+          S3_ENDPOINT: "http://{{ .Values.release_name }}-data-s3-gdrive:8080"
+          AWS_ACCESS_KEY_ID:
+            valueFrom:
+              secretKeyRef:
+                name: s3-credentials
+                key: accessKey
+          AWS_SECRET_ACCESS_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: s3-credentials
+                key: secretKey
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 256Mi
+            cpu: 200m
+
 serviceAccount:
   default:
     enabled: true
@@ -73,15 +139,6 @@ service:
     ports:
       http:
         port: 8080
-
-persistence:
-  cache:
-    enabled: true
-    accessMode: ReadWriteOnce
-    size: 20Gi
-    storageClass: longhorn-no-replica
-    globalMounts:
-      - path: /cache
 
 rawResources:
   ingress-route:
