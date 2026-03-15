@@ -6,7 +6,7 @@ container_image_version:
   ghcr.io/coder/code-server: 4.111.0
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
-  ghcr.io/gethomepage/homepage: v1.10.1
+  ghcr.io/gethomepage/homepage: v1.11.0
   ghcr.io/mealie-recipes/mealie: v3.12.0
   ghcr.io/sharevb/it-tools: 2026.1.4
   ghcr.io/tailscale/tailscale: v1.94.2
@@ -85,7 +85,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.25.0
+    version: 0.25.1
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
