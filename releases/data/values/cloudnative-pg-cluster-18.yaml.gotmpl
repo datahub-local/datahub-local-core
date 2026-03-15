@@ -21,7 +21,7 @@ cluster:
 
   walStorage:
     enabled: true
-    size: 3Gi
+    size: 4Gi
     storageClass: "longhorn"
 
   enableSuperuserAccess: true
@@ -30,6 +30,10 @@ cluster:
   env:
     - name: AWS_DEFAULT_REGION
       value: "homelab"
+    - name: AWS_REQUEST_CHECKSUM_CALCULATION
+      value: "WHEN_REQUIRED"
+    - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+      value: "WHEN_REQUIRED"
 
   monitoring:
     enabled: true
@@ -55,7 +59,7 @@ databases:
   # {{- range $key, $value := .Values.postgres_extra_databases }}
   - name: "{{ $value }}"
     ensure: "present"
-    owner: ""
+    owner: ''
   # {{- end }}
 
 backups:

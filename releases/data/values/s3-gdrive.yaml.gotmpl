@@ -20,7 +20,8 @@ controllers:
             rclone serve s3 gdrive:
             --addr :8080
             --auth-key "${RCLONE_S3_ACCESS_KEY},${RCLONE_S3_SECRET_KEY}"
-            --vfs-cache-mode writes
+            --vfs-cache-mode full
+            --vfs-cache-max-size 10G
             --cache-dir /cache
             --log-level INFO
         env:
@@ -129,6 +130,15 @@ controllers:
             memory: 256Mi
             cpu: 200m
 
+persistence:
+  cache:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: nfs
+    size: 10Gi
+    globalMounts:
+      - path: /cache
+
 serviceAccount:
   default:
     enabled: true
@@ -149,7 +159,7 @@ rawResources:
       gethomepage.dev/name: "S3 GDrive"
       gethomepage.dev/group: "Data"
       gethomepage.dev/icon: "mdi-cloud-sync-outline"
-      gethomepage.dev/href: "https://data-s3-gdrive.{{ .Values.gateway_hostname }}"
+      gethomepage.dev/href: "https://drive.google.com/drive/search?q=s3_gdrive"
     spec:
       spec:
         entryPoints:
