@@ -201,7 +201,7 @@ rawResources:
             middlewares:
               - name: oauth2-proxy-auth
                 namespace: security
-          - match: Host(`media-commafeed.{{ .Values.gateway_hostname }}`) && PathPrefix(`/rest/`)
+          - match: Host(`media-commafeed.{{ .Values.gateway_hostname }}`) && (PathPrefix(`/rest/`) || PathPrefix(`/manifest.json`) || PathPrefix(`/j_security_check`))
             kind: Rule
             services:
               - name: "{{ .Values.release_name }}-media-commafeed"
