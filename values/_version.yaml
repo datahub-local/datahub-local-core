@@ -89,7 +89,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 13.17.2
+    version: 14.0.0
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
@@ -109,7 +109,7 @@ helm_chart_version:
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
-    version: 11.4.0
+    version: 12.0.0
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
