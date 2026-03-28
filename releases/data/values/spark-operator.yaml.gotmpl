@@ -1,0 +1,13 @@
+# https://github.com/kubeflow/spark-operator/blob/master/charts/spark-operator-chart/values.yaml
+
+controller:
+  uiIngress:
+    enable: false
+
+spark:
+  jobNamespaces:
+    - ""
+
+prometheus:
+  podMonitor:
+    create: true

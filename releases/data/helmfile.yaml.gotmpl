@@ -2,6 +2,10 @@
 bases:
   - ../../values/base.yaml.gotmpl
 ---
+apiVersions:
+  - monitoring.coreos.com/v1/PodMonitor
+  - monitoring.coreos.com/v1/ServiceMonitor
+
 releases:
   - name: "{{ .Values.release_name }}-data"
     namespace: data
@@ -90,3 +94,9 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/s3-gdrive.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-spark-operator"
+    namespace: data
+    chart: '{{ (.StateValues.helm_chart_version | get "spark-operator").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "spark-operator").version }}'
+    values:
+      - values/spark-operator.yaml.gotmpl

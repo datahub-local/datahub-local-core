@@ -89,6 +89,10 @@ helm_chart_version:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
     version: 14.0.0
+  spark-operator:
+    ref: spark-operator/spark-operator
+    repository: https://kubeflow.github.io/spark-operator
+    version: 2.5.0
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
