@@ -7,7 +7,6 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.12.1
-  ghcr.io/mealie-recipes/mealie: v3.14.0
   ghcr.io/sharevb/it-tools: 2026.1.4
   ghcr.io/tailscale/tailscale: v1.94.2
   homeassistant/home-assistant: 2026.3.4
