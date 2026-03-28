@@ -1,5 +1,5 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 2.5.2
+  g33kphr33k/musicgrabber: 2.5.3
   ghcr.io/browserless/chromium: v2.46.0
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
