@@ -68,7 +68,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 12.13.0
+    version: 13.0.1
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -76,7 +76,7 @@ helm_chart_version:
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
-    version: 25.3.3
+    version: 26.1.2
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
