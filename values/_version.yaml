@@ -36,7 +36,7 @@ helm_chart_version:
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
-    version: 0.4.1
+    version: 0.4.2
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
