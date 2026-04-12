@@ -37,6 +37,8 @@ controllers:
             value: "true"
           - name: TS_EXTRA_ARGS
             value: --snat-subnet-routes=false
+          - name: TS_HOSTNAME
+            value: "{{ $.Values.release_name }}-security-tailscale"
         resources:
           requests:
             memory: 100Mi
@@ -74,8 +76,8 @@ rawResources:
     spec:
       subjects:
         - kind: ServiceAccount
-          name: "{{ $.Values.release_name }}-tailscale"
+          name: "{{ $.Values.release_name }}-security-tailscale"
       roleRef:
         kind: Role
-        name: "{{ $.Values.release_name }}-tailscale-role"
+        name: "{{ $.Values.release_name }}-security-tailscale-role"
         apiGroup: rbac.authorization.k8s.io
