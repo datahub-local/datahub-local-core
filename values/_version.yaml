@@ -88,7 +88,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 14.0.2
+    version: 14.1.0
   spark-operator:
     ref: spark-operator/spark-operator
     repository: https://kubeflow.github.io/spark-operator
