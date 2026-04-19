@@ -1,5 +1,5 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 2.6.4
+  g33kphr33k/musicgrabber: 2.6.5
   ghcr.io/browserless/chromium: v2.47.0
   ghcr.io/c4illin/convertx: v0.17.0
   ghcr.io/civilblur/mazanoke: v1.1.5
@@ -13,7 +13,7 @@ container_image_version:
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
   n8nio/n8n: 2.17.2
-  rclone/rclone: 1.73.4
+  rclone/rclone: 1.73.5
   valkey/valkey: 9.0.3
   velero/velero-plugin-for-aws: v1.14.0
 helm_chart_version:
