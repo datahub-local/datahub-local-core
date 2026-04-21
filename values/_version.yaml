@@ -12,7 +12,7 @@ container_image_version:
   homeassistant/home-assistant: 2026.4.3
   iib0011/omni-tools: 0.6.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.17.2
+  n8nio/n8n: 2.17.3
   rclone/rclone: 1.73.5
   valkey/valkey: 9.0.3
   velero/velero-plugin-for-aws: v1.14.0
