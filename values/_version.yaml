@@ -48,7 +48,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 84.0.1
+    version: 84.1.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -84,7 +84,7 @@ helm_chart_version:
   servarr:
     ref: datahub-local/servarr
     repository: https://datahub-local.github.io/servarr
-    version: 0.26.5
+    version: 0.27.0
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
