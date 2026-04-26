@@ -14,14 +14,31 @@ migrateDatabaseJob:
     "argocd.argoproj.io/hook": Sync
 
 #{{- $numWorkers := 1 }}
-#{{- $workerConcurrency := 5 }}
-#{{- $maxMemoryPerWorker := 1 }}
-#{{- $maxMemoryPerTask := (divf (mulf 0.8 $maxMemoryPerWorker) $workerConcurrency) | printf "%.1f" }}
+#{{- $workerConcurrency := 1 }}
+#{{- $workerMemoryLimitMi := 3072 }}
+#{{- $workerMemoryRequestMi := 1536 }}
+#{{- $workerMaxMemoryPerChildKiB := (divf (mulf 0.7 (mulf $workerMemoryLimitMi 1024)) $workerConcurrency) | printf "%.0f" }}
 
 config:
+  core:
+    parallelism: "{{ $workerConcurrency }}"
+    max_active_tasks_per_dag: "{{ $workerConcurrency }}"
+    max_active_runs_per_dag: "1"
+    load_examples: "False"
+
   celery:
     worker_concurrency: "{{ $workerConcurrency }}"
-    extra_celery_config: '{"worker_max_memory_per_child": {{ $maxMemoryPerTask }}}'
+    worker_prefetch_multiplier: "1"
+    extra_celery_config: "{\"worker_max_memory_per_child\": {{
+      $workerMaxMemoryPerChildKiB }}, \"worker_max_tasks_per_child\": 10}"
+
+  dag_processor:
+    parsing_processes: "1"
+    min_file_process_interval: "60"
+
+  scheduler:
+    task_instance_heartbeat_timeout: "600"
+    task_queued_timeout: "1800"
 
 extraEnv: |
   - name: "AIRFLOW__API__BASE_URL"
@@ -76,42 +93,42 @@ apiServer:
       value: "1"
   resources:
     limits:
-      cpu: 1
-      memory: 1Gi
+      cpu: 750m
+      memory: 768Mi
     requests:
-      cpu: 1
-      memory: 1Gi
+      cpu: 250m
+      memory: 384Mi
 
 workers:
   replicas: {{$numWorkers}}
 
   resources:
     limits:
-      cpu: 750m
-      memory: "{{ $maxMemoryPerWorker }}Gi"
+      cpu: 1
+      memory: "{{ $workerMemoryLimitMi }}Mi"
     requests:
-      cpu: 750m
-      memory: "{{ $maxMemoryPerWorker }}Gi"
+      cpu: 500m
+      memory: "{{ $workerMemoryRequestMi }}Mi"
 
   persistence:
     enabled: true
-    size: 2Gi
+    size: 1Gi
     storageClassName: longhorn-no-replica
 
-  logGroomerSidecar: &logGroomerSidecar
+  logGroomerSidecar:
     enabled: true
 
-    frequencyMinutes: 120
+    frequencyMinutes: 180
     resources:
       limits:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 100m
+        memory: 64Mi
       requests:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 25m
+        memory: 32Mi
 
   livenessProbe: &livenessProbe
-    timeoutSeconds: 40
+    timeoutSeconds: 120
 
 dags:
   gitSync:
@@ -131,50 +148,46 @@ dags:
 dagProcessor:
   resources:
     limits:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 500m
+      memory: 512Mi
     requests:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 200m
+      memory: 256Mi
 
   livenessProbe: *livenessProbe
 
 statsd:
-  resources:
-    limits:
-      cpu: 250m
-      memory: 256Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
+  enabled: false
 
 scheduler:
   resources:
     limits:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 500m
+      memory: 640Mi
     requests:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 250m
+      memory: 384Mi
 
-  logGroomerSidecar: *logGroomerSidecar
+  logGroomerSidecar:
+    enabled: false
 
   livenessProbe: *livenessProbe
 
 triggerer:
   resources:
     limits:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 500m
+      memory: 512Mi
     requests:
-      cpu: 750m
-      memory: 768Mi
+      cpu: 250m
+      memory: 256Mi
 
   persistence:
     enabled: true
-    size: 0.5Gi
+    size: 256Mi
     storageClassName: longhorn-no-replica
 
-  logGroomerSidecar: *logGroomerSidecar
+  logGroomerSidecar:
+    enabled: false
 
   livenessProbe: *livenessProbe
