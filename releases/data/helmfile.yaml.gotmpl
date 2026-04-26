@@ -64,6 +64,7 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "airflow").version }}'
     values:
       - values/airflow.yaml.gotmpl
+    strategicMergePatches: {{ toYaml .Values.kustomize.airflow | nindent 6 }}
   - name: "{{ .Values.release_name }}-data-ollama"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "ollama").ref }}'
