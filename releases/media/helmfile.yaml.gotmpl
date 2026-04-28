@@ -14,8 +14,8 @@ commonLabels:
 releases:
   # - name: "{{ .Values.release_name }}-media-servarr"
   #   namespace: media
-  #   chart: '{{ (.StateValues.helm_chart_version | get "servarr").ref }}'
-  #   version: '{{ (.StateValues.helm_chart_version | get "servarr").version }}'
+  #   chart: '{ { (.StateValues.helm_chart_version | get "servarr").ref } }'
+  #   version: '{ { (.StateValues.helm_chart_version | get "servarr").version } }'
   #   values:
   #     - values/servarr.yaml.gotmpl
   - name: "{{ .Values.release_name }}-media-commafeed"
