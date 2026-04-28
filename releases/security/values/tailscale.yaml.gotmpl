@@ -39,6 +39,11 @@ controllers:
             value: --snat-subnet-routes=false
           - name: TS_HOSTNAME
             value: "{{ $.Values.release_name }}-security-tailscale"
+          - name: TS_AUTH_ONCE
+            value: "true"
+          - name: TS_STATE_DIR
+            value: "/var/lib/tailscale"
+            
         resources:
           requests:
             memory: 100Mi
@@ -50,6 +55,15 @@ controllers:
 serviceAccount:
   default:
     enabled: true
+
+persistence:
+  state:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: longhorn
+    size: 256Mi
+    globalMounts:
+      - path: /var/lib/tailscale
 
 rawResources:
   role:

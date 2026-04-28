@@ -12,12 +12,12 @@ commonLabels:
   provider: "{{ .Values.release_name }}-helm"
 
 releases:
-  - name: "{{ .Values.release_name }}-automation-home-assistant"
-    namespace: automation
-    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
-    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
-    values:
-      - values/home-assistant.yaml.gotmpl
+  # - name: "{{ .Values.release_name }}-automation-home-assistant"
+  #   namespace: automation
+  #   chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+  #   version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+  #   values:
+  #     - values/home-assistant.yaml.gotmpl
   - name: "velero"
     namespace: automation
     chart: '{{ (.StateValues.helm_chart_version | get "velero").ref }}'
