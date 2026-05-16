@@ -3,6 +3,7 @@
 # See also https://tailscale.com/learn/managing-access-to-kubernetes-with-tailscale#subnet-router-deployments
 
 defaultPodOptions:
+  automountServiceAccountToken: true
   securityContext:
     # Run as a non-root user to mitigate privilege escalation attack attempts
     runAsUser: 1000
@@ -69,10 +70,9 @@ rawResources:
   role:
     enabled: true
 
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-
-    spec:
+    manifest:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
       rules:
         - apiGroups: [""]
           resources: ["secrets"]
@@ -84,10 +84,9 @@ rawResources:
   role-binding:
     enabled: true
 
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-
-    spec:
+    manifest:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
       subjects:
         - kind: ServiceAccount
           name: "{{ $.Values.release_name }}-security-tailscale"

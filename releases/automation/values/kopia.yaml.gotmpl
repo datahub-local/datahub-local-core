@@ -242,16 +242,17 @@ service:
 
 rawResources:
   nginx:
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    annotations:
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "Kopia"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-kopia"
-      gethomepage.dev/group: "Automation"
-      gethomepage.dev/icon: "sh-kopia"
-      gethomepage.dev/href: "https://automation-kopia.{{ .Values.gateway_hostname }}"
-    spec:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "Kopia"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-kopia"
+          gethomepage.dev/group: "Automation"
+          gethomepage.dev/icon: "sh-kopia"
+          gethomepage.dev/href: "https://automation-kopia.{{ .Values.gateway_hostname }}"
       spec:
         entryPoints:
           - websecure
@@ -272,9 +273,9 @@ rawResources:
                 port: http
   #{{- range $index, $ns := .Values.kopia_backup_namespaces }}
   server-{{ $ns }}:
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    spec:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
       spec:
         entryPoints:
           - websecure

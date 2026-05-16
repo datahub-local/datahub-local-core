@@ -145,8 +145,10 @@ persistence:
     accessMode: ReadWriteOnce
     size: 512Mi
     storageClass: longhorn-no-replica
-    globalMounts:
-      - path: /commafeed/data
+    advancedMounts:
+      main:
+        main:
+        - path: /commafeed/data
   setup-scripts:
     enabled: true
     type: configMap
@@ -179,16 +181,17 @@ configMaps:
 
 rawResources:
   ingress-route:
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    annotations:
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "CommaFeed"
-      gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-media-commafeed"
-      gethomepage.dev/group: "Media"
-      gethomepage.dev/icon: "sh-commafeed"
-      gethomepage.dev/href: "https://media-commafeed.{{ .Values.gateway_hostname }}"
-    spec:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "CommaFeed"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-media-commafeed"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-commafeed"
+          gethomepage.dev/href: "https://media-commafeed.{{ .Values.gateway_hostname }}"
       spec:
         entryPoints:
           - websecure

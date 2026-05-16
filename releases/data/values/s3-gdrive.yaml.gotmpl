@@ -152,15 +152,16 @@ service:
 
 rawResources:
   ingress-route:
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    annotations:
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "S3 GDrive"
-      gethomepage.dev/group: "Data"
-      gethomepage.dev/icon: "mdi-cloud-sync-outline"
-      gethomepage.dev/href: "https://drive.google.com/drive/search?q=s3_gdrive"
-    spec:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "S3 GDrive"
+          gethomepage.dev/group: "Data"
+          gethomepage.dev/icon: "mdi-cloud-sync-outline"
+          gethomepage.dev/href: "https://drive.google.com/drive/search?q=s3_gdrive"
       spec:
         entryPoints:
           - websecure
