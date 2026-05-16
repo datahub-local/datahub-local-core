@@ -142,13 +142,12 @@ service:
 persistence:
   data:
     enabled: true
+    type: persistentVolumeClaim
     accessMode: ReadWriteOnce
-    size: 512Mi
-    storageClass: longhorn-no-replica
-    advancedMounts:
-      main:
-        main:
-        - path: /commafeed/data
+    storageClass: nfs
+    size: 1Gi
+    globalMounts:
+      - path: /commafeed/data
   setup-scripts:
     enabled: true
     type: configMap

@@ -40,11 +40,13 @@ def initial_setup():
         logger.info("Initial setup completed successfully!")
     else:
         try:
-            data = resp.json()
-            if not data.get("initialSetupRequired", True):
+            if (
+                resp.status_code == 400
+                and "Initial setup has already been completed" in resp.text
+            ):
                 logger.info("Initial setup already done")
             else:
-                raise Exception(f"Initial setup failed: {data}")
+                raise Exception(f"Initial setup failed: {resp.text}")
         except Exception as e:
             raise Exception(f"Initial setup failed", e)
 
