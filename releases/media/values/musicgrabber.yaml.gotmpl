@@ -85,15 +85,16 @@ service:
 
 rawResources:
   main:
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    annotations:
-      gethomepage.dev/enabled: "true"
-      gethomepage.dev/name: "MusicGrabber"
-      gethomepage.dev/group: "Media"
-      gethomepage.dev/icon: "sh-music-service"
-      gethomepage.dev/href: "https://media-musicgrabber.{{ .Values.gateway_hostname }}"
-    spec:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "MusicGrabber"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-music-service"
+          gethomepage.dev/href: "https://media-musicgrabber.{{ .Values.gateway_hostname }}"
       spec:
         entryPoints:
           - websecure

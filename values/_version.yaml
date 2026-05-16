@@ -24,7 +24,7 @@ helm_chart_version:
   app-template:
     ref: bjw-s-labs/app-template
     repository: https://bjw-s-labs.github.io/helm-charts
-    version: 4.6.2
+    version: 5.0.1
   cloudnative-pg:
     ref: cnpg/cloudnative-pg
     repository: https://cloudnative-pg.github.io/charts
@@ -48,7 +48,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 84.5.0
+    version: 85.1.1
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
