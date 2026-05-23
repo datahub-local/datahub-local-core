@@ -1,0 +1,42 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    replicas: 1
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    pod:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+
+      tolerations:
+        - effect: NoSchedule
+          key: datahub.local/role
+          operator: "Equal"
+          value: nas
+    containers:
+      main:
+        image:
+          repository: ghcr.io/thephaseless/byparr
+          tag: main
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+          limits:
+            memory: 2Gi
+            cpu: 1
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8191

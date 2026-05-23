@@ -48,6 +48,12 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/n8n-chromium.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-n8n-cdnsolver"
+    namespace: automation
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/n8n-cdnsolver.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation"
     namespace: automation
     chart: "."
