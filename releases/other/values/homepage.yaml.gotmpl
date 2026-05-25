@@ -12,6 +12,9 @@ config:
     title: "DataHub.local"
     base: "https://{{ .StateValues.gateway_hostname }}"
     statusStyle: "dot"
+    theme: "dark"
+    color: "neutral"
+    favicon: "https://datahub-local.alvsanand.com/assets/img/favicon.svg"
     layout:
       - System:
           useEqualHeights: true
@@ -63,21 +66,15 @@ config:
             - icon: "sh-mend-renovate"
               href: https://developer.mend.io/github/datahub-local
     - Tools:
-        - ChatGPT:
-            - icon: chatgpt.svg
-              href: https://chat.openai.com
-        - "Bing Image Creator":
-            - icon: bing.svg
-              href: https://www.bing.com/images/create
-        - "kubesearch.dev":
-            - icon: https://kubesearch.dev/k8s-search.svg
-              href: https://kubesearch.dev/
+        - Gemini:
+            - icon: gemini.svg
+              href: https://gemini.google.com/
+        - Claude:
+            - icon: claude.svg
+              href: https://claude.ai/
         - "selfh.st":
             - icon: https://selfh.st/content/images/size/w256h256/2023/09/favicon-1.png
               href: https://selfh.st/apps/
-        - "recetasgratis.net":
-            - icon: mdi-chef-hat
-              href: https://www.recetasgratis.net/
   services:
     - System:
         - TrueNas:
@@ -91,7 +88,7 @@ config:
             app: "{{ .Values.release_name }}-security-tailscale"
   widgets:
     - logo:
-        icon: https://datahub-local.alvsanand.com/assets/img/logo.png
+        icon: https://datahub-local.alvsanand.com/assets/img/logo-icon.svg
     - greeting:
         text_size: 2xl
         text: DataHub.local
