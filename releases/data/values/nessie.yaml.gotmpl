@@ -9,3 +9,27 @@ jdbc:
     name: postgresql-admin-credentials
     username: user
     password: password
+
+catalog:
+  enabled: true
+  iceberg:
+    defaultWarehouse: datahub-local-test
+    warehouses:
+      - name: datahub-local-bronze
+        location: s3://datahub-local-bronze
+      - name: datahub-local-silver
+        location: s3://datahub-local-silver
+      - name: datahub-local-gold
+        location: s3://datahub-local-gold
+      - name: datahub-local-test
+        location: s3://datahub-local-test
+  storage:
+    s3:
+      defaultOptions:
+        region: homelab
+        endpoint: "https://{{ .Values.s3_endpoint }}"
+        pathStyleAccess: true
+        accessKeySecret:
+          name: s3-credentials
+          awsAccessKeyId: accessKey
+          awsSecretAccessKey: secretKey

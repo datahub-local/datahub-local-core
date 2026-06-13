@@ -75,10 +75,10 @@ additionalCatalogs:
     memory.max-data-per-node=128MB
   iceberg: |
     connector.name=iceberg
-    iceberg.catalog.type=nessie
-    iceberg.nessie-catalog.uri=http://{{ $.Values.release_name }}-data-nessie:19120/api/v1
-    iceberg.nessie-catalog.ref=main
-    iceberg.nessie-catalog.default-warehouse-dir=s3://datahub-local-gold
+    iceberg.catalog.type=rest
+    iceberg.rest-catalog.uri=http://{{ $.Values.release_name }}-data-nessie:19120/iceberg/
+    iceberg.rest-catalog.vended-credentials-enabled=true
+    iceberg.rest-catalog.warehouse=s3://datahub-local-test
 
     fs.native-s3.enabled=true
     s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
