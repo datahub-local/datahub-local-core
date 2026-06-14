@@ -13,10 +13,16 @@ postgres_extra_databases:
   airflow: airflow
   commafeed: commafeed
   n8n: n8n
-  nessie: nessie
   openwebui: openwebui
+  polaris: polaris
   sqlmesh: sqlmesh
   superset: superset
+
+iceberg_catalogs:
+  bronze: bronze
+  silver: silver
+  gold: gold
+  test: test
 
 kopia_backup_namespaces:
   - automation
@@ -27,10 +33,6 @@ kopia_backup_namespaces:
 
 s3_endpoint: "data-s3.homelab.alvsanand.com"
 s3_buckets:
-  - name: datahub-local-bronze
-  - name: datahub-local-silver
-  - name: datahub-local-gold
-  - name: datahub-local-test
   - name: datahub-local-temp
 s3_gdrive_endpoint: "data-s3-gdrive.homelab.alvsanand.com"
 s3_gdrive_buckets:

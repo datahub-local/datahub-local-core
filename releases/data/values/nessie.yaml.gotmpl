@@ -13,16 +13,12 @@ jdbc:
 catalog:
   enabled: true
   iceberg:
-    defaultWarehouse: datahub-local-test
+    defaultWarehouse: test
     warehouses:
-      - name: datahub-local-bronze
-        location: s3://datahub-local-bronze
-      - name: datahub-local-silver
-        location: s3://datahub-local-silver
-      - name: datahub-local-gold
-        location: s3://datahub-local-gold
-      - name: datahub-local-test
-        location: s3://datahub-local-test
+  # {{- range $key, $value := .Values.iceberg_catalogs }}
+      - name: "{{ $key }}"
+        location: "s3://datahub-local-{{ $key }}"
+  # {{- end }}
   storage:
     s3:
       defaultOptions:

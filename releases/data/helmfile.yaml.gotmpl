@@ -52,12 +52,22 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "superset").version }}'
     values:
       - values/superset.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-data-nessie"
+  - name: "{{ .Values.release_name }}-data-polaris"
     namespace: data
-    chart: '{{ (.StateValues.helm_chart_version | get "nessie").ref }}'
-    version: '{{ (.StateValues.helm_chart_version | get "nessie").version }}'
+    chart: '{{ (.StateValues.helm_chart_version | get "polaris").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "polaris").version }}'
+    needs:
+      - "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
     values:
-      - values/nessie.yaml.gotmpl
+      - values/polaris.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-polaris-bootstrap"
+    namespace: data
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    needs:
+      - "{{ .Values.release_name }}-data-polaris"
+    values:
+      - values/polaris-bootstrap.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-airflow"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "airflow").ref }}'

@@ -1,0 +1,111 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  bootstrap:
+    type: job
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    initContainers:
+      wait-for-polaris:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command:
+          - /bin/sh
+          - -c
+          - |
+            until curl -s -o /dev/null "http://{{ .Values.release_name }}-data-polaris:8181/api/management/v1/catalogs"; do
+              echo "Waiting for Polaris to be ready..."; sleep 5
+            done
+            echo "Polaris is ready"
+      bootstrap-realm:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command:
+          - /bin/sh
+          - -c
+          - |
+            OUTPUT=$(java -jar /deployments/polaris-admin-tool.jar bootstrap \
+              -r default-realm \
+              -c "default-realm,root,{{ .StateValues.security_github_client_secret }}" 2>&1)
+            EXIT_CODE=$?
+            echo "$OUTPUT"
+            if echo "$OUTPUT" | grep -q "already been bootstrapped"; then
+              echo "Realm already bootstrapped, skipping."
+              exit 0
+            fi
+            exit $EXIT_CODE
+        env:
+          POLARIS_PERSISTENCE_TYPE: relational-jdbc
+          QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
+          QUARKUS_DATASOURCE_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: user
+          QUARKUS_DATASOURCE_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+    containers:
+      main:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            POLARIS_URL="http://{{ .Values.release_name }}-data-polaris:8181"
+
+            echo "Getting Polaris admin token..."
+            TOKEN_RESPONSE=$(curl -s -X POST "$POLARIS_URL/api/catalog/v1/oauth/tokens" \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              -d "grant_type=client_credentials&client_id=root&client_secret={{ .StateValues.security_github_client_secret }}&scope=PRINCIPAL_ROLE:ALL")
+            TOKEN=$(echo "$TOKEN_RESPONSE" | sed 's/.*"access_token":"\([^"]*\)".*/\1/')
+            if [ -z "$TOKEN" ] || [ "$TOKEN" = "$TOKEN_RESPONSE" ]; then
+              echo "Failed to get token: $TOKEN_RESPONSE"
+              exit 1
+            fi
+            echo "Token acquired"
+
+            #{{- range $key, $value := .Values.iceberg_catalogs }}
+            echo "Creating/updating Polaris catalog: {{ $key }}"
+            STORAGE_CONFIG='{"storageType":"S3","allowedLocations":["s3://datahub-local-{{ $key }}"],"region":"{{ $.StateValues.backup_s3_region }}","endpoint":"https://{{ $.StateValues.s3_endpoint }}","pathStyleAccess":true,"stsUnavailable":true}'
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$POLARIS_URL/api/management/v1/catalogs" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"catalog":{"name":"{{ $key }}","type":"INTERNAL","properties":{"default-base-location":"s3://datahub-local-{{ $key }}"},"storageConfigInfo":'"$STORAGE_CONFIG"'}}')
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            if [ "$HTTP_CODE" = "201" ]; then
+              echo "Catalog {{ $key }} created successfully"
+            elif [ "$HTTP_CODE" = "409" ]; then
+              echo "Catalog {{ $key }} already exists, updating storage config..."
+              CATALOG_RESPONSE=$(curl -s "$POLARIS_URL/api/management/v1/catalogs/{{ $key }}" \
+                -H "Authorization: Bearer $TOKEN")
+              ENTITY_VERSION=$(echo "$CATALOG_RESPONSE" | grep -o '"entityVersion":[0-9]*' | grep -o '[0-9]*')
+              UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$POLARIS_URL/api/management/v1/catalogs/{{ $key }}" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $TOKEN" \
+                -d '{"currentEntityVersion":'"$ENTITY_VERSION"',"storageConfigInfo":'"$STORAGE_CONFIG"'}')
+              UPDATE_CODE=$(echo "$UPDATE_RESPONSE" | tail -1)
+              echo "$UPDATE_CODE" | grep -qE "^(200|204)$" || echo "Warning: unexpected update response for catalog {{ $key }}: $UPDATE_RESPONSE"
+            else
+              echo "Warning: unexpected response for catalog {{ $key }}: $RESPONSE"
+            fi
+            #{{- end }}
+
+            echo "Polaris catalog setup complete."
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+
+defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64

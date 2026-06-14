@@ -11,6 +11,8 @@ container_image_version:
   ghcr.io/tailscale/tailscale: v1.98.4
   # homeassistant/home-assistant: 2026.4.4
   iib0011/omni-tools: 0.6.0
+  apache/polaris-admin-tool: 1.5.0
+  curlimages/curl: 8.12.1
   kopia/kopia: 20251215.0.232403
   n8nio/n8n: 2.26.3
   rclone/rclone: 1.74.3
@@ -57,10 +59,10 @@ helm_chart_version:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
     version: 2.0.1
-  nessie:
-    ref: nessie/nessie
-    repository: https://charts.projectnessie.org
-    version: 0.108.0
+  polaris:
+    ref: polaris/polaris
+    repository: https://downloads.apache.org/polaris/helm-chart
+    version: 1.5.0
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm

@@ -25,36 +25,6 @@ kind: IngressRoute
 metadata:
   annotations:
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/name: "Nessie"
-    gethomepage.dev/pod-selector: "app.kubernetes.io/name=nessie"
-    gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "https://projectnessie.org/img/nessie.svg"
-    gethomepage.dev/href: "https://data-nessie.{{ .Values.gateway_hostname }}"
-  name: '{{ include "name" . }}-nessie'
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`data-nessie.{{ .Values.gateway_hostname }}`)
-      kind: Rule
-      services:
-        - name: '{{ include "name" . }}-nessie'
-          port: nessie-http
-      middlewares:
-        - name: oauth2-proxy-auth
-          namespace: security
-    - match: Host(`data-nessie.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
-      kind: Rule
-      services:
-        - name: oauth2-proxy
-          namespace: security
-          port: http
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  annotations:
-    gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Redpanda Console"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=redpanda"
     gethomepage.dev/group: "Data"

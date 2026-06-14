@@ -35,7 +35,11 @@ clusterConfig:
   buckets:
     #{{- range $bucket := .StateValues.s3_buckets }}
     - name: "{{ $bucket.name }}"
-      public: {{$bucket | get "public" false}}
+      public: false
+    #{{- end }}
+    #{{- range $catalog := .StateValues.iceberg_catalogs }}
+    - name: "datahub-local-{{ $catalog }}"
+      public: false
     #{{- end }}
   keys:
     data-key:
@@ -45,6 +49,9 @@ clusterConfig:
       buckets:
         #{{- range $bucket := .StateValues.s3_buckets }}
         - "{{ $bucket.name }}"
+        #{{- end }}
+        #{{- range $catalog := .StateValues.iceberg_catalogs }}
+        - "datahub-local-{{ $catalog }}"
         #{{- end }}
 
 webui:

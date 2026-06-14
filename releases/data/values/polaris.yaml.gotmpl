@@ -1,0 +1,50 @@
+# https://github.com/apache/polaris/blob/main/helm/polaris/values.yaml
+
+image:
+  tag: "1.5.0"
+
+replicaCount: 1
+
+nodeSelector:
+  kubernetes.io/arch: arm64
+
+realmContext:
+  realms:
+    - default-realm
+
+persistence:
+  type: relational-jdbc
+  relationalJdbc:
+    secret:
+      name: ""
+
+advancedConfig:
+  quarkus.http.access-log.enabled: true
+  quarkus.datasource.db-kind: postgresql
+  quarkus.datasource.jdbc.url: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
+  # Homelab: allow all requests without authentication
+  quarkus.http.auth.permission.permit-all.paths: "/*"
+  quarkus.http.auth.permission.permit-all.policy: permit
+
+extraEnv:
+  - name: QUARKUS_DATASOURCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-admin-credentials
+        key: user
+  - name: QUARKUS_DATASOURCE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-admin-credentials
+        key: password
+  - name: AWS_REGION
+    value: "us-east-1"
+
+storage:
+  secret:
+    name: s3-credentials
+    awsAccessKeyId: accessKey
+    awsSecretAccessKey: secretKey
+
+serviceMonitor:
+  enabled: false

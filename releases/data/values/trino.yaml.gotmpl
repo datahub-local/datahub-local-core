@@ -36,6 +36,59 @@ worker:
   nodeSelector:
     kubernetes.io/arch: arm64
 
+# Coordinator initContainer: ensures Polaris catalogs exist before Trino starts.
+# Gracefully skips if Polaris is not yet bootstrapped (bootstrap job handles first-time setup).
+initContainers:
+  coordinator:
+    - name: setup-polaris-catalogs
+      image: curlimages/curl:8.12.1
+      command:
+        - /bin/sh
+        - -c
+        - |
+          POLARIS_URL="http://{{ $.Values.release_name }}-data-polaris:8181"
+
+          echo "Waiting for Polaris..."
+          until curl -s -o /dev/null --max-time 5 "$POLARIS_URL/api/catalog"; do
+            sleep 5
+          done
+
+          TOKEN=$(curl -sf -X POST "$POLARIS_URL/api/catalog/v1/oauth/tokens" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=root&client_secret=${POLARIS_CLIENT_SECRET}&scope=PRINCIPAL_ROLE:ALL" \
+            2>/dev/null | tr ',' '\n' | grep 'access_token' | cut -d'"' -f4 || true)
+
+          if [ -n "$TOKEN" ]; then
+            {{- range $key, $value := .Values.iceberg_catalogs }}
+            curl -s -o /dev/null -X POST "$POLARIS_URL/api/management/v1/catalogs" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"catalog":{"name":"{{ $key }}","type":"INTERNAL","properties":{"default-base-location":"s3://datahub-local-{{ $key }}"},"storageConfigInfo":{"storageType":"S3","allowedLocations":["s3://datahub-local-{{ $key }}"]}}}' || true
+            {{- end }}
+          else
+            echo "Polaris not yet bootstrapped, skipping catalog creation."
+          fi
+      env:
+        - name: POLARIS_CLIENT_SECRET
+          value: "{{ .StateValues.security_github_client_secret }}"
+
+  # Creates a default schema in each Trino catalog after the coordinator is reachable.
+  # CREATE SCHEMA IF NOT EXISTS is idempotent.
+  worker:
+    - name: create-iceberg-schemas
+      image: trinodb/trino:480 # keep in sync with the trino chart appVersion
+      command:
+        - /bin/sh
+        - -c
+        - |
+          SERVER="http://{{ $.Values.release_name }}-data-trino-trino:8080"
+          until trino --server "$SERVER" --user {{ $.StateValues.default_admin_user }} --execute "SELECT 1" >/dev/null 2>&1; do
+            echo "Waiting for Trino coordinator..."; sleep 10
+          done
+          {{- range $key, $value := .Values.iceberg_catalogs }}
+          trino --server "$SERVER" --user {{ $.StateValues.default_admin_user }} --execute "CREATE SCHEMA IF NOT EXISTS {{ $key }}.main WITH (location = 's3://datahub-local-{{ $key }}')" || true
+          {{- end }}
+
 serviceAccount:
   create: true
 
@@ -47,7 +100,8 @@ rules:
           "user": "{{ .StateValues.default_admin_user }}",
           "catalog": ".*",
           "allow": "all"
-        },
+        }
+      ],
       "schemas": [
         {
           "user": "{{ .StateValues.default_admin_user }}",
@@ -58,6 +112,8 @@ rules:
     }
 
 env:
+  - name: "POLARIS_OAUTH_CREDENTIAL"
+    value: "root:{{ .StateValues.security_github_client_secret }}"
   - name: "S3_AWS_ACCESS_KEY"
     valueFrom:
       secretKeyRef:
@@ -73,16 +129,22 @@ additionalCatalogs:
   memory: |
     connector.name=memory
     memory.max-data-per-node=128MB
-  iceberg: |
+  # {{- range $key, $value := .Values.iceberg_catalogs }}
+  {{ $key }}: |
     connector.name=iceberg
     iceberg.catalog.type=rest
-    iceberg.rest-catalog.uri=http://{{ $.Values.release_name }}-data-nessie:19120/iceberg/
-    iceberg.rest-catalog.vended-credentials-enabled=true
-    iceberg.rest-catalog.warehouse=s3://datahub-local-test
+    iceberg.rest-catalog.uri=http://{{ $.Values.release_name }}-data-polaris:8181/api/catalog
+    iceberg.rest-catalog.warehouse={{ $key }}
+    iceberg.rest-catalog.prefix={{ $key }}
+    iceberg.rest-catalog.security=OAUTH2
+    iceberg.rest-catalog.oauth2.credential=${ENV:POLARIS_OAUTH_CREDENTIAL}
+    iceberg.rest-catalog.oauth2.scope=PRINCIPAL_ROLE:ALL
+    iceberg.rest-catalog.vended-credentials-enabled=false
 
     fs.native-s3.enabled=true
     s3.aws-access-key=${ENV:S3_AWS_ACCESS_KEY}
     s3.aws-secret-key=${ENV:S3_AWS_SECRET_KEY}
-    s3.endpoint=https://{{ .Values.s3_endpoint }}
+    s3.endpoint=https://{{ $.Values.s3_endpoint }}
     s3.region=homelab
     s3.path-style-access=true
+  # {{- end }}
