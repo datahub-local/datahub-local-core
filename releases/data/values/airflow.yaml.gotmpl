@@ -41,6 +41,9 @@ config:
     task_queued_timeout: "1800"
 
 extraEnv: |
+  - name: "_PIP_ADDITIONAL_REQUIREMENTS"
+    value: "requests"
+
   - name: "AIRFLOW__API__BASE_URL"
     value: "https://data-airflow.{{ .StateValues.gateway_hostname }}"
 
