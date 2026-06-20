@@ -43,6 +43,12 @@ initContainers:
       - mountPath: /target
         name: plugins
 
+repositoryMaintenanceJob:
+  repositoryConfigData:
+    global:
+      # Keep only the latest maintenance job to avoid stale failed jobs accumulating
+      keepLatestMaintenanceJobs: 1
+
 metrics:
   enabled: true
 
