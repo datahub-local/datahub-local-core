@@ -39,12 +39,16 @@ extraEnv:
         key: password
   - name: AWS_REGION
     value: "us-east-1"
-
-storage:
-  secret:
-    name: s3-credentials
-    awsAccessKeyId: accessKey
-    awsSecretAccessKey: secretKey
+  - name: AWS_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: s3-credentials
+        key: accessKey
+  - name: AWS_SECRET_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: s3-credentials
+        key: secretKey
 
 serviceMonitor:
-  enabled: false
+  enabled: true
