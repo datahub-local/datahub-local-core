@@ -55,3 +55,20 @@ kustomize:
             - "get"
             - "list"
             - "watch"
+        - apiGroups:
+            - "batch"
+          resources:
+            - "jobs"
+          verbs:
+            - "create"
+            - "list"
+            - "get"
+            - "patch"
+            - "watch"
+            - "delete"
+        - apiGroups:
+            - "batch"
+          resources:
+            - "jobs/status"
+          verbs:
+            - "get"
