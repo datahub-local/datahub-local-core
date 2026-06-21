@@ -96,6 +96,37 @@ controllers:
             else
               echo "Warning: unexpected response for catalog {{ $key }}: $RESPONSE"
             fi
+
+            # Create a catalog role with full data access and assign it to service_admin
+            echo "Setting up catalog role for {{ $key }}..."
+            ROLE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$POLARIS_URL/api/management/v1/catalogs/{{ $key }}/catalog-roles" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"catalogRole":{"name":"data_admin"}}')
+            ROLE_CODE=$(echo "$ROLE_RESPONSE" | tail -1)
+            if [ "$ROLE_CODE" = "201" ]; then
+              echo "Catalog role data_admin created for {{ $key }}"
+            elif [ "$ROLE_CODE" = "409" ]; then
+              echo "Catalog role data_admin already exists for {{ $key }}"
+            else
+              echo "Warning: unexpected response creating catalog role for {{ $key }}: $ROLE_RESPONSE"
+            fi
+
+            GRANT_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$POLARIS_URL/api/management/v1/catalogs/{{ $key }}/catalog-roles/data_admin/grants" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"grant":{"type":"catalog","privilege":"CATALOG_MANAGE_CONTENT"}}')
+            GRANT_CODE=$(echo "$GRANT_RESPONSE" | tail -1)
+            echo "$GRANT_CODE" | grep -qE "^(200|201|204)$" || echo "Warning: unexpected response granting privilege for {{ $key }}: $GRANT_RESPONSE"
+            echo "Granted CATALOG_MANAGE_CONTENT to data_admin for {{ $key }}"
+
+            ASSIGN_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$POLARIS_URL/api/management/v1/principal-roles/service_admin/catalog-roles/{{ $key }}" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"catalogRole":{"name":"data_admin"}}')
+            ASSIGN_CODE=$(echo "$ASSIGN_RESPONSE" | tail -1)
+            echo "$ASSIGN_CODE" | grep -qE "^(200|201|204)$" || echo "Warning: unexpected response assigning catalog role for {{ $key }}: $ASSIGN_RESPONSE"
+            echo "Assigned data_admin catalog role to service_admin for {{ $key }}"
             #{{- end }}
 
             echo "Polaris catalog setup complete."
