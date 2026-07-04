@@ -50,7 +50,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 87.6.0
+    version: 87.10.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
