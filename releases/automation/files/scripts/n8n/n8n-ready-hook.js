@@ -2,11 +2,13 @@ const {
     dirname,
     resolve
 } = require('path');
-const Layer = require('router/lib/layer');
+const n8nDir = dirname(require.resolve('n8n/package.json'));
+const expressDir = dirname(require.resolve('express/package.json', { paths: [n8nDir] }));
+const Layer = require(require.resolve('router/lib/layer', { paths: [expressDir] }));
 const assert = require("node:assert");
 const {
     hash
-} = require("bcryptjs");
+} = require(require.resolve('bcryptjs', { paths: [n8nDir] }));
 const {
     issueCookie
 } = require(resolve(dirname(require.resolve('n8n')), 'auth/jwt'))
