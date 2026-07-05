@@ -1,0 +1,14 @@
+database_name: Sample - Trino Memory
+sqlalchemy_uri: trino://admin@datahub-local-core-data-trino-trino:8080/memory
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: true
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_csv_upload: false
+impersonate_user: false
+extra:
+  allows_virtual_table_explore: true
+uuid: 1b7f00c8-6a2d-4e5f-9a3b-2c4d6e8f0a1b
+version: 1.0.0

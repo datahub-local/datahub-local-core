@@ -8,11 +8,48 @@ redis:
 nodeSelector:
   kubernetes.io/arch: arm64
 
+serviceAccount:
+  create: true
+
 supersetNode:
   connections:
     redis_password: true
+  extraContainers:
+    # Dashboard sidecar: imports Superset dashboard export bundles (.zip) from
+    # ConfigMaps labeled "superset_dashboard=1" through the REST API and keeps
+    # them read-only.
+    # Set SIDECAR_NAMESPACE to "ALL" to watch every namespace (requires a ClusterRole).
+    - name: dashboard-sidecar
+      image: '{{`{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}`}}'
+      imagePullPolicy: '{{`{{ .Values.image.pullPolicy }}`}}'
+      command:
+        - "python"
+        - "/app/configs/superset_dashboard_sidecar.py"
+      env:
+        - name: SUPERSET_URL
+          value: 'http://localhost:{{`{{ .Values.service.port }}`}}'
+        - name: SIDECAR_ADMIN_USERNAME
+          value: '{{`{{ .Values.init.adminUser.username }}`}}'
+        - name: SIDECAR_ADMIN_PASSWORD
+          value: '{{`{{ .Values.init.adminUser.password }}`}}'
+      livenessProbe:
+        exec:
+          command:
+            - sh
+            - -c
+            - test -n "$(find /tmp/superset-dashboard-sidecar-alive -mmin -5 2>/dev/null)"
+        initialDelaySeconds: 300
+        periodSeconds: 60
+        failureThreshold: 3
+      volumeMounts:
+        - name: superset-extra-config
+          mountPath: /app/configs
+          readOnly: true
 
 configOverrides:
+  feature_flags: |
+    # Required for the dashboard sidecar to apply tags from ConfigMap annotations
+    FEATURE_FLAGS = {"TAGGING_SYSTEM": True}
   auth: |
     # This will make sure the redirect_uri is properly computed, even with SSL offloading
     ENABLE_PROXY_FIX = True
@@ -101,6 +138,8 @@ bootstrapScript: |
   uv pip install Authlib psycopg2 trino
 
 extraConfigs:
+  superset_dashboard_sidecar.py: |
+    {{- readFile "../files/scripts/superset/superset_dashboard_sidecar.py" | nindent 4 }}
   import_datasources.yaml: |
     databases:
     {{- range $key, $value := .Values.postgres_extra_databases }}

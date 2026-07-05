@@ -1,0 +1,22 @@
+slice_name: Sample - Total events
+description: null
+viz_type: big_number_total
+params:
+  datasource: 0__table
+  viz_type: big_number_total
+  metric:
+    expressionType: SIMPLE
+    aggregate: SUM
+    column:
+      column_name: events
+      type: BIGINT
+    label: Total events
+    optionName: metric_sample_total
+  subheader: All layers, last 7 days
+  y_axis_format: SMART_NUMBER
+  time_range: No filter
+query_context: null
+cache_timeout: null
+uuid: 3d9f22ea-8c4f-4a71-9c5d-4e6f8a0b1c3d
+version: 1.0.0
+dataset_uuid: 2c8e11d9-7b3e-4f60-8b4c-3d5e7f9a0b2c

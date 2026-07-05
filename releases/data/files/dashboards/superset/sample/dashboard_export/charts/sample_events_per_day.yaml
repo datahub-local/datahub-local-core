@@ -1,0 +1,28 @@
+slice_name: Sample - Events per day
+description: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 0__table
+  viz_type: echarts_timeseries_bar
+  x_axis: day
+  time_grain_sqla: P1D
+  metrics:
+  - expressionType: SIMPLE
+    aggregate: SUM
+    column:
+      column_name: events
+      type: BIGINT
+    label: Events
+    optionName: metric_sample_events
+  groupby:
+  - layer
+  row_limit: 1000
+  color_scheme: supersetColors
+  show_legend: true
+  stack: Stack
+  time_range: No filter
+query_context: null
+cache_timeout: null
+uuid: 4ea033fb-9d5a-4b82-8d6e-5f7a9b1c2d4e
+version: 1.0.0
+dataset_uuid: 2c8e11d9-7b3e-4f60-8b4c-3d5e7f9a0b2c

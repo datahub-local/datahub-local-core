@@ -1,0 +1,23 @@
+# Kubernetes RBAC Role for the Superset dashboard sidecar
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "name" . }}-superset-dashboard-sidecar-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "name" . }}-superset-dashboard-sidecar-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "name" . }}-superset-dashboard-sidecar-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "superset.serviceAccount" . }}

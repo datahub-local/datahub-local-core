@@ -1,0 +1,75 @@
+table_name: sample_metrics
+main_dttm_col: day
+description: Synthetic data for the sample dashboard
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  SELECT * FROM (
+    VALUES
+      (DATE '2026-06-29', 'bronze', 120), (DATE '2026-06-29', 'silver', 80), (DATE '2026-06-29', 'gold', 30),
+      (DATE '2026-06-30', 'bronze', 135), (DATE '2026-06-30', 'silver', 90), (DATE '2026-06-30', 'gold', 42),
+      (DATE '2026-07-01', 'bronze', 150), (DATE '2026-07-01', 'silver', 95), (DATE '2026-07-01', 'gold', 38),
+      (DATE '2026-07-02', 'bronze', 110), (DATE '2026-07-02', 'silver', 70), (DATE '2026-07-02', 'gold', 25),
+      (DATE '2026-07-03', 'bronze', 160), (DATE '2026-07-03', 'silver', 105), (DATE '2026-07-03', 'gold', 47),
+      (DATE '2026-07-04', 'bronze', 145), (DATE '2026-07-04', 'silver', 85), (DATE '2026-07-04', 'gold', 33),
+      (DATE '2026-07-05', 'bronze', 170), (DATE '2026-07-05', 'silver', 115), (DATE '2026-07-05', 'gold', 52)
+  ) AS t(day, layer, events)
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 2c8e11d9-7b3e-4f60-8b4c-3d5e7f9a0b2c
+metrics:
+- metric_name: count
+  verbose_name: COUNT(*)
+  metric_type: count
+  expression: COUNT(*)
+  description: null
+  d3format: null
+  extra: null
+  warning_text: null
+columns:
+- column_name: day
+  verbose_name: null
+  is_dttm: true
+  is_active: true
+  type: DATE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: layer
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: events
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: BIGINT
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: 1b7f00c8-6a2d-4e5f-9a3b-2c4d6e8f0a1b

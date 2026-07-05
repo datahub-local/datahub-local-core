@@ -7,12 +7,12 @@
 {{- printf "%s-%s" $name "superset" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "postgresql.configMapJobSetup" -}}
+{{- define "superset.serviceAccount" -}}
 {{- $name := (include "name" .) }}
-{{- printf "%s-%s" $name "postgresql-job-setup" | trunc -63 | trimSuffix "-" }}
+{{- printf "%s-%s" $name "superset" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "postgresql.jobSetup" -}}
+{{- define "superset.configMapSupersetDashboard" -}}
 {{- $name := (include "name" .) }}
-{{- printf "%s-%s-" $name "postgresql-job-setup" | trunc -30 | trimSuffix "-" | trimPrefix "-" }}
+{{- printf "%s-%s" $name "superset-dashboard" | trunc 63 | trimSuffix "-" }}
 {{- end }}

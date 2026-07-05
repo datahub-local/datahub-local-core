@@ -1,0 +1,13 @@
+#{{- $files := .Files.Glob "files/dashboards/superset/*.zip" }}
+#{{- range $path, $fileContents := $files }}
+#{{- $dashboardName := regexReplaceAll "[^A-Za-z0-9-]+" (regexReplaceAll "(^.*/)(.*)\\.zip$" $path "${2}") "" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    superset_dashboard: "1"
+  name: {{ include "superset.configMapSupersetDashboard" $ }}-{{ $dashboardName }}
+binaryData:
+  {{ $dashboardName }}.zip: {{ $.Files.Get $path | b64enc }}
+#{{- end }}
