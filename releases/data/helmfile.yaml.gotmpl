@@ -60,14 +60,14 @@ releases:
       - "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
     values:
       - values/polaris.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-data-polaris-bootstrap"
+  - name: "{{ .Values.release_name }}-data-polaris-jobs"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     needs:
       - "{{ .Values.release_name }}-data-polaris"
     values:
-      - values/polaris-bootstrap.yaml.gotmpl
+      - values/polaris-jobs.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-airflow"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "airflow").ref }}'

@@ -1,0 +1,95 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  bootstrap:
+    type: job
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    initContainers:
+      wait-for-polaris:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            {{- readFile "../files/scripts/polaris/wait-for-polaris.sh" | nindent 12 }}
+        env:
+          POLARIS_URL: "http://{{ .Values.release_name }}-data-polaris:8181"
+      bootstrap-realm:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            {{- readFile "../files/scripts/polaris/bootstrap-realm.sh" | nindent 12 }}
+        env:
+          POLARIS_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
+          POLARIS_PERSISTENCE_TYPE: relational-jdbc
+          QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
+          QUARKUS_DATASOURCE_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: user
+          QUARKUS_DATASOURCE_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+    containers:
+      main:
+        image:
+          repository: apache/polaris-admin-tool
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "apache/polaris-admin-tool") }}{{ $value }}{{ end }}{{ end }}'
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            {{- readFile "../files/scripts/polaris/setup-catalogs.sh" | nindent 12 }}
+        env:
+          POLARIS_URL: "http://{{ .Values.release_name }}-data-polaris:8181"
+          POLARIS_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
+          CATALOGS: '{{ keys .Values.iceberg_catalogs | sortAlpha | join " " }}'
+          S3_ENDPOINT: "{{ .StateValues.s3_endpoint }}"
+          S3_REGION: "{{ .StateValues.backup_s3_region }}"
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+
+  # Nightly Iceberg table maintenance: compacts small files, merges manifests,
+  # expires old snapshots and removes orphan files for every table in every catalog.
+  compaction:
+    type: cronjob
+    cronjob:
+      schedule: "0 3 * * *"
+      concurrencyPolicy: Forbid
+      successfulJobsHistory: 1
+      failedJobsHistory: 1
+    containers:
+      main:
+        image:
+          repository: trinodb/trino
+          tag: "480" # keep in sync with the trino chart appVersion
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            {{- readFile "../files/scripts/polaris/compact-tables.sh" | nindent 12 }}
+        env:
+          TRINO_SERVER: "http://{{ .Values.release_name }}-data-trino-trino:8080"
+          TRINO_USER: "{{ .StateValues.default_admin_user }}"
+          CATALOGS: '{{ keys .Values.iceberg_catalogs | sortAlpha | join " " }}'
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+
+defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64
