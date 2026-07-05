@@ -128,7 +128,13 @@ def prepare_bundle(bundle_bytes, source, options):
             zipfile.ZipFile(prepared, "w", zipfile.ZIP_DEFLATED) as target:
         for file_name in original.namelist():
             content = original.read(file_name)
-            if is_managed_entry(file_name):
+            parts = file_name.split("/")
+            if len(parts) == 2 and parts[1] == "metadata.yaml":
+                # The assets import endpoint only accepts bundles of type "assets"
+                config = yaml.safe_load(content)
+                config["type"] = "assets"
+                content = yaml.safe_dump(config).encode()
+            elif is_managed_entry(file_name):
                 config = yaml.safe_load(content)
                 config["is_managed_externally"] = True
                 config["external_url"] = source
@@ -165,10 +171,11 @@ class SupersetClient:
         self.base_url = base_url
 
     def import_bundle(self, bundle_bytes, file_name):
+        # /api/v1/dashboard/import/ never overwrites existing charts and
+        # datasets; the assets import overwrites every object type
         response = self.session.post(
-            f"{self.base_url}/api/v1/dashboard/import/",
-            files={"formData": (file_name, io.BytesIO(bundle_bytes), "application/zip")},
-            data={"overwrite": "true"},
+            f"{self.base_url}/api/v1/assets/import/",
+            files={"bundle": (file_name, io.BytesIO(bundle_bytes), "application/zip")},
             timeout=300,
         )
         response.raise_for_status()
