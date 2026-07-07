@@ -147,11 +147,16 @@ main:
     failureThreshold: 5
     timeoutSeconds: 60
   livenessProbe: &livenessProbe
-    initialDelaySeconds: 120
+    # The chart has no startupProbe, so the initial delay must cover the npm
+    # install of community nodes at boot (~60s observed; 300s + 5 failures
+    # x 60s gives startup a 10 min window before any kill).
+    initialDelaySeconds: 300
 
-    periodSeconds: 600
+    # Recover fast from a wedged event loop (e.g. LLM nodes spinning the CPU
+    # on huge prompts): kill after ~5 min instead of ~50.
+    periodSeconds: 60
     failureThreshold: 5
-    timeoutSeconds: 60
+    timeoutSeconds: 10
 
   podLabels:
     backup.velero.io/custom-backup-daily-fs: "true"
@@ -216,7 +221,9 @@ worker:
     <<: *sharedEnv
 
     NODE_OPTIONS:
-      value: "--max-old-space-size=7680" # Mb RAM - 512
+      # NODE_OPTIONS is inherited by the task-runner child process, so keep
+      # heap + runner + native overhead well under the 8Gi cgroup limit.
+      value: "--max-old-space-size=6144"
   extraVolumes: *extraVolumes
   extraVolumeMounts: *extraVolumeMounts
 
