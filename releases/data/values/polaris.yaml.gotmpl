@@ -18,6 +18,12 @@ persistence:
     secret:
       name: ""
 
+features:
+  # The location-overlap check in validateStagedTableCreate resolves every sibling
+  # table and 500s when concurrent DDL (dbt threads: 4) renames/drops one mid-check.
+  # Safe to disable: Trino writes each table to a unique UUID-suffixed S3 location.
+  ALLOW_TABLE_LOCATION_OVERLAP: true
+
 advancedConfig:
   quarkus.http.access-log.enabled: true
   quarkus.datasource.db-kind: postgresql
