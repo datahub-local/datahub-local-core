@@ -15,7 +15,7 @@ container_image_version:
   curlimages/curl: 8.21.0
   kopia/kopia: 20251215.0.232403
   n8nio/n8n: 2.29.5
-  rclone/rclone: 1.74.3
+  rclone/rclone: 1.74.4
   valkey/valkey: 9.1.0
   velero/velero-plugin-for-aws: v1.14.2
 helm_chart_version:
