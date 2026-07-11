@@ -9,7 +9,7 @@ fi
 
 for CATALOG in $CATALOGS; do
   echo "Compacting catalog ${CATALOG}..."
-  for SCHEMA in $(run_sql "SHOW SCHEMAS FROM ${CATALOG}" | grep -v '^information_schema$'); do
+  for SCHEMA in $(run_sql "SHOW SCHEMAS FROM ${CATALOG}" | grep -vE '^(information_schema|system)$'); do
     for TABLE in $(run_sql "SHOW TABLES FROM ${CATALOG}.${SCHEMA}"); do
       FQN="${CATALOG}.${SCHEMA}.\"${TABLE}\""
       echo "Optimizing ${FQN}"

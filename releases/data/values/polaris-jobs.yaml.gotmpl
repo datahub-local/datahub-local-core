@@ -67,6 +67,8 @@ controllers:
     type: cronjob
     cronjob:
       schedule: "0 3 * * *"
+      # Control-plane jitter can delay the schedule beyond 5 minutes, which
+      # would silently skip the run; allow up to 1 hour of delay
       startingDeadlineSeconds: 300
       concurrencyPolicy: Forbid
       successfulJobsHistory: 1
