@@ -8,6 +8,9 @@ server:
     enabled: true
     maxReplicas: 3
     targetCPUUtilizationPercentage: 75
+    # Worker JVM RSS stays near maxHeapSize regardless of load, so memory
+    # utilization is not a usable scaling signal.
+    targetMemoryUtilizationPercentage: ""
 
   log:
     trino:
@@ -23,15 +26,34 @@ additionalConfigProperties:
   - "internal-communication.shared-secret={{ .StateValues.security_github_client_id }}"
 
 coordinator:
+  # heap must stay below the memory limit minus JVM native overhead
   jvm:
-    maxHeapSize: "4G"
+    maxHeapSize: "2G"
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 1
+      memory: 3Gi
 
   nodeSelector:
     kubernetes.io/arch: arm64
 
 worker:
+  # heap must stay below the memory limit minus JVM native overhead
   jvm:
-    maxHeapSize: "4G"
+    maxHeapSize: "3G"
+
+  # The HPA needs a CPU request to compute utilization.
+  resources:
+    requests:
+      cpu: 500m
+      memory: 3Gi
+    limits:
+      cpu: 2
+      memory: 4Gi
 
   nodeSelector:
     kubernetes.io/arch: arm64
