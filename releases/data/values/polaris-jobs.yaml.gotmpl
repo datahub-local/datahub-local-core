@@ -67,6 +67,7 @@ controllers:
     type: cronjob
     cronjob:
       schedule: "0 3 * * *"
+      startingDeadlineSeconds: 300
       concurrencyPolicy: Forbid
       successfulJobsHistory: 1
       failedJobsHistory: 1
