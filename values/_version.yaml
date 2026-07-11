@@ -8,13 +8,13 @@ container_image_version:
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.13.2
   ghcr.io/sharevb/it-tools: 2026.1.4
-  ghcr.io/tailscale/tailscale: v1.98.4
+  ghcr.io/tailscale/tailscale: v1.98.8
   # homeassistant/home-assistant: 2026.4.4
   iib0011/omni-tools: 0.6.0
-  apache/polaris-admin-tool: 1.5.0
+  apache/polaris-admin-tool: 1.6.0
   curlimages/curl: 8.21.0
   kopia/kopia: 20251215.0.232403
-  n8nio/n8n: 2.29.5
+  n8nio/n8n: 2.30.3
   rclone/rclone: 1.74.4
   valkey/valkey: 9.1.0
   velero/velero-plugin-for-aws: v1.14.2
@@ -38,7 +38,7 @@ helm_chart_version:
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
-    version: 0.7.0
+    version: 0.7.1
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -50,7 +50,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 87.10.1
+    version: 87.14.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -62,11 +62,11 @@ helm_chart_version:
   polaris:
     ref: polaris/polaris
     repository: https://downloads.apache.org/polaris/helm-chart
-    version: 1.5.0
+    version: 1.6.0
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.65.0
+    version: 1.66.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -78,11 +78,11 @@ helm_chart_version:
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
-    version: 26.1.7
+    version: 26.1.8
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.43.0
+    version: 0.44.0
   # servarr:
   #   ref: datahub-local/servarr
   #   repository: https://datahub-local.github.io/servarr
@@ -110,7 +110,7 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.3.0
+    version: 2.3.1
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
