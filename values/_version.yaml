@@ -7,7 +7,7 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v1.13.2
-  ghcr.io/sharevb/it-tools: 2026.1.4
+  ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.98.8
   # homeassistant/home-assistant: 2026.4.4
   iib0011/omni-tools: 0.6.0
