@@ -1,0 +1,210 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    initContainers:
+      wait-for-postgres:
+        image:
+          repository: apache/superset
+          tag: dockerize
+        command:
+          - /bin/sh
+          - -c
+          - dockerize -wait "tcp://{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local:5432" -timeout 3000s
+    containers:
+      main:
+        image:
+          repository: ghcr.io/miniflux/miniflux
+          tag: "2.3.2"
+        env:
+          TZ: "Europe/Madrid"
+          LISTEN_ADDR: "0.0.0.0:8080"
+          BASE_URL: "https://media-miniflux.{{ .StateValues.gateway_hostname }}"
+          # Database: lib/pq seeds connection defaults from PG* env vars, then
+          # applies DATABASE_URL on top, so credentials stay in the secret.
+          PGHOST: "{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local"
+          PGPORT: "5432"
+          PGDATABASE: "{{ .StateValues.postgres_extra_databases.miniflux }}"
+          PGUSER:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: user
+          PGPASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-admin-credentials
+                key: password
+          DATABASE_URL: "sslmode=disable"
+          RUN_MIGRATIONS: "1"
+          # Bootstrap admin user (also used by the setup job for API access)
+          CREATE_ADMIN: "1"
+          ADMIN_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-miniflux"
+                key: admin-username
+          ADMIN_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-miniflux"
+                key: admin-password
+          # Native OIDC login via Dex (same provider as the other apps)
+          OAUTH2_PROVIDER: "oidc"
+          OAUTH2_OIDC_DISCOVERY_ENDPOINT: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex"
+          OAUTH2_OIDC_PROVIDER_NAME: "Dex"
+          OAUTH2_CLIENT_ID: "miniflux"
+          OAUTH2_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
+          OAUTH2_REDIRECT_URL: "https://media-miniflux.{{ .StateValues.gateway_hostname }}/oauth2/oidc/callback"
+          # Auto-provision a Miniflux user on first successful OIDC login
+          OAUTH2_USER_CREATION: "1"
+          # Image proxy for privacy
+          MEDIA_PROXY_MODE: "http-only"
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+            cpu: 500m
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthcheck
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthcheck
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 10
+  setup-job:
+    type: job
+    serviceAccount:
+      identifier: default
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/sync-wave: "10"
+    initContainers:
+      wait-for-miniflux:
+        image:
+          repository: apache/superset
+          tag: dockerize
+        command:
+          - /bin/sh
+          - -c
+          - dockerize -wait "tcp://{{ .Values.release_name }}-media-miniflux:8080" -timeout 3000s
+    containers:
+      main:
+        image:
+          repository: python
+          tag: 3.13
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir -r /scripts/setup_miniflux_requirements.txt && \
+            python /scripts/setup_miniflux.py
+        env:
+          MINIFLUX_URL: "http://{{ .Values.release_name }}-media-miniflux:8080"
+          ADMIN_USERNAME:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-miniflux"
+                key: admin-username
+          ADMIN_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.release_name }}-media-miniflux"
+                key: admin-password
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 256Mi
+            cpu: 200m
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+persistence:
+  setup-scripts:
+    enabled: true
+    type: configMap
+    identifier: main
+    advancedMounts:
+      setup-job:
+        main:
+          - path: /scripts
+secrets:
+  # Secret for configuration credentials
+  main:
+    stringData:
+      admin-username: "{{ .StateValues.default_admin_user }}"
+      admin-password: "{{ .StateValues.default_admin_password }}"
+
+configMaps:
+  main:
+    enabled: true
+    includeInChecksum: false
+    data:
+      miniflux_config.yaml: |
+        {{- readFile "../files/scripts/miniflux/miniflux_config.yaml" | nindent 10 }}
+      setup_miniflux_requirements.txt: |
+        {{- readFile "../files/scripts/miniflux/requirements.txt" | nindent 10 }}
+      setup_miniflux.py: |
+        {{- readFile "../files/scripts/miniflux/setup_miniflux.py" | nindent 10 }}
+
+rawResources:
+  ingress-route:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "Miniflux"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-media-miniflux"
+          gethomepage.dev/group: "Media"
+          gethomepage.dev/icon: "sh-miniflux"
+          gethomepage.dev/href: "https://media-miniflux.{{ .Values.gateway_hostname }}"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          # Miniflux authenticates natively via Dex OIDC, so no oauth2-proxy middleware.
+          - match: Host(`media-miniflux.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-media-miniflux"
+                port: http

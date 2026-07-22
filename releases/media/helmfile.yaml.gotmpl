@@ -18,12 +18,12 @@ releases:
   #   version: '{ { (.StateValues.helm_chart_version | get "servarr").version } }'
   #   values:
   #     - values/servarr.yaml.gotmpl
-  - name: "{{ .Values.release_name }}-media-commafeed"
+  - name: "{{ .Values.release_name }}-media-miniflux"
     namespace: media
     chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
-      - values/commafeed.yaml.gotmpl
+      - values/miniflux.yaml.gotmpl
   - name: "{{ .Values.release_name }}-media-musicgrabber"
     namespace: media
     chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
