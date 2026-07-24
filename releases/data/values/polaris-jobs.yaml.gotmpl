@@ -61,6 +61,36 @@ controllers:
           limits:
             memory: 128Mi
 
+  # Creates the default `main` schema in each Trino iceberg catalog after the
+  # coordinator is reachable. Runs as a one-shot hook (sync-wave 1) so it fires
+  # after the bootstrap job (wave 0) has created the Polaris catalogs. This
+  # replaces the per-worker initContainer that re-ran on every autoscaled pod.
+  create-schemas:
+    type: job
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+      argocd.argoproj.io/sync-wave: "1"
+    containers:
+      main:
+        image:
+          repository: trinodb/trino
+          tag: "480" # keep in sync with the trino chart appVersion
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            {{- readFile "../files/scripts/polaris/create-schemas.sh" | nindent 12 }}
+        env:
+          TRINO_SERVER: "http://{{ .Values.release_name }}-data-trino-trino:8080"
+          TRINO_USER: "{{ .StateValues.default_admin_user }}"
+          CATALOGS: '{{ keys .Values.iceberg_catalogs | sortAlpha | join " " }}'
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 256Mi
+
   # Nightly Iceberg table maintenance: compacts small files, merges manifests,
   # expires old snapshots and removes orphan files for every table in every catalog.
   compaction:

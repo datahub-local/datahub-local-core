@@ -94,23 +94,6 @@ initContainers:
         - name: POLARIS_CLIENT_SECRET
           value: "{{ .StateValues.security_github_client_secret }}"
 
-  # Creates a default schema in each Trino catalog after the coordinator is reachable.
-  # CREATE SCHEMA IF NOT EXISTS is idempotent.
-  worker:
-    - name: create-iceberg-schemas
-      image: trinodb/trino:480 # keep in sync with the trino chart appVersion
-      command:
-        - /bin/sh
-        - -c
-        - |
-          SERVER="http://{{ $.Values.release_name }}-data-trino-trino:8080"
-          until trino --server "$SERVER" --user {{ $.StateValues.default_admin_user }} --execute "SELECT 1" >/dev/null 2>&1; do
-            echo "Waiting for Trino coordinator..."; sleep 10
-          done
-          {{- range $key, $value := .Values.iceberg_catalogs }}
-          trino --server "$SERVER" --user {{ $.StateValues.default_admin_user }} --execute "CREATE SCHEMA IF NOT EXISTS {{ $key }}.main WITH (location = 's3://datahub-local-{{ $key }}')" || true
-          {{- end }}
-
 serviceAccount:
   create: true
 
