@@ -25,7 +25,13 @@ session = requests.Session()
 
 def api(method, path, **kwargs):
     resp = session.request(method, f"{MINIFLUX_URL}{path}", **kwargs)
-    resp.raise_for_status()
+    if not resp.ok:
+        # Miniflux returns the real reason in the body (e.g. {"error_message": ...});
+        # surface it instead of a bare status code.
+        raise requests.HTTPError(
+            f"{resp.status_code} {resp.reason} for {method} {path}: {resp.text.strip()}",
+            response=resp,
+        )
     return resp.json() if resp.content else None
 
 
@@ -84,6 +90,7 @@ def configure_feeds():
     # Reconcile feeds (create missing, fix title/category on existing)
     existing_feeds = get_feeds()
     wanted_urls = set()
+    failed_feeds = []
     for category_name, feeds in categories_config.items():
         category_id = categories[category_name]
         for feed in feeds:
@@ -94,15 +101,29 @@ def configure_feeds():
             wanted_urls.add(feed_url)
 
             current = existing_feeds.get(feed_url)
-            if current is None:
-                feed_id = create_feed(feed_url, category_id)
-                if feed_title:
-                    update_feed(feed_id, feed_title, category_id)
-            elif (feed_title and current["title"] != feed_title) or current[
-                "category_id"
-            ] != category_id:
-                logger.info(f"Updating feed: {feed_title or feed_url}")
-                update_feed(current["id"], feed_title or current["title"], category_id)
+            try:
+                if current is None:
+                    feed_id = create_feed(feed_url, category_id)
+                    if feed_title:
+                        update_feed(feed_id, feed_title, category_id)
+                elif (feed_title and current["title"] != feed_title) or current[
+                    "category_id"
+                ] != category_id:
+                    logger.info(f"Updating feed: {feed_title or feed_url}")
+                    update_feed(
+                        current["id"], feed_title or current["title"], category_id
+                    )
+            except requests.RequestException as e:
+                # A single unreachable/broken feed (Miniflux replies 500) must not
+                # abort the whole reconciliation. Record it and keep going.
+                logger.warning(f"Skipping feed {feed_title or feed_url}: {e}")
+                failed_feeds.append(feed_url)
+
+    if failed_feeds:
+        logger.warning(
+            f"{len(failed_feeds)} feed(s) could not be subscribed: "
+            + ", ".join(failed_feeds)
+        )
 
     if not CLEANUP_OLD:
         return

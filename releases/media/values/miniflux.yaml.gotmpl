@@ -25,9 +25,7 @@ controllers:
           TZ: "Europe/Madrid"
           LISTEN_ADDR: "0.0.0.0:8080"
           BASE_URL: "https://media-miniflux.{{ .StateValues.gateway_hostname }}"
-          # Database: lib/pq seeds connection defaults from PG* env vars, then
-          # applies DATABASE_URL on top, so credentials stay in the secret.
-          PGHOST: "{{ $.Values.release_name }}-data-postgresql.data.svc.cluster.local"
+          PGHOST: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-18-rw.data.svc.cluster.local"
           PGPORT: "5432"
           PGDATABASE: "{{ .StateValues.postgres_extra_databases.miniflux }}"
           PGUSER:
