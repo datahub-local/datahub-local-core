@@ -40,6 +40,14 @@ _shared_config:
           name: valkey-admin-credentials
           key: password
 
+    # Miniflux API (single shared admin account owns the curated feeds)
+    MINIFLUX_URL:
+      value: "http://{{ .Values.release_name }}-media-miniflux.media.svc.cluster.local:8080"
+    MINIFLUX_API_USER:
+      value: "{{ .StateValues.default_admin_user }}"
+    MINIFLUX_API_PASSWORD:
+      value: "{{ .StateValues.default_admin_password }}"
+
     BACKUP_GITHUB_REPO_OWNER:
       value: "datahub-local"
     BACKUP_GITHUB_REPO_NAME:
