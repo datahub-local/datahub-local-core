@@ -59,8 +59,10 @@ controllers:
           OAUTH2_CLIENT_ID: "miniflux"
           OAUTH2_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
           OAUTH2_REDIRECT_URL: "https://media-miniflux.{{ .StateValues.gateway_hostname }}/oauth2/oidc/callback"
-          # Auto-provision a Miniflux user on first successful OIDC login
-          OAUTH2_USER_CREATION: "1"
+          # Single shared account: the Dex identity is linked to the local admin
+          # user (which owns the curated feeds), so OIDC must NOT auto-provision
+          # separate per-user accounts (each would start with zero feeds).
+          OAUTH2_USER_CREATION: "0"
           # Image proxy for privacy
           MEDIA_PROXY_MODE: "http-only"
         resources:

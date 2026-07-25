@@ -1,3 +1,8 @@
+# User preferences applied to the shared admin account (Miniflux has no
+# server-wide default). "system_*" themes follow the OS light/dark setting.
+settings:
+  theme: "system_serif"
+
 categories:
   Tech:
     - url: "https://news.ycombinator.com/rss"
@@ -39,8 +44,8 @@ categories:
       title: "Data Engineering Weekly"
     - url: "https://seattledataguy.substack.com/feed"
       title: "Seattle Data Guy"
-    - url: "https://eczachly.substack.com/feed"
-      title: "Zach Wilson - EcZachly"
+    - url: "https://materializedview.io/feed"
+      title: "Chris Riccomini - Materialized View"
     - url: "https://dataengineeringcentral.substack.com/feed"
       title: "Data Engineering Central"
     - url: "https://www.ssp.sh/index.xml"
@@ -62,7 +67,7 @@ categories:
       title: "Dremio Blog"
     - url: "https://docs.getdbt.com/blog/rss.xml"
       title: "dbt Labs Blog"
-    - url: "https://www.confluent.io/blog/rss.xml"
+    - url: "https://www.confluent.io/feed/"
       title: "Confluent Blog"
     - url: "https://duckdb.org/feed.xml"
       title: "DuckDB Blog"
@@ -103,8 +108,8 @@ categories:
       title: "Google DeepMind Blog"
     - url: "https://huggingface.co/blog/feed.xml"
       title: "Hugging Face Blog"
-    - url: "https://openrss.org/ai.meta.com/blog"
-      title: "Meta AI Blog"
+    - url: "https://engineering.fb.com/feed/"
+      title: "Meta Engineering"
     - url: "https://developer.nvidia.com/blog/feed/"
       title: "NVIDIA Developer Blog"
   DevOps:
@@ -127,8 +132,8 @@ categories:
       title: "Viktor Farcic - DevOps Toolkit"
     - url: "https://www.justingarrison.com/blog/index.xml"
       title: "Justin Garrison"
-    - url: "https://newsletter.cote.io/feed"
-      title: "Michael Cote"
+    - url: "https://surfingcomplexity.blog/feed/"
+      title: "Lorin Hochstein - Surfing Complexity"
     - url: "https://sreweekly.com/feed/"
       title: "SRE Weekly"
     # Companies / Market

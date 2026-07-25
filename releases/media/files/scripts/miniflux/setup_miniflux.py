@@ -72,13 +72,26 @@ def update_feed(feed_id, title, category_id):
     )
 
 
-def configure_feeds():
+def load_config():
     if not os.path.exists(CONFIG_FILE):
         raise Exception(f"{CONFIG_FILE} does not exist")
-
     with open(CONFIG_FILE, "r") as f:
-        config = yaml.safe_load(f)
+        return yaml.safe_load(f) or {}
 
+
+def apply_settings(config):
+    # User-level preferences (e.g. theme) applied to the authenticated account.
+    # Miniflux has no server-wide default; it is a per-user setting, so we set it
+    # on the shared admin user the setup job logs in as.
+    settings = config.get("settings") or {}
+    if not settings:
+        return
+    me = api("GET", "/v1/me")
+    logger.info(f"Applying user settings: {settings}")
+    api("PUT", f"/v1/users/{me['id']}", json=settings)
+
+
+def configure_feeds(config):
     categories_config = config.get("categories", {})
 
     # Reconcile categories
@@ -150,7 +163,9 @@ def main():
         raise Exception("Admin credentials not provided")
 
     session.auth = (ADMIN_USERNAME, ADMIN_PASSWORD)
-    configure_feeds()
+    config = load_config()
+    apply_settings(config)
+    configure_feeds(config)
     logger.info("Feed configuration completed.")
 
 
