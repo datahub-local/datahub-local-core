@@ -1,12 +1,12 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 3.0.3
+  g33kphr33k/musicgrabber: 4.0.2
   ghcr.io/browserless/chromium: v2.55.0
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
   # ghcr.io/coder/code-server: 4.117.0
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
-  ghcr.io/gethomepage/homepage: v1.13.2
+  ghcr.io/gethomepage/homepage: v2.0.0
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.98.9
   # homeassistant/home-assistant: 2026.4.4
@@ -50,7 +50,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 87.19.1
+    version: 88.3.0
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -70,7 +70,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 15.2.0
+    version: 16.0.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
