@@ -63,7 +63,7 @@ worker:
 initContainers:
   coordinator:
     - name: setup-polaris-catalogs
-      image: curlimages/curl:8.12.1
+      image: 'curlimages/curl:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "curlimages/curl") }}{{ $value }}{{ end }}{{ end }}'
       command:
         - /bin/sh
         - -c

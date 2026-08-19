@@ -7,6 +7,8 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v2.0.0
+  ghcr.io/headlamp-k8s/headlamp: v0.44.0
+  ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.102.2
   # homeassistant/home-assistant: 2026.4.4
@@ -15,6 +17,7 @@ container_image_version:
   curlimages/curl: 8.21.0
   kopia/kopia: 20251215.0.232403
   n8nio/n8n: 2.35.3
+  python: "3.13"
   rclone/rclone: 1.75.0
   valkey/valkey: 9.1.1
   velero/velero-plugin-for-aws: v1.14.2

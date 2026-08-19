@@ -20,7 +20,7 @@ controllers:
       main:
         image:
           repository: ghcr.io/miniflux/miniflux
-          tag: "2.3.2"
+          tag: '{{ range $key,$value := $.StateValues.container_image_version }}{{ if (eq $key "ghcr.io/miniflux/miniflux") }}{{ $value }}{{ end }}{{ end }}'
         env:
           TZ: "Europe/Madrid"
           LISTEN_ADDR: "0.0.0.0:8080"
@@ -120,7 +120,7 @@ controllers:
       main:
         image:
           repository: python
-          tag: 3.13
+          tag: '{{ range $key,$value := $.StateValues.container_image_version }}{{ if (eq $key "python") }}{{ $value }}{{ end }}{{ end }}'
         command: ["/bin/bash", "-c"]
         args:
           - |

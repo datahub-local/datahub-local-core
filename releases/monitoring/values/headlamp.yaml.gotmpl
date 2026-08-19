@@ -26,7 +26,7 @@ initContainers:
       - /bin/sh
       - /scripts/create-kubeconfig.sh
       - /home/headlamp/.kube/config
-    image: "ghcr.io/headlamp-k8s/headlamp:v0.24.1"
+    image: 'ghcr.io/headlamp-k8s/headlamp:{{ range $key,$value := $.StateValues.container_image_version }}{{ if (eq $key "ghcr.io/headlamp-k8s/headlamp") }}{{ $value }}{{ end }}{{ end }}'
     imagePullPolicy: IfNotPresent
     name: headlamp-init
     volumeMounts:

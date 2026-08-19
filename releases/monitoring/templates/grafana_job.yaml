@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
       - name: setup-grafana
-        image: curlimages/curl:latest
+        image: curlimages/curl:{{ index .Values.container_image_version "curlimages/curl" }}
         command: ["/bin/sh", "/scripts/setup-grafana.sh"]
         env:
         - name: HOMEPAGE_DASHBOARD_UID
