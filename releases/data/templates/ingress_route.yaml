@@ -28,7 +28,7 @@ metadata:
     gethomepage.dev/name: "Redpanda Console"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=redpanda"
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/logos/redpanda-icon-color.svg"
+    gethomepage.dev/icon: "https://raw.githubusercontent.com/redpanda-data/console/refs/heads/master/frontend/src/assets/redpanda/icon-color.svg"
     gethomepage.dev/href: "https://data-redpanda-console.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-redpanda-console'
 spec:
@@ -56,7 +56,7 @@ metadata:
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Superset"
-    gethomepage.dev/pod-selector: "app=superset"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=superset"
     gethomepage.dev/group: "Data"
     gethomepage.dev/icon: "https://superset.apache.org/img/superset-mark-dark.svg"
     gethomepage.dev/href: "https://data-superset.{{ .Values.gateway_hostname }}"

@@ -7,8 +7,14 @@ ollama:
   models:
     pull:
       - gemma4:e2b-it-qat
-      - lfm2.5-thinking:1.2b
-      - embeddinggemma:300m
+
+# -- Default context window (Ollama defaults to 4096, which truncates longer
+# Open WebUI conversations with an "exceeds context size" error). 131072 is
+# gemma4's full trained window; as the only resident model on the RTX 3060
+# Laptop GPU (6 GiB) it measures 3.6 GiB with every layer on the GPU.
+extraEnv:
+  - name: OLLAMA_CONTEXT_LENGTH
+    value: "131072"
 
 updateStrategy:
   type: Recreate
