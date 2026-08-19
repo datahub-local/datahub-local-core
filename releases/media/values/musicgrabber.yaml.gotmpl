@@ -9,12 +9,6 @@ controllers:
     pod:
       dnsPolicy: "ClusterFirst"
       hostNetwork: true
-      nodeSelector:
-        kubernetes.io/hostname: datahublocal-legion-laptop
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
     serviceAccount:
       identifier: default
     containers:
@@ -60,9 +54,33 @@ persistence:
     size: 128Mi
     globalMounts:
       - path: /data
+  # Music library lives on the NAS NFS export so the pod can run on any node.
+  #
+  # The directory must exist on the NAS before the pod starts, and it can be
+  # mounted on the laptop to browse/copy the library from Windows:
+  #
+  #   # WSL (needs `sudo apt install nfs-common`):
+  #   sudo mkdir -p /mnt/nfs-musicgrabber
+  #   sudo mount -t nfs -o vers=4,rw,hard,noatime \
+  #     datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber
+  #   mkdir -p "$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")/Music"
+  #   ln -sfn /mnt/nfs-musicgrabber \
+  #     "$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")/Music/musicgrabber"
+  #
+  #   # persist the mount across WSL restarts (/etc/fstab):
+  #   datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber nfs vers=4,rw,hard,noatime,_netdev 0 0
+  #
+  #   # NOTE: a mount done inside WSL is NOT visible to Windows Explorer at
+  #   # %USERPROFILE%\Music\musicgrabber (the symlink above only works from WSL).
+  #   # To get a real Windows path, use the Windows NFS client instead
+  #   # (Windows Features -> "Services for NFS" -> "Client for NFS"), in cmd/PowerShell:
+  #   #   mount -o anon \\datahublocal-nas\mnt\main\nfs\k8s\media-musicgrabber Z:
+  #   # and/or link it into your profile:
+  #   #   mklink /D "%USERPROFILE%\Music\musicgrabber" "Z:\"
   music:
-    type: hostPath
-    hostPath: /mnt/c/Users/alvsa/Music/musicgrabber
+    type: nfs
+    server: datahublocal-nas
+    path: /mnt/main/nfs/k8s/media-musicgrabber
     globalMounts:
       - path: /music
   shm:
