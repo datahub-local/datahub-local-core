@@ -54,6 +54,12 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/n8n-cdnsolver.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-sympozium"
+    namespace: automation
+    chart: '{{ (.StateValues.helm_chart_version | get "sympozium").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "sympozium").version }}'
+    values:
+      - values/sympozium.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation"
     namespace: automation
     chart: "."

@@ -1,0 +1,75 @@
+# https://github.com/sympozium-ai/sympozium/blob/main/charts/sympozium/values.yaml
+
+_shared_config:
+  node_selector: &nodeSelector
+    kubernetes.io/arch: amd64
+
+  tolerations: &tolerations
+    - effect: NoSchedule
+      key: datahub.local/role
+      operator: "Equal"
+      value: nas
+
+createNamespace: false
+namespace: automation
+
+controller:
+  nodeSelector: *nodeSelector
+  tolerations: *tolerations
+
+apiserver:
+  nodeSelector: *nodeSelector
+  tolerations: *tolerations
+
+  webUI:
+    enabled: true
+    # Pinned: left empty the chart regenerates it on every render, so ArgoCD
+    # would rewrite the Secret and restart the API server on every sync.
+    token: "{{ .StateValues.security_github_client_secret }}"
+
+webhook:
+  replicas: 1
+
+  nodeSelector: *nodeSelector
+  tolerations: *tolerations
+
+nats:
+  # No persistence: NATS is a Deployment without a Recreate strategy, so a RWO
+  # PVC would deadlock every rolling update.
+  nodeSelector: *nodeSelector
+  tolerations: *tolerations
+
+memory:
+  adminDelete:
+    # Same regenerated-token problem as the UI token, with nothing to pin it to.
+    enabled: false
+
+networkPolicies:
+  enabled: true
+  # Reach data/ollama, which the agent allowlist does not cover.
+  extraEgressPorts:
+    - 11434
+
+observability:
+  enabled: true
+  # Chart defaults hardcode the sympozium-system namespace here.
+  endpoint: "sympozium-otel-collector.automation.svc:4317"
+
+  defaultInstance:
+    otlpEndpoint: "sympozium-otel-collector.automation.svc:4317"
+    resourceAttributes:
+      deployment.environment: cluster
+      k8s.cluster.name: "{{ .StateValues.cluster_name }}"
+
+# Node-installed inference providers; Ollama runs in-cluster instead.
+nodeProbe:
+  enabled: false
+
+llmfit:
+  daemonset:
+    # GPU fitness telemetry; no GPUs here.
+    enabled: false
+
+# DRA driver for model placement; needs a ghcr-pull secret that does not exist.
+llmfit-dra:
+  enabled: false

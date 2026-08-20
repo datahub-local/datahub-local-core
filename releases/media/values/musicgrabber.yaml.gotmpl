@@ -54,29 +54,76 @@ persistence:
     size: 128Mi
     globalMounts:
       - path: /data
-  # Music library lives on the NAS NFS export so the pod can run on any node.
+  # Music library on the NAS NFS export, so the pod is not pinned to a node.
+  # The media-musicgrabber directory already exists on the NAS export.
   #
-  # The directory must exist on the NAS before the pod starts, and it can be
-  # mounted on the laptop to browse/copy the library from Windows:
+  # To browse/copy the library from the laptop:
   #
-  #   # WSL (needs `sudo apt install nfs-common`):
-  #   sudo mkdir -p /mnt/nfs-musicgrabber
-  #   sudo mount -t nfs -o vers=4,rw,hard,noatime \
-  #     datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber
-  #   mkdir -p "$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")/Music"
-  #   ln -sfn /mnt/nfs-musicgrabber \
-  #     "$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')")/Music/musicgrabber"
+  #   a) From WSL - REQUIRES networkingMode=nat in %USERPROFILE%\.wslconfig.
+  #      With networkingMode=mirrored the kernel NFS client hangs forever in
+  #      SYN-SENT (mirrored mode never delivers the replies to the kernel's RPC
+  #      sockets, even though userspace TCP to the NAS works fine), so a plain
+  #      `sudo mount -t nfs ...` just looks stuck. After editing .wslconfig run
+  #      `wsl --shutdown`, then:
   #
-  #   # persist the mount across WSL restarts (/etc/fstab):
-  #   datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber nfs vers=4,rw,hard,noatime,_netdev 0 0
+  #        sudo apt install -y nfs-common
+  #        sudo mkdir -p /mnt/nfs-musicgrabber
+  #        sudo mount -t nfs -o vers=4,rw,hard,noatime \
+  #          datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber
   #
-  #   # NOTE: a mount done inside WSL is NOT visible to Windows Explorer at
-  #   # %USERPROFILE%\Music\musicgrabber (the symlink above only works from WSL).
-  #   # To get a real Windows path, use the Windows NFS client instead
-  #   # (Windows Features -> "Services for NFS" -> "Client for NFS"), in cmd/PowerShell:
-  #   #   mount -o anon \\datahublocal-nas\mnt\main\nfs\k8s\media-musicgrabber Z:
-  #   # and/or link it into your profile:
-  #   #   mklink /D "%USERPROFILE%\Music\musicgrabber" "Z:\"
+  #      persist it in /etc/fstab:
+  #        datahublocal-nas:/mnt/main/nfs/k8s/media-musicgrabber /mnt/nfs-musicgrabber nfs vers=4,rw,hard,noatime,_netdev 0 0
+  #
+  #      Windows Explorer sees this only as \\wsl.localhost\<distro>\mnt\nfs-musicgrabber,
+  #      NOT as %USERPROFILE%\Music\musicgrabber.
+  #
+  #   b) For a real Windows path, use the Windows NFS client instead.
+  #      Install it once from an ELEVATED PowerShell (Win 11 Pro; reboot if asked).
+  #      Enable the CHILD feature: the umbrella "ServicesForNFS-ClientOnly" already
+  #      reports itself installed and silently no-ops, without ever laying down
+  #      mount.exe or the NfsClnt service:
+  #
+  #        Enable-WindowsOptionalFeature -Online -FeatureName ClientForNFS-Infrastructure -All
+  #        Enable-WindowsOptionalFeature -Online -FeatureName NFS-Administration -All
+  #
+  #      then, from a normal PowerShell - it MUST be `mount.exe`, because plain
+  #      `mount` is a PowerShell alias for New-PSDrive and fails with
+  #      "the parameter name 'o' is ambiguous":
+  #
+  #        mount.exe -o anon \\datahublocal-nas\mnt\main\nfs\k8s\media-musicgrabber Z:
+  #
+  #      Link it into the profile ONCE, from an ELEVATED cmd - symlink creation
+  #      needs admin (both `mklink /D` and `New-Item -ItemType SymbolicLink` refuse
+  #      without it, and `mklink /J` cannot target a network drive). The symlink is
+  #      a permanent filesystem object: it survives reboots and merely dangles
+  #      until Z: is mounted again, so this is a one-time step:
+  #
+  #        mklink /D "%USERPROFILE%\Music\musicgrabber" Z:\
+  #
+  #      or self-elevating, from a normal PowerShell:
+  #
+  #        Start-Process cmd -Verb RunAs -ArgumentList '/c','mklink /D "%USERPROFILE%\Music\musicgrabber" Z:\'
+  #
+  #      The Z: mount itself is per-logon-session and does NOT survive a reboot,
+  #      so re-create it at logon from
+  #      %APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\mount-musicgrabber.cmd:
+  #
+  #        @echo off
+  #        set SHARE=\\datahublocal-nas\mnt\main\nfs\k8s\media-musicgrabber
+  #        if exist Z:\ exit /b 0
+  #        C:\Windows\System32\mount.exe -o anon %SHARE% Z: >nul 2>&1
+  #        if exist Z:\ exit /b 0
+  #        rem NfsClnt/NfsRdr may still be starting right after logon - retry once
+  #        timeout /t 15 /nobreak >nul
+  #        C:\Windows\System32\mount.exe -o anon %SHARE% Z: >nul 2>&1
+  #
+  #      If it lands read-only, map anon to the export owner (elevated, then
+  #      `Restart-Service NfsClnt`):
+  #        $k='HKLM:\SOFTWARE\Microsoft\ClientForNFS\CurrentVersion\Default'
+  #        New-ItemProperty -Path $k -Name AnonymousUid -Value 950 -PropertyType DWord -Force
+  #        New-ItemProperty -Path $k -Name AnonymousGid -Value 950 -PropertyType DWord -Force
+  #
+  #      (SMB is not an option: ports 445/139 are closed on datahublocal-nas.)
   music:
     type: nfs
     server: datahublocal-nas
