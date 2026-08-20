@@ -1,0 +1,192 @@
+# The controller derives the Deployment, Service and cluster DNS name straight
+# from MCPServer.metadata.name, so the chart's built-in catalog produced bare
+# `github`, `grafana`, `postgres` and `argocd` workloads in a namespace that
+# already holds argo-cd-*. defaultMcpServers is off in values/sympozium.yaml.gotmpl
+# and the catalog lives here instead; the specs are otherwise the chart's own and
+# the secret names are the ones the secrets repo provides. Disabling the catalog
+# also drops the chart's k8s-mcp ServiceAccount and ClusterRole, re-created below.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+rules:
+  - apiGroups: [""]
+    resources:
+      - configmaps
+      - endpoints
+      - events
+      - limitranges
+      - namespaces
+      - nodes
+      - persistentvolumeclaims
+      - persistentvolumes
+      - pods
+      - replicationcontrollers
+      - resourcequotas
+      - secrets
+      - serviceaccounts
+      - services
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "ingressclasses", "networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses", "volumeattachments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+subjects:
+  - kind: ServiceAccount
+    name: '{{ include "name" . }}-sympozium-mcp-k8s'
+    namespace: '{{ .Release.Namespace }}'
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: http
+  toolsPrefix: k8s
+  timeout: 30
+  toolsDeny:
+    - delete_resource
+    - create_resource
+    - update_resource
+  deployment:
+    image: ghcr.io/containers/kubernetes-mcp-server:latest
+    port: 8080
+    serviceAccountName: '{{ include "name" . }}-sympozium-mcp-k8s'
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-github'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: github
+  timeout: 30
+  deployment:
+    image: mcp/github
+    cmd: node
+    args:
+      - dist/index.js
+    secretRefs:
+      - name: mcp-github-token
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-grafana'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: grafana
+  timeout: 30
+  deployment:
+    image: mcp/grafana
+    cmd: /app/mcp-grafana
+    args:
+      - -t
+      - stdio
+    secretRefs:
+      - name: mcp-grafana-token
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-postgres'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: pg
+  timeout: 60
+  toolsDeny:
+    - execute_write_query
+  deployment:
+    image: crystaldba/postgres-mcp:latest
+    cmd: /app/docker-entrypoint.sh
+    args:
+      - postgres-mcp
+    secretRefs:
+      - name: mcp-postgres-token
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-argocd'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: argocd
+  timeout: 30
+  deployment:
+    image: quay.io/argoprojlabs/mcp-for-argocd:latest
+    cmd: node
+    args:
+      - dist/index.js
+      - stdio
+    secretRefs:
+      - name: mcp-argocd-token
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi

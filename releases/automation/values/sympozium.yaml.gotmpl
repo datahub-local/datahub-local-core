@@ -64,6 +64,11 @@ observability:
       deployment.environment: cluster
       k8s.cluster.name: "{{ .StateValues.cluster_name }}"
 
+# Catalog is owned by ../templates/sympozium_mcp_servers.yaml so the workloads
+# the controller derives from each name are prefixed.
+defaultMcpServers:
+  enabled: false
+
 # Node-installed inference providers; Ollama runs in-cluster instead.
 nodeProbe:
   enabled: false

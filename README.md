@@ -55,6 +55,11 @@ Helmfile project for deploying core services of [**DataHub.local**](https://data
             kind: "StatefulSet"
             jqPathExpressions:
             - ".spec.volumeClaimTemplates"
+          - group: "sympozium.ai"
+            kind: "Ensemble"
+            jqPathExpressions:
+            - ".spec.agentConfigs[]?.memory.maxSizeKB"
+            - ".spec.agentConfigs[]?.schedule.firstTick"
           - group: "*"
             kind: "*"
             jqPathExpressions:
