@@ -3,7 +3,6 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.55.4
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
-  # ghcr.io/coder/code-server: 4.117.0
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202507280147
   ghcr.io/gethomepage/homepage: v2.0.0
@@ -11,7 +10,6 @@ container_image_version:
   ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.102.2
-  # homeassistant/home-assistant: 2026.4.4
   iib0011/omni-tools: 0.6.0
   apache/polaris-admin-tool: 1.7.0
   curlimages/curl: 8.21.0

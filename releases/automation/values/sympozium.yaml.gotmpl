@@ -25,7 +25,10 @@ apiserver:
     enabled: true
     # Pinned: left empty the chart regenerates it on every render, so ArgoCD
     # would rewrite the Secret and restart the API server on every sync.
-    token: "{{ .StateValues.security_github_client_secret }}"
+    # Derived rather than the shared secret itself, because the UI keeps this
+    # token in browser localStorage. Kept in sync with the -sympozium-login
+    # middleware in ../templates/ingress_route.yaml.
+    token: "{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}"
 
 webhook:
   replicas: 1

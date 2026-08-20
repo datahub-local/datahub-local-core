@@ -37,6 +37,19 @@ spec:
           namespace: security
           port: http
 ---
+# The API server only knows bearer-token auth, and its SPA gates on that token
+# being in localStorage. /auth hands the token over in a URL fragment, which
+# never reaches a server; the SPA consumes and stores it, so the login prompt
+# never appears. Behind oauth2-proxy, so only signed-in users get the token.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: '{{ include "name" . }}-sympozium-login'
+spec:
+  redirectRegex:
+    regex: "^https?://([^/]+)/auth$"
+    replacement: "https://${1}/#token={{ .Values.security_github_client_secret | sha256sum | trunc 32 }}"
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -46,7 +59,7 @@ metadata:
     gethomepage.dev/pod-selector: "app.kubernetes.io/component=apiserver"
     gethomepage.dev/group: "Automation"
     gethomepage.dev/icon: "mdi-robot-outline"
-    gethomepage.dev/href: "https://automation-sympozium.{{ .Values.gateway_hostname }}"
+    gethomepage.dev/href: "https://automation-sympozium.{{ .Values.gateway_hostname }}/auth"
   name: '{{ include "name" . }}-sympozium'
 spec:
   entryPoints:
@@ -60,6 +73,15 @@ spec:
       middlewares:
         - name: oauth2-proxy-auth
           namespace: security
+    - match: Host(`automation-sympozium.{{ .Values.gateway_hostname }}`) && Path(`/auth`)
+      kind: Rule
+      services:
+        - name: sympozium-apiserver
+          port: http
+      middlewares:
+        - name: oauth2-proxy-auth
+          namespace: security
+        - name: '{{ include "name" . }}-sympozium-login'
     - match: Host(`automation-sympozium.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
       kind: Rule
       services:
