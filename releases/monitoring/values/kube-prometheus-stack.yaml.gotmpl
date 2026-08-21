@@ -45,9 +45,25 @@ alertmanager:
           continue: true #
       receiver: "default-receiver"
 
+# k3s embeds these (no separate metrics endpoint) and uses SQLite, not etcd.
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
 defaultRules:
   rules:
     kubeProxy: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
 
   node:
     fsSelector: 'fstype=~"ext[234]|btrfs|xfs|zfs"'
@@ -95,10 +111,23 @@ grafana:
     passwordKey: password
 
 prometheus-node-exporter:
+  # The filesystem excludes are the chart default: extraArgs replaces it
+  # wholesale, so re-check them on a chart bump.
   extraArgs:
-    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
-    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd/.+|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
     - --collector.textfile.directory=/var/lib/node_exporter
+    # unit-include keeps this from emitting ~1k series per node.
+    - --collector.systemd
+    - --collector.systemd.unit-include=^(k3s|k3s-agent|containerd|ssh|systemd-timesyncd|chrony|smartmontools|nut-server|nut-monitor|nut-driver@.+)\.service$
+
+  # The systemd collector needs /run/systemd/private inside the container.
+  extraHostVolumeMounts:
+    - name: run-systemd
+      hostPath: /run/systemd
+      mountPath: /run/systemd
+      readOnly: true
+      mountPropagation: HostToContainer
 
   securityContext:
     fsGroup: 0
@@ -111,7 +140,7 @@ prometheus-node-exporter:
       image: ghcr.io/datahub-local/node-exporter-textfiles:{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/node-exporter-textfiles") }}{{ $value }}{{ end }}{{ end }}
       env:
         - name: SCRIPTS
-          value: "nutmon.py,smartmon.py"
+          value: "nutmon.py,smartmon.py,updates.py"
         - name: INTERVAL
           value: "60"
       resources:
