@@ -54,6 +54,7 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "sympozium").version }}'
     values:
       - values/sympozium.yaml.gotmpl
+    strategicMergePatches: {{ toYaml .Values.kustomize.sympozium | nindent 6 }}
   - name: "{{ .Values.release_name }}-automation"
     namespace: automation
     chart: "."

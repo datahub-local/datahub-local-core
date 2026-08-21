@@ -1,1 +1,13 @@
-kustomize: {}
+# Patches to chart-rendered resources. New resources go in
+# ../templates/sympozium_upstream_fixes.yaml; kustomize can only modify, not add.
+kustomize:
+  sympozium:
+    # NATS keeps its JetStream store on a RWO PVC; RollingUpdate deadlocks on reattach.
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: nats
+        namespace: automation
+      spec:
+        strategy:
+          type: Recreate

@@ -37,8 +37,11 @@ webhook:
   tolerations: *tolerations
 
 nats:
-  # No persistence: NATS is a Deployment without a Recreate strategy, so a RWO
-  # PVC would deadlock every rolling update.
+  # RWO PVC needs the Recreate patch in _kustomize.yaml.gotmpl to survive rollouts.
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 1Gi
   nodeSelector: *nodeSelector
   tolerations: *tolerations
 
