@@ -1,0 +1,29 @@
+# sympozium-agent-allow-eventbus only opens 8080 to memory, model and apiserver,
+# so agent-deny-all blocks shared memory and every MCPServer.
+# Sandboxed agents stay excluded; core's extraEgressPorts cannot express a `to:`.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-agent-allow-tools'
+spec:
+  podSelector:
+    matchExpressions:
+      - key: sympozium.ai/role
+        operator: In
+        values: ["agent"]
+      - key: sympozium.ai/sandbox
+        operator: DoesNotExist
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 8080
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels:
+              sympozium.ai/component: shared-memory
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mcpserver
