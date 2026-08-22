@@ -1,26 +1,9 @@
 # https://github.com/sympozium-ai/sympozium/blob/main/charts/sympozium/values.yaml
 
-_shared_config:
-  node_selector: &nodeSelector
-    kubernetes.io/arch: amd64
-
-  tolerations: &tolerations
-    - effect: NoSchedule
-      key: datahub.local/role
-      operator: "Equal"
-      value: nas
-
 createNamespace: false
 namespace: automation
 
-controller:
-  nodeSelector: *nodeSelector
-  tolerations: *tolerations
-
 apiserver:
-  nodeSelector: *nodeSelector
-  tolerations: *tolerations
-
   webUI:
     enabled: true
     # Pinned: left empty the chart regenerates it on every render, so ArgoCD
@@ -33,17 +16,12 @@ apiserver:
 webhook:
   replicas: 1
 
-  nodeSelector: *nodeSelector
-  tolerations: *tolerations
-
 nats:
   # RWO PVC needs the Recreate patch in _kustomize.yaml.gotmpl to survive rollouts.
   persistence:
     enabled: true
     storageClass: longhorn
     size: 1Gi
-  nodeSelector: *nodeSelector
-  tolerations: *tolerations
 
 memory:
   adminDelete:
