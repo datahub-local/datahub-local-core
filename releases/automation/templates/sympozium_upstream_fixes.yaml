@@ -6,6 +6,9 @@
 #    agent-deny-all blocks both.
 # 2. The controller injects a hardcoded nats.sympozium-system.svc into every agent
 #    ipc-bridge, ignoring its own NATS_URL.
+# 3. sympozium-allow-otel selects app.kubernetes.io/part-of=sympozium, a label no
+#    controller-created pod carries, so agent and channel pods keep no OTLP egress
+#    past their deny-all and log export failures on a loop.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -49,3 +52,50 @@ metadata:
 spec:
   type: ExternalName
   externalName: nats.automation.svc.cluster.local
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-agent-allow-otel'
+spec:
+  podSelector:
+    matchExpressions:
+      - key: sympozium.ai/role
+        operator: In
+        values: ["agent"]
+      # The sandbox is meant to reach nothing but its siblings.
+      - key: sympozium.ai/sandbox
+        operator: DoesNotExist
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: sympozium-otel-collector
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-channel-allow-otel'
+spec:
+  podSelector:
+    matchLabels:
+      sympozium.ai/component: channel
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: sympozium-otel-collector
