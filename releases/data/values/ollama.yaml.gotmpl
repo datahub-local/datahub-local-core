@@ -14,6 +14,10 @@ extraEnv:
   - name: OLLAMA_CONTEXT_LENGTH
     value: "32768"
 
+# The metrics-proxy sidecar patch lands ahead of ollama in the container list.
+podAnnotations:
+  kubectl.kubernetes.io/default-container: ollama
+
 updateStrategy:
   type: Recreate
 
@@ -31,6 +35,20 @@ tolerations:
     effect: NoSchedule
 
 extraObjects:
+  # Scrapes the metrics-proxy sidecar patched in by ../values/_kustomize.yaml.gotmpl.
+  - apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      name: "{{ $.Values.release_name }}-data-ollama"
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: ollama
+          app.kubernetes.io/instance: "{{ $.Values.release_name }}-data-ollama"
+      endpoints:
+        - port: http
+          path: /metrics
+          interval: 30s
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:

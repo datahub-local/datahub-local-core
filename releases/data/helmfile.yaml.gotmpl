@@ -81,6 +81,8 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "ollama").version }}'
     values:
       - values/ollama.yaml.gotmpl
+    strategicMergePatches: {{ toYaml .Values.kustomize.ollama | nindent 6 }}
+    jsonPatches: {{ toYaml .Values.kustomize.ollama_json_patches | nindent 6 }}
   - name: "{{ .Values.release_name }}-data-open-webui"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "open-webui").ref }}'

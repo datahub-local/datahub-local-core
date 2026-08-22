@@ -1,5 +1,6 @@
 #{{- $namespace := "data" }}
 #{{- $release_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).release_name }}
+#{{- $metrics_image_version := index (readFile "../../../values/_version.yaml" | fromYaml).container_image_version "ghcr.io/norskhelsenett/ollama-metrics" }}
 
 kustomize:
   airflow:
@@ -72,3 +73,59 @@ kustomize:
             - "jobs/status"
           verbs:
             - "get"
+  ollama:
+    # Transparent proxy in front of Ollama; the chart has no sidecar hook.
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "{{ $release_name }}-data-ollama"
+        namespace: "{{ $namespace }}"
+      spec:
+        template:
+          spec:
+            containers:
+              - name: metrics-proxy
+                image: "ghcr.io/norskhelsenett/ollama-metrics:{{ $metrics_image_version }}"
+                imagePullPolicy: IfNotPresent
+                env:
+                  # hostNetwork: the sidecar shares the node netns with Ollama.
+                  - name: OLLAMA_HOST
+                    value: "http://localhost:11434"
+                  - name: PORT
+                    value: "11435"
+                ports:
+                  - name: metrics-proxy
+                    containerPort: 11435
+                    protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /metrics
+                    port: 11435
+                  periodSeconds: 30
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+                  limits:
+                    memory: 128Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  runAsUser: 65534
+                  capabilities:
+                    drop:
+                      - ALL
+
+  # Keeps the service on 11434 but lands it on the sidecar, which forwards to
+  # Ollama. A strategic merge cannot rewrite a servicePort entry it has matched.
+  ollama_json_patches:
+    - target:
+        version: v1
+        kind: Service
+        name: "{{ $release_name }}-data-ollama"
+        namespace: "{{ $namespace }}"
+      patch:
+        - op: replace
+          path: /spec/ports/0/targetPort
+          value: metrics-proxy

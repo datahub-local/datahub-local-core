@@ -8,6 +8,7 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v2.0.0
   ghcr.io/headlamp-k8s/headlamp: v0.44.0
   ghcr.io/miniflux/miniflux: 2.3.3
+  ghcr.io/norskhelsenett/ollama-metrics: latest
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.102.2
   iib0011/omni-tools: 0.6.0
