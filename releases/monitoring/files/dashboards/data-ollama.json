@@ -74,7 +74,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "max_over_time(ollama_loaded_models[$__range])",
+          "expr": "max(max_over_time(ollama_loaded_models[$__range]))",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A",
@@ -142,7 +142,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max_over_time(ollama_model_loaded[$__range]) == 1",
+          "expr": "max by (model) (max_over_time(ollama_model_loaded[$__range])) == 1",
           "format": "table",
           "instant": true,
           "range": false,
@@ -224,7 +224,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(max_over_time(ollama_model_ram_mb[$__range]))",
+          "expr": "sum(max by (model) (max_over_time(ollama_model_ram_mb[$__range])))",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A",
@@ -318,7 +318,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "max_over_time(ollama_model_ram_mb[$__range])",
+          "expr": "max by (model) (max_over_time(ollama_model_ram_mb[$__range]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{model}}",
@@ -590,14 +590,14 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg(\n  rate(ollama_time_per_token_seconds_sum[$__range])\n  /\n  rate(ollama_time_per_token_seconds_count[$__range])\n) by (model)\nunless\navg(\n  rate(ollama_time_per_token_seconds_count[$__range])\n) by (model) == 0\n",
+          "expr": "sum(rate(ollama_time_per_token_seconds_sum[$__range])) by (model) / sum(rate(ollama_time_per_token_seconds_count[$__range])) by (model)",
           "instant": true,
           "legendFormat": "{{model}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Average Token Generation Time by Model",
+      "title": "Avg token generation time",
       "transparent": true,
       "type": "gauge"
     },
@@ -686,14 +686,15 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(rate(ollama_request_duration_seconds_count[5m])) by (api_endpoint, model)",
+          "expr": "sum by (api_endpoint, model) (label_replace(sum by (api_endpoint, exported_endpoint, model) (rate(ollama_request_duration_seconds_count[5m])),\"api_endpoint\",\"$1\",\"exported_endpoint\",\"(.+)\"))",
           "legendFormat": "{{api_endpoint}} / {{model}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Request Rate by Endpoint",
-      "type": "timeseries"
+      "title": "Request rate by endpoint",
+      "type": "timeseries",
+      "description": "Pre-fork samples carry the endpoint as exported_endpoint (the operator's own endpoint label collided with it). label_replace folds those into api_endpoint so old traffic keeps its breakdown instead of collapsing into one unlabelled series. Removable once the retention window no longer covers 2026-08-22."
     },
     {
       "datasource": {
@@ -791,7 +792,7 @@
           "refId": "A"
         }
       ],
-      "title": "Time to First Token (p95)",
+      "title": "Time to first token (p95)",
       "type": "timeseries"
     },
     {
@@ -883,15 +884,16 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(ollama_request_duration_seconds_bucket[5m])) by (api_endpoint, model, le))",
+          "expr": "histogram_quantile(0.95, sum by (api_endpoint, model, le) (label_replace(sum by (api_endpoint, exported_endpoint, model, le) (rate(ollama_request_duration_seconds_bucket[5m])),\"api_endpoint\",\"$1\",\"exported_endpoint\",\"(.+)\")))",
           "instant": false,
           "legendFormat": "{{api_endpoint}} / {{model}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Request Duration (p95)",
-      "type": "timeseries"
+      "title": "Request duration (p95)",
+      "type": "timeseries",
+      "description": "Pre-fork samples carry the endpoint as exported_endpoint (the operator's own endpoint label collided with it). label_replace folds those into api_endpoint so old traffic keeps its breakdown instead of collapsing into one unlabelled series. Removable once the retention window no longer covers 2026-08-22."
     },
     {
       "datasource": {
@@ -989,7 +991,7 @@
           "refId": "A"
         }
       ],
-      "title": "Token Generation Time (p95)",
+      "title": "Token generation time (p95)",
       "type": "timeseries"
     },
     {
@@ -1088,7 +1090,7 @@
           "refId": "A"
         }
       ],
-      "title": "Token Generation Rate (per model)",
+      "title": "Token generation rate (per model)",
       "type": "timeseries"
     },
     {
