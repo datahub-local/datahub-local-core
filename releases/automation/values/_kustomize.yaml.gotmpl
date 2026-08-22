@@ -8,6 +8,9 @@ kustomize:
       metadata:
         name: nats
         namespace: automation
+        annotations:
+          # A merge cannot drop the defaulted rollingUpdate that Recreate forbids.
+          argocd.argoproj.io/sync-options: Replace=true
       spec:
         strategy:
           type: Recreate
