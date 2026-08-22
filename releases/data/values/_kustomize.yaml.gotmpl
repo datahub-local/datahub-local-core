@@ -1,6 +1,6 @@
 #{{- $namespace := "data" }}
 #{{- $release_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).release_name }}
-#{{- $metrics_image_version := index (readFile "../../../values/_version.yaml" | fromYaml).container_image_version "ghcr.io/norskhelsenett/ollama-metrics" }}
+#{{- $metrics_image_version := index (readFile "../../../values/_version.yaml" | fromYaml).container_image_version "ghcr.io/datahub-local/ollama-metrics" }}
 
 kustomize:
   airflow:
@@ -85,7 +85,7 @@ kustomize:
           spec:
             containers:
               - name: metrics-proxy
-                image: "ghcr.io/norskhelsenett/ollama-metrics:{{ $metrics_image_version }}"
+                image: "ghcr.io/datahub-local/ollama-metrics:{{ $metrics_image_version }}"
                 imagePullPolicy: IfNotPresent
                 env:
                   # hostNetwork: the sidecar shares the node netns with Ollama.
