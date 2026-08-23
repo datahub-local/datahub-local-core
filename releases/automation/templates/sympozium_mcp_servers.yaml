@@ -68,6 +68,63 @@ subjects:
     name: '{{ include "name" . }}-sympozium-mcp-k8s'
     namespace: '{{ .Release.Namespace }}'
 ---
+# Upstream runs this one as a controller-managed http server, but the server
+# answers only on /mcp while the controller publishes the Service root, so every
+# k8s_* call 404s. stdio is no way out: the mcp-bridge shares one child session
+# across all callers and this server rejects the second initialize. So the
+# workload is ours and the MCPServer only points at it, path included. Selector
+# labels match what the controller used, so it adopts the existing objects.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &mcpK8sLabels
+      app.kubernetes.io/name: mcpserver
+      app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-k8s'
+      app.kubernetes.io/managed-by: sympozium
+  template:
+    metadata:
+      # The agent egress policy only opens 8080 towards name=mcpserver.
+      labels: *mcpK8sLabels
+    spec:
+      serviceAccountName: '{{ include "name" . }}-sympozium-mcp-k8s'
+      containers:
+        - name: mcp-server
+          image: ghcr.io/containers/kubernetes-mcp-server:latest
+          args: ["--port", "8080"]
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s'
+spec:
+  selector:
+    app.kubernetes.io/name: mcpserver
+    app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-k8s'
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
 metadata:
@@ -75,27 +132,19 @@ metadata:
   labels:
     sympozium.ai/catalog: "true"
 spec:
-  # Upstream ships this one as http, but the server only answers on /mcp while
-  # the controller publishes the Service root, so every tool call 404s. stdio
-  # puts the mcp-bridge adapter in front, which answers on both.
-  transportType: stdio
+  transportType: http
   toolsPrefix: k8s
   timeout: 30
+  # Setting url also stops the controller reconciling a deployment of its own.
+  url: 'http://{{ include "name" . }}-sympozium-mcp-k8s.{{ .Release.Namespace }}.svc:8080/mcp'
+  # Upstream denies delete_resource/create_resource/update_resource, which this
+  # server has never had; these are the names it actually registers.
   toolsDeny:
-    - delete_resource
-    - create_resource
-    - update_resource
-  deployment:
-    image: ghcr.io/containers/kubernetes-mcp-server:latest
-    cmd: /app/kubernetes-mcp-server
-    serviceAccountName: '{{ include "name" . }}-sympozium-mcp-k8s'
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 256Mi
+    - pods_delete
+    - pods_exec
+    - pods_run
+    - resources_create_or_update
+    - resources_delete
 ---
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
