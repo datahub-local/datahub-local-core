@@ -75,7 +75,10 @@ metadata:
   labels:
     sympozium.ai/catalog: "true"
 spec:
-  transportType: http
+  # Upstream ships this one as http, but the server only answers on /mcp while
+  # the controller publishes the Service root, so every tool call 404s. stdio
+  # puts the mcp-bridge adapter in front, which answers on both.
+  transportType: stdio
   toolsPrefix: k8s
   timeout: 30
   toolsDeny:
@@ -84,7 +87,7 @@ spec:
     - update_resource
   deployment:
     image: ghcr.io/containers/kubernetes-mcp-server:latest
-    port: 8080
+    cmd: /app/kubernetes-mcp-server
     serviceAccountName: '{{ include "name" . }}-sympozium-mcp-k8s'
     resources:
       requests:
