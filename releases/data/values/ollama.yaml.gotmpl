@@ -10,9 +10,16 @@ ollama:
 
 # -- Default context window; Ollama's own default of 4096 truncates longer
 # Open WebUI conversations with an "exceeds context size" error.
+# 64Ki is the largest all-GPU window on the 6GB 3060; 80Ki spills to CPU.
 extraEnv:
   - name: OLLAMA_CONTEXT_LENGTH
-    value: "32768"
+    value: "65536"
+  # Required for KV cache quantization.
+  - name: OLLAMA_FLASH_ATTENTION
+    value: "1"
+  # Halves the f16 KV cache, which is what buys the window above 40Ki.
+  - name: OLLAMA_KV_CACHE_TYPE
+    value: "q8_0"
 
 # The metrics-proxy sidecar patch lands ahead of ollama in the container list.
 podAnnotations:
