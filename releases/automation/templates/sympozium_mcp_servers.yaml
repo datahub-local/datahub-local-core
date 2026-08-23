@@ -94,6 +94,9 @@ spec:
       containers:
         - name: mcp-server
           image: ghcr.io/containers/kubernetes-mcp-server:latest
+          # Named explicitly: the controller left command=/adapter/mcp-bridge on
+          # the Deployment we adopt, and a merge cannot drop what we never set.
+          command: ["/app/kubernetes-mcp-server"]
           args: ["--port", "8080"]
           ports:
             - name: http
