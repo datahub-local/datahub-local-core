@@ -1,5 +1,7 @@
 # Patches to chart-rendered resources. New resources go in
 # ../templates/sympozium_upstream_fixes.yaml; kustomize can only modify, not add.
+#{{- $sympozium_version := (index (readFile "../../../values/_version.yaml" | fromYaml).helm_chart_version "sympozium").version }}
+
 kustomize:
   sympozium:
     # NATS keeps its JetStream store on a RWO PVC; RollingUpdate deadlocks on reattach.
@@ -14,3 +16,13 @@ kustomize:
       spec:
         strategy:
           type: Recreate
+    # The web-endpoint sidecar hardcodes :latest, which the controller's own
+    # SYMPOZIUM_IMAGE_TAG does not reach. Pinned to the control-plane version.
+    - apiVersion: sympozium.ai/v1alpha1
+      kind: SkillPack
+      metadata:
+        name: web-endpoint
+        namespace: automation
+      spec:
+        sidecar:
+          image: "ghcr.io/sympozium-ai/sympozium/web-proxy:v{{ $sympozium_version }}"

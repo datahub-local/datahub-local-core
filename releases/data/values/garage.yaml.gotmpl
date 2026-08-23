@@ -57,6 +57,15 @@ clusterConfig:
 webui:
   enabled: true
 
+monitoring:
+  metrics:
+    # garage_local_disk_total{volume="data"} is the whole nfs share, not garage.
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  grafanaDashboard:
+    enabled: true
+
 extraResources:
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute

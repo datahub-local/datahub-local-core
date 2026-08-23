@@ -52,7 +52,7 @@
         "/(^|/)values/_version.yaml$/"
       ],
       "matchStrings": [
-        "$each(container_image_version, function($v, $k) { {'packageName': $k , 'datasource': 'docker', 'currentValue': $v} })"
+        "$each(container_image_version, function($v, $k) { {'packageName': $k , 'datasource': 'docker', 'currentValue': ($contains($string($v), '@') ? $substringBefore($string($v), '@') : $string($v)), 'currentDigest': ($contains($string($v), '@') ? $substringAfter($string($v), '@'))} })"
       ]
     }
   ]

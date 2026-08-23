@@ -93,7 +93,7 @@ spec:
       serviceAccountName: '{{ include "name" . }}-sympozium-mcp-k8s'
       containers:
         - name: mcp-server
-          image: ghcr.io/containers/kubernetes-mcp-server:latest
+          image: ghcr.io/containers/kubernetes-mcp-server:{{ index .Values.container_image_version "ghcr.io/containers/kubernetes-mcp-server" }}
           # Named explicitly: the controller left command=/adapter/mcp-bridge on
           # the Deployment we adopt, and a merge cannot drop what we never set.
           command: ["/app/kubernetes-mcp-server"]
@@ -148,6 +148,7 @@ spec:
     - pods_run
     - resources_create_or_update
     - resources_delete
+    - resources_scale
 ---
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
@@ -159,8 +160,21 @@ spec:
   transportType: stdio
   toolsPrefix: github
   timeout: 30
+  # add_issue_comment stays allowed: renovate-reviewer exists to comment on PRs.
+  toolsDeny:
+    - create_or_update_file
+    - push_files
+    - create_repository
+    - fork_repository
+    - create_branch
+    - create_issue
+    - update_issue
+    - create_pull_request
+    - create_pull_request_review
+    - merge_pull_request
+    - update_pull_request_branch
   deployment:
-    image: mcp/github
+    image: mcp/github:{{ index .Values.container_image_version "mcp/github" }}
     cmd: node
     args:
       - dist/index.js
@@ -177,8 +191,25 @@ spec:
   transportType: stdio
   toolsPrefix: grafana
   timeout: 30
+  # grafana_api_request passes through to the whole Grafana API, so the other
+  # thirteen denies mean nothing without it.
+  toolsDeny:
+    - grafana_api_request
+    - update_dashboard
+    - update_datasource
+    - create_datasource
+    - create_folder
+    - create_annotation
+    - update_annotation
+    - create_snapshot
+    - delete_snapshot
+    - create_incident
+    - add_activity_to_incident
+    - install_plugin
+    - alerting_manage_rules
+    - alerting_manage_routing
   deployment:
-    image: mcp/grafana
+    image: mcp/grafana:{{ index .Values.container_image_version "mcp/grafana" }}
     cmd: /app/mcp-grafana
     args:
       - -t
@@ -203,13 +234,16 @@ spec:
   transportType: stdio
   toolsPrefix: pg
   timeout: 60
+  # execute_sql is the only write tool; --access-mode below blocks it at the
+  # server, so this deny is the backstop rather than the enforcement.
   toolsDeny:
-    - execute_write_query
+    - execute_sql
   deployment:
-    image: crystaldba/postgres-mcp:latest
+    image: crystaldba/postgres-mcp:{{ index .Values.container_image_version "crystaldba/postgres-mcp" }}
     cmd: /app/docker-entrypoint.sh
     args:
       - postgres-mcp
+      - --access-mode=restricted
     secretRefs:
       - name: mcp-postgres-token
     resources:
@@ -230,8 +264,9 @@ spec:
   transportType: stdio
   toolsPrefix: argocd
   timeout: 30
+  # All eleven tools are reads; nothing to deny.
   deployment:
-    image: quay.io/argoprojlabs/mcp-for-argocd:latest
+    image: quay.io/argoprojlabs/mcp-for-argocd:{{ index .Values.container_image_version "quay.io/argoprojlabs/mcp-for-argocd" }}
     cmd: node
     args:
       - dist/index.js
