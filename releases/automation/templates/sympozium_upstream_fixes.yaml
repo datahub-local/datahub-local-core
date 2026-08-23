@@ -9,6 +9,16 @@
 # 3. sympozium-allow-otel selects app.kubernetes.io/part-of=sympozium, a label no
 #    controller-created pod carries, so agent and channel pods keep no OTLP egress
 #    past their deny-all and log export failures on a loop.
+# 4. sympozium-web-proxy-allow-ingress selects sympozium.ai/component=web-proxy,
+#    but the controller labels those pods sympozium.ai/component=agent-server, so
+#    the policy matches nothing. The web-proxy pods *do* carry
+#    app.kubernetes.io/part-of=sympozium — note that this makes the comment in (3)
+#    wrong for them — so sympozium-allow-otel becomes the only Egress policy
+#    selecting them, and its 4317/4318 allowance is therefore a deny of everything
+#    else. The endpoint serves /healthz and rejects an unauthenticated call
+#    correctly, then fails every real request on
+#    `Get "https://10.43.0.1:443/api": connect: connection refused`, because the
+#    proxy needs the API server to create the AgentRun it is serving.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -99,3 +109,59 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: sympozium-otel-collector
+---
+# Fix (4): give the web-proxy pods the egress its own chart policy intended,
+# selecting the label the controller actually sets. Scoped tightly — as of
+# 2026-08-23 exactly the five homelab-ops web-endpoint-server pods carry
+# sympozium.ai/component=agent-server and nothing else does:
+#
+#   kubectl get pods -A -l sympozium.ai/component=agent-server
+#
+# Ports mirror the upstream sympozium-web-proxy-allow-ingress rules rather than
+# being derived independently, so this can be deleted verbatim once that policy
+# selects the right label. `to:` is deliberately omitted on the API-server rule:
+# the endpoint is a Service ClusterIP, not a pod, so no podSelector can name it.
+#
+# No OTLP rule here: sympozium-allow-otel already grants these pods 4317/4318 —
+# that is precisely the problem, since a single matching Egress policy narrows a
+# pod to the union of matching rules. Egress policies add, so this one widens
+# that union rather than replacing it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-web-proxy-allow-egress'
+spec:
+  podSelector:
+    matchLabels:
+      sympozium.ai/component: agent-server
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # The Kubernetes API. The proxy watches Agents and creates an AgentRun per
+    # request, so without this the endpoint authenticates callers and then fails
+    # every one of them.
+    - ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
+          protocol: TCP
+    - ports:
+        - port: 4222
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: nats
+    # Ollama, as the upstream policy allows. 11435 is the metrics-proxy sidecar
+    # the Service targets; 11434 is Ollama itself — same pair as
+    # networkPolicies.extraEgressPorts in ../values/sympozium.yaml.gotmpl.
+    - ports:
+        - port: 11434
+          protocol: TCP
+        - port: 11435
+          protocol: TCP
