@@ -6,7 +6,7 @@ container_image_version:
   ghcr.io/containers/kubernetes-mcp-server: v0.0.66
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
-  ghcr.io/datahub-local/ollama-metrics: v202608221609
+  ghcr.io/datahub-local/ollama-metrics: v202608231901
   ghcr.io/gethomepage/homepage: v2.0.0
   ghcr.io/headlamp-k8s/headlamp: v0.44.0
   ghcr.io/miniflux/miniflux: 2.3.3
