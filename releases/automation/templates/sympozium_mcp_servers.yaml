@@ -16,44 +16,12 @@ kind: ClusterRole
 metadata:
   name: '{{ include "name" . }}-sympozium-mcp-k8s'
 rules:
-  - apiGroups: [""]
-    resources:
-      - configmaps
-      - endpoints
-      - events
-      - limitranges
-      - namespaces
-      - nodes
-      - persistentvolumeclaims
-      - persistentvolumes
-      - pods
-      - replicationcontrollers
-      - resourcequotas
-      - secrets
-      - serviceaccounts
-      - services
+  # Cluster-wide read: the enumerated groups this replaces covered no CRD, so
+  # agents could not read velero, cnpg, longhorn or cert-manager objects.
+  # get/list/watch only, so pods/exec and every write stay denied.
+  - apiGroups: ["*"]
+    resources: ["*"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/log"]
-    verbs: ["get"]
-  - apiGroups: ["apps"]
-    resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["batch"]
-    resources: ["jobs", "cronjobs"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses", "ingressclasses", "networkpolicies"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["autoscaling"]
-    resources: ["horizontalpodautoscalers"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses", "volumeattachments"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["metrics.k8s.io"]
-    resources: ["pods", "nodes"]
-    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
