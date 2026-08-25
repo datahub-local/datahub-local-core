@@ -278,9 +278,9 @@ spec:
 #
 # `SympoziumSchedule` copies the persona's `toolPolicy` onto each run it creates.
 # Nothing else does. A run started from an inbound channel message or from the
-# web endpoint is built from the `Agent` object, and `Agent.spec.agentConfig`
-# carries `mcpServers` and `policyRef` but no `toolPolicy` — so those runs get
-# every built-in tool. Observed 2026-08-24: a Slack @-mention of
+# web endpoint is built from the `Agent` object, which carries `mcpServers` and
+# `policyRef` at `spec` and per-agent config at `spec.agents.default`, but no
+# `toolPolicy` at any path — so those runs get every built-in tool. Observed 2026-08-24: a Slack @-mention of
 # `homelab-ops/sre-sentinel` produced a run whose agent container logged zero
 # `tool policy:` lines against the same persona's 13, registered 14 tools rather
 # than 13, and opened with
@@ -301,15 +301,20 @@ spec:
 # the runner treats the two lists independently — a scheduled run logs both
 # `denied tool "execute_command"` and `tool "read_file" not in allow list`.
 #
-# Drop this once Agent.spec.agentConfig carries toolPolicy upstream.
+# Drop this once the Agent CRD carries toolPolicy upstream.
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicy
 metadata:
   name: '{{ include "name" . }}-sympozium-agentrun-default-toolpolicy'
 spec:
   # Fail closed. A guard that fails open is the failure mode this whole file
-  # exists for — but it does mean a CEL error stops every run, so probe with a
-  # hand-applied AgentRun after any change here.
+  # exists for — but it does mean a patch error rejects every run it matches, so
+  # probe with a hand-applied AgentRun after any change here. Rendering and a
+  # --dry-run=server of the policy are not enough: both passed while
+  # patchType: ApplyConfiguration was rejecting every AgentRun it matched, since
+  # the atomic-array check only runs when the patch meets a real object. The
+  # probe needs an Agent to exist, or the validating webhook rejects first and
+  # masks the result.
   failurePolicy: Fail
   reinvocationPolicy: Never
   matchConstraints:
