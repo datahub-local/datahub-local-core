@@ -8,6 +8,9 @@ defaultPodOptions:
     # Run as a non-root user to mitigate privilege escalation attack attempts
     runAsUser: 1000
     runAsGroup: 1000
+    # Take ownership of the longhorn volume, otherwise the state dir is read-only
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
 
 controllers:
   main:
@@ -36,15 +39,24 @@ controllers:
             value: "10.42.0.0/16,10.43.0.0/16,192.168.31.0/24"
           - name: TS_USERSPACE
             value: "true"
-          - name: TS_EXTRA_ARGS
-            value: --snat-subnet-routes=false
           - name: TS_HOSTNAME
             value: "{{ $.Values.release_name }}-security-tailscale"
           - name: TS_AUTH_ONCE
             value: "true"
           - name: TS_STATE_DIR
             value: "/var/lib/tailscale"
-            
+          # Default HOME is / and the cache dir is not writable there
+          - name: HOME
+            value: "/var/lib/tailscale"
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_UID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.uid
+
         resources:
           requests:
             memory: 100Mi
@@ -81,6 +93,9 @@ rawResources:
           resourceNames: ["tailscale-auth-current"]
           resources: ["secrets"]
           verbs: ["get", "update", "patch"]
+        - apiGroups: [""]
+          resources: ["events"]
+          verbs: ["get", "create", "patch"]
   role-binding:
     enabled: true
 
