@@ -323,13 +323,21 @@ spec:
     - name: has-no-toolpolicy
       expression: "!has(object.spec.toolPolicy)"
   mutations:
-    - patchType: ApplyConfiguration
-      applyConfiguration:
+    # JSONPatch, not ApplyConfiguration. CRD list fields are atomic unless the
+    # schema says otherwise, and ApplyConfiguration refuses to mutate an atomic
+    # array: it fails at runtime with `may not mutate atomic arrays, maps or
+    # structs: .spec.toolPolicy.deny`, which failurePolicy: Fail turns into a
+    # rejected AgentRun. Adding the whole toolPolicy object as a JSONPatch skips
+    # the merge machinery. Safe because matchConditions proves it is absent.
+    - patchType: JSONPatch
+      jsonPatch:
         expression: >
-          Object{
-            spec: Object.spec{
-              toolPolicy: Object.spec.toolPolicy{
-                deny: [
+          [
+            JSONPatch{
+              op: "add",
+              path: "/spec/toolPolicy",
+              value: {
+                "deny": [
                   "execute_command",
                   "write_file",
                   "edit_file",
@@ -340,7 +348,7 @@ spec:
                 ]
               }
             }
-          }
+          ]
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicyBinding
