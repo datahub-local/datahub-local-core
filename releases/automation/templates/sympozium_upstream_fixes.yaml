@@ -19,6 +19,12 @@
 #    correctly, then fails every real request on
 #    `Get "https://10.43.0.1:443/api": connect: connection refused`, because the
 #    proxy needs the API server to create the AgentRun it is serving.
+# 5. Nothing retires an AgentRun, and each run's skill Role and RoleBinding are
+#    owned by it, so retained runs pin their RBAC. Pruned on a schedule below.
+# 6. Only the schedule controller copies a persona's toolPolicy onto the AgentRun
+#    it creates. A run started from a channel message or the web endpoint is
+#    built from the Agent object, whose CRD has no toolPolicy field, so it is
+#    handed the whole built-in tool set. Given a floor at admission below.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -165,3 +171,184 @@ spec:
           protocol: TCP
         - port: 11435
           protocol: TCP
+---
+# Fix (5): nothing retires an AgentRun. The controller gives each run's skill
+# Role and RoleBinding an ownerReference on the AgentRun, so retained runs pin
+# their RBAC too — 109 pairs had accumulated in `automation` by 2026-08-24.
+# There is no knob for this: AgentRun has no TTL, SympoziumSchedule has no
+# history limit, and the chart exposes no retention. Deleting the run collects
+# its Role and RoleBinding with it. Completed runs only, so nothing in flight is
+# touched; `status.completedAt` is set exactly when a run finishes.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: '{{ include "name" . }}-sympozium-run-pruner'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: '{{ include "name" . }}-sympozium-run-pruner'
+rules:
+  - apiGroups: ["sympozium.ai"]
+    resources: ["agentruns"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: '{{ include "name" . }}-sympozium-run-pruner'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: '{{ include "name" . }}-sympozium-run-pruner'
+subjects:
+  - kind: ServiceAccount
+    name: '{{ include "name" . }}-sympozium-run-pruner'
+    namespace: '{{ .Release.Namespace }}'
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: '{{ include "name" . }}-sympozium-run-pruner'
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 3600
+      template:
+        spec:
+          serviceAccountName: '{{ include "name" . }}-sympozium-run-pruner'
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: pruner
+              image: alpine/k8s:{{ index .Values.container_image_version "alpine/k8s" }}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                # Runs older than this are deleted. Raise it if a run's history
+                # is still wanted; the RBAC pair lives exactly as long.
+                - name: RETAIN_DAYS
+                  value: "7"
+                - name: NAMESPACE
+                  value: '{{ .Release.Namespace }}'
+                # kubectl writes its discovery cache under $HOME; the root
+                # filesystem is read-only.
+                - name: HOME
+                  value: /tmp
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  CUTOFF=$(( $(date -u +%s) - RETAIN_DAYS * 86400 ))
+                  kubectl get agentruns -n "$NAMESPACE" -o json \
+                    | jq -r --argjson c "$CUTOFF" '
+                        .items[]
+                        | select(.status.completedAt != null)
+                        | select((.status.completedAt | fromdateiso8601) < $c)
+                        | .metadata.name' \
+                    | tee /dev/stderr \
+                    | xargs -r -n 25 kubectl delete agentrun -n "$NAMESPACE" --ignore-not-found
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: tmp
+              emptyDir: {}
+---
+# Fix (6): a default toolPolicy for AgentRuns created without one.
+#
+# `SympoziumSchedule` copies the persona's `toolPolicy` onto each run it creates.
+# Nothing else does. A run started from an inbound channel message or from the
+# web endpoint is built from the `Agent` object, and `Agent.spec.agentConfig`
+# carries `mcpServers` and `policyRef` but no `toolPolicy` — so those runs get
+# every built-in tool. Observed 2026-08-24: a Slack @-mention of
+# `homelab-ops/sre-sentinel` produced a run whose agent container logged zero
+# `tool policy:` lines against the same persona's 13, registered 14 tools rather
+# than 13, and opened with
+# `execute_command {"command":"kubectl get nodes","target":"k8s-ops"}`.
+#
+# Scope, honestly: this removes the denied tools from the schema the model is
+# offered, which is the observed path — the model reaches for what it is handed.
+# It is NOT a hard boundary. `toolPolicy` is applied at schema registration and
+# not at dispatch, so a model that produces a denied tool name from anywhere else
+# still gets it executed; that half is an upstream fix. The hard boundaries that
+# do hold are `mcpServers[].toolsAllow`, which runs at the MCP bridge and does
+# bound those tools on this path, and the absence of a skill sidecar, without
+# which `execute_command` has nothing to run it.
+#
+# MCP tools are deliberately absent from the deny list: they are already bounded
+# per-agent, and a fleet-wide deny here would break every persona. Deny rather
+# than allow because admission cannot know which persona a run belongs to, and
+# the runner treats the two lists independently — a scheduled run logs both
+# `denied tool "execute_command"` and `tool "read_file" not in allow list`.
+#
+# Drop this once Agent.spec.agentConfig carries toolPolicy upstream.
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-agentrun-default-toolpolicy'
+spec:
+  # Fail closed. A guard that fails open is the failure mode this whole file
+  # exists for — but it does mean a CEL error stops every run, so probe with a
+  # hand-applied AgentRun after any change here.
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["sympozium.ai"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE"]
+        resources: ["agentruns"]
+  matchConditions:
+    # Runs that already carry a policy — every scheduled one — are untouched.
+    - name: has-no-toolpolicy
+      expression: "!has(object.spec.toolPolicy)"
+  mutations:
+    - patchType: ApplyConfiguration
+      applyConfiguration:
+        expression: >
+          Object{
+            spec: Object.spec{
+              toolPolicy: Object.spec.toolPolicy{
+                deny: [
+                  "execute_command",
+                  "write_file",
+                  "edit_file",
+                  "fetch_url",
+                  "delegate_to_persona",
+                  "schedule_task",
+                  "workflow_memory_store"
+                ]
+              }
+            }
+          }
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: '{{ include "name" . }}-sympozium-agentrun-default-toolpolicy'
+spec:
+  policyName: '{{ include "name" . }}-sympozium-agentrun-default-toolpolicy'
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: '{{ .Release.Namespace }}'

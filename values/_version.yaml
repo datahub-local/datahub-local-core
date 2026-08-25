@@ -13,6 +13,7 @@ container_image_version:
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.102.2
   iib0011/omni-tools: 0.6.0
+  alpine/k8s: 1.36.2
   apache/polaris-admin-tool: 1.7.0
   crystaldba/postgres-mcp: 0.3.0
   curlimages/curl: 8.21.0

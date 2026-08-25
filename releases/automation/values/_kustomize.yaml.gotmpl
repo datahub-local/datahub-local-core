@@ -26,3 +26,65 @@ kustomize:
       spec:
         sidecar:
           image: "ghcr.io/sympozium-ai/sympozium/web-proxy:v{{ $sympozium_version }}"
+    # k8s-ops grants create/update/patch/delete namespace-wide, including on
+    # roles and rolebindings, and the controller binds the per-run Role to the
+    # shared sympozium-agent SA, so it reaches every agent pod in the namespace.
+    # Cut to read-only; pods/exec and pods/portforward are dropped, not narrowed.
+    #
+    # `secrets` is dropped from both scopes as well. Read-only was never the
+    # whole question for it: the pack hands the model a shell, and cluster-wide
+    # `get secrets` through a shell is every credential in the cluster —
+    # mcp-slack-token, the MCP server credentials, the lot. clusterRBAC is
+    # restated in full because a strategic merge replaces the list, not the
+    # entries, so an omitted scope keeps its original rules.
+    - apiVersion: sympozium.ai/v1alpha1
+      kind: SkillPack
+      metadata:
+        name: k8s-ops
+        namespace: automation
+      spec:
+        sidecar:
+          clusterRBAC:
+            - apiGroups: [""]
+              resources: ["nodes", "namespaces", "persistentvolumes", "pods", "pods/log", "services", "configmaps", "events", "endpoints"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["jobs", "cronjobs"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["networkpolicies", "ingresses", "ingressclasses"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["storage.k8s.io"]
+              resources: ["storageclasses", "volumeattachments"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apiextensions.k8s.io"]
+              resources: ["customresourcedefinitions"]
+              verbs: ["get", "list", "watch"]
+          rbac:
+            - apiGroups: [""]
+              resources: ["pods", "pods/log", "services", "configmaps", "events", "endpoints", "persistentvolumeclaims", "serviceaccounts", "replicationcontrollers", "resourcequotas", "limitranges"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "statefulsets", "replicasets", "daemonsets", "controllerrevisions"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["jobs", "cronjobs"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["networkpolicies", "ingresses", "ingressclasses"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["autoscaling"]
+              resources: ["horizontalpodautoscalers"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["policy"]
+              resources: ["poddisruptionbudgets"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["roles", "rolebindings"]
+              verbs: ["get", "list", "watch"]
