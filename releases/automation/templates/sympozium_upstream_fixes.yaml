@@ -31,13 +31,14 @@ kind: NetworkPolicy
 metadata:
   name: '{{ include "name" . }}-sympozium-agent-allow-tools'
 spec:
+  # Sandboxed agents are selected too. sympozium-sandbox-restricted grants them
+  # DNS and sibling agent pods only, and neither destination below is reachable
+  # any other way, so excluding them here left agentSandbox unusable for any
+  # persona with an MCP server. The sandbox keeps what actually isolates it: no
+  # ingress, and the gVisor/Kata kernel boundary.
   podSelector:
-    matchExpressions:
-      - key: sympozium.ai/role
-        operator: In
-        values: ["agent"]
-      - key: sympozium.ai/sandbox
-        operator: DoesNotExist
+    matchLabels:
+      sympozium.ai/role: agent
   policyTypes:
     - Egress
   egress:
@@ -74,14 +75,10 @@ kind: NetworkPolicy
 metadata:
   name: '{{ include "name" . }}-sympozium-agent-allow-otel'
 spec:
+  # Sandboxed agents too, or they loop on OTLP export failures — see (3).
   podSelector:
-    matchExpressions:
-      - key: sympozium.ai/role
-        operator: In
-        values: ["agent"]
-      # The sandbox is meant to reach nothing but its siblings.
-      - key: sympozium.ai/sandbox
-        operator: DoesNotExist
+    matchLabels:
+      sympozium.ai/role: agent
   policyTypes:
     - Egress
   egress:
