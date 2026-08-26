@@ -523,7 +523,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(ollama_time_per_token_seconds_count[$__range])) / sum(rate(ollama_time_per_token_seconds_sum[$__range])) > 0",
+          "expr": "(sum(increase(ollama_generated_tokens_total[$__range])) / sum(increase(ollama_request_duration_seconds_sum[$__range]))) or vector(0)",
           "instant": true,
           "range": false,
           "legendFormat": "__auto",
@@ -590,7 +590,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(rate(ollama_time_per_token_seconds_sum[$__range])) by (model) / sum(rate(ollama_time_per_token_seconds_count[$__range])) by (model)",
+          "expr": "sum(increase(ollama_request_duration_seconds_sum[$__range])) by (model) / sum(increase(ollama_request_duration_seconds_count[$__range])) by (model)",
           "instant": true,
           "legendFormat": "{{model}}",
           "range": false,
