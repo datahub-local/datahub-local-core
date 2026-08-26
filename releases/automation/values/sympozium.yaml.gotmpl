@@ -52,6 +52,14 @@ observability:
 defaultMcpServers:
   enabled: false
 
+# https://agent-sandbox.sigs.k8s.io - the alternative execution backend, giving a
+# run a Sandbox CR with a real kernel boundary instead of a plain pod.
+agentSandbox:
+  enabled: true
+  # Matches the RuntimeClass bootstrap creates. Used when a run names none.
+  defaultRuntimeClass: gvisor
+  rbac: true
+
 # Node-installed inference providers; Ollama runs in-cluster instead.
 nodeProbe:
   enabled: false
