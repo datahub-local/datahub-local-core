@@ -1,0 +1,92 @@
+# Explicit Sympozium policy profiles selected by personas through policyRef.
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: SympoziumPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-hardened-agent-sandbox'
+  namespace: {{ .Release.Namespace }}
+spec:
+  sandboxPolicy:
+    # The agent-sandbox CRD backend is the boundary; the legacy sidecar is not.
+    required: false
+    allowHostMounts: false
+    agentSandboxPolicy:
+      required: true
+      defaultRuntimeClass: gvisor
+      allowedRuntimeClasses:
+        - gvisor
+  toolGating:
+    defaultAction: allow
+    rules:
+      - tool: execute_command
+        action: deny
+      - tool: write_file
+        action: deny
+      - tool: delegate_to_persona
+        action: deny
+      - tool: spawn_subagents
+        action: deny
+  subagentPolicy:
+    maxDepth: 0
+    maxConcurrent: 0
+  featureGates:
+    code-execution: false
+    sub-agents: false
+    browser-automation: false
+  imagePolicy:
+    allowedRegistries:
+      - curlimages/
+  lifecyclePolicy:
+    deniedResources:
+      - secrets
+      - serviceaccounts
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: SympoziumPolicy
+metadata:
+  name: '{{ include "name" . }}-sympozium-permissive-agent-sandbox'
+  namespace: {{ .Release.Namespace }}
+spec:
+  sandboxPolicy:
+    # Keep the same gVisor boundary as the hardened profile.
+    required: false
+    allowHostMounts: false
+    agentSandboxPolicy:
+      required: true
+      defaultRuntimeClass: gvisor
+      allowedRuntimeClasses:
+        - gvisor
+  toolGating:
+    defaultAction: allow
+    rules:
+      # This profile intentionally permits the command-execution tool.
+      - tool: execute_command
+        action: allow
+      - tool: write_file
+        action: deny
+      - tool: delegate_to_persona
+        action: deny
+      - tool: spawn_subagents
+        action: deny
+  subagentPolicy:
+    maxDepth: 0
+    maxConcurrent: 0
+  featureGates:
+    code-execution: true
+    sub-agents: false
+    browser-automation: false
+  imagePolicy:
+    allowedRegistries:
+      - curlimages/
+  lifecyclePolicy:
+    deniedResources:
+      - secrets
+      - serviceaccounts
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
