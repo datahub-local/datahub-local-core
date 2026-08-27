@@ -248,3 +248,28 @@ spec:
       limits:
         cpu: 500m
         memory: 256Mi
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-slack'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: slack
+  timeout: 30
+  deployment:
+    image: mcp/slack:{{ index .Values.container_image_version "mcp/slack" }}
+    cmd: node
+    args:
+      - dist/index.js
+    secretRefs:
+      - name: mcp-slack-token
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi

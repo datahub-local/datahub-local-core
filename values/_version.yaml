@@ -21,6 +21,7 @@ container_image_version:
   # Only latest is published for these two, so the digest is the pin.
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
+  mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
   n8nio/n8n: 2.35.3
   python: "3.13"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
