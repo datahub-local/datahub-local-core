@@ -145,11 +145,8 @@ prometheus-node-exporter:
           value: "60"
       resources:
         requests:
-          cpu: 300m
-          memory: 150Mi
-        limits:
-          cpu: 550m
-          memory: 300Mi
+          cpu: 100m
+          memory: 100Mi
       securityContext:
         privileged: true
 
