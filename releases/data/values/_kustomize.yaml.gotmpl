@@ -95,6 +95,9 @@ kustomize:
                     value: "11435"
                   - name: DEBUG_MODE
                     value: "true"
+                  # Must be set to be compatible with Sympozium
+                  - name: OLLAMA_PROXY_REQUEST_OVERRIDES
+                    value: '{"reasoning_effort":"none"}'
                 ports:
                   - name: metrics-proxy
                     containerPort: 11435
