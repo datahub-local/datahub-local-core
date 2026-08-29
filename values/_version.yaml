@@ -1,17 +1,17 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 4.0.2
-  ghcr.io/browserless/chromium: v2.55.4
+  g33kphr33k/musicgrabber: 4.0.3
+  ghcr.io/browserless/chromium: v2.56.0
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
   ghcr.io/containers/kubernetes-mcp-server: v0.0.66
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-metrics: v202608281825
-  ghcr.io/gethomepage/homepage: v2.0.0
-  ghcr.io/headlamp-k8s/headlamp: v0.44.0
+  ghcr.io/gethomepage/homepage: v2.1.2
+  ghcr.io/headlamp-k8s/headlamp: v0.45.0
   ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.7.11
-  ghcr.io/tailscale/tailscale: v1.102.2
+  ghcr.io/tailscale/tailscale: v1.102.3
   iib0011/omni-tools: 0.6.0
   alpine/k8s: 1.36.2
   apache/polaris-admin-tool: 1.7.0
@@ -22,8 +22,8 @@ container_image_version:
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.35.3
-  python: "3.13"
+  n8nio/n8n: 2.37.4
+  python: "3.14"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
   rclone/rclone: 1.75.0
   valkey/valkey: 9.1.1
@@ -52,7 +52,7 @@ helm_chart_version:
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
-    version: 0.44.0
+    version: 0.45.0
   homepage:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
@@ -60,7 +60,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 88.3.0
+    version: 88.6.1
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -68,7 +68,7 @@ helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 2.0.1
+    version: 2.1.0
   polaris:
     ref: polaris/polaris
     repository: https://downloads.apache.org/polaris/helm-chart
@@ -76,11 +76,11 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.75.0
+    version: 1.78.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 16.0.0
+    version: 16.1.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -92,7 +92,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.47.0
+    version: 0.48.0
   # servarr:
   #   ref: datahub-local/servarr
   #   repository: https://datahub-local.github.io/servarr
@@ -116,7 +116,7 @@ helm_chart_version:
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.10.47
+    version: 0.10.48
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
