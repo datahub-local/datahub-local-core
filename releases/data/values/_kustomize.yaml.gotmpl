@@ -1,6 +1,6 @@
 #{{- $namespace := "data" }}
 #{{- $release_name := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).release_name }}
-#{{- $metrics_image_version := index (readFile "../../../values/_version.yaml" | fromYaml).container_image_version "ghcr.io/datahub-local/ollama-metrics" }}
+#{{- $metrics_image_version := index (readFile "../../../values/_version.yaml" | fromYaml).container_image_version "ghcr.io/datahub-local/ollama-proxy" }}
 
 kustomize:
   airflow:
@@ -84,8 +84,8 @@ kustomize:
         template:
           spec:
             containers:
-              - name: metrics-proxy
-                image: "ghcr.io/datahub-local/ollama-metrics:{{ $metrics_image_version }}"
+              - name: ollama-proxy
+                image: "ghcr.io/datahub-local/ollama-proxy:{{ $metrics_image_version }}"
                 imagePullPolicy: IfNotPresent
                 env:
                   # hostNetwork: the sidecar shares the node netns with Ollama.
@@ -96,10 +96,10 @@ kustomize:
                   - name: DEBUG_MODE
                     value: "true"
                   # Must be set to be compatible with Sympozium
-                  - name: OLLAMA_PROXY_REQUEST_OVERRIDES
+                  - name: OLLAMA_PROXY_REQUEST_DEFAULTS
                     value: '{"reasoning_effort":"none"}'
                 ports:
-                  - name: metrics-proxy
+                  - name: ollama-proxy
                     containerPort: 11435
                     protocol: TCP
                 readinessProbe:
@@ -133,4 +133,4 @@ kustomize:
       patch:
         - op: replace
           path: /spec/ports/0/targetPort
-          value: metrics-proxy
+          value: ollama-proxy

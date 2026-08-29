@@ -31,7 +31,7 @@ memory:
 networkPolicies:
   enabled: true
   # Reach data/ollama, which the agent allowlist does not cover. 11435 is the
-  # metrics-proxy sidecar the ollama Service targets; 11434 is Ollama itself.
+  # ollama-proxy sidecar the ollama Service targets; 11434 is Ollama itself.
   extraEgressPorts:
     - 11434
     - 11435

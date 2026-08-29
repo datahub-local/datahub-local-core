@@ -160,7 +160,7 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: nats
-    # Ollama, as the upstream policy allows. 11435 is the metrics-proxy sidecar
+    # Ollama, as the upstream policy allows. 11435 is the ollama-proxy sidecar
     # the Service targets; 11434 is Ollama itself — same pair as
     # networkPolicies.extraEgressPorts in ../values/sympozium.yaml.gotmpl.
     - ports:
