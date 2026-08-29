@@ -97,7 +97,7 @@ kustomize:
                     value: "true"
                   # Must be set to be compatible with Sympozium
                   - name: OLLAMA_PROXY_REQUEST_DEFAULTS
-                    value: '{"reasoning_effort":"none"}'
+                    value: '{"reasoning_effort":"low"}'
                 ports:
                   - name: ollama-proxy
                     containerPort: 11435
