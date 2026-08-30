@@ -42,6 +42,20 @@ cluster:
         - CNPGClusterHACritical
         - CNPGClusterHAWarning
 
+  # Read-only role for Trino; pg_read_all_data grants SELECT cluster-wide.
+  roles:
+    - name: viewer
+      ensure: present
+      comment: Read-only user for Trino
+      login: true
+      superuser: false
+      createdb: false
+      createrole: false
+      inRoles:
+        - pg_read_all_data
+      passwordSecret:
+        name: postgresql-viewer-credentials
+
 poolers:
   - name: rw
     type: rw

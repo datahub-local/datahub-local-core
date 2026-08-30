@@ -129,11 +129,30 @@ env:
       secretKeyRef:
         name: s3-credentials
         key: secretKey
+  - name: "POSTGRES_VIEWER_USER"
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-viewer-credentials
+        key: username
+  - name: "POSTGRES_VIEWER_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-viewer-credentials
+        key: password
 
 additionalCatalogs:
   memory: |
     connector.name=memory
     memory.max-data-per-node=128MB
+  # {{- range $key, $value := .Values.postgres_extra_databases }}
+  # Direct service: the JDBC connector is incompatible with the transaction-mode pooler.
+  postgresql_{{ $key }}: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql-r:5432/{{ $value }}
+    connection-user=${ENV:POSTGRES_VIEWER_USER}
+    connection-password=${ENV:POSTGRES_VIEWER_PASSWORD}
+    case-insensitive-name-matching=true
+  # {{- end }}
   # {{- range $key, $value := .Values.iceberg_catalogs }}
   {{ $key }}: |
     connector.name=iceberg
