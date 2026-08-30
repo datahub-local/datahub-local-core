@@ -47,12 +47,14 @@ cluster:
     - name: viewer
       ensure: present
       comment: Read-only user for Trino
+      connectionLimit: -1
       login: true
       superuser: false
       createdb: false
       createrole: false
       inRoles:
         - pg_read_all_data
+      inherit: true
       passwordSecret:
         name: postgresql-viewer-credentials
 
