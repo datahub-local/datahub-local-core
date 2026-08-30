@@ -273,3 +273,41 @@ spec:
       limits:
         cpu: 250m
         memory: 256Mi
+---
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-trino'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: trino
+  # Iceberg scans over S3 are slower than the other servers' calls.
+  timeout: 60
+  # All six tools read: execute_query rejects anything but SELECT/SHOW/DESCRIBE/
+  # EXPLAIN while TRINO_ALLOW_WRITE_QUERIES stays false. Nothing to deny.
+  deployment:
+    image: ghcr.io/tuannvm/mcp-trino:{{ index .Values.container_image_version "ghcr.io/tuannvm/mcp-trino" }}
+    cmd: /app/trino-mcp
+    env:
+      # The image ships MCP_TRANSPORT=http, and the binary defaults the Trino
+      # side to https; the coordinator serves plain http on 8080.
+      MCP_TRANSPORT: stdio
+      TRINO_SCHEME: http
+      TRINO_SSL: "false"
+      TRINO_HOST: '{{ .Values.release_name }}-data-trino-trino.data.svc'
+      TRINO_PORT: "8080"
+      # Not the admin Superset uses, so the coordinator attributes these queries
+      # separately and a read-only rule can be scoped to them later.
+      TRINO_USER: mcp
+      TRINO_CATALOG: memory
+      TRINO_SCHEMA: default
+      TRINO_ALLOW_WRITE_QUERIES: "false"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
