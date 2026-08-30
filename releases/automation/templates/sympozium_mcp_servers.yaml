@@ -298,9 +298,10 @@ spec:
       TRINO_SSL: "false"
       TRINO_HOST: '{{ .Values.release_name }}-data-trino-trino.data.svc'
       TRINO_PORT: "8080"
-      # Not the admin Superset uses, so the coordinator attributes these queries
-      # separately and a read-only rule can be scoped to them later.
-      TRINO_USER: mcp
+      # Not the admin Superset uses: the coordinator's rules.json grants this
+      # identity read-only on every catalog but system, so the client-side
+      # TRINO_ALLOW_WRITE_QUERIES below is the backstop rather than the fence.
+      TRINO_USER: '{{ .Values.trino_mcp_user }}'
       TRINO_CATALOG: memory
       TRINO_SCHEMA: default
       TRINO_ALLOW_WRITE_QUERIES: "false"

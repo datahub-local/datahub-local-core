@@ -97,24 +97,36 @@ initContainers:
 serviceAccount:
   create: true
 
-rules:
-  rules.json: |-
-    {
-      "catalogs": [
-        {
-          "user": "{{ .StateValues.default_admin_user }}",
-          "catalog": ".*",
-          "allow": "all"
-        }
-      ],
-      "schemas": [
-        {
-          "user": "{{ .StateValues.default_admin_user }}",
-          "schema": ".*",
-          "owner": true
-        }
-      ]
-    }
+# A bare `rules` key rendered nothing: the chart only writes
+# access-control.properties under accessControl, so until now no system access
+# control was loaded and every user had full access to every catalog.
+accessControl:
+  type: configmap
+  configFile: rules.json
+  # Rules reload in place, so edits need no coordinator restart.
+  refreshPeriod: 60s
+  rules:
+    rules.json: |-
+      {
+        "catalogs": [
+          {"user": "{{ .StateValues.default_admin_user }}", "catalog": ".*", "allow": "all"},
+          {"user": "{{ .Values.trino_mcp_user }}", "catalog": "system", "allow": "none"},
+          {"user": "{{ .Values.trino_mcp_user }}", "catalog": ".*", "allow": "read-only"}
+        ],
+        "schemas": [
+          {"user": "{{ .StateValues.default_admin_user }}", "schema": ".*", "owner": true}
+        ],
+        "queries": [
+          {"user": "{{ .StateValues.default_admin_user }}", "allow": ["execute", "view", "kill"]},
+          {"user": "{{ .Values.trino_mcp_user }}", "allow": ["execute"]}
+        ],
+        "procedures": [
+          {"user": "{{ .StateValues.default_admin_user }}", "catalog": ".*", "schema": ".*", "procedure": ".*", "privileges": ["EXECUTE", "GRANT_EXECUTE"]}
+        ],
+        "system_information": [
+          {"user": "{{ .StateValues.default_admin_user }}", "allow": ["read"]}
+        ]
+      }
 
 env:
   - name: "POLARIS_OAUTH_CREDENTIAL"
