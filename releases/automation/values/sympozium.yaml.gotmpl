@@ -72,3 +72,12 @@ llmfit:
 # DRA driver for model placement; needs a ghcr-pull secret that does not exist.
 llmfit-dra:
   enabled: false
+
+pricing:
+  # OpenRouter is absent from the chart's shipped table (openai, anthropic,
+  # bedrock only), so homelab-oracle's runs get no cost estimate without this.
+  extraEntries:
+    - provider: openrouter
+      match: deepseek/deepseek-v4-flash-0731
+      inputPerMTokMicro: 65000
+      outputPerMTokMicro: 180000
