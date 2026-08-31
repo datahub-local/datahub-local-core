@@ -19,7 +19,19 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
 
     replicas: 1
-    retention: 5d
+    retention: 30d
+    # Whichever limit hits first; leaves headroom for the WAL and compaction.
+    retentionSize: 24GB
+
+    # StatefulSet volumeClaimTemplate: resizing later needs a manual PVC patch.
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn-no-replica
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 30Gi
 
 alertmanager:
   alertmanagerSpec:
