@@ -100,8 +100,8 @@ serviceAccount:
 # A bare `rules` key rendered nothing: the chart only writes
 # access-control.properties under accessControl, so until now no system access
 # control was loaded and every user had full access to every catalog.
-# The MCP identity reads the iceberg catalogs and the postgresql_* app databases
-#  anything unlisted is denied. system needs its own deny -- it
+# The MCP identity reads memory, the iceberg catalogs and the postgresql_* app
+# databases; anything unlisted is denied. system needs its own deny -- it
 # stays reachable when no rule matches, unlike every other catalog.
 # Naming the functions section at all turns every unlisted user's built-in
 # functions off too, so the system.builtin grant is what keeps count() and
@@ -117,7 +117,7 @@ accessControl:
         "catalogs": [
           {"user": "{{ .StateValues.default_admin_user }}", "catalog": ".*", "allow": "all"},
           {"user": "{{ .Values.trino_mcp_user }}", "catalog": "system", "allow": "none"},
-          {"user": "{{ .Values.trino_mcp_user }}", "catalog": "(postgresql_.*|{{ keys .Values.iceberg_catalogs | sortAlpha | join "|" }})", "allow": "read-only"}
+          {"user": "{{ .Values.trino_mcp_user }}", "catalog": "(memory|postgresql_.*|{{ keys .Values.iceberg_catalogs | sortAlpha | join "|" }})", "allow": "read-only"}
         ],
         "schemas": [
           {"user": "{{ .StateValues.default_admin_user }}", "schema": ".*", "owner": true}
