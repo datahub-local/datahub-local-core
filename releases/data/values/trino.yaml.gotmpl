@@ -117,7 +117,7 @@ accessControl:
         "catalogs": [
           {"user": "{{ .StateValues.default_admin_user }}", "catalog": ".*", "allow": "all"},
           {"user": "{{ .Values.trino_mcp_user }}", "catalog": "system", "allow": "none"},
-          {"user": "{{ .Values.trino_mcp_user }}", "catalog": "{{ concat (list "memory") (keys .Values.iceberg_catalogs | sortAlpha) | join "|" }}", "allow": "read-only"}
+          {"user": "{{ .Values.trino_mcp_user }}", "catalog": ".*", "allow": "read-only"}
         ],
         "schemas": [
           {"user": "{{ .StateValues.default_admin_user }}", "schema": ".*", "owner": true}
