@@ -1,33 +1,33 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 4.0.3
-  ghcr.io/browserless/chromium: v2.56.0
+  g33kphr33k/musicgrabber: 4.0.4
+  ghcr.io/browserless/chromium: v2.56.2
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
   ghcr.io/containers/kubernetes-mcp-server: v0.0.66
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300609
-  ghcr.io/gethomepage/homepage: v2.1.2
+  ghcr.io/gethomepage/homepage: v2.2.0
   ghcr.io/headlamp-k8s/headlamp: v0.45.0
   ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.7.11
   ghcr.io/tailscale/tailscale: v1.102.3
   ghcr.io/tuannvm/mcp-trino: 4.3.1
   iib0011/omni-tools: 0.6.0
-  alpine/k8s: 1.36.2
+  alpine/k8s: 1.37.0
   apache/polaris-admin-tool: 1.7.0
   crystaldba/postgres-mcp: 0.3.0
-  curlimages/curl: 8.21.0
+  curlimages/curl: 8.22.0
   kopia/kopia: 20251215.0.232403
   # Only latest is published for these two, so the digest is the pin.
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.37.4
+  n8nio/n8n: 2.38.2
   python: "3.14"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
   rclone/rclone: 1.75.0
-  valkey/valkey: 9.1.1
+  valkey/valkey: 9.1.2
   velero/velero-plugin-for-aws: v1.14.2
 helm_chart_version:
   airflow:
@@ -61,7 +61,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 88.6.1
+    version: 88.6.3
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -69,7 +69,7 @@ helm_chart_version:
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
-    version: 2.1.0
+    version: 2.1.1
   polaris:
     ref: polaris/polaris
     repository: https://downloads.apache.org/polaris/helm-chart
@@ -77,11 +77,11 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.78.0
+    version: 1.79.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 16.1.0
+    version: 16.3.2
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -101,7 +101,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 14.7.0
+    version: 14.9.0
   spark-operator:
     ref: spark-operator/spark-operator
     repository: https://kubeflow.github.io/spark-operator
@@ -117,7 +117,7 @@ helm_chart_version:
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.10.48
+    version: 0.10.54
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
