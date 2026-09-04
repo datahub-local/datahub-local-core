@@ -100,8 +100,9 @@ serviceAccount:
 # Deny-by-default: a user matching no rule loses every catalog. No group provider
 # is configured, so tiers are anchored `user` alternations.
 # system stays reachable when no rule matches it, unlike every other catalog, so
-# it needs an explicit deny per tier. A non-empty functions section disables
-# built-ins for everyone not granted them, hence the system.builtin grant per tier.
+# each tier pins it explicitly -- read-only, since clients introspect it.
+# A non-empty functions section disables built-ins for everyone not granted them,
+# hence the system.builtin grant per tier.
 accessControl:
   type: configmap
   configFile: rules.json
@@ -116,15 +117,15 @@ accessControl:
       {
         "catalogs": [
           {"user": "{{ $admins }}", "catalog": ".*", "allow": "all"},
-          {"user": "{{ $writers }}", "catalog": "system", "allow": "none"},
+          {"user": "{{ $writers }}", "catalog": "system", "allow": "read-only"},
           {{- /* postgresql_* excluded: shared viewer credential. */}}
           {"user": "{{ $writers }}", "catalog": "^(memory|{{ $iceberg }})$", "allow": "all"},
-          {"user": "{{ $readers }}", "catalog": "system", "allow": "none"},
+          {"user": "{{ $readers }}", "catalog": "system", "allow": "read-only"},
           {"user": "{{ $readers }}", "catalog": "^(memory|postgresql_.*|{{ $iceberg }})$", "allow": "read-only"}
         ],
         "schemas": [
           {"user": "{{ $admins }}", "schema": ".*", "owner": true},
-          {{- /* dbt creates and drops schemas. */}}
+          {{- /* owner: writers create and drop schemas, not just tables. */}}
           {"user": "{{ $writers }}", "catalog": "^(memory|{{ $iceberg }})$", "schema": ".*", "owner": true}
         ],
         "queries": [
