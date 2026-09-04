@@ -23,8 +23,26 @@ iceberg_catalogs:
   gold: gold
   test: test
 
+#{{ $trino_mcp_user := "mcp" }}
+#{{ $trino_dbt_user := "dbt" }}
+#{{ $trino_superset_user := "superset" }}
+
 # Read-only Trino identity for the agent MCP server, scoped in the Trino rules.
-trino_mcp_user: mcp
+trino_mcp_user: "{{ $trino_mcp_user }}"
+# Matches the TRINO_USER default in datahub-local-ai's dbt profiles.
+trino_dbt_user: "{{ $trino_dbt_user }}"
+# Superset's sqlalchemy_uri must be changed to this user for it to take effect.
+trino_superset_user: "{{ $trino_superset_user }}"
+
+# Trino access tiers, consumed by rules.json in trino.yaml.gotmpl.
+# default_admin_user is a StateValue loaded after this file, so the template
+# appends it to the admin tier.
+trino_reader_users:
+  - "{{ $trino_mcp_user }}"
+trino_writer_users:
+  - "{{ $trino_dbt_user }}"
+  - "{{ $trino_superset_user }}"
+trino_admin_extra_users: []
 
 kopia_backup_namespaces:
   - automation
