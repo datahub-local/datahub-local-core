@@ -59,7 +59,7 @@ extraEnv: |
   - name: "TRINO_PORT"
     value: "8080"
   - name: "TRINO_USER"
-    value: "{{ $.StateValues.default_admin_user}}"
+    value: "{{ $.Values.trino_dbt_user }}"
   - name: "S3_AWS_ENDPOINT"
     value: "https://{{ .Values.s3_endpoint }}"
   - name: "S3_AWS_ACCESS_KEY"

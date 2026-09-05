@@ -158,7 +158,7 @@ extraConfigs:
       allow_file_upload: true
       allow_run_async : true
       database_name: trino-memory
-      sqlalchemy_uri: trino://{{ $.StateValues.default_admin_user }}@{{ $.Values.release_name }}-data-trino-trino:8080/memory
+      sqlalchemy_uri: trino://{{ $.Values.trino_superset_user }}@{{ $.Values.release_name }}-data-trino-trino:8080/memory
       tables: []
     {{- range $key, $value := .Values.iceberg_catalogs }}
     - allow_ctas: true
@@ -167,6 +167,6 @@ extraConfigs:
       allow_file_upload: true
       allow_run_async : true
       database_name: trino-{{ $key }}
-      sqlalchemy_uri: trino://{{ $.StateValues.default_admin_user }}@{{ $.Values.release_name }}-data-trino-trino:8080/{{ $key }}
+      sqlalchemy_uri: trino://{{ $.Values.trino_superset_user }}@{{ $.Values.release_name }}-data-trino-trino:8080/{{ $key }}
       tables: []
     {{- end }}
