@@ -1,6 +1,6 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 4.0.4
-  ghcr.io/browserless/chromium: v2.56.2
+  g33kphr33k/musicgrabber: 4.1.0
+  ghcr.io/browserless/chromium: v2.56.3
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
   ghcr.io/containers/kubernetes-mcp-server: v0.0.66
@@ -23,10 +23,10 @@ container_image_version:
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.38.2
+  n8nio/n8n: 2.38.3
   python: "3.14"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
-  rclone/rclone: 1.75.0
+  rclone/rclone: 1.75.1
   valkey/valkey: 9.1.2
   velero/velero-plugin-for-aws: v1.14.2
 helm_chart_version:
@@ -81,7 +81,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 16.3.2
+    version: 16.5.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
@@ -89,7 +89,7 @@ helm_chart_version:
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
-    version: 26.2.2
+    version: 26.2.3
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
@@ -117,7 +117,7 @@ helm_chart_version:
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.10.54
+    version: 0.10.56
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
@@ -125,7 +125,7 @@ helm_chart_version:
   valkey:
     ref: groundhog2k/valkey
     repository: https://groundhog2k.github.io/helm-charts
-    version: 2.3.3
+    version: 2.3.4
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
