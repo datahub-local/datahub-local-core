@@ -5,6 +5,14 @@ postgresql:
 redis:
   enabled: false
 
+# RESULTS_BACKEND and the async-query backends are rendered at template time and
+# ignore the REDIS_HOST env var, so the host must be set here too.
+cache:
+  host: "{{ .Values.release_name }}-data-valkey-headless"
+  port: 6379
+  cacheDb: 1
+  celeryDb: 0
+
 nodeSelector:
   kubernetes.io/arch: arm64
 
@@ -12,8 +20,6 @@ serviceAccount:
   create: true
 
 supersetNode:
-  connections:
-    redis_password: true
   extraContainers:
     # Dashboard sidecar: imports Superset dashboard export bundles (.zip) from
     # ConfigMaps labeled "superset_dashboard=1" through the REST API and keeps
@@ -100,6 +106,34 @@ configOverrides:
       return None
 
     SQLALCHEMY_CUSTOM_PASSWORD_STORE = lookup_password
+  redis_backends: |
+    # The chart renders these backends at template time, so it cannot read the
+    # Valkey password from the secret. Rebuild them at runtime instead;
+    # RedisCache is already imported by the chart's own config.
+    _REDIS_HOST = os.environ["REDIS_HOST"]
+    _REDIS_PORT = int(os.environ["REDIS_PORT"])
+    _REDIS_PASSWORD = os.environ["REDIS_PASSWORD"]
+
+    RESULTS_BACKEND = RedisCache(
+        host=_REDIS_HOST,
+        port=_REDIS_PORT,
+        password=_REDIS_PASSWORD,
+        key_prefix="superset_results",
+    )
+
+    GLOBAL_ASYNC_QUERIES_CACHE_BACKEND = {
+        **GLOBAL_ASYNC_QUERIES_CACHE_BACKEND,
+        "CACHE_REDIS_HOST": _REDIS_HOST,
+        "CACHE_REDIS_PORT": _REDIS_PORT,
+        "CACHE_REDIS_PASSWORD": _REDIS_PASSWORD,
+    }
+
+    GLOBAL_ASYNC_QUERIES_RESULTS_BACKEND = {
+        **GLOBAL_ASYNC_QUERIES_RESULTS_BACKEND,
+        "host": _REDIS_HOST,
+        "port": _REDIS_PORT,
+        "password": _REDIS_PASSWORD,
+    }
 
 secretEnv:
   create: false
