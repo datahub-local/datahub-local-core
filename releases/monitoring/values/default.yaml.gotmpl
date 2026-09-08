@@ -148,7 +148,7 @@ prometheus_rules:
             severity: warning
           annotations:
             summary: "n8n workflow failed"
-            description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Executions: https://automation-n8n.{{ .StateValues.gateway_hostname }}/workflow/{{`{{ $labels.workflow_id }}`}}/executions"
+            description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Open it in n8n at /workflow/{{`{{ $labels.workflow_id }}`}}/executions and filter by Error. Catch Errors carries the message and failing node when it could fire."
 
         - alert: N8nInstanceDown
           expr: |
