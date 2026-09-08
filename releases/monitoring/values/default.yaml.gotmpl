@@ -1,4 +1,3 @@
-#{{ $gateway_hostname := (readFile "../../../values/global.yaml.gotmpl" | fromYaml).gateway_hostname }}
 
 prometheus_rules:
   datahub.local.rules:
@@ -149,7 +148,7 @@ prometheus_rules:
             severity: warning
           annotations:
             summary: "n8n workflow failed"
-            description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Executions: https://automation-n8n.{{ $gateway_hostname }}/workflow/{{`{{ $labels.workflow_id }}`}}/executions"
+            description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Executions: https://automation-n8n.{{ .StateValues.gateway_hostname }}/workflow/{{`{{ $labels.workflow_id }}`}}/executions"
 
         - alert: N8nInstanceDown
           expr: |
