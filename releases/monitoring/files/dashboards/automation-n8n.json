@@ -23,6 +23,444 @@
   "panels": [
     {
       "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total failed workflow executions the running n8n instances have recorded, summed over main, worker and webhook.\nThis is the raw counter, not increase(): a histogram series does not exist until its first observation, so a counter whose first sample is 1 has no 0->1 step and increase() reads it as 0. A workflow that failed once since the pod started would show as zero here otherwise.\nResets to 0 when a pod restarts.\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "title": "Failed Executions (since instance start)",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(n8n_workflow_execution_duration_seconds_count{status=\"failed\"})",
+          "instant": true,
+          "legendFormat": "failed",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Executions enqueued in Valkey and not yet picked up by a worker. A brief non-zero value is normal; N8nQueueBacklog alerts when it stays above zero for 15m, which means the worker is gone or cannot reach Valkey.\nReported by the main instance only.\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "title": "Queue Jobs Waiting",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max(n8n_scaling_mode_queue_jobs_waiting)",
+          "instant": true,
+          "legendFormat": "waiting",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Age of the most recent activity on any n8n instance. Scheduled workflows run several times a day, so a large value means the scheduler or the trigger registration is broken rather than a quiet day. N8nNoActivity alerts at 24h.\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 43200
+              },
+              {
+                "color": "red",
+                "value": 86400
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "title": "Time Since Last Activity",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "min(time() - n8n_last_activity)",
+          "instant": true,
+          "legendFormat": "age",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Workflow executions completed per 5 minutes, split by outcome. Success is green and failure red because these are states, not series.\nCovers every execution mode: trigger and manual on the main instance, integrated (sub-workflow) and error on the worker.\nThe first observation of a brand-new series is not visible to increase(); the Failed Executions tile reads the raw counter and is authoritative for whether anything has failed at all.\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "title": "Executions per 5m by Status",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{status=\"success\"}[5m]))",
+          "legendFormat": "success",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{status=\"failed\"}[5m]))",
+          "legendFormat": "failed",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Failed executions per workflow since the instances started, with the name resolved from n8n_workflow_info (N8N_METRICS_INCLUDE_WORKFLOW_INFO), which the alerts cannot carry - the execution histogram labels only status, mode and workflow_id.\nThe or-fallback is deliberate: a bare group_left join drops any workflow with no info entry, which would hide a deleted workflow's failures entirely while the Failed Executions tile still counted them. A row with a blank Workflow is a workflow that no longer exists.\nCounts reset when a pod restarts.\n",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Workflow"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 260
+              },
+              {
+                "id": "noValue",
+                "value": "(deleted)"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 24,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Failed"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.0",
+      "title": "Failed Executions by Workflow",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "instant": true,
+          "expr": "(sum by (workflow_id) (n8n_workflow_execution_duration_seconds_count{status=\"failed\"}) * on (workflow_id) group_left(workflow_name) n8n_workflow_info) or sum by (workflow_id) (n8n_workflow_execution_duration_seconds_count{status=\"failed\"})",
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "workflow_name": 0,
+              "workflow_id": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "Value": "Failed",
+              "workflow_id": "ID",
+              "workflow_name": "Workflow"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
         "type": "prometheus"
       },
       "fieldConfig": {
@@ -48,7 +486,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 0
+        "y": 12
       },
       "id": 2,
       "options": {
@@ -126,7 +564,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 0
+        "y": 12
       },
       "id": 1,
       "options": {
@@ -193,7 +631,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 0
+        "y": 12
       },
       "id": 9,
       "options": {
@@ -263,7 +701,7 @@
         "h": 8,
         "w": 4,
         "x": 12,
-        "y": 0
+        "y": 12
       },
       "id": 16,
       "options": {
@@ -328,7 +766,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 0
+        "y": 12
       },
       "id": 14,
       "options": {
@@ -392,7 +830,7 @@
         "h": 8,
         "w": 4,
         "x": 20,
-        "y": 0
+        "y": 12
       },
       "id": 13,
       "options": {
@@ -456,7 +894,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 4
+        "y": 16
       },
       "id": 15,
       "options": {
@@ -532,7 +970,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 4
+        "y": 16
       },
       "id": 10,
       "options": {
@@ -605,7 +1043,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 4
+        "y": 16
       },
       "id": 17,
       "options": {
@@ -707,7 +1145,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 20
       },
       "id": 3,
       "options": {
@@ -805,7 +1243,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 25
       },
       "id": 4,
       "options": {
@@ -914,7 +1352,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 29
       },
       "id": 5,
       "options": {
@@ -1022,7 +1460,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 34
       },
       "id": 6,
       "options": {
@@ -1123,7 +1561,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 39
       },
       "id": 7,
       "options": {
@@ -1217,7 +1655,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 47
       },
       "id": 8,
       "options": {
@@ -1324,7 +1762,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 55
       },
       "id": 11,
       "options": {
@@ -1417,7 +1855,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 63
       },
       "id": 12,
       "options": {

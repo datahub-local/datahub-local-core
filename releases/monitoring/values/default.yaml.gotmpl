@@ -10,7 +10,7 @@ prometheus_rules:
           expr: avg(avg_over_time(node_hwmon_temp_celsius[1m])) by (instance) > 65
           for: 5m
           labels:
-            severity: warning
+            severity: high
         - alert: ExtremeCPUTemperature
           annotations:
             description: '{{`{{ printf "%.4g" $value }}`}} °C detected in {{`{{ $labels.instance }}`}}. This is a high temperature and you must shutdown the server'
@@ -146,6 +146,7 @@ prometheus_rules:
           for: 0m
           labels:
             severity: warning
+            namespace: automation
           annotations:
             summary: "n8n workflow failed"
             description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Open it in n8n at /workflow/{{`{{ $labels.workflow_id }}`}}/executions and filter by Error. Catch Errors carries the message and failing node when it could fire."
@@ -156,6 +157,7 @@ prometheus_rules:
           for: 5m
           labels:
             severity: critical
+            namespace: automation
           annotations:
             summary: "n8n instance is not being scraped"
             description: "Prometheus cannot scrape {{`{{ $labels.pod }}`}} (job {{`{{ $labels.job }}`}}). An n8n error workflow cannot fire while its own instance is down, so this alert is the only notification path for that case."
@@ -166,6 +168,7 @@ prometheus_rules:
           for: 10m
           labels:
             severity: critical
+            namespace: automation
           annotations:
             summary: "no n8n instance is reporting metrics"
             description: "Every n8n metric series has disappeared. Either all pods are down, or the PodMonitor selectors in releases/automation/values/n8n.yaml.gotmpl no longer match any pod."
@@ -176,6 +179,7 @@ prometheus_rules:
           for: 15m
           labels:
             severity: warning
+            namespace: automation
           annotations:
             summary: "n8n execution queue is not draining"
             description: "{{`{{ printf \"%.0f\" $value }}`}} job(s) have been waiting in the queue for 15m. Check the worker pod is running and connected to Valkey."
@@ -186,6 +190,7 @@ prometheus_rules:
           for: 30m
           labels:
             severity: warning
+            namespace: automation
           annotations:
             summary: "n8n has executed nothing for 24h"
             description: "Last activity {{`{{ humanizeDuration $value }}`}} ago. Scheduled workflows run several times a day, so silence means the scheduler or the trigger registration is broken rather than a quiet day."
@@ -196,6 +201,7 @@ prometheus_rules:
           for: 15m
           labels:
             severity: critical
+            namespace: automation
           annotations:
             summary: "n8n has no active workflows"
             description: "Every workflow trigger has been deactivated or failed to register. No schedule, webhook or form trigger will fire."
