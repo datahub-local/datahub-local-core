@@ -74,6 +74,7 @@ main:
       metrics_include_api_endpoints: true
       metrics_include_queue_metrics: true
       metrics_include_workflow_id_label: true
+      metrics_include_workflow_info: true
 
       runners_enabled: true
 
@@ -312,7 +313,23 @@ extraManifests:
         matchLabels:
           app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
           app.kubernetes.io/name: n8n
-          app.kubernetes.io/type: master
+          app.kubernetes.io/type: worker
+  - apiVersion: monitoring.coreos.com/v1
+    kind: PodMonitor
+    metadata:
+      name: "{{ .Values.release_name }}-automation-n8n-webhook"
+    spec:
+      podMetricsEndpoints:
+        - path: /metrics
+          port: http
+      namespaceSelector:
+        matchNames:
+          - automation
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: "{{ .Values.release_name }}-automation-n8n"
+          app.kubernetes.io/name: n8n
+          app.kubernetes.io/type: webhook
   - apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
