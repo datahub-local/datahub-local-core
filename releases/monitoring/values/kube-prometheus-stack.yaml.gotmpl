@@ -102,6 +102,12 @@ grafana:
     storageClass: longhorn
     size: 2Gi
   grafana.ini:
+    plugins:
+      # Grafana 13 ships the SQL datasources as bundled plugins and updates them at
+      # startup. readOnlyRootFilesystem makes that write fail after the installer has
+      # already stopped the plugin, leaving postgres and mssql unregistered - the n8n
+      # datasource then loads as "Plugin not registered".
+      preinstall_disabled: true
     server:
       domain: "monitoring-grafana.{{ .StateValues.gateway_hostname }}"
       root_url: "https://monitoring-grafana.{{ .StateValues.gateway_hostname }}:{{ .StateValues.ingress_port }}"

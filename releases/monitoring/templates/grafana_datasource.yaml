@@ -13,7 +13,6 @@ data:
       type: loki
       access: proxy
       url: http://{{ $.Values.release_name }}-loki.monitoring.svc.cluster.local:3100
-      version: 1
       isDefault: true
       jsonData:
         timeout: 500
@@ -39,7 +38,8 @@ data:
       url: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-18-rw.data.svc.cluster.local:5432"
       database: "{{ $.Values.postgres_extra_databases.n8n }}"
       user: "$POSTGRES_VIEWER_USER"
-      version: 1
+      # No version: Grafana skips provisioning updates unless it exceeds the
+      # stored one, so a pinned version silently ignores every later edit.
       editable: false
       jsonData:
         # CNPG serves its own CA, so require encryption without verifying it.
