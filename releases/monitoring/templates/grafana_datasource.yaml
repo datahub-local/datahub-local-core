@@ -32,7 +32,7 @@ data:
     # per-workflow aggregates and cannot list executions.
     - name: n8n
       uid: n8n-postgres
-      type: postgres
+      type: grafana-postgresql-datasource
       access: proxy
       # The -data-postgresql alias is the PgBouncer pooler in transaction mode,
       # which breaks Grafana's prepared statements. Connect to the primary.
