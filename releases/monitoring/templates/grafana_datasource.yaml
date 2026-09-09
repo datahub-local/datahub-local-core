@@ -17,3 +17,37 @@ data:
       isDefault: true
       jsonData:
         timeout: 500
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+   grafana_datasource: "1"
+  name: "{{ include "grafana.configMapDataSource" $ }}-n8n"
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    # n8n keeps per-execution rows only in Postgres; its Prometheus metrics are
+    # per-workflow aggregates and cannot list executions.
+    - name: n8n
+      uid: n8n-postgres
+      type: postgres
+      access: proxy
+      # The -data-postgresql alias is the PgBouncer pooler in transaction mode,
+      # which breaks Grafana's prepared statements. Connect to the primary.
+      url: "{{ $.Values.release_name }}-data-cloudnative-pg-cluster-18-rw.data.svc.cluster.local:5432"
+      database: "{{ $.Values.postgres_extra_databases.n8n }}"
+      user: "$POSTGRES_VIEWER_USER"
+      version: 1
+      editable: false
+      jsonData:
+        # CNPG serves its own CA, so require encryption without verifying it.
+        sslmode: require
+        postgresVersion: 1800
+        maxOpenConns: 5
+        maxIdleConns: 2
+        connMaxLifetime: 14400
+        timescaledb: false
+      secureJsonData:
+        password: "$POSTGRES_VIEWER_PASSWORD"

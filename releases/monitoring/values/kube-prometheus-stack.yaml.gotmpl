@@ -84,6 +84,19 @@ grafana:
   assertNoLeakedSecrets: false
   deploymentStrategy:
     type: Recreate
+
+  # Read-only Postgres identity for the n8n execution list on the automation-n8n
+  # dashboard. Grafana expands $VAR in provisioning files, so the datasource in
+  # ../templates/grafana_datasource.yaml carries the reference, not the value.
+  envValueFrom:
+    POSTGRES_VIEWER_USER:
+      secretKeyRef:
+        name: postgresql-viewer-credentials
+        key: username
+    POSTGRES_VIEWER_PASSWORD:
+      secretKeyRef:
+        name: postgresql-viewer-credentials
+        key: password
   persistence:
     enabled: true
     storageClass: longhorn
@@ -121,6 +134,110 @@ grafana:
     existingSecret: "grafana-admin-credentials"
     userKey: user
     passwordKey: password
+
+# Sympozium keeps every run's outcome in AgentRun CRs and exports nothing to
+# Prometheus itself, so kube-state-metrics reads the CRs instead.
+kube-state-metrics:
+  rbac:
+    extraRules:
+      - apiGroups: ["sympozium.ai"]
+        resources: ["agentruns"]
+        verbs: ["list", "watch"]
+
+  customResourceState:
+    enabled: true
+    config:
+      spec:
+        resources:
+          - groupVersionKind:
+              group: sympozium.ai
+              version: v1alpha1
+              kind: AgentRun
+            metricNamePrefix: sympozium_agentrun
+            labelsFromPath:
+              name: [metadata, name]
+              namespace: [metadata, namespace]
+              agent: [metadata, labels, "sympozium.ai/instance"]
+              ensemble: [metadata, labels, "sympozium.ai/ensemble"]
+              trigger: [metadata, labels, "sympozium.ai/type"]
+            metrics:
+              # phase rides here rather than in a StateSet: the CRD does not
+              # constrain it, so a hardcoded state list would silently drop
+              # every run whose phase upstream later adds.
+              - name: info
+                help: "Attributes of an AgentRun that are not numbers."
+                each:
+                  type: Info
+                  info:
+                    labelsFromPath:
+                      phase: [status, phase]
+                      pod: [status, podName]
+                      mode: [spec, mode]
+                      model: [spec, model, model]
+                      provider: [spec, model, provider]
+              - name: created_timestamp_seconds
+                help: "Time the AgentRun was created."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [metadata, creationTimestamp]
+              - name: started_timestamp_seconds
+                help: "Time the agent container started."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, startedAt]
+              - name: completed_timestamp_seconds
+                help: "Time the run reached a terminal phase."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, completedAt]
+              - name: exit_code
+                help: "Exit code of the agent container."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, exitCode]
+              # Reported by the harness, so it excludes scheduling and pull time.
+              - name: duration_milliseconds
+                help: "Wall-clock duration the harness measured."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, tokenUsage, durationMs]
+              - name: input_tokens
+                help: "Prompt tokens the run consumed."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, tokenUsage, inputTokens]
+              - name: output_tokens
+                help: "Completion tokens the run produced."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, tokenUsage, outputTokens]
+              - name: total_tokens
+                help: "Input plus output tokens."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, tokenUsage, totalTokens]
+              - name: tool_calls
+                help: "Tool invocations the run made."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, tokenUsage, toolCalls]
+              # Absent for providers missing from the pricing table; the
+              # openrouter entry is added in ../../automation/values/sympozium.yaml.gotmpl.
+              - name: cost_micro_usd
+                help: "Estimated cost in millionths of a USD."
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [status, costEstimate, amountMicro]
 
 prometheus-node-exporter:
   # The filesystem excludes are the chart default: extraArgs replaces it
