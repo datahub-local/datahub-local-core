@@ -1,4 +1,6 @@
 
+#{{ $gateway_hostname := "homelab.alvsanand.com" }}
+
 prometheus_rules:
   datahub.local.rules:
     - name: datahub.local.rules
@@ -130,26 +132,48 @@ prometheus_rules:
         # no 0->1 step and increase() reads it as 0 forever. Verified against a
         # real recorded failure. The clause fires while the series is younger
         # than the window, which is the only way a first-ever failure is seen.
+        # workflow_name is joined in from n8n_workflow_info; the histogram itself
+        # carries only status, mode and workflow_id. The or-fallback keeps a
+        # workflow with no info entry alerting on id rather than dropping it.
         - alert: N8nWorkflowExecutionFailed
           expr: |
             (
-              sum by (workflow_id, mode) (
-                increase(n8n_workflow_execution_duration_seconds_count{status="failed"}[1h])
-              ) > 0
+              (
+                (
+                  sum by (workflow_id, mode) (
+                    increase(n8n_workflow_execution_duration_seconds_count{status="failed"}[1h])
+                  ) > 0
+                )
+                or
+                (
+                  sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"})
+                  unless
+                  sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"} offset 1h)
+                )
+              )
+              * on (workflow_id) group_left(workflow_name) n8n_workflow_info
             )
             or
             (
-              sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"})
-              unless
-              sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"} offset 1h)
+              (
+                sum by (workflow_id, mode) (
+                  increase(n8n_workflow_execution_duration_seconds_count{status="failed"}[1h])
+                ) > 0
+              )
+              or
+              (
+                sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"})
+                unless
+                sum by (workflow_id, mode) (n8n_workflow_execution_duration_seconds_count{status="failed"} offset 1h)
+              )
             )
           for: 0m
           labels:
             severity: warning
             namespace: automation
           annotations:
-            summary: "n8n workflow failed"
-            description: "Workflow {{`{{ $labels.workflow_id }}`}} recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Open it in n8n at /workflow/{{`{{ $labels.workflow_id }}`}}/executions and filter by Error. Catch Errors carries the message and failing node when it could fire."
+            summary: "n8n workflow failed: {{`{{ if $labels.workflow_name }}{{ $labels.workflow_name }}{{ else }}{{ $labels.workflow_id }}{{ end }}`}}"
+            description: "Workflow {{`{{ if $labels.workflow_name }}{{ $labels.workflow_name }}{{ else }}(name unknown){{ end }}`}} ({{`{{ $labels.workflow_id }}`}}) recorded a failed execution (mode {{`{{ $labels.mode }}`}}). Executions: https://automation-n8n.{{ $gateway_hostname }}/workflow/{{`{{ $labels.workflow_id }}`}}/executions?status=error - open the most recent one for the message and failing node."
 
         - alert: N8nInstanceDown
           expr: |
@@ -183,17 +207,6 @@ prometheus_rules:
           annotations:
             summary: "n8n execution queue is not draining"
             description: "{{`{{ printf \"%.0f\" $value }}`}} job(s) have been waiting in the queue for 15m. Check the worker pod is running and connected to Valkey."
-
-        - alert: N8nNoActivity
-          expr: |
-            max(time() - n8n_last_activity) > 86400
-          for: 30m
-          labels:
-            severity: warning
-            namespace: automation
-          annotations:
-            summary: "n8n has executed nothing for 24h"
-            description: "Last activity {{`{{ humanizeDuration $value }}`}} ago. Scheduled workflows run several times a day, so silence means the scheduler or the trigger registration is broken rather than a quiet day."
 
         - alert: N8nNoActiveWorkflows
           expr: |

@@ -162,7 +162,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Age of the most recent activity on any n8n instance. Scheduled workflows run several times a day, so a large value means the scheduler or the trigger registration is broken rather than a quiet day. N8nNoActivity alerts at 24h.\n",
+      "description": "Age of the most recent activity on any n8n instance. Not alerted on: a quiet period is only a fault if something was actually scheduled to run in it, which this metric cannot tell you. Read it alongside the workflow schedules.\n",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -352,7 +352,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Failed executions per workflow since the instances started, with the name resolved from n8n_workflow_info (N8N_METRICS_INCLUDE_WORKFLOW_INFO), which the alerts cannot carry - the execution histogram labels only status, mode and workflow_id.\nThe or-fallback is deliberate: a bare group_left join drops any workflow with no info entry, which would hide a deleted workflow's failures entirely while the Failed Executions tile still counted them. A row with a blank Workflow is a workflow that no longer exists.\nCounts reset when a pod restarts.\n",
+      "description": "Failed executions per workflow since the instances started, with the name resolved from n8n_workflow_info (N8N_METRICS_INCLUDE_WORKFLOW_INFO) - the execution histogram labels only status, mode and workflow_id.\nThe or-fallback is deliberate: a bare group_left join drops any workflow with no info entry, which would hide a deleted workflow's failures entirely while the Failed Executions tile still counted them. A row with a blank Workflow is a workflow that no longer exists.\nCounts reset when a pod restarts.\n",
       "fieldConfig": {
         "defaults": {
           "color": {
