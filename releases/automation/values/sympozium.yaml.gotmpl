@@ -78,10 +78,13 @@ llmfit-dra:
   enabled: false
 
 pricing:
-  # OpenRouter is absent from the chart's shipped table (openai, anthropic,
-  # bedrock only), so homelab-oracle's runs get no cost estimate without this.
+  # The fleet runs through data/litellm on OpenCode Go, which is absent from the
+  # chart's shipped table (openai, anthropic, bedrock only), so the personas get
+  # no cost estimate without this. The prices are the previous OpenRouter ones
+  # carried over for the same model family -- [UNVERIFIED] as OpenCode Go list
+  # prices, and the gateway already reports cost 0 for the subscription.
   extraEntries:
     - provider: openrouter
-      match: deepseek/deepseek-v4-flash-0731
+      match: opencode-go/deepseek-v4.1-flash
       inputPerMTokMicro: 65000
       outputPerMTokMicro: 180000
