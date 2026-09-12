@@ -104,6 +104,10 @@ proxy_config:
     # Mounts /metrics. Without a callback the proxy never mounts it, so a scrape
     # falls through to the auth middleware and 401s. The mounted app is public.
     success_callback: ["prometheus"]
+    # New SSO users default to proxy_admin; without this LiteLLM falls back to
+    # internal_user_viewer.
+    default_internal_user_params:
+      user_role: proxy_admin
 
 resources:
   requests:
