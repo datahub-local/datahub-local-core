@@ -92,22 +92,54 @@ proxy_config:
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
 
-    # --- OpenRouter ---
-    # LiteLLM's openrouter/ image handler always posts to /chat/completions, so
-    # only models OpenRouter still serves there work. Newer image models live
-    # exclusively on OpenRouter's dedicated Image API (POST /api/v1/images) and
-    # return an opaque 500 through this route; reach them via the
-    # /openrouter/images pass-through in general_settings instead.
+    # --- OpenRouter (chat) ---
+    # Same model as the opencode-go entry, second source. Reasoning model: a
+    # small max_tokens is spent on reasoning and comes back with empty content.
+    - model_name: openrouter/deepseek/deepseek-v4.1-flash
+      litellm_params:
+        model: openrouter/deepseek/deepseek-v4.1-flash
+        api_key: os.environ/OPENROUTER_API_KEY
+
+    # --- OpenRouter (image generation) ---
+    # All but gemini-3.1-flash-image are absent from /chat/completions, which is
+    # the only route LiteLLM's openrouter/ image handler posts to. OpenRouter's
+    # unified Image API also answers on /images/generations with an OpenAI-shaped
+    # body, so reach all four through the openai/ handler and an explicit
+    # api_base. Call them on /v1/images/generations, not /v1/chat/completions.
+    - model_name: openrouter/openai/gpt-image-2.5-sunburst
+      litellm_params:
+        model: openai/openai/gpt-image-2.5-sunburst
+        api_base: https://openrouter.ai/api/v1
+        api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        mode: image_generation
     - model_name: openrouter/google/gemini-3.1-flash-image
       litellm_params:
-        model: openrouter/google/gemini-3.1-flash-image
+        model: openai/google/gemini-3.1-flash-image
+        api_base: https://openrouter.ai/api/v1
         api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        mode: image_generation
+    - model_name: openrouter/qwen/qwen-image-3-pro
+      litellm_params:
+        model: openai/qwen/qwen-image-3-pro
+        api_base: https://openrouter.ai/api/v1
+        api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        mode: image_generation
+    - model_name: openrouter/bytedance-seed/seedream-5-0-pro
+      litellm_params:
+        model: openai/bytedance-seed/seedream-5-0-pro
+        api_base: https://openrouter.ai/api/v1
+        api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        mode: image_generation
 
   general_settings:
     master_key: os.environ/PROXY_MASTER_KEY
-    # OpenRouter's dedicated Image API is not wired into the openrouter/ image
-    # handler. Expose it verbatim; models absent from /chat/completions
-    # (Seedream 5.0, GPT Image 2.5, Qwen Image 3, ...) are only callable here.
+    # drop_params strips OpenRouter's non-OpenAI image params (resolution,
+    # aspect_ratio, output_format, provider.options). Expose the Image API
+    # verbatim for callers that need them.
     pass_through_endpoints:
       - path: "/openrouter/images"
         target: "https://openrouter.ai/api/v1/images"
