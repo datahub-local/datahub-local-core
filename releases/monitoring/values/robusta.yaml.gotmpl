@@ -21,6 +21,17 @@ sinksConfig:
         include:
           - severity: HIGH
           - identifier: N8n.*
+  # Second sink, because Robusta routes by sink rather than by channel and the
+  # one above carries only HIGH-severity and N8n alerts. The failed-run alert is
+  # deliberately warning, so it matches this sink alone and posts once; a critical
+  # one would also match `severity: HIGH` above and land in two channels.
+  - slack_sink:
+      name: slack_runs_sink
+      slack_channel: "#monitoring-ai-runs"
+      api_key: "{{`{{ env.SLACK_API_KEY }}`}}"
+      scope:
+        include:
+          - identifier: Sympozium.*
 
 customPlaybooks:
   - actions:

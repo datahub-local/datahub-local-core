@@ -218,3 +218,26 @@ prometheus_rules:
           annotations:
             summary: "n8n has no active workflows"
             description: "Every workflow trigger has been deactivated or failed to register. No schedule, webhook or form trigger will fire."
+  sympozium.rules:
+    - name: sympozium.rules
+      rules:
+        # A failed AgentRun notifies nobody on its own: the run's postRun delivery
+        # hook never fires when the run ends in error, and nothing else watches the
+        # CR. kube-state-metrics exports the run's phase as a label on
+        # sympozium_agentrun_info, so the Failed series appears the moment the
+        # phase flips; the offset-1h clause limits the alert to the first hour of
+        # that failure rather than leaving it firing until the run is pruned.
+        # Delivered to #monitoring-ai-runs by the second sink in robusta.yaml.gotmpl.
+        - alert: SympoziumAgentRunFailed
+          expr: |
+            sympozium_agentrun_info{phase="Failed"} == 1
+            unless
+            sympozium_agentrun_info{phase="Failed"} == 1 offset 1h
+          for: 0m
+          labels:
+            severity: warning
+            namespace: automation
+          annotations:
+            summary: "Sympozium run failed: {{`{{ $labels.agent }}`}} ({{`{{ $labels.ensemble }}`}})"
+            description: "AgentRun {{`{{ $labels.name }}`}} in {{`{{ $labels.namespace }}`}} ended Failed (model {{`{{ $labels.model }}`}}, trigger {{`{{ $labels.trigger }}`}}). Read it with: kubectl -n {{`{{ $labels.namespace }}`}} get agentrun {{`{{ $labels.name }}`}} -o jsonpath='{.status.error}'"
+
