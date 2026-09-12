@@ -152,6 +152,12 @@ proxy_config:
     # Mounts /metrics. Without a callback the proxy never mounts it, so a scrape
     # falls through to the auth middleware and 401s. The mounted app is public.
     success_callback: ["prometheus"]
+    # The fleet's primary model is deepseek-v4.1-flash; when it errors at the
+    # provider (rate limit, outage, bad gateway) the router retries once against
+    # glm-5.3-flash instead of failing the run. The fallback is a paid model on
+    # the same OpenCode Go subscription, so it costs nothing extra to have ready.
+    fallbacks:
+      - opencode-go/deepseek-v4.1-flash: ["opencode-go/glm-5.3-flash"]
     # New SSO users default to proxy_admin; without this LiteLLM falls back to
     # internal_user_viewer.
     default_internal_user_params:
