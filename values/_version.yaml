@@ -1,13 +1,13 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 4.1.0
-  ghcr.io/browserless/chromium: v2.56.3
+  g33kphr33k/musicgrabber: 4.1.2
+  ghcr.io/browserless/chromium: v2.56.7
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
   ghcr.io/containers/kubernetes-mcp-server: v0.0.66
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
-  ghcr.io/gethomepage/homepage: v2.2.0
+  ghcr.io/gethomepage/homepage: v2.3.0
   ghcr.io/headlamp-k8s/headlamp: v0.45.0
   ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.7.11
@@ -23,7 +23,7 @@ container_image_version:
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.38.3
+  n8nio/n8n: 2.39.4
   python: "3.14"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
   rclone/rclone: 1.75.1
@@ -49,7 +49,7 @@ helm_chart_version:
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
-    version: 0.7.1
+    version: 0.8.0
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -65,7 +65,7 @@ helm_chart_version:
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
-    version: 1.89.2
+    version: 1.100.1
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -81,7 +81,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.79.0
+    version: 1.80.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -97,7 +97,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.48.0
+    version: 0.49.0
   # servarr:
   #   ref: datahub-local/servarr
   #   repository: https://datahub-local.github.io/servarr
@@ -105,7 +105,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 14.9.0
+    version: 14.10.0
   spark-operator:
     ref: spark-operator/spark-operator
     repository: https://kubeflow.github.io/spark-operator
@@ -117,11 +117,11 @@ helm_chart_version:
   superset:
     ref: superset/superset
     repository: https://apache.github.io/superset
-    version: 0.22.4
+    version: 0.22.8
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.10.56
+    version: 0.10.61
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
