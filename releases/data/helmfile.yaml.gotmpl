@@ -97,6 +97,7 @@ releases:
       - "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
     values:
       - values/litellm.yaml.gotmpl
+    strategicMergePatches: {{ toYaml .Values.kustomize.litellm | nindent 6 }}
   - name: "{{ .Values.release_name }}-data-redpanda"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "redpanda").ref }}'

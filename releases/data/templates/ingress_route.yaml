@@ -109,7 +109,7 @@ metadata:
     gethomepage.dev/name: "LiteLLM"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=litellm"
     gethomepage.dev/group: "Data"
-    gethomepage.dev/icon: "si-litellm"
+    gethomepage.dev/icon: "sh-litellm"
     gethomepage.dev/href: "https://data-litellm.{{ .Values.gateway_hostname }}/ui"
   name: '{{ include "name" . }}-litellm'
 spec:

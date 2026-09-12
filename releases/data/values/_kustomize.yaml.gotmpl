@@ -136,3 +136,19 @@ kustomize:
         - op: replace
           path: /spec/ports/0/targetPort
           value: ollama-proxy
+
+  # The chart's ServiceMonitor scrapes /metrics/ with no credentials, which the
+  # proxy rejects with a 401. LiteLLM accepts the master key as a bearer token.
+  litellm:
+    - apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: "{{ $release_name }}-data-litellm"
+      spec:
+        endpoints:
+          - port: http
+            path: /metrics/
+            interval: 30s
+            bearerTokenSecret:
+              name: litellm-provider-credentials
+              key: LITELLM_MASTER_KEY

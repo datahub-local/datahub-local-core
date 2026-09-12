@@ -30,6 +30,9 @@ envVars:
   GENERIC_USERINFO_ENDPOINT: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/userinfo"
   GENERIC_SCOPE: "openid profile email groups"
   GENERIC_USER_ID_ATTRIBUTE: "sub"
+  # The UI still ships a username/password form; this makes /ui jump straight
+  # into the Dex flow so that form is never reachable.
+  AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
 
 proxy_config:
   model_list:
@@ -98,13 +101,21 @@ proxy_config:
   litellm_settings:
     # Providers reject kwargs they do not know; let LiteLLM drop them instead.
     drop_params: true
+    # Mounts /metrics. Without a callback the proxy never mounts it, so a scrape
+    # falls through to the auth middleware and 401s. The mounted app is public.
+    success_callback: ["prometheus"]
 
 resources:
   requests:
     cpu: 200m
-    memory: 512Mi
-  limits:
     memory: 1Gi
+  limits:
+    # The litellm-database image bundles prisma and spikes well past 1Gi while
+    # loading the router; the chart itself recommends 4Gi.
+    memory: 4Gi
 
+# /metrics/ requires a bearer token; the chart's ServiceMonitor scrapes it
+# unauthenticated, so it is patched with bearerTokenSecret in
+# values/_kustomize.yaml.gotmpl.
 serviceMonitor:
   enabled: true

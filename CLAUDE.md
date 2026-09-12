@@ -33,3 +33,21 @@ another repo. Keep it to a line or two when you do.
 
 Do not restate the diff, enumerate every touched file, or explain the reasoning
 behind each decision. That is what the review conversation is for.
+
+## Patching upstream charts
+
+When a chart-rendered resource needs a change its values cannot express, patch it
+with helmfile instead of adding a standalone template:
+
+- Put the patch under `.Values.kustomize.<release>` in
+  `releases/<namespace>/values/_kustomize.yaml.gotmpl`, next to that release's
+  other overrides.
+- Wire it into the release in `releases/<namespace>/helmfile.yaml.gotmpl` with
+  `strategicMergePatches` (whole fields) or `jsonPatches` (a value a merge cannot
+  replace, such as a matched service port), each through `toYaml`.
+- Leave `metadata.namespace` off the patch target. Chart output carries no
+  namespace, and a namespaced target fails to match with `no resource matches
+  strategic merge patch`.
+
+Only add a file under `releases/<namespace>/templates/` for a resource the chart
+does not render at all.
