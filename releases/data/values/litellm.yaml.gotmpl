@@ -46,36 +46,51 @@ proxy_config:
     # OpenAI-compatible but not a LiteLLM native provider, so each model goes
     # through the openai/ prefix with an explicit api_base. Ids are the ones in
     # https://opencode.ai/zen/go/v1/models.
+    # Go rejects requests without an x-opencode-session header (400
+    # MissingSessionID); clients pointed at the proxy do not send one and LiteLLM
+    # strips client headers, so inject a fixed id here.
     - model_name: opencode-go/glm-5.3-flash
       litellm_params:
         model: openai/glm-5.3-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
     - model_name: opencode-go/glm-5.3
       litellm_params:
         model: openai/glm-5.3
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
     - model_name: opencode-go/kimi-k3
       litellm_params:
         model: openai/kimi-k3
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
     - model_name: opencode-go/deepseek-v4.1-flash
       litellm_params:
         model: openai/deepseek-v4.1-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
     - model_name: opencode-go/qwen3.8-flash
       litellm_params:
         model: openai/qwen3.8-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
     - model_name: opencode-go/qwen3.8-max
       litellm_params:
         model: openai/qwen3.8-max
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
 
     # --- OpenRouter ---
     # Image-generation models; call them through /v1/images/generations.
