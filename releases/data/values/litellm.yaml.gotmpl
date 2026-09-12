@@ -37,7 +37,7 @@ envVars:
 proxy_config:
   model_list:
     # --- Ollama (local, via the ollama-proxy sidecar the Service targets) ---
-    - model_name: qwen3.5:4b
+    - model_name: ollama/qwen3.5:4b
       litellm_params:
         model: ollama/qwen3.5:4b
         api_base: http://{{ .Values.release_name }}-data-ollama:11434
@@ -46,32 +46,32 @@ proxy_config:
     # OpenAI-compatible but not a LiteLLM native provider, so each model goes
     # through the openai/ prefix with an explicit api_base. Ids are the ones in
     # https://opencode.ai/zen/go/v1/models.
-    - model_name: glm-5.3-flash
+    - model_name: opencode-go/glm-5.3-flash
       litellm_params:
         model: openai/glm-5.3-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
-    - model_name: glm-5.3
+    - model_name: opencode-go/glm-5.3
       litellm_params:
         model: openai/glm-5.3
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
-    - model_name: kimi-k3
+    - model_name: opencode-go/kimi-k3
       litellm_params:
         model: openai/kimi-k3
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
-    - model_name: deepseek-v4.1-flash
+    - model_name: opencode-go/deepseek-v4.1-flash
       litellm_params:
         model: openai/deepseek-v4.1-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
-    - model_name: qwen3.8-flash
+    - model_name: opencode-go/qwen3.8-flash
       litellm_params:
         model: openai/qwen3.8-flash
         api_base: https://opencode.ai/zen/go/v1
         api_key: os.environ/OPENCODE_GO_API_KEY
-    - model_name: qwen3.8-max
+    - model_name: opencode-go/qwen3.8-max
       litellm_params:
         model: openai/qwen3.8-max
         api_base: https://opencode.ai/zen/go/v1
@@ -79,19 +79,19 @@ proxy_config:
 
     # --- OpenRouter ---
     # Image-generation models; call them through /v1/images/generations.
-    - model_name: openai/gpt-image-2.5-sunburst
+    - model_name: openrouter/openai/gpt-image-2.5-sunburst
       litellm_params:
         model: openrouter/openai/gpt-image-2.5-sunburst
         api_key: os.environ/OPENROUTER_API_KEY
-    - model_name: google/gemini-3.1-flash-image
+    - model_name: openrouter/google/gemini-3.1-flash-image
       litellm_params:
         model: openrouter/google/gemini-3.1-flash-image
         api_key: os.environ/OPENROUTER_API_KEY
-    - model_name: qwen/qwen-image-3-pro
+    - model_name: openrouter/qwen/qwen-image-3-pro
       litellm_params:
         model: openrouter/qwen/qwen-image-3-pro
         api_key: os.environ/OPENROUTER_API_KEY
-    - model_name: bytedance-seed/seedream-5-0-pro
+    - model_name: openrouter/bytedance-seed/seedream-5-0-pro
       litellm_params:
         model: openrouter/bytedance-seed/seedream-5-0-pro
         api_key: os.environ/OPENROUTER_API_KEY
