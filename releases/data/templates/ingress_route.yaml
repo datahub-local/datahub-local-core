@@ -100,3 +100,26 @@ spec:
         - name: oauth2-proxy
           namespace: security
           port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "LiteLLM"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=litellm"
+    gethomepage.dev/group: "Data"
+    gethomepage.dev/icon: "si-litellm"
+    gethomepage.dev/href: "https://data-litellm.{{ .Values.gateway_hostname }}/ui"
+  name: '{{ include "name" . }}-litellm'
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # No oauth2-proxy here: clients authenticate with a LiteLLM key, and the
+    # SSO middleware would intercept their Authorization header.
+    - match: Host(`data-litellm.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-litellm'
+          port: http

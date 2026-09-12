@@ -1,0 +1,110 @@
+# https://github.com/BerriAI/litellm/blob/main/helm/litellm-helm/values.yaml
+
+db:
+  useExisting: true
+  deployStandalone: false
+  endpoint: "{{ .Values.release_name }}-data-postgresql"
+  database: "{{ .StateValues.postgres_extra_databases.litellm }}"
+  secret:
+    name: postgresql-admin-credentials
+    usernameKey: user
+    passwordKey: password
+
+# The proxy's provider keys, master key and salt come from an ExternalSecret in
+# datahub-local-secrets. Clients authenticate with the same master key, delivered
+# to them separately as litellm-auth-credentials.
+masterkeySecretName: litellm-provider-credentials
+masterkeySecretKey: LITELLM_MASTER_KEY
+
+environmentSecrets:
+  - litellm-provider-credentials
+
+# Admin UI SSO against Dex. The "litellm" client must be registered in Dex with
+# this callback: https://data-litellm.<gateway_hostname>/sso/callback
+envVars:
+  PROXY_BASE_URL: "https://data-litellm.{{ .StateValues.gateway_hostname }}"
+  GENERIC_CLIENT_ID: "litellm"
+  GENERIC_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
+  GENERIC_AUTHORIZATION_ENDPOINT: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/auth"
+  GENERIC_TOKEN_ENDPOINT: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/token"
+  GENERIC_USERINFO_ENDPOINT: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/userinfo"
+  GENERIC_SCOPE: "openid profile email groups"
+  GENERIC_USER_ID_ATTRIBUTE: "sub"
+
+proxy_config:
+  model_list:
+    # --- Ollama (local, via the ollama-proxy sidecar the Service targets) ---
+    - model_name: qwen3.5:4b
+      litellm_params:
+        model: ollama/qwen3.5:4b
+        api_base: http://{{ .Values.release_name }}-data-ollama:11434
+
+    # --- OpenCode Go ---
+    # OpenAI-compatible but not a LiteLLM native provider, so each model goes
+    # through the openai/ prefix with an explicit api_base. Ids are the ones in
+    # https://opencode.ai/zen/go/v1/models.
+    - model_name: glm-5.3-flash
+      litellm_params:
+        model: openai/glm-5.3-flash
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+    - model_name: glm-5.3
+      litellm_params:
+        model: openai/glm-5.3
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+    - model_name: kimi-k3
+      litellm_params:
+        model: openai/kimi-k3
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+    - model_name: deepseek-v4.1-flash
+      litellm_params:
+        model: openai/deepseek-v4.1-flash
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+    - model_name: qwen3.8-flash
+      litellm_params:
+        model: openai/qwen3.8-flash
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+    - model_name: qwen3.8-max
+      litellm_params:
+        model: openai/qwen3.8-max
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+
+    # --- OpenRouter ---
+    # Image-generation models; call them through /v1/images/generations.
+    - model_name: openai/gpt-image-2.5-sunburst
+      litellm_params:
+        model: openrouter/openai/gpt-image-2.5-sunburst
+        api_key: os.environ/OPENROUTER_API_KEY
+    - model_name: google/gemini-3.1-flash-image
+      litellm_params:
+        model: openrouter/google/gemini-3.1-flash-image
+        api_key: os.environ/OPENROUTER_API_KEY
+    - model_name: qwen/qwen-image-3-pro
+      litellm_params:
+        model: openrouter/qwen/qwen-image-3-pro
+        api_key: os.environ/OPENROUTER_API_KEY
+    - model_name: bytedance-seed/seedream-5-0-pro
+      litellm_params:
+        model: openrouter/bytedance-seed/seedream-5-0-pro
+        api_key: os.environ/OPENROUTER_API_KEY
+
+  general_settings:
+    master_key: os.environ/PROXY_MASTER_KEY
+  litellm_settings:
+    # Providers reject kwargs they do not know; let LiteLLM drop them instead.
+    drop_params: true
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+serviceMonitor:
+  enabled: true

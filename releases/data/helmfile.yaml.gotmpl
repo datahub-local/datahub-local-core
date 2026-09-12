@@ -89,6 +89,14 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "open-webui").version }}'
     values:
       - values/openwebui.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-litellm"
+    namespace: data
+    chart: "oci://ghcr.io/berriai/litellm-helm"
+    version: '{{ (.StateValues.helm_chart_version | get "litellm-helm").version }}'
+    needs:
+      - "{{ .Values.release_name }}-data-cloudnative-pg-cluster-18"
+    values:
+      - values/litellm.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-redpanda"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "redpanda").ref }}'
