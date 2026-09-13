@@ -232,7 +232,7 @@ prometheus_rules:
           expr: |
             sympozium_agentrun_info{phase="Failed"} == 1
             unless
-            sympozium_agentrun_info{phase="Failed"} == 1 offset 1h
+            sympozium_agentrun_info{phase="Failed"} offset 1h == 1
           for: 0m
           labels:
             severity: warning
