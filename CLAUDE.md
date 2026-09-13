@@ -51,3 +51,35 @@ with helmfile instead of adding a standalone template:
 
 Only add a file under `releases/<namespace>/templates/` for a resource the chart
 does not render at all.
+
+## Prometheus rules are not validated by a render
+
+`prometheus_rules` in `releases/monitoring/values/default.yaml.gotmpl` is a list
+of raw PromQL strings, so `helmfile template` and `--dry-run=server` both accept an
+expression the engine cannot parse. The operator then rejects the **whole**
+PrometheusRule with `invalid rule`, logs it at `level=warn` and emits a
+`Warning/InvalidConfiguration` event — and nothing else fails. `helmfile template`
+passes, ArgoCD reports Synced and Healthy, and the rule is simply never evaluated.
+
+Check every new or edited expression with the `promtool` that ships in the running
+Prometheus before committing:
+
+```bash
+kubectl -n monitoring exec -i prometheus-datahub-local-core-kube-pr-prometheus-0 \
+  -c prometheus -- promtool check rules /dev/stdin <<'EOF'
+groups:
+  - name: <group>
+    rules:
+      - alert: <AlertName>
+        expr: |
+          <the expression>
+EOF
+```
+
+One trap this caught on 2026-09-13: an `offset` binds to the vector selector it
+follows, not to the comparison, so
+`sympozium_agentrun_info{phase="Failed"} == 1 offset 1h` does not parse. Write the
+`offset` on the selector — `sympozium_agentrun_info{phase="Failed"} offset 1h == 1`.
+Confirm a fix landed by reading
+`kubectl -n monitoring logs deploy/datahub-local-core-kube-pr-operator | grep 'invalid rule'`,
+not by the render or the ArgoCD sync state.
