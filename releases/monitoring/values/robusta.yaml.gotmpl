@@ -21,10 +21,15 @@ sinksConfig:
         include:
           - severity: HIGH
           - identifier: N8n.*
+        # Robusta has no MEDIUM: its SEVERITY_MAP sends error, medium, high and
+        # critical all to FindingSeverity.HIGH, so the run alerts match the
+        # include above as well and would post in two channels. Scoping them out
+        # here is what keeps them to one, and it holds whatever severity they
+        # carry later - the previous arrangement relied on them staying warning.
+        exclude:
+          - identifier: Sympozium.*
   # Second sink, because Robusta routes by sink rather than by channel and the
-  # one above carries only HIGH-severity and N8n alerts. The failed-run alert is
-  # deliberately warning, so it matches this sink alone and posts once; a critical
-  # one would also match `severity: HIGH` above and land in two channels.
+  # one above carries only HIGH-severity and N8n alerts.
   - slack_sink:
       name: slack_runs_sink
       slack_channel: "#monitoring-ai-runs"

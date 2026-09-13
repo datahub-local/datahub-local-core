@@ -89,3 +89,57 @@ follows, not to the comparison, so
 Confirm a fix landed by reading
 `kubectl -n monitoring logs deploy/datahub-local-core-kube-pr-operator | grep 'invalid rule'`,
 not by the render or the ArgoCD sync state.
+
+## Raising an alert's severity changes which channel it lands in
+
+Robusta has **no MEDIUM**: `SEVERITY_MAP` in its `integrations/prometheus/models.py`
+sends `error`, `medium`, `high` and `critical` all to `FindingSeverity.HIGH`, and
+the enum itself only has DEBUG, INFO, LOW and HIGH (🔵 ⚪️ 🟡 🔴). A `warning`
+alert is LOW. So `severity: error` renders as 🔴 **High**, and asking for a middle
+tier means changing Robusta, not the label.
+
+The consequence is routing, not cosmetics. The first sink in
+`releases/monitoring/values/robusta.yaml.gotmpl` includes `severity: HIGH`, so
+raising any alert to `error` or above adds it to that channel on top of wherever
+else it was going. Give the alert family an `exclude` on that sink when it belongs
+somewhere specific; `exclude` is evaluated before `include` and wins.
+
+Read the mapping off the running image rather than the docs:
+
+```bash
+kubectl -n monitoring exec deploy/datahub-local-core-robusta-runner -c runner -- \
+  grep -A 10 'SEVERITY_MAP' /app/src/robusta/integrations/prometheus/models.py
+```
+
+## An event alert must not notify on resolve
+
+An alert whose expression carves out a window — `X unless X offset 1h`, the shape
+the Sympozium run alerts use — stops firing when the window closes, not when
+anything recovered. Alertmanager then sends a resolved webhook and Robusta posts
+"resolved" an hour later, which reads as the failed run having fixed itself.
+
+The fix is a second receiver on the same webhook URL with `send_resolved: false`
+and a route matching that alert family, placed **before** the catch-all route and
+without `continue`, since that route carries `continue: true` and would otherwise
+send a second copy through the receiver that does notify. Verify the routing, and
+never by reading it:
+
+```bash
+kubectl -n monitoring exec -i alertmanager-datahub-local-core-kube-pr-alertmanager-0 \
+  -c alertmanager -- amtool config routes test --config.file=/dev/stdin \
+  alertname=SympoziumAgentRunFailed severity=error < am.yaml
+```
+
+## kube-state-metrics drops an Info metric whose labels all fail to resolve
+
+`addPathLabels` skips a label whose path resolves to nil, and `compiledInfo.values`
+emits nothing when that leaves no labels at all (v2.20.0). That is a feature worth
+using: a metric declaring only `error: [status, error]` exists for failed
+AgentRuns and for nothing else, which is why the error text does not have to ride
+on `sympozium_agentrun_info` and sit on every run's series. Resource-level
+`labelsFromPath` is added afterwards and does not keep the metric alive.
+
+A Gauge behaves differently — a missing path logs
+`got nil while resolving path` at `registry_factory.go:719` and emits nothing.
+Those lines are normal for the token-usage gauges of a run that never reached the
+model; they are not an error to chase.

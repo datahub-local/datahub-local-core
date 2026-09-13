@@ -221,23 +221,64 @@ prometheus_rules:
   sympozium.rules:
     - name: sympozium.rules
       rules:
-        # A failed AgentRun notifies nobody on its own: the run's postRun delivery
-        # hook never fires when the run ends in error, and nothing else watches the
-        # CR. kube-state-metrics exports the run's phase as a label on
+        # Why the cause is classified once, here, rather than in each alert: the
+        # regex would otherwise be pasted into every rule that needs it and drift
+        # from the others. label_replace leaves a series it does not match
+        # untouched, so an unclassified failure is cause="".
+        #
+        # (?is) is load-bearing on both counts. A Prometheus regex is anchored, so
+        # the leading and trailing .* are required; and `.` does not cross a
+        # newline in RE2, which a multi-line provider error contains.
+        - record: sympozium_agentrun:error_cause
+          expr: |
+            label_replace(
+              sympozium_agentrun_error_info,
+              "cause", "rate_limited", "error",
+              "(?is).*(429|rate.?limit|usage limit|too many requests|quota).*"
+            )
+
+        # A failed AgentRun notifies nobody on its own: nothing watches the CR,
+        # and the run's own delivery hook posts to the persona's channel, not to
+        # an operator's. kube-state-metrics exports the run's phase as a label on
         # sympozium_agentrun_info, so the Failed series appears the moment the
         # phase flips; the offset-1h clause limits the alert to the first hour of
         # that failure rather than leaving it firing until the run is pruned.
         # Delivered to #monitoring-ai-runs by the second sink in robusta.yaml.gotmpl.
+        #
+        # The rate-limited runs are carved out below, so this one is every other
+        # failure and its cause still has to be read off the object.
         - alert: SympoziumAgentRunFailed
           expr: |
-            sympozium_agentrun_info{phase="Failed"} == 1
-            unless
-            sympozium_agentrun_info{phase="Failed"} offset 1h == 1
+            (
+              sympozium_agentrun_info{phase="Failed"} == 1
+              unless
+              sympozium_agentrun_info{phase="Failed"} offset 1h == 1
+            )
+            unless on (name, namespace)
+            sympozium_agentrun:error_cause{cause="rate_limited"}
           for: 0m
           labels:
-            severity: warning
+            severity: error
             namespace: automation
           annotations:
             summary: "Sympozium run failed: {{`{{ $labels.agent }}`}} ({{`{{ $labels.ensemble }}`}})"
             description: "AgentRun {{`{{ $labels.name }}`}} in {{`{{ $labels.namespace }}`}} ended Failed (model {{`{{ $labels.model }}`}}, trigger {{`{{ $labels.trigger }}`}}). Read it with: kubectl -n {{`{{ $labels.namespace }}`}} get agentrun {{`{{ $labels.name }}`}} -o jsonpath='{.status.error}'"
 
+        # Split out because the action is different and the alert can say so: the
+        # run never reached the model, so there is nothing wrong with the agent,
+        # the prompt or the cluster, and re-running before the window resets just
+        # spends another attempt. Both evening reporters died this way at 19:00 on
+        # 2026-09-13, and the gateway's fallback shares the account whose limit was
+        # hit, so it cannot rescue the call.
+        - alert: SympoziumAgentRunRateLimited
+          expr: |
+            sympozium_agentrun:error_cause{cause="rate_limited"} == 1
+            unless
+            sympozium_agentrun:error_cause{cause="rate_limited"} offset 1h == 1
+          for: 0m
+          labels:
+            severity: error
+            namespace: automation
+          annotations:
+            summary: "Sympozium run rate-limited: {{`{{ $labels.agent }}`}} ({{`{{ $labels.ensemble }}`}})"
+            description: "AgentRun {{`{{ $labels.name }}`}} in {{`{{ $labels.namespace }}`}} never reached the model: the LLM gateway refused the call. {{`{{ $labels.error }}`}}"

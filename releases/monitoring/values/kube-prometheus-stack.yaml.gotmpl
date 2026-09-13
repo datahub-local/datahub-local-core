@@ -44,9 +44,28 @@ alertmanager:
         webhook_configs:
           - url: "http://{{ $.Values.release_name }}-robusta-runner/api/alerts"
             send_resolved: true
+      # Same runner, resolved notifications off. A Sympozium run alert reports an
+      # event, not a state: the run stays failed forever and the alert stops
+      # firing only because its own offset-1h clause ages it out. Sending the
+      # resolved webhook posts "resolved" into #monitoring-ai-runs an hour later,
+      # which reads as the run having recovered.
+      - name: "robusta-events"
+        webhook_configs:
+          - url: "http://{{ $.Values.release_name }}-robusta-runner/api/alerts"
+            send_resolved: false
 
     route:
       routes:
+        # First, and without continue, so these reach the events receiver only.
+        # The route below carries continue: true and would otherwise send a
+        # second copy through the receiver that does notify on resolve.
+        - receiver: "robusta-events"
+          group_by: ["..."]
+          group_wait: 1s
+          group_interval: 1s
+          matchers:
+            - alertname =~ "Sympozium.*"
+          repeat_interval: 4h
         - receiver: "robusta"
           group_by: ["..."]
           group_wait: 1s
@@ -181,6 +200,21 @@ kube-state-metrics:
                       mode: [spec, mode]
                       model: [spec, model, model]
                       provider: [spec, model, provider]
+              # status.error is free text and set only on failure, so it rides
+              # on its own metric: this one declares no path that a healthy run
+              # resolves, and kube-state-metrics emits no Info series at all when
+              # none of a metric's own labels resolve. A successful run therefore
+              # produces nothing here, and the label never lands on the info
+              # series above, where a 500-character value would sit on all 115 of
+              # them. The name, agent, ensemble and trigger labels come from the
+              # resource-level labelsFromPath and arrive anyway.
+              - name: error_info
+                help: "The error a failed AgentRun recorded, absent while it has none."
+                each:
+                  type: Info
+                  info:
+                    labelsFromPath:
+                      error: [status, error]
               - name: created_timestamp_seconds
                 help: "Time the AgentRun was created."
                 each:
