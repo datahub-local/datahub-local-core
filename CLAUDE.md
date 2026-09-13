@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## Git commits
+
+Governed by the global rule in `~/.claude/CLAUDE.md`: **never commit unless asked
+directly**, and suggest one short subject line instead. The local convention it
+points at is below.
+
 ## Git commit messages
 
 Angular / Conventional Commits, and **short** — a subject line and nothing else.
