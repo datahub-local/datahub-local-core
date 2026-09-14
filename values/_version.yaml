@@ -1,5 +1,5 @@
 container_image_version:
-  g33kphr33k/musicgrabber: 4.1.2
+  g33kphr33k/musicgrabber: 4.2.0
   ghcr.io/browserless/chromium: v2.56.7
   ghcr.io/c4illin/convertx: v0.18.0
   ghcr.io/civilblur/mazanoke: v1.1.6
@@ -61,7 +61,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 91.2.0
+    version: 91.2.1
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
@@ -121,7 +121,7 @@ helm_chart_version:
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.10.61
+    version: 0.10.62
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
