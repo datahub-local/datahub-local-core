@@ -1,0 +1,39 @@
+# Enable Banking token renewal: the n8n workflow in `automation` upserts the
+# session-scoped credential it exchanges with the consent flow. Its own
+# namespace aggregates nothing, so the Role lives here in `data` (namespaced
+# objects an automation release renders would be rejected) and the RoleBinding
+# reaches across to the n8n ServiceAccount that owns those pods.
+#
+# Scoped deliberately: `resourceNames` bounds get/patch/update to the two
+# finance Secrets, nothing else. `create` cannot be resource-scoped by the API
+# server (spec 005 §4.2.1) — it heals a deleted token Secret — and that
+# namespace-wide carve-out is recorded in the spec's risk table.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: n8n-finance-secrets
+  namespace: data
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["finance-enablebanking", "finance-enablebanking-token"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: n8n-finance-secrets-rolebinding
+  namespace: data
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: n8n-finance-secrets-role
+subjects:
+- kind: ServiceAccount
+  name: datahub-local-core-automation-n8n
+  namespace: automation
