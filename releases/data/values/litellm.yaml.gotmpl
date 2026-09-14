@@ -152,12 +152,28 @@ proxy_config:
     # Mounts /metrics. Without a callback the proxy never mounts it, so a scrape
     # falls through to the auth middleware and 401s. The mounted app is public.
     success_callback: ["prometheus"]
+    # OpenCode Go hangs rather than refusing when a model is unhealthy, and this
+    # setting defaults to 600s - so a dead primary parked every caller for ten
+    # minutes before the chain below was even tried, and an n8n model node
+    # retries five times on top of that: one LinkedIn Image Creator run spent 51
+    # minutes failing that way (execution 10751, 2026-09-14). 120s is far past a
+    # healthy completion here - glm answers in ~1s, ollama in ~6s - so it only
+    # ever fires on a hang, and turns an outage into a fallback.
+    request_timeout: 120
     # The fleet's primary model is deepseek-v4.1-flash; when it errors at the
-    # provider (rate limit, outage, bad gateway) the router retries once against
-    # glm-5.3-flash instead of failing the run. The fallback is a paid model on
-    # the same OpenCode Go subscription, so it costs nothing extra to have ready.
+    # provider (rate limit, outage, bad gateway) the router retries against
+    # glm-5.3-flash instead of failing the run. That hop costs nothing extra -
+    # same OpenCode Go subscription - but it is also the same host, key and
+    # x-opencode-session, so a provider-level failure takes both out at once:
+    # on 2026-09-14 deepseek hung and glm answered InternalServerError in the
+    # same run. The last hop is therefore OpenRouter, an independent path to the
+    # same model, and the only one of the three that is paid per token.
     fallbacks:
-      - opencode-go/deepseek-v4.1-flash: ["opencode-go/glm-5.3-flash"]
+      - opencode-go/deepseek-v4.1-flash:
+          - opencode-go/glm-5.3-flash
+          - openrouter/deepseek/deepseek-v4.1-flash
+      - opencode-go/glm-5.3-flash:
+          - openrouter/deepseek/deepseek-v4.1-flash
     # New SSO users default to proxy_admin; without this LiteLLM falls back to
     # internal_user_viewer.
     default_internal_user_params:
