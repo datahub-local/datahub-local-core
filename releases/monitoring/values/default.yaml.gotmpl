@@ -241,9 +241,17 @@ prometheus_rules:
         # and the run's own delivery hook posts to the persona's channel, not to
         # an operator's. kube-state-metrics exports the run's phase as a label on
         # sympozium_agentrun_info, so the Failed series appears the moment the
-        # phase flips; the offset-1h clause limits the alert to the first hour of
-        # that failure rather than leaving it firing until the run is pruned.
+        # phase flips; the completedAt window limits the alert to the first hour
+        # of that failure rather than leaving it firing until the run is pruned.
         # Delivered to #monitoring-ai-runs by the second sink in robusta.yaml.gotmpl.
+        #
+        # The window is measured off completedAt and not `unless X offset 1h`,
+        # which asks "was this series here an hour ago" and so replays every
+        # still-Failed run whenever the answer is no for a reason that is not the
+        # run: kube-state-metrics losing the series for longer than the 5m
+        # lookback, its pod label changing on a reschedule, or the metric being
+        # introduced at all. That last one fired both 19:00 runs at 20:22 on
+        # 2026-09-13, 79 minutes after they failed, when error_info first shipped.
         #
         # The rate-limited runs are carved out below, so this one is every other
         # failure and its cause still has to be read off the object.
@@ -251,8 +259,8 @@ prometheus_rules:
           expr: |
             (
               sympozium_agentrun_info{phase="Failed"} == 1
-              unless
-              sympozium_agentrun_info{phase="Failed"} offset 1h == 1
+              and on (name, namespace)
+              (time() - sympozium_agentrun_completed_timestamp_seconds) < 3600
             )
             unless on (name, namespace)
             sympozium_agentrun:error_cause{cause="rate_limited"}
@@ -273,8 +281,8 @@ prometheus_rules:
         - alert: SympoziumAgentRunRateLimited
           expr: |
             sympozium_agentrun:error_cause{cause="rate_limited"} == 1
-            unless
-            sympozium_agentrun:error_cause{cause="rate_limited"} offset 1h == 1
+            and on (name, namespace)
+            (time() - sympozium_agentrun_completed_timestamp_seconds) < 3600
           for: 0m
           labels:
             severity: error
