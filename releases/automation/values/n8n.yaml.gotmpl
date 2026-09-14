@@ -345,6 +345,14 @@ extraManifests:
       entryPoints:
         - websecure
       routes:
+        # Public webhook/form routes must match before the whole-host rule:
+        # traefik uses first-match, and the bank's consent redirect (or any
+        # public form) must not bounce through oauth2-proxy.
+        - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`) && (PathPrefix(`/rest/`) || PathPrefix(`/webhook/`) || PathPrefix(`/form/`) || PathPrefix(`/form-test/`))
+          kind: Rule
+          services:
+            - name: "{{ $.Values.release_name }}-automation-n8n"
+              port: http
         - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`)
           kind: Rule
           services:
@@ -353,11 +361,6 @@ extraManifests:
           middlewares:
             - name: oauth2-proxy-auth
               namespace: security
-        - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`) && (PathPrefix(`/rest/`) || PathPrefix(`/webhook/`)) || PathPrefix(`/form/`)) || PathPrefix(`/form-test/`))
-          kind: Rule
-          services:
-            - name: "{{ $.Values.release_name }}-automation-n8n"
-              port: http
         - match: Host(`automation-n8n.{{ .StateValues.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
           kind: Rule
           services:
