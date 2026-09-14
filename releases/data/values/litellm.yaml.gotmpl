@@ -19,6 +19,14 @@ masterkeySecretKey: LITELLM_MASTER_KEY
 environmentSecrets:
   - litellm-provider-credentials
 
+# Password for the coordination Redis wired up in proxy_config below.
+extraEnvVars:
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: valkey-admin-credentials
+        key: password
+
 # Admin UI SSO against Dex. The "litellm" client must be registered in Dex with
 # this callback: https://data-litellm.<gateway_hostname>/sso/callback
 envVars:
@@ -137,6 +145,12 @@ proxy_config:
 
   general_settings:
     master_key: os.environ/PROXY_MASTER_KEY
+    # Shares rate limits, budgets and router state across workers; dbs 0-1 are taken.
+    coordination_redis:
+      host: "{{ .Values.release_name }}-data-valkey-headless"
+      port: 6379
+      db: 2
+      password: os.environ/REDIS_PASSWORD
     # drop_params strips OpenRouter's non-OpenAI image params (resolution,
     # aspect_ratio, output_format, provider.options). Expose the Image API
     # verbatim for callers that need them.
@@ -156,10 +170,10 @@ proxy_config:
     # setting defaults to 600s - so a dead primary parked every caller for ten
     # minutes before the chain below was even tried, and an n8n model node
     # retries five times on top of that: one LinkedIn Image Creator run spent 51
-    # minutes failing that way (execution 10751, 2026-09-14). 120s is far past a
+    # minutes failing that way (execution 10751, 2026-09-14). 30s is far past a
     # healthy completion here - glm answers in ~1s, ollama in ~6s - so it only
     # ever fires on a hang, and turns an outage into a fallback.
-    request_timeout: 120
+    request_timeout: 30
     # The fleet's primary model is deepseek-v4.1-flash; when it errors at the
     # provider (rate limit, outage, bad gateway) the router retries against
     # glm-5.3-flash instead of failing the run. That hop costs nothing extra -
