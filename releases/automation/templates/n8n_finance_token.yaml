@@ -1,0 +1,16 @@
+# Kubernetes API credential for the n8n Enable-Banking token-renewal workflow.
+# A non-expiring ServiceAccount token (the legacy token type is controller-
+# populated, so ArgoCD will show data.token as externally-managed; that is
+# expected). The workflow presents it as a Header Auth credential; the Role in
+# `data` (rbac_n8n_finance.yaml) scopes what that identity can read and write.
+#
+# Rotation note: this token does not rotate. Replace the referenced credential
+# in n8n whenever the Secret is recreated.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datahub-local-core-automation-n8n-finance-token
+  namespace: automation
+  annotations:
+    kubernetes.io/service-account.name: datahub-local-core-automation-n8n
+type: kubernetes.io/service-account-token
