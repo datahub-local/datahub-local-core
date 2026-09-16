@@ -9,8 +9,8 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: datahub-local-core-automation-n8n-finance-token
+  name: '{{ include "name" . }}-n8n-finance-token'
   namespace: automation
   annotations:
-    kubernetes.io/service-account.name: datahub-local-core-automation-n8n
+    kubernetes.io/service-account.name: '{{ include "name" . }}-n8n'
 type: kubernetes.io/service-account-token
