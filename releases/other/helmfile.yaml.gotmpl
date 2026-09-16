@@ -48,6 +48,12 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/omni_tools.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-other-actualbudget"
+    namespace: other
+    chart: '{{ (.StateValues.helm_chart_version | get "actualbudget").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "actualbudget").version }}'
+    values:
+      - values/actualbudget.yaml.gotmpl
   - name: "{{ .Values.release_name }}-other"
     namespace: other
     chart: "."

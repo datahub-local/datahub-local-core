@@ -52,3 +52,25 @@ spec:
         - name: oauth2-proxy
           namespace: security
           port: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: '{{ include "name" . }}-actualbudget'
+
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Actual Budget"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=actualbudget"
+    gethomepage.dev/group: "Other"
+    gethomepage.dev/icon: "actual-budget"
+    gethomepage.dev/href: "https://other-actualbudget.{{ .Values.gateway_hostname }}"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`other-actualbudget.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-actualbudget'
+          port: http

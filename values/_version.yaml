@@ -1,4 +1,5 @@
 container_image_version:
+  actualbudget/actual-server: 26.1.0
   g33kphr33k/musicgrabber: 4.2.0
   ghcr.io/browserless/chromium: v2.56.7
   ghcr.io/c4illin/convertx: v0.18.0
@@ -30,6 +31,10 @@ container_image_version:
   valkey/valkey: 9.1.2
   velero/velero-plugin-for-aws: v1.14.2
 helm_chart_version:
+  actualbudget:
+    ref: community-charts/actualbudget
+    repository: https://community-charts.github.io/helm-charts
+    version: 1.9.4
   airflow:
     ref: apache-airflow/airflow
     repository: https://airflow.apache.org
