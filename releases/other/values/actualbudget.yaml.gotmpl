@@ -1,46 +1,94 @@
-# https://github.com/community-charts/helm-charts/blob/main/charts/actualbudget/values.yaml
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
-replicaCount: 1
+#{{ $oidc_provider := "IAM" }}
+#{{ $oidc_client_id := "actualbudget" }}
+#{{ $oidc_client_secret := .StateValues.security_github_client_secret }}
+#{{ $oidc_discovery := printf "https://security-dex.%s/dex/.well-known/openid-configuration" .StateValues.gateway_hostname }}
 
-image:
-  repository: actualbudget/actual-server
-  pullPolicy: IfNotPresent
-  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "actualbudget/actual-server") }}{{ $value }}{{ end }}{{ end }}'
+controllers:
+  main:
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      labels:
+        backup.velero.io/custom-backup-daily-fs: "true"
+      annotations:
+        backup.velero.io/backup-volumes: data
+    containers:
+      main:
+        image:
+          repository: actualbudget/actual-server
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "actualbudget/actual-server") }}{{ $value }}{{ end }}{{ end }}'
+        env:
+          ACTUAL_PORT: "5006"
+          ACTUAL_DATA_DIR: /data
+          ACTUAL_SERVER_FILES: /data/server-files
+          ACTUAL_USER_FILES: /data/user-files
+          ACTUAL_LOGIN_METHOD: openid
+          ACTUAL_ALLOWED_LOGIN_METHODS: "openid,password"
+          ACTUAL_MULTIUSER: "true"
+          ACTUAL_OPENID_ENFORCE: "false"
+          ACTUAL_OPENID_PROVIDER_NAME: "{{ $oidc_provider }}"
+          ACTUAL_OPENID_DISCOVERY_URL: "{{ $oidc_discovery }}"
+          ACTUAL_OPENID_CLIENT_ID: "{{ $oidc_client_id }}"
+          ACTUAL_OPENID_CLIENT_SECRET: "{{ $oidc_client_secret }}"
+          ACTUAL_OPENID_SERVER_HOSTNAME: "https://other-actualbudget.{{ .StateValues.gateway_hostname }}"
+          ACTUAL_OPENID_AUTH_METHOD: openid
+          ACTUAL_TOKEN_EXPIRATION: never
+          ACTUAL_USER_CREATION_MODE: login
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 25m
+          limits:
+            memory: 512Mi
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+            spec:
+              failureThreshold: 30
+              periodSeconds: 5
 
 persistence:
-  enabled: true
-  storageClass: longhorn
-  size: 10Gi
+  data:
+    enabled: true
+    type: persistentVolumeClaim
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    globalMounts:
+      - path: /data
 
-# Login is configured entirely through env: the chart only renders its own
-# ACTUAL_OPENID_* block when its ingress is enabled (this release uses a Traefik
-# IngressRoute, so it is off), and its login.openid map exists only to satisfy the
-# chart's schema. The chart still emits its default ACTUAL_LOGIN_METHOD=password and
-# ACTUAL_ALLOWED_LOGIN_METHODS=password,header,openid before these, so the two below
-# are duplicate env keys whose last value wins.
-extraEnvVars:
-  ACTUAL_LOGIN_METHOD: "openid"
-  ACTUAL_ALLOWED_LOGIN_METHODS: "openid"
-  ACTUAL_MULTIUSER: "true"
-  ACTUAL_OPENID_ENFORCE: "true"
-  ACTUAL_OPENID_PROVIDER_NAME: "IAM"
-  ACTUAL_OPENID_DISCOVERY_URL: "https://security-dex.{{ .StateValues.gateway_hostname }}/dex/.well-known/openid-configuration"
-  ACTUAL_OPENID_CLIENT_ID: "actualbudget"
-  ACTUAL_OPENID_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
-  ACTUAL_OPENID_SERVER_HOSTNAME: "https://other-actualbudget.{{ .StateValues.gateway_hostname }}"
-  ACTUAL_OPENID_AUTH_METHOD: "openid"
-  ACTUAL_TOKEN_EXPIRATION: "never"
-  ACTUAL_USER_CREATION_MODE: "login"
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 5006
 
-resources:
-  requests:
-    cpu: 25m
-    memory: 128Mi
-  limits:
-    memory: 512Mi
-
-podLabels:
-  backup.velero.io/custom-backup-daily-fs: "true"
-
-podAnnotations:
-  backup.velero.io/backup-volumes: data
+rawResources:
+  main:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "Actual Budget"
+          gethomepage.dev/group: "Other"
+          gethomepage.dev/icon: "actual-budget"
+          gethomepage.dev/href: "https://other-actualbudget.{{ .Values.gateway_hostname }}"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`other-actualbudget.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-other-actualbudget"
+                port: http
