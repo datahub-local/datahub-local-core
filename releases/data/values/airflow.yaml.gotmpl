@@ -146,8 +146,10 @@ dags:
     subPath: "workflows/airflow/dags"
 
     sshKeySecret: github-auth
+    
+    # 30 min failing
     period: 60s
-    maxFailures: 100
+    maxFailures: 30
 
 dagProcessor:
   resources:
