@@ -21,7 +21,7 @@ prometheus:
     replicas: 1
     retention: 30d
     # Whichever limit hits first; leaves headroom for the WAL and compaction.
-    retentionSize: 24GB
+    retentionSize: 33GB
 
     # StatefulSet volumeClaimTemplate: resizing later needs a manual PVC patch.
     storageSpec:
@@ -31,7 +31,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 30Gi
+              storage: 40Gi
 
 alertmanager:
   alertmanagerSpec:
