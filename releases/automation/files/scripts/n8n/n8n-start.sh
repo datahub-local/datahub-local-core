@@ -1,15 +1,15 @@
     #!/bin/sh
     
-    N8N_NODE_MODULES_PATH=/usr/local/lib/node_modules/n8n
     NODE_USER=node
     
     if [ -n "$CUSTOM_EXTRA_MODULES" ]; then
-      cd $N8N_NODE_MODULES_PATH
-    
       CUSTOM_EXTRA_MODULES=$(echo "$CUSTOM_EXTRA_MODULES" | sed "s/,/ /g")
       echo "Installing extra modules: $CUSTOM_EXTRA_MODULES"
     
-      npm add "$CUSTOM_EXTRA_MODULES" || echo "Error Installing extra modules: $CUSTOM_EXTRA_MODULES"
+      # npm add inside the n8n package tree fails on this image (npm's arborist
+      # reads a null package name), so install globally: the module lands in
+      # /usr/local/lib/node_modules and its binaries are runnable by path.
+      npm install -g "$CUSTOM_EXTRA_MODULES" || echo "Error Installing extra modules: $CUSTOM_EXTRA_MODULES"
     fi
     
     if [ -n "$CUSTOM_COMMUNITY_NODES" ]; then

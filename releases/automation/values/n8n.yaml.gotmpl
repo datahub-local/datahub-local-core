@@ -17,6 +17,12 @@ _shared_config:
     DB_POSTGRESDB_STATEMENT_TIMEOUT:
       value: "0"
 
+    # n8n v2 disables the ExecuteCommand node by default (executeCommand and
+    # localFileTrigger). The Visual Studio workflow assembles animated WebP by
+    # running img2webp through it, so exclude nothing to re-enable the node.
+    NODES_EXCLUDE:
+      value: "[]"
+
     N8N_LICENSE_ACTIVATION_KEY:
       valueFrom:
         secretKeyRef:
@@ -114,7 +120,11 @@ main:
 
     custom:
       credentials_file: /n8n-secrets/credentials.json
-      # extra_modules: "@extractus/article-extractor"
+      # libwebp CLIs (cwebp, img2webp, gif2webp, libwebp 1.6.0) for the Visual
+      # Studio workflow's animated WebP assembly. Installed globally at boot by
+      # n8n-start.sh; the binaries are under
+      # /usr/local/lib/node_modules/webp-converter/bin/libwebp_linux/bin.
+      extra_modules: "webp-converter"
       community_nodes: "n8n-nodes-puppeteer,n8n-nodes-webpage-content-extractor"
   secret:
     n8n:
