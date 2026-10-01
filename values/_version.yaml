@@ -1,7 +1,7 @@
 container_image_version:
   actualbudget/actual-server: 26.9.0
-  g33kphr33k/musicgrabber: 4.2.3
-  ghcr.io/browserless/chromium: v2.56.7
+  g33kphr33k/musicgrabber: 4.2.4
+  ghcr.io/browserless/chromium: v2.57.0
   ghcr.io/c4illin/convertx: v0.19.0
   ghcr.io/civilblur/mazanoke: v1.1.7
   ghcr.io/containers/kubernetes-mcp-server: v0.0.67
@@ -11,12 +11,12 @@ container_image_version:
   ghcr.io/gethomepage/homepage: v2.4.0
   ghcr.io/headlamp-k8s/headlamp: v0.45.0
   ghcr.io/miniflux/miniflux: 2.3.3
-  ghcr.io/sharevb/it-tools: 2026.7.11
+  ghcr.io/sharevb/it-tools: 2026.9.27
   ghcr.io/tailscale/tailscale: v1.102.5
   ghcr.io/tuannvm/mcp-trino: 4.3.1
   iib0011/omni-tools: 0.6.0
   alpine/k8s: 1.37.1
-  apache/polaris-admin-tool: 1.7.0
+  apache/polaris-admin-tool: 1.8.0
   crystaldba/postgres-mcp: 0.3.0
   curlimages/curl: 8.22.0
   kopia/kopia: 20251215.0.232403
@@ -24,12 +24,12 @@ container_image_version:
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.41.3
+  n8nio/n8n: 2.42.2
   python: "3.14"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
   rclone/rclone: 1.75.1
   valkey/valkey: 9.1.2
-  velero/velero-plugin-for-aws: v1.14.3
+  velero/velero-plugin-for-aws: v1.14.4
 helm_chart_version:
   airflow:
     ref: apache-airflow/airflow
@@ -46,7 +46,7 @@ helm_chart_version:
   cluster:
     ref: cnpg/cluster
     repository: https://cloudnative-pg.github.io/charts
-    version: 0.8.1
+    version: 0.9.0
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
@@ -62,11 +62,11 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 91.7.0
+    version: 91.8.2
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
-    version: 1.102.1
+    version: 1.103.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
@@ -78,7 +78,7 @@ helm_chart_version:
   polaris:
     ref: polaris/polaris
     repository: https://downloads.apache.org/polaris/helm-chart
-    version: 1.7.0
+    version: 1.8.0
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
