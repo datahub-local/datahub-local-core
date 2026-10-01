@@ -212,7 +212,9 @@ main:
       memory: 256Mi
       cpu: 250m
     limits:
-      memory: 1024Mi
+      # Tightest of the three n8n containers; the worker (where executions run)
+      # is 8Gi. 1Gi was OOM-killed once by a command run in this container by hand.
+      memory: 2048Mi
       cpu: 1
 
 worker:
