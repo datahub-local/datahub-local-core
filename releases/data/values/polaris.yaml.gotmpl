@@ -24,7 +24,7 @@ features:
 advancedConfig:
   quarkus.http.access-log.enabled: true
   quarkus.datasource.db-kind: postgresql
-  quarkus.datasource.jdbc.url: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
+  quarkus.datasource.jdbc.url: "jdbc:postgresql://{{ $.Values.release_name }}-data-postgresql-rw:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
   # Homelab: allow all requests without authentication
   quarkus.http.auth.permission.permit-all.paths: "/*"
   quarkus.http.auth.permission.permit-all.policy: permit

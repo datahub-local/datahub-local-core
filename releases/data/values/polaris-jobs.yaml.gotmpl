@@ -28,7 +28,7 @@ controllers:
         env:
           POLARIS_CLIENT_SECRET: "{{ .StateValues.security_github_client_secret }}"
           POLARIS_PERSISTENCE_TYPE: relational-jdbc
-          QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
+          QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://{{ .Values.release_name }}-data-postgresql-rw:5432/{{ .StateValues.postgres_extra_databases.polaris }}"
           QUARKUS_DATASOURCE_USERNAME:
             valueFrom:
               secretKeyRef:

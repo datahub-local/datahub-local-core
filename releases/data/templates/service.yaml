@@ -25,3 +25,17 @@ spec:
       port: 5432
       protocol: TCP
       targetPort: 5432
+---
+# Direct cluster access, bypassing the transaction-mode pooler.
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "name" . }}-postgresql-rw'
+spec:
+  type: ExternalName
+  externalName: '{{ include "name" . }}-cloudnative-pg-cluster-18-rw.{{ .Release.Namespace }}.svc.cluster.local'
+  ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
