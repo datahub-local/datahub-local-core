@@ -1,6 +1,6 @@
 container_image_version:
-  actualbudget/actual-server: 26.9.0
-  g33kphr33k/musicgrabber: 4.2.4
+  actualbudget/actual-server: 26.10.0
+  g33kphr33k/musicgrabber: 4.3.0
   ghcr.io/browserless/chromium: v2.57.0
   ghcr.io/c4illin/convertx: v0.19.0
   ghcr.io/civilblur/mazanoke: v1.1.7
@@ -62,7 +62,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 91.8.2
+    version: 91.9.0
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
@@ -82,7 +82,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.84.0
+    version: 1.85.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
