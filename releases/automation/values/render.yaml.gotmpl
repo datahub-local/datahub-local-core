@@ -19,6 +19,7 @@ controllers:
         image:
           repository: ghcr.io/datahub-local/datahub-local-ai-render
           tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/datahub-local-ai-render") }}{{ $value }}{{ end }}{{ end }}'
+          pullPolicy: Always
         env:
           PORT:
             value: "8080"
@@ -32,6 +33,7 @@ controllers:
         probes:
           liveness:
             enabled: true
+            type: HTTP
             path: /healthz
             port: http
             spec:
@@ -39,6 +41,7 @@ controllers:
               timeoutSeconds: 3
           readiness:
             enabled: true
+            type: HTTP
             path: /healthz
             port: http
             spec:
