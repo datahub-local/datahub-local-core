@@ -1,0 +1,103 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+
+controllers:
+  main:
+    replicas: 1
+    strategy: RollingUpdate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    pod:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      main:
+        image:
+          repository: ghcr.io/datahub-local/datahub-local-ai-render
+          tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/datahub-local-ai-render") }}{{ $value }}{{ end }}{{ end }}'
+        env:
+          PORT:
+            value: "8080"
+          # A render is Chrome capture plus encode; seconds, not milliseconds.
+          # This is the ceiling, not the expected cost.
+          RENDER_TIMEOUT_MS:
+            value: "240000"
+        ports:
+          - name: http
+            containerPort: 8080
+        probes:
+          liveness:
+            enabled: true
+            path: /healthz
+            port: http
+            spec:
+              periodSeconds: 30
+              timeoutSeconds: 3
+          readiness:
+            enabled: true
+            path: /healthz
+            port: http
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+
+serviceAccount:
+  default:
+    enabled: true
+
+persistence:
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  # Chrome will not run its renderer against the default 64 MB /dev/shm.
+  dshm:
+    type: emptyDir
+    globalMounts:
+      - path: /dev/shm
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+# The endpoint is unauthenticated and there is no default-deny in this
+# namespace, so without a policy every pod here could reach it. Selecting the
+# pod at all denies every other ingress; these rules admit the two callers that
+# exist - n8n (the studio) and the render MCP proxy (name=mcpserver).
+networkpolicies:
+  allow-callers:
+    controller: main
+    policyTypes:
+      - Ingress
+    rules:
+      ingress:
+        - ports:
+            - port: 8080
+              protocol: TCP
+          from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: n8n
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: mcpserver
