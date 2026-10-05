@@ -66,6 +66,12 @@ _shared_config:
     RENDER_URL:
       value: "http://{{ .Values.release_name }}-automation-render.automation.svc.cluster.local:8080"
 
+    # The agent-authored type calls the pi-render session; the workflow reads it as
+    # $env.PI_RENDER_URL. The session and its Service are declared in the
+    # datahub-local-ai repository (agents/sympozium/templates/pi-render-session.yaml).
+    PI_RENDER_URL:
+      value: "http://datahub-local-ai-pi-render-api.automation.svc.cluster.local:8080"
+
 image:
   repository: n8nio/n8n
   tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
