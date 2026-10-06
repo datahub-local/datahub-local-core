@@ -7,7 +7,8 @@
 
 controllers:
   main:
-    strategy: RollingUpdate
+    # RWO PVC is reattached on rollout; RollingUpdate deadlocks with two pods.
+    strategy: Recreate
     annotations:
       reloader.stakater.com/auto: "true"
     pod:
