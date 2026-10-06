@@ -11,6 +11,8 @@ controllers:
     strategy: Recreate
     annotations:
       reloader.stakater.com/auto: "true"
+      # A merge cannot drop the defaulted rollingUpdate that Recreate forbids.
+      argocd.argoproj.io/sync-options: Replace=true
     pod:
       labels:
         backup.velero.io/custom-backup-daily-fs: "true"
