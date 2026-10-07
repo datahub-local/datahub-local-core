@@ -61,11 +61,6 @@ _shared_config:
     BACKUP_GITHUB_REPO_PATH:
       value: "agents/n8n"
 
-    # The Visual Studio video type calls the render service beside n8n; the
-    # workflow reads it as $env.RENDER_URL. See releases/automation/templates/render.yaml.
-    RENDER_URL:
-      value: "http://{{ .Values.release_name }}-automation-render.automation.svc.cluster.local:8080"
-
     # The agent-authored type calls the pi-render session; the workflow reads it as
     # $env.PI_RENDER_URL. The session and its Service are declared in the
     # datahub-local-ai repository (agents/sympozium/templates/pi-render-session.yaml).
