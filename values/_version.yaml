@@ -86,7 +86,7 @@ helm_chart_version:
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
-    version: 16.6.0
+    version: 17.0.0
   promtail:
     ref: grafana/promtail
     repository: https://grafana.github.io/helm-charts
