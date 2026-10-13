@@ -1,5 +1,8 @@
 # https://github.com/BerriAI/litellm/blob/main/helm/litellm-helm/values.yaml
 
+{{- $maxInputTokens := 500000 }}
+{{- $maxOutputTokens := 131072 }}
+
 db:
   useExisting: true
   deployStandalone: false
@@ -57,6 +60,10 @@ proxy_config:
     # Go rejects requests without an x-opencode-session header (400
     # MissingSessionID); clients pointed at the proxy do not send one and LiteLLM
     # strips client headers, so inject a fixed id here.
+    # These are custom aliases, so LiteLLM has no cost-map entry and /model/info
+    # reports a null token limit - clients then fall back to their own default
+    # (OpenCode uses 200000/32000) instead of the model's real window. Pin the
+    # limits on every entry so the window travels with the alias.
     - model_name: opencode-go/glm-5.3-flash
       litellm_params:
         model: openai/glm-5.3-flash
@@ -64,6 +71,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
     - model_name: opencode-go/glm-5.3
       litellm_params:
         model: openai/glm-5.3
@@ -71,6 +81,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
     - model_name: opencode-go/kimi-k3
       litellm_params:
         model: openai/kimi-k3
@@ -78,6 +91,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
     - model_name: opencode-go/deepseek-v4.1-flash
       litellm_params:
         model: openai/deepseek-v4.1-flash
@@ -85,6 +101,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
     - model_name: opencode-go/qwen3.8-flash
       litellm_params:
         model: openai/qwen3.8-flash
@@ -92,6 +111,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
     - model_name: opencode-go/qwen3.8-max
       litellm_params:
         model: openai/qwen3.8-max
@@ -99,6 +121,9 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
 
     # --- OpenRouter (chat) ---
     # Same model as the opencode-go entry, second source. Reasoning model: a
@@ -107,6 +132,9 @@ proxy_config:
       litellm_params:
         model: openrouter/deepseek/deepseek-v4.1-flash
         api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
 
     # --- OpenRouter (image generation) ---
     # All but gemini-3.1-flash-image are absent from /chat/completions, which is
