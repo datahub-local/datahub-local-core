@@ -67,6 +67,13 @@ _shared_config:
     PI_RENDER_URL:
       value: "http://datahub-local-ai-pi-render-api.automation.svc.cluster.local:8080"
 
+    # The temp-bucket MCP server (`utils`), which stores a finished artifact for the
+    # studio and signs a download URL for the publish path, so no workflow carries
+    # the asset's bytes. Declared in the datahub-local-ai repository
+    # (agents/sympozium/templates/mcpservers.yaml).
+    MCP_UTILS_URL:
+      value: "http://datahub-local-ai-mcp-utils.automation.svc.cluster.local:8080"
+
 image:
   repository: n8nio/n8n
   tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "n8nio/n8n") }}{{ $value }}{{ end }}{{ end }}'
