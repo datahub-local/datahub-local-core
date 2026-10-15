@@ -5,7 +5,16 @@ type: postgresql
 cluster:
   imageName: "ghcr.io/cloudnative-pg/postgresql:18.1-system-trixie"
 
-  instances: 1
+  instances: 2
+
+  # Spread the instances so either node can be drained for maintenance while the
+  # cluster keeps serving. The chart default (topology.kubernetes.io/zone)
+  # matches no node here, which leaves both instances free to land together.
+  affinity:
+    topologyKey: kubernetes.io/hostname
+    # Hard, so the two instances can never share a node and a drain can never
+    # take both down at once.
+    podAntiAffinityType: required
 
   resources:
     limits:
@@ -37,9 +46,11 @@ cluster:
 
   monitoring:
     enabled: true
+    # CNPGClusterHACritical stays on: it means the cluster has no standby left.
+    # CNPGClusterHAWarning stays off because it wants two standbys, so two
+    # instances would trip it permanently.
     prometheusRule:
       excludeRules:
-        - CNPGClusterHACritical
         - CNPGClusterHAWarning
 
   # Read-only role for Trino; pg_read_all_data grants SELECT cluster-wide.
