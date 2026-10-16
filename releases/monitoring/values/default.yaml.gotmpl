@@ -290,3 +290,67 @@ prometheus_rules:
           annotations:
             summary: "Sympozium run rate-limited: {{`{{ $labels.agent }}`}} ({{`{{ $labels.ensemble }}`}})"
             description: "AgentRun {{`{{ $labels.name }}`}} in {{`{{ $labels.namespace }}`}} never reached the model: the LLM gateway refused the call. {{`{{ $labels.error }}`}}"
+  # Helm release history, and the Secret list Argo CD has to read. The chain, measured
+  # 2026-10-16: Helm's default 10 revisions per release made ~140 release Secrets and a
+  # ~30 MB cluster-wide Secret LIST; the kube-apiserver (2.8 GB RSS on a 4 GB
+  # control-plane node) could not stream it, so Argo CD's controller logged "failed to
+  # load initial state of resource Secret" and left every Application at sync=Unknown
+  # for an hour - with no pod unhealthy and no other symptom. Prevented for the releases
+  # this repo applies by helmDefaults.historyMax in values/base.yaml.gotmpl, and pruned
+  # for the bootstrap-installed ones (traefik, cert-manager, argo-cd, longhorn) by
+  # datahub-local-bootstrap's roles/k3s_maintenance, which nothing schedules yet - hence
+  # the first alert below.
+  gitops.rules:
+    - name: gitops.rules
+      rules:
+        - alert: HelmReleaseHistorySecretsGrowing
+          expr: |
+            sum(kube_secret_info{secret=~"sh\\.helm\\.release\\.v1\\..*"}) > 30
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Helm release history is accumulating in Secrets"
+            description: >
+              {{`{{ printf "%.0f" $value }}`}} Helm release-history Secrets exist, one per retained
+              revision and each holding a whole rendered chart. They dominate a cluster-wide
+              Secret LIST, which is what Argo CD reads to build its cluster cache, and that list
+              is what breaks first. Run playbook/maintenance.yml from datahub-local-bootstrap to
+              prune every release to k3s_maintenance_helm_history_keep revisions - and re-read
+              that value: keeping three revisions of traefik, argo-cd and cert-manager was still
+              ~10 MB here, where one revision per release is ~4 MB.
+        - alert: ClusterSecretListResponseLarge
+          expr: |
+            (
+              sum(increase(apiserver_response_sizes_sum{resource="secrets",verb="LIST",scope="cluster"}[30m]))
+              /
+              sum(increase(apiserver_response_sizes_count{resource="secrets",verb="LIST",scope="cluster"}[30m]))
+            ) > 6e6
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "A cluster-wide Secret LIST response averages over 6 MB"
+            description: >
+              The average response to a cluster-scoped Secret LIST has been
+              {{`{{ printf "%.0f" $value }}`}} bytes over the last hour. Argo CD reads that list to
+              load its cluster cache, and at roughly 10 MB the kube-apiserver aborted the stream,
+              leaving every Application at sync=Unknown. One revision per release measured
+              ~3-4.5 MB, so this is the warning that the payload is climbing again: the cause is
+              almost always retained Helm history, which the alert above names.
+        - alert: ArgoAppSyncComparisonFailing
+          expr: |
+            argocd_app_info{sync_status="Unknown"} == 1
+          for: 15m
+          labels:
+            severity: error
+          annotations:
+            summary: "[{{`{{ $labels.name }}`}}] Argo CD cannot compare the application"
+            description: >
+              Argo CD reports sync_status=Unknown for {{`{{ $labels.name }}`}} for 15m, which means
+              it could not load the cluster state to compare against - not that the application
+              drifted, and not that anything inside it is down. Several applications going Unknown
+              together means the controller's cluster cache is failing on one resource kind,
+              usually Secret. Read the reason with: kubectl -n automation logs
+              statefulset/argo-cd-argocd-application-controller --tail=100 | grep 'Failed to sync
+              cluster'

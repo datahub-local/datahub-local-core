@@ -19,6 +19,9 @@ helmDefaults:
   timeout: 600
   recreatePods: true
   force: false
+  # Helm keeps the last 10 revisions by default and stores each as a Secret of the
+  # whole rendered chart
+  historyMax: 2
 ---
 repositories:
   #{{- $repos := dict }}
