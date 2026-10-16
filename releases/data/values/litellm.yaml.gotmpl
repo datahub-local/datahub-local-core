@@ -64,6 +64,13 @@ proxy_config:
     # reports a null token limit - clients then fall back to their own default
     # (OpenCode uses 200000/32000) instead of the model's real window. Pin the
     # limits on every entry so the window travels with the alias.
+    # /model/info reports no capability flags either, and the OpenCode LiteLLM
+    # plugin classifies a model without supports_vision as text-only, so the
+    # client refuses to attach an image ("this model has no image input") even
+    # though the provider takes one. Verified 2026-10-16 with a three-stripe
+    # PNG: every flagged entry below names the stripes correctly, both direct
+    # and through this proxy. glm-5.3 is the exception and stays unflagged - it
+    # answers 400 "This model does not support image inputs".
     - model_name: opencode-go/glm-5.3-flash
       litellm_params:
         model: openai/glm-5.3-flash
@@ -74,6 +81,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
     - model_name: opencode-go/glm-5.3
       litellm_params:
         model: openai/glm-5.3
@@ -94,6 +102,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
     - model_name: opencode-go/deepseek-v4.1-flash
       litellm_params:
         model: openai/deepseek-v4.1-flash
@@ -104,6 +113,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
     - model_name: opencode-go/qwen3.8-flash
       litellm_params:
         model: openai/qwen3.8-flash
@@ -114,6 +124,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
     - model_name: opencode-go/qwen3.8-max
       litellm_params:
         model: openai/qwen3.8-max
@@ -124,6 +135,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
 
     # --- OpenRouter (chat) ---
     # Same model as the opencode-go entry, second source. Reasoning model: a
@@ -135,6 +147,7 @@ proxy_config:
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
 
     # --- OpenRouter (image generation) ---
     # All but gemini-3.1-flash-image are absent from /chat/completions, which is
