@@ -78,6 +78,16 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+        # This model always thinks and rejects reasoning_effort=none ([1210] "This model
+        # always engages in thinking and cannot be disabled"), which is exactly what the
+        # Pi composer sends, so as a fallback it could never serve the caller the chain
+        # exists for. Probed 2026-10-16: with that parameter the unit answers 400 and the
+        # router falls through to OpenRouter, in both the streaming and non-streaming
+        # shape. Dropped for this hop only - the primary honours it, which is how the
+        # gateway's reasoning is kept off the bill. [UNVERIFIED] whether the drop makes
+        # this hop succeed.
+        additional_drop_params:
+          - reasoning_effort
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
@@ -233,6 +243,19 @@ proxy_config:
     # internal_user_viewer.
     default_internal_user_params:
       user_role: proxy_admin
+
+  # `request_timeout` above is a per-read timeout, and for a streaming call that means
+  # the gap between chunks - so it is the only timeout a stream ever gets. A streaming
+  # caller is not rescued by the fallback chain below: stream_with_fallbacks re-raises
+  # the provider's own error once any content has reached the client, so a primary that
+  # emits a sentence and then stalls ends that call outright, with no substitution.
+  # Patience is the recovery mechanism for a stream, so a stream gets its own longer
+  # read timeout and the caller retries; the 30s stays for everything that does not
+  # stream, where the fallback chain does fire. Measured 2026-10-16: a 30s stall killed
+  # nine consecutive composer attempts, no composition was authored, the artifact fetch
+  # answered 404, and one article lost its animation (Visual Studio run 13648).
+  router_settings:
+    stream_timeout: 120
 
 resources:
   requests:
