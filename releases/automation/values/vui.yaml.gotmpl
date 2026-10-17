@@ -10,12 +10,6 @@ apiService:
     nodeSelector:
       kubernetes.io/arch: amd64
 
-    tolerations:
-      - effect: NoSchedule
-        key: datahub.local/role
-        operator: "Equal"
-        value: nas
-
 exposure:
   mode: clusterIP
   clusterIP:

@@ -239,12 +239,6 @@ worker:
   nodeSelector:
     kubernetes.io/arch: amd64
 
-  tolerations:
-    - effect: NoSchedule
-      key: datahub.local/role
-      operator: "Equal"
-      value: nas
-
   command: *command
   podSecurityContext: *podSecurityContext
 

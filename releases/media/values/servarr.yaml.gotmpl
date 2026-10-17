@@ -107,16 +107,6 @@ global:
     nodeSelector:
       kubernetes.io/arch: amd64
 
-  podOptionsNAS: &podOptionsNAS
-    nodeSelector:
-      kubernetes.io/hostname: datahublocal-nas
-
-    tolerations:
-      - effect: NoSchedule
-        key: datahub.local/role
-        operator: "Equal"
-        value: nas
-
 metrics:
   enabled: &metricsEnabled true
 
@@ -543,7 +533,7 @@ flaresolverr:
           main:
             resources: *flaresolverrResources
 
-  podOptions: *podOptionsNAS
+  podOptions: *podOptionsAmd
 
 bazarr:
   crd:
