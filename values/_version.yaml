@@ -8,7 +8,7 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
-  ghcr.io/gethomepage/homepage: v2.5.0
+  ghcr.io/gethomepage/homepage: v2.6.0
   ghcr.io/headlamp-k8s/headlamp: v0.46.0
   ghcr.io/miniflux/miniflux: 2.3.3
   ghcr.io/sharevb/it-tools: 2026.9.27
