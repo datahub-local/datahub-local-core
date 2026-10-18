@@ -286,9 +286,10 @@ prometheus-node-exporter:
     - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd/.+|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
     - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
     - --collector.textfile.directory=/var/lib/node_exporter
-    # unit-include keeps this from emitting ~1k series per node.
+    # unit-include keeps this from emitting ~1k series per node; the nut,
+    # containerd and chrony units it used to select left with the NAS.
     - --collector.systemd
-    - --collector.systemd.unit-include=^(k3s|k3s-agent|containerd|ssh|systemd-timesyncd|chrony|smartmontools|nut-server|nut-monitor|nut-driver@.+)\.service$
+    - --collector.systemd.unit-include=^(k3s|k3s-agent|ssh|systemd-timesyncd|smartmontools)\.service$
 
   # The systemd collector needs /run/systemd/private inside the container.
   extraHostVolumeMounts:
@@ -411,3 +412,21 @@ extraManifests:
           services:
             - name: "{{ $.Values.release_name }}-kube-prometheus-stack-grafana"
               port: http-web
+  # The NAS left the cluster with the TrueNAS upgrade that replaced Kubernetes
+  # with Docker, so the node-exporter DaemonSet cannot cover it. node_exporter and
+  # node-exporter-textfiles run in a Docker app on the NAS instead:
+  # datahub-local-private-config/README.md. Reusing the DaemonSet's job name keeps
+  # every dashboard, rule and alert keyed on job="node-exporter" working; the
+  # target is the FQDN because the bare name the NFS volumes use does not resolve
+  # in pods.
+  - apiVersion: monitoring.coreos.com/v1alpha1
+    kind: ScrapeConfig
+    metadata:
+      name: "{{ $.Values.release_name }}-nas"
+    spec:
+      jobName: node-exporter
+      staticConfigs:
+        - targets:
+            - datahublocal-nas.homelab.alvsanand.com:9100
+          labels:
+            instance: datahublocal-nas:9100
