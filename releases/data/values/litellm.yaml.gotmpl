@@ -71,6 +71,15 @@ proxy_config:
     # PNG: every flagged entry below names the stripes correctly, both direct
     # and through this proxy. glm-5.3 is the exception and stays unflagged - it
     # answers 400 "This model does not support image inputs".
+    # Clients also grew a Responses API path (POST /v1/responses here), and the
+    # openai/ handler forwards that verbatim to {api_base}/responses - where Go
+    # serves deepseek-v4.1-flash and nothing else. Probed 2026-10-18 against the
+    # gateway with the real key: glm-5.3, glm-5.3-flash, kimi-k3, qwen3.8-flash
+    # and qwen3.8-max all answer that endpoint 400 ModelProtocolUnsupported
+    # ("Model does not support this protocol"), while the same ids on
+    # /chat/completions answer 200. So every Go entry except deepseek-v4.1-flash
+    # carries use_chat_completions_api, which makes LiteLLM translate a Responses
+    # request into a chat one instead of 400ing the caller's fallback hop.
     - model_name: opencode-go/glm-5.3-flash
       litellm_params:
         model: openai/glm-5.3-flash
@@ -88,6 +97,7 @@ proxy_config:
         # this hop succeed.
         additional_drop_params:
           - reasoning_effort
+        use_chat_completions_api: true
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
@@ -99,6 +109,7 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+        use_chat_completions_api: true
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
@@ -109,6 +120,7 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+        use_chat_completions_api: true
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
@@ -131,6 +143,7 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+        use_chat_completions_api: true
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
@@ -142,6 +155,7 @@ proxy_config:
         api_key: os.environ/OPENCODE_GO_API_KEY
         extra_headers:
           x-opencode-session: ses_datahub-local-litellm
+        use_chat_completions_api: true
       model_info:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
