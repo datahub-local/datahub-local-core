@@ -127,8 +127,8 @@ Findings only — `design.md` carries the review. Nothing here is applied.
   and confirm the Control UI and an agent turn still work through it.
 - [x] 7.3 The Control UI rides the repo's standard exposure: Traefik `websecure` IngressRoute with
   the `oauth2-proxy-auth` middleware, no internet reach, reached over Tailscale. The gateway binds
-  `custom:0.0.0.0` (`lan` drops the loopback the exec probes hit) with `controlUi.allowedOrigins`
-  set to the proxy origin, because a non-loopback bind refuses to start without it. Token auth
-  stays on behind oauth2-proxy.
+  `lan` — the schema's value for `0.0.0.0`, so Traefik reaches the pod IP and the exec probes still
+  hit `127.0.0.1` — with `controlUi.allowedOrigins` set to the proxy origin, because a non-loopback
+  bind refuses to start without it. Token auth stays on behind oauth2-proxy.
 - [x] 7.4 Agent content lives beside `datahub-local-ai`: the authored `AGENTS.md` and skills are
   maintained there and delivered into the persisted home; this release keeps only the seed copy.

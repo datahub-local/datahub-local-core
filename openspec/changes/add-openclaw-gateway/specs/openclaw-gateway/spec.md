@@ -19,7 +19,7 @@ relationship is visible rather than buried in a default.
 
 Probes SHALL be `exec` probes that assert the JSON readiness body, not HTTP or TCP probes against the
 pod IP. The Control UI answers unknown paths with a catch-all 200, so a status-code check alone would
-report a broken gateway as healthy. The release binds `custom:0.0.0.0` for Traefik, so an HTTP probe
+report a broken gateway as healthy. The release binds `lan` (`0.0.0.0`) for Traefik, so an HTTP probe
 would connect — and still prove nothing. Each probe SHALL be explicitly enabled, because the chart
 drops an unenabled probe without failing the render.
 

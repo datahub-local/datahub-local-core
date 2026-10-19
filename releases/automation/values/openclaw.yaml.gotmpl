@@ -30,11 +30,11 @@ configMaps:
       # (AI-synthesized answers with citations); once GEMINI_API_KEY is in
       # openclaw-secrets, switch tools.web.search.provider to "gemini" - that one
       # line is the whole change, and search stays on DuckDuckGo until then.
-      # Bind "custom:0.0.0.0", not "lan": lan binds only the LAN interface and
-      # drops the 127.0.0.1 the exec probes hit, while 0.0.0.0 answers both the
-      # pod IP (Traefik) and loopback. The container default (auto) resolves to
-      # 0.0.0.0 anyway; explicit beats detection. A non-loopback bind refuses to
-      # start without controlUi.allowedOrigins, and startup only seeds
+      # Bind "lan" = 0.0.0.0 (the config schema's own value): it serves both the
+      # pod IP Traefik dials and the 127.0.0.1 the exec probes hit. "custom"
+      # exists but takes a separate customBindHost, and "auto" resolves to 0.0.0.0
+      # in a container anyway; explicit beats detection. A non-loopback bind
+      # refuses to start without controlUi.allowedOrigins, and startup only seeds
       # localhost/127.0.0.1 origins, so the proxy origin must be listed. Token
       # auth stays on behind oauth2-proxy: the middleware gates the network,
       # the token gates the gateway.
@@ -46,7 +46,7 @@ configMaps:
         {
           "gateway": {
             "mode": "local",
-            "bind": "custom:0.0.0.0",
+            "bind": "lan",
             "port": 18789,
             "auth": { "mode": "token" },
             "controlUi": {

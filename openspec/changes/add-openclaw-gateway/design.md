@@ -116,7 +116,7 @@ Reviewed 2026-10-18 against the rendered release and upstream's own
 Non-root UID 1000, `drop: ALL`, `allowPrivilegeEscalation: false` (which implies
 `no_new_privs`), `readOnlyRootFilesystem: true`, `seccompProfile: RuntimeDefault`,
 `automountServiceAccountToken: false`, and no `hostNetwork`/`hostPID`/`hostIPC`. The gateway binds
-`custom:0.0.0.0` with token auth, but only the oauth2-proxy-gated IngressRoute reaches it and
+`lan` (`0.0.0.0`) with token auth, but only the oauth2-proxy-gated IngressRoute reaches it and
 nothing is internet-exposed; the token stays on behind the proxy. Slack defaults to an allowlist
 with no channels listed and pairing for DMs. No GitHub credential exists to leak, because the
 bundled plugin fetches public content anonymously. Egress policy is designed and its enforcement
@@ -248,8 +248,8 @@ and LiteLLM itself receive credentials in this repository.
 
 **The Control UI rides the repo's standard exposure.** A Traefik `websecure` IngressRoute with the
 `oauth2-proxy-auth` middleware — mandatory — like every other app here. Nothing is internet-
-reachable; Tailscale reaches the ingress hostname. The gateway binds `custom:0.0.0.0` for Traefik
-(`lan` binds only the LAN interface and would drop the loopback the exec probes hit), and
+reachable; Tailscale reaches the ingress hostname. The gateway binds `lan` — the schema's value for
+`0.0.0.0` — so Traefik reaches the pod IP and the exec probes still hit `127.0.0.1`; and
 `controlUi.allowedOrigins` carries the proxy origin because a non-loopback bind refuses to start
 without explicit origins and startup seeds only `localhost`/`127.0.0.1`. Token auth stays on behind
 oauth2-proxy: the middleware gates the network, the token gates the gateway.
@@ -272,7 +272,7 @@ authored persona and skills are maintained at that side and delivered into the p
   verified.
 - **OpenClaw moves fast** (roughly daily releases, ~9.5k open issues) and its k8s manifests are
   self-described as not production-ready. A pinned tag is required.
-- **The Control UI now leaves loopback.** `custom:0.0.0.0` plus an explicit origin list and the
+- **The Control UI now leaves loopback.** `lan` (`0.0.0.0`) plus an explicit origin list and the
   oauth2-proxy middleware; the gateway token still gates the gateway itself. Tailscale is the only
   path in — no internet reach.
 
