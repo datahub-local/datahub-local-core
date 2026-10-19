@@ -10,7 +10,8 @@ newer. A gateway refuses to open a state database whose schema is newer than the
 (`uses schema 20; this build supports 19`) and exits 78. `extended-stable` moves only on
 trailing-month releases, so it is a *stability* channel, not the newest build; a deployment that
 starts on `2026.10.4-slim` cannot later move to `extended-stable-browser` without wiping state. Pin a
-versioned `-browser` tag for anything that must be reproducible.
+versioned `-browser` tag for anything that must be reproducible; this release pins the index digest
+of `extended-stable-browser` so the moving tag cannot change under it.
 
 **Runtime class — why this release does not set one.** The gateway boots under
 `runtimeClassName: gvisor` and its embedded agent path works (an `agent exec` turn reached LiteLLM and
@@ -72,16 +73,16 @@ the **same dist-tags as core**, so `@openclaw/diffs@extended-stable` installs cl
 @openclaw/duckduckgo-plugin@extended-stable → Installed plugin: duckduckgo
 ```
 
-So the stability channel is kept and the plugins are pinned to its tag. Pinning the plugins rather
-than the image is the deliberate trade: the project releases daily, and the channel the user wants is
-the one that moves slowly.
+So the stability channel is kept, the image is pinned by digest, and the plugins are pinned to the
+exact `2026.9.33` the channel resolves to. The project releases daily, and the channel the user wants
+is the one that moves slowly; pinning the exact versions is what makes that choice reproducible.
 
 Three traps came out of that: the CLI **exits 0 even when it refuses a plugin**, so neither the exit
 code nor a marker file can gate a re-install; the successful installs land in `npm/projects/<id>`, so
 a directory check is fragile; and the manifest id can differ from the package name
 (`@openclaw/brave-plugin` → id `brave`, `@openclaw/duckduckgo-plugin` → id `duckduckgo`), so config
-keys are not package names. The init container therefore installs on every boot and never fails the
-pod on it.
+keys are not package names. The init container therefore installs on every boot; it asserts the
+`Installed plugin` line in each install's output and warns on a miss, but never fails the pod on it.
 
 No `plugins.allow` list is set. That list is authoritative when non-empty, and adding it would drop
 the bundled `browser` plugin the evaluation proved working — the entries are declared under
@@ -107,7 +108,8 @@ refused.
 ## Security review
 
 Reviewed 2026-10-18 against the rendered release and upstream's own
-`docs/gateway/security/hardened-baseline.md`. Findings only — nothing here is applied yet.
+`docs/gateway/security/hardened-baseline.md`; updated 2026-10-19. Findings 1 (tool policy), 4
+(plugin pinning) and 5 (image digest) are now applied in the release; the rest remain pending.
 
 ### Already sound (verified in the rendered spec)
 
@@ -145,7 +147,9 @@ against the pod. This is what converts a prompt injection into an incident. Upst
 baseline sets `profile: "messaging"`, denies `group:automation`/`group:runtime`/`group:fs` plus
 `sessions_spawn`/`sessions_send`, `fs.workspaceOnly: true`, `exec: { security: "deny", ask:
 "always" }`, `elevated.enabled: false`, and `agentToAgent.enabled: false`. Adapted so search,
-browser and `bundle-mcp` keep working, that is the fix.
+browser and `bundle-mcp` keep working, that is the fix — and it is now applied: `profile:
+"messaging"` with `alsoAllow: ["group:web", "browser"]` (the profile omits both) and
+`sessions.visibility: "agent"`; `bundle-mcp` is implicit in the profile.
 
 **2 — The pod environment holds the remaining crown jewels.** The gateway token and the Slack bot
 and app tokens are in the pod's environment, because those are the credentials the process itself
@@ -163,11 +167,13 @@ blast-radius reduction.
 **4 — Plugin code is fetched from npm at every boot, unpinned.** `@openclaw/slack@extended-stable`
 is a *moving* tag, installed by an init container and executed with the pod's environment. A
 compromised plugin release inherits finding 2. The CLI also **exits 0 on failure**, so a bad
-install is silent.
+install is silent. Applied: exact `2026.9.33` pins, and the init container asserts `Installed
+plugin` in each install's output, warning loudly on a miss without failing the boot.
 
 **5 — Moving image tag, no digest pin.** `extended-stable-browser` can change without a commit,
 and `imagePullPolicy: IfNotPresent` lets different nodes hold different digests. No signature or
-attestation verification.
+attestation verification. Applied: the index digest is pinned, so `IfNotPresent` can no longer
+drift; signatures/attestation remain out of scope.
 
 **6 — No Pod Security Admission labels on the `automation` namespace.** Nothing at admission
 prevents a later edit from adding a privileged container. Enabling `restricted` must be checked

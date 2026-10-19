@@ -87,26 +87,30 @@
 
 Findings only — `design.md` carries the review. Nothing here is applied.
 
-- [ ] 6.1 Add the `tools` policy from upstream's hardened baseline, adapted so search, browser and
+- [x] 6.1 Add the `tools` policy from upstream's hardened baseline, adapted so search, browser and
   `bundle-mcp` keep working: `profile: "messaging"`, deny `group:automation` / `group:runtime` /
   `group:fs` / `sessions_spawn` / `sessions_send`, `fs.workspaceOnly: true`,
   `exec: { security: "deny", ask: "always" }`, `elevated.enabled: false`,
   `agentToAgent.enabled: false`. This is the highest-severity gap: without it the agent has `exec`
-  and `fs` on the gateway pod.
+  and `fs` on the gateway pod. Applied, with `alsoAllow: ["group:web", "browser"]` — the messaging
+  profile omits both — and `sessions.visibility: "agent"` from the same baseline.
 - [ ] 6.2 Nothing to narrow: `envFrom` reads exactly the credentials the gateway authenticates
   with (gateway token, model key, Slack pair), so per-key refs would not reduce the exposure. Treat
   this as a consequence of 6.1, and reach for the shared secret store's sentinel/egress-proxy path
   if a tighter boundary is ever wanted.
 - [ ] 6.3 Enable the egress `NetworkPolicy` (DNS, LiteLLM, Slack, public) and add an ingress rule.
-- [ ] 6.4 Pin the plugin installs to exact versions instead of the moving `@extended-stable` tag,
-  and remember the CLI exits 0 on failure, so a failed install is silent.
-- [ ] 6.5 Pin the image by digest; `imagePullPolicy: IfNotPresent` currently allows nodes to hold
-  different digests under one moving tag.
+- [x] 6.4 Pinned the plugin installs to exact `2026.9.33` — what `@extended-stable` resolved to on
+  2026-10-19, and the image's plugin API. The CLI still exits 0 on failure, so the init container
+  asserts `Installed plugin` in each install's output and warns loudly on a miss; it does not fail
+  the boot.
+- [x] 6.5 Pinned the image by index digest
+  `sha256:a789522a0c6b37d8496a07f114e57dffeb6099970f5cdb448c9f33a179267f28` (resolved 2026-10-19),
+  tag kept for readability. `IfNotPresent` is now safe: a digest cannot drift under a moving tag.
 - [ ] 6.6 Consider Pod Security Admission `restricted` on `automation` — check the namespace's other
   pods for compliance first.
 - [ ] 6.7 Raise the unauthenticated `fact_server` endpoint with the Sympozium side; the MCP surface
   is currently open to anything in the cluster.
-- [ ] 6.8 Set `session.dmScope: "per-channel-peer"` and `exec.ask: "always"` for parity with the
+- [x] 6.8 Set `session.dmScope: "per-channel-peer"` and `exec.ask: "always"` for parity with the
   baseline.
 - [x] 6.9 Encryption at rest accepted as-is: `state/openclaw.sqlite` stays unencrypted behind
   0600/0700. If that ever changes, the path is an exec provider (1Password, Vault), not the gateway

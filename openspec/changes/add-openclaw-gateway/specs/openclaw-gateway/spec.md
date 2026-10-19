@@ -52,6 +52,29 @@ auth SHALL stay enabled behind the proxy.
 - **WHEN** a browser authenticated by the proxy opens the Control UI
 - **THEN** the gateway still demands its own token
 
+### Requirement: The agent runs the hardened tool profile
+
+The release SHALL set `tools.profile: "messaging"` and deny `group:automation`, `group:runtime`,
+`group:fs`, `sessions_spawn` and `sessions_send`, with `fs.workspaceOnly: true`, `exec` denied,
+`elevated` and `agentToAgent` off, and `session.dmScope: "per-channel-peer"`. `group:web` and
+`browser` SHALL be re-allowed explicitly — the messaging profile omits both — while `bundle-mcp` is
+implicit in the profile, so search, the browser and the facts MCP server keep working.
+
+#### Scenario: The agent cannot run shell commands or touch the filesystem
+
+- **WHEN** an agent turn is asked to run a shell command or open a workspace file
+- **THEN** the `exec`/`process` and `fs` tools are not offered to the model
+
+#### Scenario: Search and the browser survive the profile
+
+- **WHEN** an agent turn searches the web or opens a page
+- **THEN** `web_search` and `browser` are available
+
+#### Scenario: MCP tools survive the profile
+
+- **WHEN** an agent turn calls a `homelab_facts` tool
+- **THEN** the `bundle-mcp` tools are offered under the messaging profile
+
 ### Requirement: The browser works inside the pod or is disabled
 
 When the browser is enabled the deployment SHALL supply the two things the bundled Chromium needs in
@@ -101,9 +124,10 @@ purpose.
 
 ### Requirement: Plugins are pinned to a build that can load them
 
-The image tag SHALL be at or above the plugin API floor the declared plugins require, because a
-plugin install refuses silently — the CLI exits 0 while reporting
-`requires plugin API >=<version>`. The declared plugin set SHALL NOT be expressed as a `plugins.allow`
+The image SHALL be pinned by digest, and the plugin installs SHALL be pinned to exact versions the
+pinned image can load — at or above the plugin API floor, because a plugin install refuses silently:
+the CLI exits 0 while reporting `requires plugin API >=<version>`. A failed install SHALL be logged
+rather than silently tolerated. The declared plugin set SHALL NOT be expressed as a `plugins.allow`
 list, because that list is authoritative and would disable bundled plugins the deployment depends on.
 
 #### Scenario: A declared plugin actually installs

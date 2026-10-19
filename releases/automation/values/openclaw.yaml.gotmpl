@@ -13,6 +13,11 @@ _shared_config:
   image: &openclawImage
     repository: ghcr.io/openclaw/openclaw
     tag: extended-stable-browser
+    # Index digest resolved 2026-10-19. The tag moves; the digest is what makes
+    # the deploy reproducible. The index (not the amd64 child) keeps platform
+    # resolution working.
+    digest: sha256:a789522a0c6b37d8496a07f114e57dffeb6099970f5cdb448c9f33a179267f28
+    pullPolicy: IfNotPresent
 
 configMaps:
   config:
@@ -33,6 +38,10 @@ configMaps:
       # localhost/127.0.0.1 origins, so the proxy origin must be listed. Token
       # auth stays on behind oauth2-proxy: the middleware gates the network,
       # the token gates the gateway.
+      # Tools: upstream's hardened baseline (docs/gateway/security/hardened-
+      # baseline.md), adapted only where the messaging profile would drop what
+      # this bot exists for - it omits group:web and browser, so both are
+      # re-allowed; bundle-mcp (homelab_facts) is implicit in the profile.
       openclaw.json: |
         {
           "gateway": {
@@ -69,6 +78,14 @@ configMaps:
             }
           },
           "tools": {
+            "profile": "messaging",
+            "alsoAllow": ["group:web", "browser"],
+            "deny": ["group:automation", "group:runtime", "group:fs", "sessions_spawn", "sessions_send"],
+            "fs": { "workspaceOnly": true },
+            "exec": { "security": "deny", "ask": "always" },
+            "elevated": { "enabled": false },
+            "sessions": { "visibility": "agent" },
+            "agentToAgent": { "enabled": false },
             "web": {
               "search": {
                 "provider": "duckduckgo",
@@ -76,6 +93,7 @@ configMaps:
               }
             }
           },
+          "session": { "dmScope": "per-channel-peer" },
           "mcp": {
             "servers": {
               "homelab_facts": {
@@ -173,19 +191,24 @@ controllers:
             mkdir -p /home/node/.openclaw/workspace
             [ -f /home/node/.openclaw/workspace/AGENTS.md ] || cp /config/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
             # slack, diffs and duckduckgo are not bundled with the image; github and
-            # google are. Install at the image's own channel tag: the plugin packages
-            # carry the same dist-tags as core, so @extended-stable matches the
-            # 2026.9.33 runtime, while the bare name resolves to @latest and is
+            # google are. Pin the exact version behind the image's channel tag:
+            # @extended-stable resolved to 2026.9.33 when this was written (the
+            # image's plugin API), while the bare name resolves to @latest and is
             # refused ("requires plugin API >=2026.10.4").
             # Reinstall every boot on purpose: the CLI exits 0 even when it
             # refuses a plugin, and the installs land in npm/projects/<id>, so
-            # neither the exit code nor a directory check can be trusted.
+            # neither the exit code nor a directory check can be trusted. Assert
+            # the success line in the output and warn loudly, but never fail the
+            # boot on it - a registry hiccup must not hold the gateway hostage.
             for p in \
-              @openclaw/slack@extended-stable \
-              @openclaw/diffs@extended-stable \
-              @openclaw/duckduckgo-plugin@extended-stable
+              @openclaw/slack@2026.9.33 \
+              @openclaw/diffs@2026.9.33 \
+              @openclaw/duckduckgo-plugin@2026.9.33
             do
-              node /app/dist/index.js plugins install "$p" 2>&1 | sed "s/^/[plugins] $p: /"
+              out=$(node /app/dist/index.js plugins install "$p" 2>&1) || true
+              printf '%s\n' "$out" | sed "s/^/[plugins] $p: /"
+              printf '%s\n' "$out" | grep -q 'Installed plugin' || \
+                echo "[plugins] WARNING: $p did not report an install" >&2
             done
         env:
           HOME:
