@@ -1,0 +1,365 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# OpenClaw gateway. Every deviation from the upstream kustomize manifests
+# (docs/install/kubernetes.md) is something the cluster forced, and each one is
+# commented where it appears: the grace period, the exec probes, the browser's
+# noSandbox and /dev/shm, the amd64 pin, and the non-loopback bind behind
+# Traefik and oauth2-proxy.
+
+_shared_config:
+  # extended-stable-browser is the stability channel, which suits a project that
+  # releases daily. Its plugin API is 2026.9.33, so the plugins below must be
+  # installed at the matching tag or they refuse with "requires plugin API >=…".
+  image: &openclawImage
+    repository: ghcr.io/openclaw/openclaw
+    tag: extended-stable-browser
+
+configMaps:
+  config:
+    enabled: true
+    data:
+      # Web search: DuckDuckGo is key-free, installs on this runtime, and its HTML
+      # endpoint answers from inside the cluster, so it is the provider that works
+      # today. It is an unofficial scrape, so expect occasional bot-challenge
+      # breakage. The Google plugin below is configured for Gemini Search grounding
+      # (AI-synthesized answers with citations); once GEMINI_API_KEY is in
+      # openclaw-secrets, switch tools.web.search.provider to "gemini" - that one
+      # line is the whole change, and search stays on DuckDuckGo until then.
+      # Bind "custom:0.0.0.0", not "lan": lan binds only the LAN interface and
+      # drops the 127.0.0.1 the exec probes hit, while 0.0.0.0 answers both the
+      # pod IP (Traefik) and loopback. The container default (auto) resolves to
+      # 0.0.0.0 anyway; explicit beats detection. A non-loopback bind refuses to
+      # start without controlUi.allowedOrigins, and startup only seeds
+      # localhost/127.0.0.1 origins, so the proxy origin must be listed. Token
+      # auth stays on behind oauth2-proxy: the middleware gates the network,
+      # the token gates the gateway.
+      openclaw.json: |
+        {
+          "gateway": {
+            "mode": "local",
+            "bind": "custom:0.0.0.0",
+            "port": 18789,
+            "auth": { "mode": "token" },
+            "controlUi": {
+              "enabled": true,
+              "allowedOrigins": [
+                "https://automation-openclaw.{{ .Values.gateway_hostname }}"
+              ]
+            }
+          },
+          "cron": { "enabled": false },
+          "browser": {
+            "enabled": true,
+            "headless": true,
+            "noSandbox": true
+          },
+          "plugins": {
+            "entries": {
+              "slack": { "enabled": true },
+              "github": { "enabled": true },
+              "diffs": { "enabled": true },
+              "google": {
+                "enabled": true,
+                "config": {
+                  "webSearch": {
+                    "model": "gemini-3.6-flash"
+                  }
+                }
+              }
+            }
+          },
+          "tools": {
+            "web": {
+              "search": {
+                "provider": "duckduckgo",
+                "maxResults": 5
+              }
+            }
+          },
+          "mcp": {
+            "servers": {
+              "homelab_facts": {
+                "url": "http://datahub-local-ai-mcp-homelab-facts.automation.svc:8080/mcp",
+                "transport": "streamable-http",
+                "enabled": true,
+                "connectionTimeoutMs": 5000,
+                "requestTimeoutMs": 20000
+              }
+            }
+          },
+          "channels": {
+            "slack": {
+              "enabled": true,
+              "botToken": { "source": "env", "provider": "default", "id": "SLACK_BOT_TOKEN" },
+              "appToken": { "source": "env", "provider": "default", "id": "SLACK_APP_TOKEN" },
+              "groupPolicy": "allowlist"
+            }
+          },
+          "models": {
+            "mode": "merge",
+            "providers": {
+              "litellm": {
+                "baseUrl": "http://{{ .Values.release_name }}-data-litellm.data.svc.cluster.local:4000/v1",
+                "apiKey": "${OPENAI_API_KEY}",
+                "api": "openai-completions",
+                "timeoutSeconds": 300,
+                "request": { "allowPrivateNetwork": true },
+                "models": [
+                  {
+                    "id": "opencode-go/deepseek-v4.1-flash",
+                    "name": "DeepSeek V4.1 Flash (LiteLLM)",
+                    "reasoning": false,
+                    "input": ["text", "image"],
+                    "contextWindow": 500000,
+                    "maxTokens": 32000
+                  }
+                ]
+              }
+            }
+          },
+          "agents": {
+            "defaults": {
+              "workspace": "~/.openclaw/workspace",
+              "model": { "primary": "litellm/opencode-go/deepseek-v4.1-flash" }
+            },
+            "entries": {
+              "default": {
+                "name": "OpenClaw Assistant",
+                "workspace": "~/.openclaw/workspace"
+              }
+            }
+          }
+        }
+      AGENTS.md: |
+        # OpenClaw Assistant
+
+        You are a helpful AI assistant running in Kubernetes.
+        Be concise, and say what you did rather than what you would do.
+
+defaultPodOptions:
+  automountServiceAccountToken: false
+  # The bundled Chromium does not auto-detect on arm64 nodes; amd64 does.
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  securityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  main:
+    replicas: 1
+    strategy: Recreate
+    annotations:
+      reloader.stakater.com/auto: "true"
+    serviceAccount:
+      identifier: default
+    pod:
+      # The gateway logs a ~315s drain budget and refuses to start after a
+      # SIGKILL mid-drain ("Another Gateway owner lease is still active").
+      terminationGracePeriodSeconds: 360
+    initContainers:
+      seed-config:
+        # The gateway image, not busybox: seeding is cheap but the plugin install
+        # below needs node and the OpenClaw CLI.
+        image: *openclawImage
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            # Seed-if-missing: the persisted copy owns config after first boot.
+            [ -f /home/node/.openclaw/openclaw.json ] || cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+            mkdir -p /home/node/.openclaw/workspace
+            [ -f /home/node/.openclaw/workspace/AGENTS.md ] || cp /config/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
+            # slack, diffs and duckduckgo are not bundled with the image; github and
+            # google are. Install at the image's own channel tag: the plugin packages
+            # carry the same dist-tags as core, so @extended-stable matches the
+            # 2026.9.33 runtime, while the bare name resolves to @latest and is
+            # refused ("requires plugin API >=2026.10.4").
+            # Reinstall every boot on purpose: the CLI exits 0 even when it
+            # refuses a plugin, and the installs land in npm/projects/<id>, so
+            # neither the exit code nor a directory check can be trusted.
+            for p in \
+              @openclaw/slack@extended-stable \
+              @openclaw/diffs@extended-stable \
+              @openclaw/duckduckgo-plugin@extended-stable
+            do
+              node /app/dist/index.js plugins install "$p" 2>&1 | sed "s/^/[plugins] $p: /"
+            done
+        env:
+          HOME:
+            value: /home/node
+          OPENCLAW_CONFIG_DIR:
+            value: /home/node/.openclaw
+          XDG_CACHE_HOME:
+            value: /home/node/.openclaw/.cache
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+    containers:
+      main:
+        image: *openclawImage
+        command:
+          - node
+          - /app/dist/index.js
+          - gateway
+          - run
+        env:
+          HOME:
+            value: /home/node
+          OPENCLAW_CONFIG_DIR:
+            value: /home/node/.openclaw
+          # Private SQLite snapshots need a writable cache; the rootfs is read-only.
+          XDG_CACHE_HOME:
+            value: /home/node/.openclaw/.cache
+          NODE_ENV:
+            value: production
+        # Read the secrets wholesale rather than key by key. Everything in
+        # openclaw-secrets arrives as an env var - OPENCLAW_GATEWAY_TOKEN,
+        # OPENAI_API_KEY, and GEMINI_API_KEY for Gemini search grounding - and a
+        # key that has not been added yet is simply absent instead of failing the
+        # pod, which per-key secretKeyRefs cannot express here (the chart's schema
+        # rejects `optional`).
+        envFrom:
+          - secret: openclaw-secrets
+          # Slack, Socket Mode. Both halves come from the same Slack app root as
+          # the MCP server, because Socket Mode rejects a pair from two different
+          # apps.
+          - secret: mcp-slack-token
+        # exec, not httpGet: it asserts the JSON body, which a status check cannot -
+        # the Control UI answers unknown paths with a catch-all 200, so an HTTP
+        # probe against the (now non-loopback) bind would connect but prove nothing.
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('http').get('http://127.0.0.1:18789/readyz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ready === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
+              periodSeconds: 10
+              timeoutSeconds: 10
+              failureThreshold: 120
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('http').get('http://127.0.0.1:18789/readyz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ready === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
+              initialDelaySeconds: 15
+              periodSeconds: 10
+              timeoutSeconds: 10
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - node
+                  - -e
+                  - "require('http').get('http://127.0.0.1:18789/healthz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ok === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 15
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+            cpu: "1"
+
+persistence:
+  home:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: local-path
+    globalMounts:
+      - path: /home/node/.openclaw
+  config:
+    type: configMap
+    identifier: config
+    globalMounts:
+      - path: /config
+        readOnly: true
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
+  # Chromium needs more than the 64Mi pod default for /dev/shm.
+  dshm:
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 256Mi
+    globalMounts:
+      - path: /dev/shm
+
+serviceAccount:
+  default:
+    enabled: true
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 18789
+
+rawResources:
+  # Same exposure as every other app here: Traefik websecure, oauth2-proxy-auth
+  # in front, no internet reach - Tailscale lands on the ingress hostname.
+  openclaw:
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "OpenClaw"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/instance={{ .Values.release_name }}-automation-openclaw"
+          gethomepage.dev/group: "Automation"
+          # simple-icons has no openclaw slug; unprefixed resolves from
+          # dashboard-icons, like actual-budget and open-webui.
+          gethomepage.dev/icon: "openclaw"
+          gethomepage.dev/href: "https://automation-openclaw.{{ .Values.gateway_hostname }}"
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-openclaw.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: "{{ .Values.release_name }}-automation-openclaw"
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+          - match: Host(`automation-openclaw.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http

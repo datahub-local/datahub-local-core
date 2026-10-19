@@ -55,6 +55,12 @@ releases:
     values:
       - values/sympozium.yaml.gotmpl
     strategicMergePatches: {{ toYaml .Values.kustomize.sympozium | nindent 6 }}
+  - name: "{{ .Values.release_name }}-automation-openclaw"
+    namespace: automation
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/openclaw.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation"
     namespace: automation
     chart: "."
