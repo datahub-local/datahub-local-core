@@ -5,8 +5,9 @@
 - [x] 1.1 Add the release to `releases/automation/helmfile.yaml.gotmpl` on `app-template`, the chart
   the other six automation releases use.
 - [x] 1.2 Add `releases/automation/values/openclaw.yaml.gotmpl`: controller on amd64 with
-  `strategy: Recreate`, the config `ConfigMap`, the home PVC, an `emptyDir` for `/tmp` and a 256 Mi
-  memory `emptyDir` for `/dev/shm`, and a ClusterIP Service on 18789.
+  `strategy: Recreate`, the config `ConfigMap`, the home PVC, a memory-backed 512 Mi `emptyDir` for
+  `/tmp` (a disk one arrives `2777` and trips the CLI's temp-workspace check), and a 256 Mi memory
+  `emptyDir` for `/dev/shm`, and a ClusterIP Service on 18789.
 - [x] 1.3 Take `openclaw.json` and `AGENTS.md` as `configMaps.config.data`, so no model id, provider
   name or channel id needs a template.
 - [x] 1.4 Read secrets by `secretKeyRef` only — `openclaw-secrets` for the gateway token and the
@@ -14,12 +15,19 @@
 - [x] 1.5 Prove it renders: `helm template` against `app-template` 5.3.0 shows the grace period, the
   amd64 selector, `readOnlyRootFilesystem`, all three probes, the PVC storage class, and the
   `/dev/shm` mount.
+- [x] 1.6 Run config, state, plugins and the workspace from a `data/` subdirectory of the PVC that
+  uid 1000 creates and owns. The volume root is root-owned (local-path + fsGroup only sets the
+  group) and the CLI `fchmod`s its state directory, so the root fails `plugins install` with
+  `EPERM: fchmod` and then crashloops on config validation. `OPENCLAW_CONFIG_DIR` is not read; the
+  state dir locates `openclaw.json`. `/tmp` is memory-backed so it mounts sticky (`1777`).
 
 ## 2. Carry the upstream gaps
 
 - [x] 2.1 `terminationGracePeriodSeconds: 360`, with the drain budget named in the comment.
-- [x] 2.2 Probes are `exec` (loopback bind), asserting the JSON body. Note `enabled: true` is
-  required — `app-template` drops a probe without it, silently.
+- [x] 2.2 Probes are `exec`, asserting the JSON body: `/startupz` for startup and readiness (it
+  ignores channel health, so a degraded account cannot evict a healthy gateway; startup sidecars
+  still gate it) and `/healthz` for liveness. Note `enabled: true` is required — `app-template`
+  drops a probe without it, silently.
 - [x] 2.3 Browser config defaults to `headless: true` and `noSandbox: true`, with a 256 Mi `/dev/shm`.
 - [x] 2.4 Pin the image to a `-browser` variant and default the pod to `kubernetes.io/arch: amd64`.
 
@@ -51,11 +59,12 @@
 
 ## 5. Plugins and MCP
 
-- [x] 5.1 Declare the plugin entries in `openclaw.json`: `slack`, `github`, `diffs`, `google`. No
-  `plugins.allow` list is set, deliberately — a nonempty allow list is authoritative and would drop
-  the bundled `browser` plugin that section 3 verified.
+- [x] 5.1 Declare the plugin entries in `openclaw.json`: `slack`, `github`, `diffs`, `google`,
+  `duckduckgo`. No `plugins.allow` list is set, deliberately — a nonempty allow list is
+  authoritative and would drop the bundled `browser` plugin that section 3 verified.
 - [x] 5.2 Install the two that are not bundled with the image — `@openclaw/slack` and
-  `@openclaw/diffs` — from an init container, every boot.
+  `@openclaw/diffs` — from an init container, every boot. Verified in-cluster: all three installs
+  (with `@openclaw/duckduckgo-plugin`) report `Installed plugin: …`.
 - [x] 5.3 Pin the installs to the image's own channel tag. The plugin packages carry the same
   dist-tags as core, so `@extended-stable` matches the 2026.9.33 runtime; the bare name resolves to
   `@latest` (2026.10.4) and is refused with `requires plugin API >=2026.10.4`. Verified on the
@@ -82,6 +91,10 @@
   and the channel tag were settled.
 - [ ] 5.12 If authenticated or private GitHub access is ever wanted, mint a fine-grained PAT. The only
   PAT in the cluster is the admin one that `data/github-auth` and the GitHub MCP server share.
+- [x] 5.13 Install against an empty bootstrap config (`OPENCLAW_CONFIG_PATH=<state>/.bootstrap.json`):
+  the real config names the `duckduckgo` provider, which is invalid until that plugin exists, and
+  the installer refuses to run against an invalid config. Verified in-cluster: all three installs
+  report `Installed plugin`, then the real config validates.
 
 ## 6. Security findings
 

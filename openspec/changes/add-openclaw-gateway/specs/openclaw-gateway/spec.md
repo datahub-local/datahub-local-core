@@ -17,11 +17,12 @@ relationship is visible rather than buried in a default.
 
 ### Requirement: Liveness is asserted where the gateway is reachable
 
-Probes SHALL be `exec` probes that assert the JSON readiness body, not HTTP or TCP probes against the
-pod IP. The Control UI answers unknown paths with a catch-all 200, so a status-code check alone would
-report a broken gateway as healthy. The release binds `lan` (`0.0.0.0`) for Traefik, so an HTTP probe
-would connect — and still prove nothing. Each probe SHALL be explicitly enabled, because the chart
-drops an unenabled probe without failing the render.
+Probes SHALL be `exec` probes that assert the JSON body, not HTTP or TCP probes against the pod IP.
+The Control UI answers unknown paths with a catch-all 200, so a status-code check alone would report
+a broken gateway as healthy. Startup and readiness SHALL use `/startupz` (`ok === true`), which
+ignores channel health so one degraded channel account cannot evict a healthy gateway; liveness SHALL
+use `/healthz`. Each probe SHALL be explicitly enabled, because the chart drops an unenabled probe
+without failing the render.
 
 #### Scenario: A gateway that cannot answer is not called ready
 
@@ -127,8 +128,11 @@ purpose.
 The image SHALL be pinned by digest, and the plugin installs SHALL be pinned to exact versions the
 pinned image can load — at or above the plugin API floor, because a plugin install refuses silently:
 the CLI exits 0 while reporting `requires plugin API >=<version>`. A failed install SHALL be logged
-rather than silently tolerated. The declared plugin set SHALL NOT be expressed as a `plugins.allow`
-list, because that list is authoritative and would disable bundled plugins the deployment depends on.
+rather than silently tolerated. A first install SHALL NOT depend on a config that already names a
+plugin-provided provider — such a config is invalid until the plugin exists, and the installer
+refuses to run while the selected config is invalid — so installs SHALL run against an empty
+bootstrap config. The declared plugin set SHALL NOT be expressed as a `plugins.allow` list, because
+that list is authoritative and would disable bundled plugins the deployment depends on.
 
 #### Scenario: A declared plugin actually installs
 
@@ -174,8 +178,11 @@ but unauthenticated, and the missing key recorded as a task rather than substitu
 
 ### Requirement: The state directory outlives the pod
 
-The gateway SHALL persist its state on a claim, because image tags advance and a persisted state
-database carries the schema its writer created.
+The gateway SHALL persist config, state, plugins and the agent workspace on a claim, because image
+tags advance and a persisted state database carries the schema its writer created. They SHALL live in
+a subdirectory the container user creates and owns: the volume root is root-owned and the CLI
+tightens permissions on its state directory. `/tmp` SHALL be memory-backed so it carries the sticky
+bit the temp-workspace check requires.
 
 #### Scenario: Configuration survives a restart
 

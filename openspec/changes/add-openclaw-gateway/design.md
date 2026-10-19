@@ -31,18 +31,27 @@ out. So no RuntimeClass is set. The one untried lever is a second containerd han
 with `platform = "ptrace"` instead of the default `systrap`; the attempt was abandoned before the
 node restart it needs, so this is an open question rather than a finding.
 
-**Probe shape.** `exec`, not `httpGet`. The `exec` probe is the only one that asserts the JSON body
-(`ready === true`) rather than a status code — the Control UI answers unknown paths with a catch-all
-200, so a status-only check would pass against a broken gateway. That mattered doubly while the bind
-was loopback and a probe against the pod IP could never connect; with the non-loopback bind (below)
-an HTTP probe would connect but still prove nothing. In `app-template` a probe also needs
-`enabled: true`; omitting it drops the probe silently, which is how the first render came out.
+**Probe shape.** `exec`, not `httpGet`. The `exec` probe asserts the JSON body rather than a status
+code — the Control UI answers unknown paths with a catch-all 200, so a status-only check would pass
+against a broken gateway. Startup and readiness use `/startupz` (`ok === true`): it ignores channel
+health, so one degraded channel account cannot evict an otherwise healthy gateway, while startup
+sidecars still gate it. Liveness uses `/healthz` (`ok === true`). In `app-template` a probe also
+needs `enabled: true`; omitting it drops the probe silently, which is how the first render came out.
 
 **State-directory lifetime.** The gateway logs a ~315 s drain budget at startup
 (`drain=315000ms shutdown=325000ms`). Kubernetes' 30 s default grace period SIGKILLs it mid-drain and
 leaves an owner lease behind; the next start refuses with `failed to acquire gateway state ownership |
 Another Gateway owner lease is still active for this state directory`. This release sets
 `terminationGracePeriodSeconds: 360`.
+
+**State layout.** Config, state, plugins and the agent workspace live under
+`OPENCLAW_STATE_DIR=/home/node/.openclaw/data`, a subdirectory uid 1000 creates on the PVC. The
+local-path volume root is root-owned (fsGroup only sets the group) and the CLI `fchmod`s the state
+directory it uses, so pointing it at the volume root fails `plugins install` with
+`EPERM: fchmod`; an invalid config at that path then makes the gateway exit 78. `OPENCLAW_CONFIG_DIR`
+is not read — the state dir also locates `openclaw.json`. `/tmp` is memory-backed so it mounts
+`1777` (sticky): the CLI's temp-workspace check rejects a world-writable ancestor without the sticky
+bit, and a disk emptyDir arrives `2777`.
 
 **Browser.** The `-browser` variant bakes Playwright's Chromium at `~/.cache/ms-playwright`
 (`chromium-1243/chrome-linux64/chrome` on amd64, `chrome-linux-arm64` on arm64). It needs
@@ -59,8 +68,9 @@ away from the baked browser directory, which is why `executablePath` was needed 
 `agent model: litellm/opencode-go/deepseek-v4.1-flash` and an agent turn returns through the proxy
 (`status=200`). `request.allowPrivateNetwork: true` is set because the endpoint is RFC1918.
 
-**Plugins and the plugin-API floor.** Four plugins are declared: `slack`, `github`, `diffs`, `google`.
-`github` and `google` ship inside the image; the other two install from ClawHub at boot. That install
+**Plugins and the plugin-API floor.** Five plugins are declared: `slack`, `github`, `diffs`, `google`
+and `duckduckgo`. `github` and `google` ship inside the image; the other three install from ClawHub
+at boot. That install
 is what decides the image tag, and the answer is *not* "upgrade the image": the plugin packages carry
 the **same dist-tags as core**, so `@openclaw/diffs@extended-stable` installs cleanly on the
 2026.9.33 runtime while the bare name resolves to `@latest` (2026.10.4) and is refused with
@@ -83,6 +93,11 @@ a directory check is fragile; and the manifest id can differ from the package na
 (`@openclaw/brave-plugin` → id `brave`, `@openclaw/duckduckgo-plugin` → id `duckduckgo`), so config
 keys are not package names. The init container therefore installs on every boot; it asserts the
 `Installed plugin` line in each install's output and warns on a miss, but never fails the pod on it.
+
+**Plugin bootstrap.** The installs run against an empty `.bootstrap.json` (`OPENCLAW_CONFIG_PATH`):
+the real config names the `duckduckgo` provider, which is invalid until that plugin exists, and the
+installer refuses to run while the selected config is invalid. Verified in-cluster: all three pinned
+installs report `Installed plugin`, and `config validate` then passes on the real config.
 
 No `plugins.allow` list is set. That list is authoritative when non-empty, and adding it would drop
 the bundled `browser` plugin the evaluation proved working — the entries are declared under

@@ -67,6 +67,7 @@ configMaps:
               "slack": { "enabled": true },
               "github": { "enabled": true },
               "diffs": { "enabled": true },
+              "duckduckgo": { "enabled": true },
               "google": {
                 "enabled": true,
                 "config": {
@@ -137,13 +138,13 @@ configMaps:
           },
           "agents": {
             "defaults": {
-              "workspace": "~/.openclaw/workspace",
+              "workspace": "/home/node/.openclaw/data/workspace",
               "model": { "primary": "litellm/opencode-go/deepseek-v4.1-flash" }
             },
             "entries": {
               "default": {
                 "name": "OpenClaw Assistant",
-                "workspace": "~/.openclaw/workspace"
+                "workspace": "/home/node/.openclaw/data/workspace"
               }
             }
           }
@@ -186,15 +187,24 @@ controllers:
           - -c
           - |
             set -e
+            # The PVC root is root-owned (local-path + fsGroup only sets the
+            # group), and the CLI fchmods the state directory it uses. A
+            # subdirectory this user creates is owned by it, so the installs and
+            # the gateway both pass those checks. OPENCLAW_STATE_DIR also locates
+            # the config file - OPENCLAW_CONFIG_DIR is not read.
+            mkdir -p "$OPENCLAW_STATE_DIR/workspace" "$XDG_CACHE_HOME"
             # Seed-if-missing: the persisted copy owns config after first boot.
-            [ -f /home/node/.openclaw/openclaw.json ] || cp /config/openclaw.json /home/node/.openclaw/openclaw.json
-            mkdir -p /home/node/.openclaw/workspace
-            [ -f /home/node/.openclaw/workspace/AGENTS.md ] || cp /config/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
+            [ -f "$OPENCLAW_STATE_DIR/openclaw.json" ] || cp /config/openclaw.json "$OPENCLAW_STATE_DIR/openclaw.json"
+            [ -f "$OPENCLAW_STATE_DIR/workspace/AGENTS.md" ] || cp /config/AGENTS.md "$OPENCLAW_STATE_DIR/workspace/AGENTS.md"
             # slack, diffs and duckduckgo are not bundled with the image; github and
             # google are. Pin the exact version behind the image's channel tag:
             # @extended-stable resolved to 2026.9.33 when this was written (the
             # image's plugin API), while the bare name resolves to @latest and is
             # refused ("requires plugin API >=2026.10.4").
+            # Install against an empty bootstrap config: a config that names a
+            # plugin-provided provider is invalid until that plugin exists, and the
+            # installer refuses to run while the selected config is invalid.
+            [ -f "$OPENCLAW_STATE_DIR/.bootstrap.json" ] || echo '{}' > "$OPENCLAW_STATE_DIR/.bootstrap.json"
             # Reinstall every boot on purpose: the CLI exits 0 even when it
             # refuses a plugin, and the installs land in npm/projects/<id>, so
             # neither the exit code nor a directory check can be trusted. Assert
@@ -205,7 +215,8 @@ controllers:
               @openclaw/diffs@2026.9.33 \
               @openclaw/duckduckgo-plugin@2026.9.33
             do
-              out=$(node /app/dist/index.js plugins install "$p" 2>&1) || true
+              out=$(OPENCLAW_CONFIG_PATH="$OPENCLAW_STATE_DIR/.bootstrap.json" \
+                node /app/dist/index.js plugins install "$p" 2>&1) || true
               printf '%s\n' "$out" | sed "s|^|[plugins] $p: |"
               printf '%s\n' "$out" | grep -q 'Installed plugin' || \
                 echo "[plugins] WARNING: $p did not report an install" >&2
@@ -213,10 +224,12 @@ controllers:
         env:
           HOME:
             value: /home/node
-          OPENCLAW_CONFIG_DIR:
-            value: /home/node/.openclaw
+          # The state dir also locates the config file; everything the CLI owns
+          # lives under the 1000-owned data/ subdirectory.
+          OPENCLAW_STATE_DIR:
+            value: /home/node/.openclaw/data
           XDG_CACHE_HOME:
-            value: /home/node/.openclaw/.cache
+            value: /home/node/.openclaw/data/.cache
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
@@ -238,11 +251,11 @@ controllers:
         env:
           HOME:
             value: /home/node
-          OPENCLAW_CONFIG_DIR:
-            value: /home/node/.openclaw
+          OPENCLAW_STATE_DIR:
+            value: /home/node/.openclaw/data
           # Private SQLite snapshots need a writable cache; the rootfs is read-only.
           XDG_CACHE_HOME:
-            value: /home/node/.openclaw/.cache
+            value: /home/node/.openclaw/data/.cache
           NODE_ENV:
             value: production
         # Read the secrets wholesale rather than key by key. Everything in
@@ -259,7 +272,10 @@ controllers:
           - secret: mcp-slack-token
         # exec, not httpGet: it asserts the JSON body, which a status check cannot -
         # the Control UI answers unknown paths with a catch-all 200, so an HTTP
-        # probe against the (now non-loopback) bind would connect but prove nothing.
+        # probe against the (non-loopback) bind would connect but prove nothing.
+        # Admission uses /startupz (image >=2026.8.1): it ignores channel health,
+        # so one degraded channel account cannot evict a healthy gateway, while
+        # startup sidecars still gate it. Liveness stays /healthz.
         probes:
           startup:
             enabled: true
@@ -269,7 +285,7 @@ controllers:
                 command:
                   - node
                   - -e
-                  - "require('http').get('http://127.0.0.1:18789/readyz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ready === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
+                  - "require('http').get('http://127.0.0.1:18789/startupz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ok === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
               periodSeconds: 10
               timeoutSeconds: 10
               failureThreshold: 120
@@ -281,7 +297,7 @@ controllers:
                 command:
                   - node
                   - -e
-                  - "require('http').get('http://127.0.0.1:18789/readyz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ready === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
+                  - "require('http').get('http://127.0.0.1:18789/startupz', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { process.exit(r.statusCode < 400 && JSON.parse(b).ok === true ? 0 : 1); } catch { process.exit(1); } }); }).on('error', () => process.exit(1))"
               initialDelaySeconds: 15
               periodSeconds: 10
               timeoutSeconds: 10
@@ -330,6 +346,11 @@ persistence:
         readOnly: true
   tmp:
     type: emptyDir
+    # Memory-backed so /tmp mounts as 1777 (sticky). The CLI's temp-workspace
+    # check rejects a world-writable ancestor without the sticky bit, and a disk
+    # emptyDir arrives as 2777.
+    medium: Memory
+    sizeLimit: 512Mi
     globalMounts:
       - path: /tmp
   # Chromium needs more than the 64Mi pod default for /dev/shm.
