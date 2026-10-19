@@ -206,7 +206,7 @@ controllers:
               @openclaw/duckduckgo-plugin@2026.9.33
             do
               out=$(node /app/dist/index.js plugins install "$p" 2>&1) || true
-              printf '%s\n' "$out" | sed "s/^/[plugins] $p: /"
+              printf '%s\n' "$out" | sed "s|^|[plugins] $p: |"
               printf '%s\n' "$out" | grep -q 'Installed plugin' || \
                 echo "[plugins] WARNING: $p did not report an install" >&2
             done
