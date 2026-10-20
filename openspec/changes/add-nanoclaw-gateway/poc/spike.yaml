@@ -1,0 +1,214 @@
+# Live PoC for openspec/changes/add-nanoclaw-gateway.
+# Apply only after the two images are imported on datahublocal-amd-1 and the
+# LiteLLM key Secret exists in this namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spike-nanoclaw
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nanoclaw-state
+  namespace: spike-nanoclaw
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nanoclaw-host
+  namespace: spike-nanoclaw
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nanoclaw-pods
+  namespace: spike-nanoclaw
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nanoclaw-pods
+  namespace: spike-nanoclaw
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nanoclaw-pods
+subjects:
+  - kind: ServiceAccount
+    name: nanoclaw-host
+    namespace: spike-nanoclaw
+---
+# ConfigMap litellm-proxy is created from poc/litellm-proxy.js:
+#   kubectl -n spike-nanoclaw create configmap litellm-proxy --from-file=litellm-proxy.js
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-proxy
+  namespace: spike-nanoclaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: litellm-proxy }
+  template:
+    metadata:
+      labels: { app: litellm-proxy }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: proxy
+          image: node:22-slim
+          imagePullPolicy: IfNotPresent
+          command: ["node", "/app/litellm-proxy.js"]
+          ports:
+            - containerPort: 4001
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: script
+              mountPath: /app
+              readOnly: true
+            - name: key
+              mountPath: /etc/nanoclaw
+              readOnly: true
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 200m, memory: 128Mi }
+      volumes:
+        - name: script
+          configMap: { name: litellm-proxy }
+        - name: key
+          secret: { secretName: litellm-key }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-proxy
+  namespace: spike-nanoclaw
+spec:
+  selector: { app: litellm-proxy }
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nanoclaw-poc-host
+  namespace: spike-nanoclaw
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels: { app: nanoclaw-poc-host }
+    spec:
+      serviceAccountName: nanoclaw-host
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: datahublocal-amd-1
+      securityContext:
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: seed
+          image: nanoclaw-host:poc
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-lc"]
+          args:
+            - |
+              set -e
+              # Sync code every run so a rebuilt host image is picked up; state
+              # directories survive.
+              tar -C /opt/nanoclaw --exclude=node_modules --exclude=data --exclude=groups --exclude=store \
+                -cf - . | tar -C /data/nanoclaw -xf -
+              chown -R 1000:1000 /data/nanoclaw
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - { name: state, mountPath: /data/nanoclaw }
+      containers:
+        - name: host
+          image: nanoclaw-host:poc
+          imagePullPolicy: IfNotPresent
+          workingDir: /data/nanoclaw
+          command: ["bash", "-lc"]
+          args:
+            - |
+              set -e
+              ln -sfn /opt/nanoclaw/node_modules node_modules
+              pnpm exec tsx scripts/test-v2-host.ts
+          env:
+            - { name: HOME, value: /tmp }
+            - { name: ASSISTANT_NAME, value: Andy }
+            - { name: TZ, value: Europe/Amsterdam }
+            - { name: NANOCLAW_RUNTIME_DRIVER, value: kubernetes }
+            - { name: NANOCLAW_K8S_NAMESPACE, value: spike-nanoclaw }
+            - { name: NANOCLAW_K8S_ROOT, value: /data/nanoclaw }
+            - { name: NANOCLAW_K8S_PVC, value: nanoclaw-state }
+            - { name: NANOCLAW_K8S_NODE_NAME, value: datahublocal-amd-1 }
+            - { name: NANOCLAW_GATEWAY_PROVIDER, value: litellm-proxy }
+            - { name: NANOCLAW_LITELLM_PROXY_URL, value: "http://litellm-proxy.spike-nanoclaw.svc.cluster.local:4001" }
+            - { name: NANOCLAW_DEFAULT_MODEL, value: opencode-go/deepseek-v4.1-flash }
+            - { name: CONTAINER_IMAGE, value: nanoclaw-agent:poc }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: state, mountPath: /data/nanoclaw }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: "1", memory: 1Gi }
+      volumes:
+        - name: state
+          persistentVolumeClaim: { claimName: nanoclaw-state }
+---
+# k3s enforces NetworkPolicy through its built-in controller. The agent may
+# resolve DNS and reach the credential proxy; nothing else.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nanoclaw-agent-egress
+  namespace: spike-nanoclaw
+spec:
+  podSelector:
+    matchLabels:
+      nanoclaw-role: agent
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - podSelector:
+            matchLabels:
+              app: litellm-proxy
+      ports:
+        - { protocol: TCP, port: 4001 }

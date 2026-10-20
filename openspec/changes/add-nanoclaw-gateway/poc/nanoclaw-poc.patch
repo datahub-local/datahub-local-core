@@ -1,0 +1,608 @@
+diff --git a/.dockerignore b/.dockerignore
+new file mode 100644
+index 0000000..c572884
+--- /dev/null
++++ b/.dockerignore
+@@ -0,0 +1,7 @@
++node_modules
++.git
++data
++groups
++store
++logs
++*.log
+diff --git a/Dockerfile.poc b/Dockerfile.poc
+new file mode 100644
+index 0000000..182f281
+--- /dev/null
++++ b/Dockerfile.poc
+@@ -0,0 +1,24 @@
++# PoC host image: the fork, built once, then copied onto the PVC at first boot.
++# Not part of upstream; see openspec/changes/add-nanoclaw-gateway.
++FROM node:22-slim
++
++ARG PNPM_VERSION=10.34.5
++ARG KUBECTL_VERSION=v1.36.2
++
++RUN apt-get update && apt-get install -y --no-install-recommends \
++      ca-certificates curl git python3 make g++ \
++    && rm -rf /var/lib/apt/lists/* \
++    && npm install -g "pnpm@${PNPM_VERSION}" \
++    && curl -fsSL -o /usr/local/bin/kubectl \
++       "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
++    && chmod +x /usr/local/bin/kubectl \
++    && kubectl version --client
++
++WORKDIR /opt/nanoclaw
++COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
++RUN pnpm install --frozen-lockfile
++COPY . .
++RUN pnpm build
++
++# The host runs as uid 1000; /opt stays root-owned and read-only to it.
++RUN chmod -R a+rX /opt/nanoclaw
+diff --git a/scripts/test-v2-host.ts b/scripts/test-v2-host.ts
+index c811145..caef3f3 100644
+--- a/scripts/test-v2-host.ts
++++ b/scripts/test-v2-host.ts
+@@ -9,6 +9,10 @@
+  * Usage: pnpm exec tsx scripts/test-v2-host.ts
+  */
+ import Database from 'better-sqlite3';
++
++// The sqlite mailbox is registered as a side effect; the host entry point
++// imports this too, but this script does not go through it.
++import '../src/mailbox/compose.js';
+ import fs from 'fs';
+ import path from 'path';
+ 
+@@ -23,6 +27,7 @@ import { initDb } from '../src/db/connection.js';
+ import { runMigrations } from '../src/db/migrations/index.js';
+ import { createAgentGroup } from '../src/db/agent-groups.js';
+ import { createMessagingGroup, createMessagingGroupAgent } from '../src/db/messaging-groups.js';
++import { ensureContainerConfig } from '../src/db/container-configs.js';
+ 
+ const centralDb = await initDb(path.join(TEST_DIR, 'v2.db'));
+ await runMigrations(centralDb);
+@@ -51,6 +56,8 @@ await createMessagingGroup({
+   created_at: new Date().toISOString(),
+ });
+ 
++await ensureContainerConfig('ag-e2e');
++
+ await createMessagingGroupAgent({
+   id: 'mga-e2e',
+   messaging_group_id: 'mg-e2e',
+@@ -82,7 +89,7 @@ await routeInbound({
+     kind: 'chat',
+     content: JSON.stringify({
+       sender: 'Alex',
+-      text: 'Say "E2E works!" and nothing else. Do not use any tools.',
++      text: 'Reply with exactly <message to="e2e-test-channel">E2E works!</message> and nothing else. Do not use any tools.',
+     }),
+     timestamp: new Date().toISOString(),
+   },
+diff --git a/src/drivers/installed.ts b/src/drivers/installed.ts
+index 2b14e1e..bc75898 100644
+--- a/src/drivers/installed.ts
++++ b/src/drivers/installed.ts
+@@ -1,8 +1,9 @@
+-// Out-of-tree session drivers self-register on import. Drivers that ship in
+-// this tree (docker) register in `index.ts` and do not appear here.
+-//
+-// Skills add a driver by appending one import line below — the same shape as
+-// the provider container-config barrel (`src/providers/index.ts`). Append-only
+-// on purpose: an overlay that instead rewrote the construction expression in
+-// `index.ts` would own a patch of this tree's internals, and every later edit
+-// to selection would silently invalidate it.
++/**
++ * Overlay hook: drivers append one import (and their registration) here.
++ * See src/drivers/index.ts for why this file exists separately from the registry.
++ */
++import { KubernetesSessionDriver } from './kubernetes-driver.js';
++import { registerSessionDriver } from './driver-registry.js';
++
++// PoC overlay — see openspec/changes/add-nanoclaw-gateway in datahub-local-core.
++registerSessionDriver('kubernetes', (policy) => new KubernetesSessionDriver(policy));
+diff --git a/src/drivers/kubernetes-driver.ts b/src/drivers/kubernetes-driver.ts
+new file mode 100644
+index 0000000..72bdfce
+--- /dev/null
++++ b/src/drivers/kubernetes-driver.ts
+@@ -0,0 +1,433 @@
++/**
++ * Kubernetes session driver (PoC).
++ *
++ * One Pod per session, created through `kubectl` against the in-cluster
++ * ServiceAccount. Mounts are subPaths of a single session-state PVC, so the
++ * agent sees only the paths the spec names and the host and the Pod open the
++ * same SQLite files.
++ *
++ * Deviations from the Docker driver, all deliberate and recorded in the
++ * OpenSpec change `add-nanoclaw-gateway`:
++ * - `prepare()` creates a Pod that starts immediately; `start()` is a no-op,
++ *   because Kubernetes cannot create-without-starting.
++ * - `watchSessions()` polls the list. There is no raw watch stream here; the
++ *   seam treats events as hints, so polling is a legal realization.
++ * - images are pre-imported into the node's containerd store, so
++ *   `imageBuild` is false and `imagePullPolicy` is `IfNotPresent`.
++ */
++import { createHash } from 'crypto';
++import path from 'path';
++
++import { log } from '../log.js';
++
++import { realCli, validateRuntimeName, type Cli } from './cli.js';
++import {
++  LABELS,
++  asFailureError,
++  labelsForKey,
++  specInvalid,
++  validateSpec,
++  type ContainerSpec,
++  type DriverCapabilities,
++  type MountPolicy,
++  type MountSpec,
++  type SessionDriver,
++  type SessionEvent,
++  type SessionExecSpec,
++  type SessionFailure,
++  type SessionHandle,
++  type SessionKey,
++  type SessionPhase,
++  type SessionSnapshot,
++  type SessionSpec,
++  type SessionStatus,
++  type SessionWatch,
++} from './types.js';
++
++export interface KubernetesDriverOptions extends MountPolicy {
++  cli?: Cli;
++  namespace?: string;
++  /** Absolute path where the session-state PVC is mounted in the host. */
++  volumeRoot?: string;
++  volumeClaim?: string;
++  /** Pin every Pod to one node so the RWO volume stays mountable. */
++  nodeName?: string;
++  imagePullPolicy?: 'IfNotPresent' | 'Never';
++  reapAfterMs?: number;
++}
++
++const DEFAULT_NAMESPACE = 'automation';
++const DEFAULT_VOLUME_ROOT = '/data/nanoclaw';
++const WATCH_INTERVAL_MS = 3_000;
++
++interface PodDoc {
++  metadata: { name: string; labels?: Record<string, string>; creationTimestamp?: string };
++  spec?: { nodeName?: string };
++  status?: {
++    phase?: string;
++    containerStatuses?: Array<{
++      name?: string;
++      state?: { terminated?: { exitCode?: number; reason?: string } };
++    }>;
++  };
++}
++
++export class KubernetesSessionDriver implements SessionDriver {
++  readonly kind = 'kubernetes';
++  readonly #cli: Cli;
++  readonly #policy: MountPolicy;
++  readonly #namespace: string;
++  readonly #volumeRoot: string;
++  readonly #volumeClaim: string;
++  readonly #nodeName: string | undefined;
++  readonly #pullPolicy: string;
++  readonly #reapAfterMs: number;
++  readonly #watches = new Map<string, () => void>();
++
++  constructor(opts: KubernetesDriverOptions) {
++    this.#cli = opts.cli ?? realCli('kubectl');
++    this.#policy = opts;
++    this.#namespace = opts.namespace ?? process.env.NANOCLAW_K8S_NAMESPACE ?? DEFAULT_NAMESPACE;
++    this.#volumeRoot = path.resolve(opts.volumeRoot ?? process.env.NANOCLAW_K8S_ROOT ?? DEFAULT_VOLUME_ROOT);
++    this.#volumeClaim = opts.volumeClaim ?? process.env.NANOCLAW_K8S_PVC ?? `${this.#namespace}-nanoclaw-state`;
++    this.#nodeName = opts.nodeName ?? process.env.NANOCLAW_K8S_NODE_NAME ?? undefined;
++    this.#pullPolicy = opts.imagePullPolicy ?? 'IfNotPresent';
++    this.#reapAfterMs = opts.reapAfterMs ?? 15 * 60_000;
++  }
++
++  capabilities(): DriverCapabilities {
++    return {
++      isolationTiers: ['container'],
++      admissionEnforced: false,
++      networkPolicy: 'declarative',
++      encryptedVolumes: false,
++      unrealized: ['pidsLimit', 'shmSizeMb'],
++      sharedNetworkNamespace: false,
++      auxiliaryContainers: true,
++      imageBuild: false,
++    };
++  }
++
++  async ensureReady(): Promise<void> {
++    // Fails fast on a missing ServiceAccount, namespace or RBAC rule. The host
++    // is useless without the ability to create Pods, so this is fatal.
++    this.#run(['get', 'pods', '-n', this.#namespace, '--request-timeout=10s']);
++  }
++
++  async prepare(spec: SessionSpec): Promise<SessionHandle> {
++    validateSpec(spec, this.#policy, this.capabilities());
++    const name = podName(spec);
++    validateRuntimeName(name, 'pod');
++
++    const existing = this.#getPod(name);
++    if (existing) {
++      this.#assertOwned(existing, spec);
++      return new KubernetesHandle(spec.key, name, this.#cli, this.#namespace, this.#emit);
++    }
++
++    const manifest = this.#podManifest(spec, name);
++    try {
++      this.#run(['create', '-f', '-'], JSON.stringify(manifest));
++    } catch (error) {
++      // A concurrent prepare can win the create; adopt the winner if it is ours.
++      const raced = this.#getPod(name);
++      if (!raced) throw asFailureError(normalizeKubectlError(error));
++      this.#assertOwned(raced, spec);
++    }
++    log.info('Session Pod created', { pod: name, namespace: this.#namespace });
++    return new KubernetesHandle(spec.key, name, this.#cli, this.#namespace, this.#emit);
++  }
++
++  async listSessions(installSlug: string): Promise<SessionSnapshot[]> {
++    let doc: { items?: PodDoc[] };
++    try {
++      doc = JSON.parse(
++        this.#run([
++          'get',
++          'pods',
++          '-n',
++          this.#namespace,
++          '-l',
++          `${LABELS.install}=${installSlug}`,
++          '-o',
++          'json',
++        ]),
++      );
++    } catch (error) {
++      throw asFailureError(normalizeKubectlError(error));
++    }
++    return (doc.items ?? []).flatMap((pod) => {
++      const labels = pod.metadata.labels ?? {};
++      const group = labels[LABELS.group];
++      const sessionId = labels[LABELS.session];
++      if (!group || !sessionId) return [];
++      const key: SessionKey = { installSlug, agentGroupId: group, sessionId };
++      return [
++        {
++          handle: new KubernetesHandle(key, pod.metadata.name, this.#cli, this.#namespace, this.#emit),
++          phase: podPhase(pod),
++        },
++      ];
++    });
++  }
++
++  watchSessions(installSlug: string, onEvent: (event: SessionEvent) => void): SessionWatch {
++    const key = installSlug;
++    if (this.#watches.has(key)) {
++      return { stop: this.#watches.get(key)! };
++    }
++    const last = new Map<string, SessionPhase>();
++    const timer = setInterval(() => {
++      this.listSessions(installSlug)
++        .then((snapshots) => {
++          for (const snapshot of snapshots) {
++            const id = `${snapshot.handle.key.agentGroupId}/${snapshot.handle.key.sessionId}`;
++            const before = last.get(id);
++            last.set(id, snapshot.phase);
++            if (before === snapshot.phase) continue;
++            onEvent({
++              key: snapshot.handle.key,
++              kind: snapshot.phase === 'terminal' ? 'terminal' : 'phase',
++            });
++          }
++        })
++        .catch((error) => log.warn('Kubernetes session watch poll failed', { error: String(error) }));
++    }, WATCH_INTERVAL_MS);
++    timer.unref?.();
++    const stop = (): void => {
++      clearInterval(timer);
++      this.#watches.delete(key);
++    };
++    this.#watches.set(key, stop);
++    return { stop };
++  }
++
++  async reapResidue(installSlug: string): Promise<void> {
++    const snapshots = await this.listSessions(installSlug);
++    for (const snapshot of snapshots) {
++      if (snapshot.phase !== 'terminal') continue;
++      const pod = this.#getPod(snapshot.handle.name);
++      if (!pod?.metadata.creationTimestamp) continue;
++      const age = Date.now() - Date.parse(pod.metadata.creationTimestamp);
++      if (age < this.#reapAfterMs) continue;
++      try {
++        this.#run(['delete', 'pod', snapshot.handle.name, '-n', this.#namespace, '--wait=false']);
++      } catch (error) {
++        log.warn('Could not reap session Pod', { pod: snapshot.handle.name, error: String(error) });
++      }
++    }
++  }
++
++  #podManifest(spec: SessionSpec, name: string): Record<string, unknown> {
++    const runAs = spec.runAs ?? { uid: 1000, gid: 1000 };
++    return {
++      apiVersion: 'v1',
++      kind: 'Pod',
++      metadata: {
++        name,
++        namespace: this.#namespace,
++        labels: sanitizeLabels({ ...spec.labels, ...labelsForKey(spec.key, 'agent') }),
++      },
++      spec: {
++        restartPolicy: 'Never',
++        automountServiceAccountToken: false,
++        terminationGracePeriodSeconds: spec.stopGraceSeconds,
++        ...(this.#nodeName ? { nodeSelector: { 'kubernetes.io/hostname': this.#nodeName } } : {}),
++        securityContext: {
++          runAsNonRoot: runAs.uid !== 0,
++          runAsUser: runAs.uid,
++          runAsGroup: runAs.gid,
++          fsGroup: runAs.gid,
++          seccompProfile: { type: 'RuntimeDefault' },
++        },
++        containers: spec.containers.map((container) => this.#container(container, spec)),
++        volumes: this.#volumeList(spec),
++      },
++    };
++  }
++
++  #container(container: ContainerSpec, spec: SessionSpec): Record<string, unknown> {
++    const mounts = container.mounts.map((mount) => this.#mount(mount));
++    const env = {
++      ...container.env,
++      ...(container.contributedEnv ?? {}),
++    };
++    return {
++      name: container.role === 'agent' ? 'agent' : container.role,
++      image: container.image,
++      imagePullPolicy: this.#pullPolicy,
++      ...(container.command?.length ? { command: container.command } : {}),
++      ...(container.args?.length ? { args: container.args } : {}),
++      env: Object.entries(env).map(([name, value]) => ({ name, value })),
++      volumeMounts: mounts.map((entry) => entry.volumeMount),
++      resources: {
++        ...(spec.resources.memoryMb
++          ? { requests: { memory: `${spec.resources.memoryMb}Mi` }, limits: { memory: `${spec.resources.memoryMb}Mi` } }
++          : {}),
++        ...(spec.resources.cpus ? { limits: { cpu: spec.resources.cpus } } : {}),
++      },
++      securityContext: {
++        allowPrivilegeEscalation: false,
++        privileged: false,
++        capabilities: { drop: ['ALL'] },
++        // The agent image writes /tmp and $HOME; upstream's Docker path leaves
++        // the agent rootfs writable for the same reason. Auxiliary roles get the
++        // read-only rootfs.
++        ...(container.role === 'agent' ? {} : { readOnlyRootFilesystem: true }),
++      },
++    };
++  }
++
++  #mount(mount: MountSpec): { volume: Record<string, unknown>; volumeMount: Record<string, unknown> } {
++    const rel = this.#subPath(mount.hostPath);
++    const name = `m-${createHash('sha256').update(rel).digest('hex').slice(0, 10)}`;
++    return {
++      volume: { name, persistentVolumeClaim: { claimName: this.#volumeClaim } },
++      volumeMount: {
++        name,
++        mountPath: mount.containerPath,
++        subPath: rel,
++        readOnly: mount.mode === 'ro',
++      },
++    };
++  }
++
++  #subPath(hostPath: string): string {
++    const rel = path.relative(this.#volumeRoot, hostPath);
++    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
++      throw specInvalid(
++        `mount ${hostPath} is outside the session-state volume root ${this.#volumeRoot}; ` +
++          'the Kubernetes driver can only realize paths on that volume',
++      );
++    }
++    return rel;
++  }
++
++  /** Volumes are deduped per Pod: a subPath mounted twice needs one volume. */
++  #volumeList(spec: SessionSpec): Record<string, unknown>[] {
++    const byName = new Map<string, Record<string, unknown>>();
++    for (const container of spec.containers) {
++      for (const mount of container.mounts) {
++        const entry = this.#mount(mount);
++        byName.set(String(entry.volume.name), entry.volume);
++      }
++    }
++    return [...byName.values()];
++  }
++
++  #getPod(name: string): PodDoc | null {
++    try {
++      return JSON.parse(this.#run(['get', 'pod', name, '-n', this.#namespace, '-o', 'json']));
++    } catch {
++      return null;
++    }
++  }
++
++  #assertOwned(pod: PodDoc, spec: SessionSpec): void {
++    const labels = pod.metadata.labels ?? {};
++    const owned =
++      labels[LABELS.install] === spec.key.installSlug &&
++      labels[LABELS.group] === spec.key.agentGroupId &&
++      labels[LABELS.session] === spec.key.sessionId;
++    if (!owned) throw specInvalid(`pod ${pod.metadata.name} exists but does not carry this session's labels`);
++  }
++
++  #emit = (event: SessionEvent): void => {
++    // The handle's terminal event is also observed by the driver-level poll,
++    // which is the single source the hub subscribes to.
++    log.debug('Session Pod terminal', { session: event.key.sessionId });
++  };
++
++  #run(args: string[], input?: string): string {
++    return this.#cli.run(args, { input, timeoutMs: 30_000 });
++  }
++}
++
++class KubernetesHandle implements SessionHandle {
++  constructor(
++    readonly key: SessionKey,
++    readonly name: string,
++    private readonly cli: Cli,
++    private readonly namespace: string,
++    private readonly emit: (event: SessionEvent) => void,
++  ) {}
++
++  /** The Pod was created running; see the driver's prepare()/start() note. */
++  async start(): Promise<void> {
++    return;
++  }
++
++  async status(): Promise<SessionStatus> {
++    let pod: PodDoc;
++    try {
++      pod = JSON.parse(this.cli.run(['get', 'pod', this.name, '-n', this.namespace, '-o', 'json']));
++    } catch {
++      return { phase: 'stopped' };
++    }
++    const phase = pod.status?.phase;
++    if (phase === 'Pending') return { phase: 'preparing' };
++    if (phase === 'Running') return { phase: 'running' };
++    if (phase === 'Succeeded') return { phase: 'stopped' };
++    if (phase === 'Failed') {
++      const exitCode = pod.status?.containerStatuses?.find((c) => c.state?.terminated)?.state?.terminated
++        ?.exitCode;
++      this.emit({ key: this.key, kind: 'terminal' });
++      return {
++        phase: 'failed',
++        failure: { kind: 'started-then-died', retryable: false, ...(exitCode != null ? { exitCode } : {}) },
++      };
++    }
++    return { phase: 'preparing' };
++  }
++
++  async stop(reason: string): Promise<void> {
++    log.info('Deleting session Pod', { pod: this.name, reason });
++    try {
++      this.cli.run(['delete', 'pod', this.name, '-n', this.namespace, '--ignore-not-found', '--wait=false']);
++    } catch (error) {
++      throw asFailureError(normalizeKubectlError(error));
++    }
++  }
++
++  execSpec(command: string[]): SessionExecSpec {
++    const base = ['exec', '-n', this.namespace];
++    return {
++      bin: 'kubectl',
++      argsTty: [...base, '-it', this.name, '--', ...command],
++      argsPlain: [...base, '-i', this.name, '--', ...command],
++    };
++  }
++}
++
++function podName(spec: Pick<SessionSpec, 'key'>): string {
++  const raw = `ncl-${spec.key.installSlug}-${spec.key.sessionId}`.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
++  if (raw.length <= 63) return raw;
++  const hash = createHash('sha256').update(`${spec.key.installSlug} ${spec.key.sessionId}`).digest('hex').slice(0, 8);
++  return `${raw.slice(0, 54)}-${hash}`.replace(/-+$/g, '');
++}
++
++function podPhase(pod: PodDoc): SessionPhase {
++  const phase = pod.status?.phase;
++  if (phase === 'Running') return 'running';
++  if (phase === 'Pending') return 'starting';
++  return 'terminal';
++}
++
++/** Kubernetes label values are stricter than the seam's; the canonical four already pass. */
++function sanitizeLabels(labels: Record<string, string>): Record<string, string> {
++  const out: Record<string, string> = {};
++  for (const [key, value] of Object.entries(labels)) {
++    if (!/^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$/.test(key) || key.length > 63) continue;
++    if (!value || value.length > 63 || !/^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$/.test(value)) continue;
++    out[key] = value;
++  }
++  return out;
++}
++
++function normalizeKubectlError(error: unknown): SessionFailure {
++  const text = error instanceof Error ? error.message : String(error);
++  if (/Forbidden|cannot (create|get|list|delete)/i.test(text)) {
++    return { kind: 'denied-by-policy', retryable: false, detail: text };
++  }
++  return { kind: 'runtime-unavailable', retryable: true };
++}
+diff --git a/src/gateway-providers/installed.ts b/src/gateway-providers/installed.ts
+index fd0de45..3cdefa2 100644
+--- a/src/gateway-providers/installed.ts
++++ b/src/gateway-providers/installed.ts
+@@ -1,7 +1,4 @@
+ /**
+- * The barrel overlays append their gateway provider's registration to — one
+- * appended `import './x.js';` and one `registerGatewayProvider(...)` call in
+- * the imported file, the same shape as the driver barrel (`drivers/installed.ts`)
+- * and the provider container-config barrel. Nothing outside this directory is
+- * rewritten to install a gateway.
++ * Overlay hook: gateway providers append one import here.
+  */
++import './litellm-proxy.js';
+diff --git a/src/gateway-providers/litellm-proxy.ts b/src/gateway-providers/litellm-proxy.ts
+new file mode 100644
+index 0000000..da0ccc8
+--- /dev/null
++++ b/src/gateway-providers/litellm-proxy.ts
+@@ -0,0 +1,43 @@
++/**
++ * LiteLLM proxy gateway provider (PoC).
++ *
++ * Contributes no credentials. Agents get a placeholder token and the URL of
++ * the in-cluster forwarder, which holds the LiteLLM key and adds it upstream.
++ * This keeps `validateSpec`'s "no credential values in env" rule intact
++ * instead of patching it for the PoC.
++ */
++import { registerGatewayProvider } from './gateway-provider-registry.js';
++
++const proxyUrl = process.env.NANOCLAW_LITELLM_PROXY_URL?.trim() || 'http://nanoclaw-litellm-proxy:4001';
++
++registerGatewayProvider({
++  kind: 'litellm-proxy',
++  agentSkills: [],
++  sessions: {
++    async ensure() {
++      return {
++        contribution: {
++          env: {
++            ANTHROPIC_BASE_URL: proxyUrl,
++            // The forwarder overwrites both headers. The value only has to be
++            // present; it is never a credential.
++            ANTHROPIC_AUTH_TOKEN: 'placeholder',
++            ANTHROPIC_API_KEY: 'placeholder',
++          },
++          networkAccess: { endpoint: proxyUrl, target: { kind: 'host' } },
++        },
++        async release() {
++          /* nothing per-session */
++        },
++      };
++    },
++    reapOrphans() {
++      /* nothing install-wide */
++    },
++  },
++  approvals: {
++    async subscribe() {
++      /* no approval surface in the PoC */
++    },
++  },
++});
