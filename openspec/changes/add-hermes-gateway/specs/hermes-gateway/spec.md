@@ -50,16 +50,44 @@ s6-overlay's init runs from it.
 - **THEN** the main container sets `readOnlyRootFilesystem: true`
 - **AND** `/run` and `/tmp` are the only writable memory-backed mounts besides `/opt/data`
 
-### Requirement: Nothing on the network can reach the gateway
+### Requirement: The only inbound surface is the OIDC-gated dashboard
 
-The release SHALL NOT create an IngressRoute, a public Service, a dashboard, an API server, or a
-homepage entry. Slack SHALL use Socket Mode, which is an outbound connection.
+The release SHALL expose the chart's management dashboard through one Traefik `IngressRoute` at
+`automation-hermes.<gateway_hostname>`, backed by the release's Service on port 9119. The API server,
+the webhook receiver and every other listener SHALL stay disabled. The dashboard SHALL authenticate
+against dex (`dashboard.auth.provider: oidc`, client `hermes`), because upstream fails closed without
+a provider, and SHALL set `public_url` and `trusted_proxies` so the callback origin matches the
+registered redirect URI and the session cookies are marked `Secure`.
 
-#### Scenario: No inbound route exists
+#### Scenario: The dashboard is the only route
 
 - **WHEN** cluster resources for the release are listed
-- **THEN** there is no IngressRoute and no externally reachable Service
-- **AND** Slack messages still arrive over the outbound socket
+- **THEN** there is exactly one IngressRoute, pointing at the dashboard Service port
+- **AND** no API server or webhook listener is enabled
+
+#### Scenario: Sign-in goes through dex
+
+- **WHEN** the dashboard origin is opened without a session
+- **THEN** it redirects to the sign-in page and the callback returns through dex
+- **AND** `/api/env` and `/api/config` answer 401 unauthenticated
+
+#### Scenario: Nothing else reaches the pod
+
+- **WHEN** a connection to port 9119 arrives from an address outside Traefik's node network
+- **THEN** the NetworkPolicy denies it
+
+### Requirement: The dex client names the dashboard callback
+
+The dex staticClient `hermes` SHALL list exactly the dashboard callback
+`https://automation-hermes.<gateway_hostname>/auth/callback` and SHALL reuse the shared client
+secret already used by the other dex clients. The dashboard SHALL read that secret from
+`HERMES_DASHBOARD_OIDC_CLIENT_SECRET`, never from `config.yaml`, which renders into a ConfigMap.
+
+#### Scenario: The callback is registered
+
+- **WHEN** dex is asked to complete a login started from the dashboard origin
+- **THEN** the callback URI matches the registered entry and the login completes
+- **AND** the client secret reaches the Pod only as an environment variable
 
 ### Requirement: Egress is limited to DNS, LiteLLM, and HTTPS
 
@@ -82,13 +110,18 @@ hostname.
 ### Requirement: Credentials come from existing secrets by reference
 
 The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from
-`mcp-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. No key SHALL
-appear in a values file, a ConfigMap, or a rendered manifest.
+`mcp-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. The LiteLLM key
+SHALL NOT appear in a values file, a ConfigMap, or a rendered manifest. The dex client secret is the
+one exception: it is the shared value already used by the other dex clients, it comes from
+`/helm-values/security.yaml` rather than this repository, and it reaches the Pod as
+`HERMES_DASHBOARD_OIDC_CLIENT_SECRET`, because the dashboard reads that key from the environment and
+`config.yaml` renders into a ConfigMap.
 
 #### Scenario: No credential is rendered
 
 - **WHEN** the Helm output is searched for key material
-- **THEN** only secret references are present
+- **THEN** the LiteLLM key appears only as a secret reference
+- **AND** the only literal secret is the dex client secret, which is not this repository's to hold
 
 ### Requirement: The model path is the cluster LiteLLM endpoint
 
@@ -125,10 +158,12 @@ refused at review.
 
 ### Requirement: Health is the gateway's own status
 
-Liveness and readiness SHALL run `hermes gateway status` as an `exec` probe, so a process that is
-listening but has lost its channel connection is not reported healthy.
+Liveness, readiness and startup SHALL run `hermes gateway status` as an `exec` probe. That command
+exits 0 whether or not the gateway runs, so the probe SHALL match its `Gateway is running` output
+instead of relying on the exit status. It reports the gateway process, not channel connectivity: a
+live process with a dead socket still reads healthy, and nothing in the chart can observe the socket.
 
-#### Scenario: A dead channel connection is not ready
+#### Scenario: A dead gateway is not ready
 
-- **WHEN** the gateway process is up but its channel socket is not connected
+- **WHEN** the gateway process is not running
 - **THEN** readiness fails

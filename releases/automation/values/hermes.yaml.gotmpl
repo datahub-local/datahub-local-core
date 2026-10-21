@@ -1,0 +1,179 @@
+# https://github.com/jyje/hermes-agent-helm/blob/main/charts/hermes-agent/values-hardened.yaml
+
+# The chart appends its own name when the release name does not contain it, which
+# would name every object ...-automation-hermes-hermes-agent.
+fullnameOverride: "{{ .Values.release_name }}-automation-hermes"
+
+image:
+  repository: nousresearch/hermes-agent
+  # The chart's appVersion tracks the same release; the tag stays in
+  # values/_version.yaml so Renovate sees it.
+  tag: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "nousresearch/hermes-agent") }}{{ $value }}{{ end }}{{ end }}'
+
+controller:
+  type: deployment
+replicaCount: 1
+runtimeClassName: gvisor
+
+# values-hardened.yaml, copied because the chart ships it as a file next to the
+# chart, not as a values source at install time.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10000
+  runAsGroup: 10000
+  fsGroup: 10000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+# s6-overlay's own init lives under /run and must be executable, so the rootfs
+# cannot be read-only without these.
+extraVolumes:
+  - name: run-tmpfs
+    emptyDir:
+      medium: Memory
+      sizeLimit: 16Mi
+  - name: tmp-tmpfs
+    emptyDir:
+      medium: Memory
+      sizeLimit: 64Mi
+
+extraVolumeMounts:
+  - name: run-tmpfs
+    mountPath: /run
+  - name: tmp-tmpfs
+    mountPath: /tmp
+
+persistence:
+  enabled: true
+  storageClass: longhorn
+  size: 5Gi
+
+config:
+  providers:
+    litellm:
+      base_url: http://{{ .Values.release_name }}-data-litellm.data.svc.cluster.local:4000/v1
+      key_env: OPENAI_API_KEY
+      discover_models: true
+  model:
+    provider: litellm
+    default: opencode-go/deepseek-v4.1-flash
+  terminal:
+    backend: local
+  security:
+    redact_secrets: true
+  approvals:
+    mode: smart
+    cron_mode: deny
+    unattended_mode: deny
+    single_query_mode: deny
+  dashboard:
+    oauth:
+      self_hosted:
+        # Dex staticClient "hermes"; the secret is shared with the other apps and
+        # arrives through HERMES_DASHBOARD_OIDC_CLIENT_SECRET below, never here.
+        issuer: https://security-dex.{{ .StateValues.gateway_hostname }}/dex
+        client_id: hermes
+
+dashboard:
+  enabled: true
+  publicUrl: https://automation-hermes.{{ .StateValues.gateway_hostname }}
+  # Traefik runs hostNetwork, so the peer is a node address; the pod CIDR covers
+  # a controller reaching the pod from its tunnel address.
+  trustedProxies:
+    - 192.168.31.0/24
+    - 10.42.0.0/16
+  auth:
+    provider: oidc
+
+service:
+  enabled: true
+
+# A null deletes the chart's default sk-REPLACE_ME; an empty map would keep it.
+# The real key comes from litellm-auth-credentials in extraEnvFrom below, which
+# is applied after the chart's own Secret and wins the duplicate name.
+env:
+  OPENAI_API_KEY: null
+
+extraEnvFrom:
+  - secretRef:
+      name: litellm-auth-credentials
+  - secretRef:
+      name: mcp-slack-token
+
+extraEnv:
+  - name: GATEWAY_ALLOW_ALL_USERS
+    value: "false"
+  - name: SLACK_ALLOWED_USERS
+    value: U08RV08387L
+  # Same dex client secret as the other apps; config.yaml is a ConfigMap, so
+  # the secret cannot live in config.dashboard.oauth.self_hosted.
+  - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
+    value: "{{ .StateValues.security_github_client_secret }}"
+
+networkPolicy:
+  enabled: true
+  allowDns: true
+  # Denies the rest of RFC1918 and the metadata endpoint; the LiteLLM rule below
+  # is the only in-cluster egress exception, so the agent cannot reach the API
+  # server.
+  blockPrivateEgress: true
+  extraEgress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: data
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: litellm
+      ports:
+        - protocol: TCP
+          port: 4000
+  # Only the dashboard listener is reachable, and only from Traefik's node
+  # addresses (hostNetwork, so a namespace/pod selector would match nothing).
+  extraIngress:
+    - from:
+        - ipBlock:
+            cidr: 192.168.31.0/24
+      ports:
+        - protocol: TCP
+          port: 9119
+
+# `hermes gateway status` exits 0 whether or not the gateway runs, so the probe
+# has to match its output. It reports the process, not the Slack socket: a live
+# gateway with a dead channel connection still reads healthy. Readiness also
+# waits for the dashboard listener so Traefik does not answer 502 during the
+# first, skill-syncing boot.
+probes:
+  startup:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - hermes gateway status | grep -q "Gateway is running"
+    periodSeconds: 10
+    timeoutSeconds: 15
+    failureThreshold: 60
+  liveness:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - hermes gateway status | grep -q "Gateway is running"
+    periodSeconds: 60
+    timeoutSeconds: 15
+    failureThreshold: 3
+  readiness:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - hermes gateway status | grep -q "Gateway is running" && curl -fsS -o /dev/null http://127.0.0.1:9119/
+    periodSeconds: 30
+    timeoutSeconds: 15
+    failureThreshold: 3

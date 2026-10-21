@@ -23,14 +23,15 @@ hand-maintained template.
   `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent`, pinned to chart `1.21.0` (Hermes `v0.22.2`).
 - Layer `values-hardened.yaml`: non-root uid/gid 10000, read-only root filesystem, writable
   executable `/run` and `/tmp`, all capabilities dropped, `RuntimeDefault` seccomp.
-- Set `runtimeClassName: gvisor`; no ingress, Service, dashboard or homepage entry — Slack uses
-  Socket Mode, which is outbound only.
+- Set `runtimeClassName: gvisor`.
+- Enable the chart's management dashboard as the only inbound surface, exposed through a Traefik
+  `IngressRoute` at `automation-hermes.<gateway_hostname>` and signed in with dex over OIDC.
 - Wire **Slack** with the existing `automation/mcp-slack-token` app, allowing only the owner's member
   ID.
 - Point the model plane at in-cluster LiteLLM through the chart's custom provider support
   (`config.providers.litellm`), model `opencode-go/deepseek-v4.1-flash`.
 - Add a NetworkPolicy from the chart: DNS, public HTTPS, and a precise in-cluster exception for
-  LiteLLM on port 4000.
+  LiteLLM on port 4000, plus ingress to port 9119 from Traefik's node network only.
 - Keep state on a 5 Gi Longhorn PVC, one replica, `Recreate`.
 
 Not changed: LiteLLM, the MCP servers, ArgoCD, the Slack app, and every existing release.
@@ -41,7 +42,7 @@ Not changed: LiteLLM, the MCP servers, ArgoCD, the Slack app, and every existing
 
 - `hermes-gateway`: how the Hermes gateway is packaged and hardened on this cluster — chart and
   image pinning, gVisor isolation, the restricted security profile, network boundary, credential
-  delivery, Slack wiring, model path, probes, and state volume.
+  delivery, Slack wiring, model path, probes, dashboard exposure and sign-in, and state volume.
 
 ### Modified Capabilities
 
@@ -50,8 +51,13 @@ Not changed: LiteLLM, the MCP servers, ArgoCD, the Slack app, and every existing
 ## Impact
 
 - One new release in `releases/automation/`; no image is built or published by us.
+- One new IngressRoute and homepage entry in `releases/automation/templates/ingress_route.yaml`.
 - No new secret: `OPENAI_API_KEY` comes from `automation/litellm-auth-credentials`, Slack tokens
-  from `automation/mcp-slack-token`, both through `extraEnvFrom`.
+  from `automation/mcp-slack-token`, both through `extraEnvFrom`; the dashboard's dex client secret
+  is the shared one from `/helm-values/security.yaml`.
+- A dex staticClient `hermes` must be registered with callback
+  `https://automation-hermes.<gateway_hostname>/auth/callback`. Dex lives in another repository, so
+  this is a manual step.
 - The Slack app must have Socket Mode (verified) and the message events Hermes subscribes to
   (unverified). A dedicated app is the fallback.
 - One new entry in `values/_version.yaml` so Renovate tracks the chart.

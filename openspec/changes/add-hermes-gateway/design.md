@@ -54,14 +54,32 @@ one values key.
 `[UNVERIFIED]` until the live run: the hardened profile and gVisor together, and any Chromium use
 inside the sandbox. The first release keeps browser tools off.
 
-### 4 — No inbound surface
+### 4 — The dashboard is the only inbound surface
 
-`hermes gateway run` is outbound-only. Slack uses Socket Mode, so no public URL, Service or Ingress
-is needed. Dashboard, API server and webhook stay disabled; the chart's NetworkPolicy denies ingress
-by default, which matches.
+`hermes gateway run` is outbound-only: Slack uses Socket Mode, so the gateway itself needs no public
+URL. The one listener that is turned on is the chart's management dashboard, which is the browser
+chat and session UI and the only built-in web UI. The API server and the webhook receiver stay
+disabled.
 
-This removes the ingress, oauth2-proxy and gateway-token surface that OpenClaw required for its
-Control UI.
+The dashboard binds `0.0.0.0:9119` inside the Pod and upstream fails closed without an auth
+provider, so it signs in against the cluster's dex. That means:
+
+- one Traefik `IngressRoute` for `automation-hermes.<gateway_hostname>` in
+  `releases/automation/templates/ingress_route.yaml`, backed by the release's Service on port 9119,
+  with a homepage entry — no `oauth2-proxy` middleware, because the dashboard's own OIDC gate is
+  mandatory and a second login would only be a second hop;
+- `dashboard.publicUrl` set explicitly, since the chart derives it from a chart-managed Ingress this
+  release does not use, and the OIDC callback is built from it;
+- `dashboard.trustedProxies` listing Traefik's node network (`192.168.31.0/24`) and the pod CIDR
+  (`10.42.0.0/16`): Traefik runs hostNetwork, so the dashboard sees a node address, and without the
+  list the session cookies are silently not marked `Secure`;
+- a NetworkPolicy `extraIngress` for port 9119 from that node network, because the chart's policy
+  denies all inbound by default.
+
+The dashboard shows API keys to whoever signs in and can create shell hooks, so sign-in is shell
+access to the Pod; dex is the access control, and the client is restricted there.
+
+This still removes the gateway-token surface OpenClaw required for its Control UI.
 
 ### 5 — Network boundary
 
@@ -71,6 +89,7 @@ The chart's NetworkPolicy:
 - `blockPrivateEgress: true`, so RFC1918 and the cloud metadata endpoint are denied by default;
 - one `extraEgress` rule for LiteLLM, scoped to the `data` namespace and the LiteLLM Pod label, port
   4000;
+- one `extraIngress` rule for the dashboard, port 9119, from Traefik's node network;
 - public internet stays allowed, which is what Slack's WSS endpoint needs.
 
 Verified on this cluster from an earlier agent Pod: the network-policy controller denies a direct
@@ -91,6 +110,11 @@ renders empty. The real key arrives from the later `envFrom` source, which wins 
 No key enters values or a ConfigMap. Hermes keeps the model key in-process; mitigations are a read-only LiteLLM key,
 `security.redact_secrets`, and gVisor. A credential gateway would be stronger, but Hermes has no
 equivalent seam and this is a single-tenant homelab gateway.
+
+The dashboard's dex client secret is the exception to "no key in a rendered manifest": it is the
+shared value the other dex clients already use, it lives in `/helm-values/security.yaml` rather than
+this repository, and it has to reach the Pod as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET` because
+`config.dashboard.oauth.self_hosted` renders into a ConfigMap.
 
 ### 7 — Model path
 
@@ -135,13 +159,16 @@ connect but stay silent. A live DM is the test, and a dedicated app is the fallb
 - `terminationGracePeriodSeconds` stays at the default unless the gateway drain is raised; the
   image's current default interrupts in-flight work and exits fast. If `restart_drain_timeout` is
   ever set, the grace period must exceed it.
-- Probes use `hermes gateway status` as an `exec` check. A TCP check would call a listening process
-  healthy even after it lost its channel socket.
+- Probes run `hermes gateway status` as an `exec` check and match its `Gateway is running` line,
+  because the command exits 0 whether or not the gateway is up. They see the process, not the
+  channel socket; a TCP check would be no better, since it only proves something listens. Readiness
+  also curls the dashboard port, so Traefik does not route to a Pod whose dashboard has not started
+  listening yet — the first boot syncs bundled skills and can take minutes.
 
 ### 10 — Explicitly out of scope
 
-Dashboard and its ingress, API server/webhook, multi-tenant or team mode, channels other than Slack,
-browser tools under gVisor, and a dedicated credential gateway.
+API server/webhook, multi-tenant or team mode, channels other than Slack, browser tools under gVisor,
+and a dedicated credential gateway.
 
 ## Risks
 
@@ -152,5 +179,10 @@ browser tools under gVisor, and a dedicated credential gateway.
   rootfs.
 - **Broad HTTPS egress.** Required by Slack with an L3/L4 CNI.
 - **Slack event scopes.** Socket Mode works; delivery is unproven until a DM is answered.
+- **Dashboard is shell access.** Whoever signs in can read API keys and create shell hooks, so the
+  dex client is the access control and nothing else may be granted on it.
+- **Dashboard host changes are sticky.** `public_url` and `trusted_proxies` are written into
+  `config.yaml` on first seed; changing host or proxies later needs `bootstrap.overwrite=true`, and a
+  stale `public_url` breaks the OIDC callback.
 - **Rootless image contract.** The chart's uid 10000 is the image's own user; a future image that
   changes that uid requires a values change.

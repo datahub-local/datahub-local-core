@@ -88,3 +88,27 @@ spec:
         - name: oauth2-proxy
           namespace: security
           port: http
+---
+# No oauth2-proxy here: the dashboard has its own mandatory OIDC gate against
+# dex (dashboard.auth.provider: oidc), so a second login would only be a second
+# hop.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Hermes"
+    gethomepage.dev/pod-selector: "app.kubernetes.io/name=hermes-agent"
+    gethomepage.dev/group: "Automation"
+    gethomepage.dev/icon: "mdi-robot-outline"
+    gethomepage.dev/href: "https://automation-hermes.{{ .Values.gateway_hostname }}"
+  name: '{{ include "name" . }}-hermes'
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`automation-hermes.{{ .Values.gateway_hostname }}`)
+      kind: Rule
+      services:
+        - name: '{{ include "name" . }}-hermes'
+          port: dashboard
