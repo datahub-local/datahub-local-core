@@ -2,46 +2,46 @@
 
 ## Why
 
-OpenClaw was reverted. NanoClaw was then evaluated and live-tested: a Kubernetes session driver was
-written against its driver seam and a host → agent Pod → LiteLLM turn completed. It works, but it
-costs a fork of a fast-moving project, locally built images with no registry path, and a
-single-node RWO volume because host and agent share the session SQLite files. The isolation it buys
-is still runc; stronger isolation would mean adding gVisor on top anyway.
+OpenClaw was reverted. NanoClaw was evaluated and live-tested with a Kubernetes session driver; it
+worked, but required a fork of a fast-moving project, locally built images, and a single-node volume
+so host and agent could share SQLite files. Its isolation was still runc, not a kernel boundary.
 
-Hermes Agent (Nous Research) keeps the OpenClaw shape without the fork: one gateway process, one
-Deployment, one state volume, and channels as configuration. It ships an official image, supports
-Slack through Socket Mode, has approvals, user allowlists, skills, memory, cron and MCP, and — unlike
-OpenClaw — runs under the cluster's existing `gvisor` RuntimeClass. That last point is the security
-argument: every command the agent runs stays inside a user-space kernel, not the node's.
+Hermes Agent (Nous Research) keeps the gateway shape without the fork: one process, one Deployment,
+channels as configuration, an official image, Slack over Socket Mode, approvals, allowlists, memory,
+cron and MCP. It can also run under the cluster's existing `gvisor` RuntimeClass, which gives the
+agent's shell execution a user-space kernel instead of the node's.
 
-The community Helm chart (`ultraworkers/hermes-agent-helm-chart`) describes the deployment we want,
-but it is not published anywhere Helm can consume and its pod defaults do not match the image it
-targets (see `design.md`). The cluster already has a house harness for this shape: `app-template`,
-used by every other automation release — including the one OpenClaw used.
+The deployment vehicle is the community chart `jyje/hermes-agent-helm`. It is published as OCI and
+as a Helm repository, tracks upstream `v0.22.2`, and — unlike the other community chart — ships the
+two overlays this deployment needs: a Pod Security Standards `restricted` profile that actually
+boots the image, and a LiteLLM/egress-lockdown example. Using it avoids both a fork and a
+hand-maintained template.
 
 ## What Changes
 
-- Add a `hermes` release to `releases/automation/` on `app-template`, mirroring the community
-  chart's intent with values this cluster can actually run.
-- Run it under `runtimeClassName: gvisor`, with the image's supported root-entrypoint +
-  `HERMES_UID`/`HERMES_GID` privilege drop, no service-account token, all capabilities dropped, and
-  no inbound surface.
-- Wire **Slack** through Socket Mode using the existing `automation/mcp-slack-token` app, with the
-  owner's member ID as the only allowed user.
-- Point the model plane at in-cluster LiteLLM through its OpenAI-compatible endpoint, using the
-  `opencode-go/deepseek-v4.1-flash` alias.
-- Add a NetworkPolicy: DNS, LiteLLM, and HTTPS out (Slack). No ingress.
+- Add a `hermes` release to `releases/automation/` from
+  `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent`, pinned to chart `1.21.0` (Hermes `v0.22.2`).
+- Layer `values-hardened.yaml`: non-root uid/gid 10000, read-only root filesystem, writable
+  executable `/run` and `/tmp`, all capabilities dropped, `RuntimeDefault` seccomp.
+- Set `runtimeClassName: gvisor`; no ingress, Service, dashboard or homepage entry — Slack uses
+  Socket Mode, which is outbound only.
+- Wire **Slack** with the existing `automation/mcp-slack-token` app, allowing only the owner's member
+  ID.
+- Point the model plane at in-cluster LiteLLM through the chart's custom provider support
+  (`config.providers.litellm`), model `opencode-go/deepseek-v4.1-flash`.
+- Add a NetworkPolicy from the chart: DNS, public HTTPS, and a precise in-cluster exception for
+  LiteLLM on port 4000.
 - Keep state on a 5 Gi Longhorn PVC, one replica, `Recreate`.
 
-Not changed: LiteLLM, the MCP servers, ArgoCD, every existing release, and the Slack app itself.
+Not changed: LiteLLM, the MCP servers, ArgoCD, the Slack app, and every existing release.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `hermes-gateway`: how the Hermes gateway is packaged and hardened on this cluster — its image and
-  entrypoint contract, gVisor isolation, privilege drop, network boundary, credential delivery,
-  Slack wiring, model path, and state volume.
+- `hermes-gateway`: how the Hermes gateway is packaged and hardened on this cluster — chart and
+  image pinning, gVisor isolation, the restricted security profile, network boundary, credential
+  delivery, Slack wiring, model path, probes, and state volume.
 
 ### Modified Capabilities
 
@@ -49,10 +49,9 @@ Not changed: LiteLLM, the MCP servers, ArgoCD, every existing release, and the S
 
 ## Impact
 
-- One new release in `releases/automation/`; no new image is built or published.
+- One new release in `releases/automation/`; no image is built or published by us.
 - No new secret: `OPENAI_API_KEY` comes from `automation/litellm-auth-credentials`, Slack tokens
-  from `automation/mcp-slack-token`.
-- The Slack app must already have Socket Mode and the message events Hermes subscribes to. Socket
-  Mode is verified; event subscriptions are not, and are called out in `tasks.md` as a check rather
-  than an assumption.
-- `datahub-local-secrets` is untouched unless a dedicated Hermes Slack app is chosen later.
+  from `automation/mcp-slack-token`, both through `extraEnvFrom`.
+- The Slack app must have Socket Mode (verified) and the message events Hermes subscribes to
+  (unverified). A dedicated app is the fallback.
+- One new entry in `values/_version.yaml` so Renovate tracks the chart.

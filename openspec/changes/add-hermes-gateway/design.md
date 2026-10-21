@@ -2,161 +2,155 @@
 
 ## Context
 
-Hermes is a single gateway process that owns the channels, the agent loop, tools, memory and cron.
-Unlike NanoClaw it does not start a container per session; tools execute in the gateway's own
-environment. That makes the *pod's* isolation the security boundary, which is why this design is
-mostly about the runtime class and the network, not about a driver.
-
-The gateway shape matches the OpenClaw release: one Deployment, one PVC, channel credentials in
-secrets, and a Service only if something needs to reach it. Nothing else in the cluster needs to
-change.
+Hermes is a single gateway process that owns channels, the agent loop, tools, memory and cron. It
+does not start a container per session, so the *Pod's* isolation is the security boundary. The
+gateway shape matches the OpenClaw release: one workload, one state volume, channel credentials in
+secrets, and no inbound surface when Socket Mode is used.
 
 ## Decisions
 
-### 1 — No fork, and no community chart
+### 1 — Use the jyje chart, published and current
 
-NanoClaw's live PoC proved the seam works, but it required a ~400-line Kubernetes driver in a fork,
-two bespoke images, and a single-node volume so the host and agent could share SQLite files. Hermes
-needs none of that: the upstream image runs the gateway, channels are configuration, and the image
-is published.
+Three options were considered:
 
-The community Helm chart was still not used directly:
+- **Fork the agent** (NanoClaw): live-tested, rejected — fork maintenance, bespoke images, and a
+  single-node shared volume for session SQLite.
+- **`ultraworkers/hermes-agent-helm-chart`**: not published anywhere Helm can consume, pins
+  `appVersion: 0.8.0` while the image is `0.22.2`, and its Pod defaults do not match the image it
+  targets.
+- **`jyje/hermes-agent-helm`**: published as `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent` and
+  on GitHub Pages, chart `1.21.0` targets Hermes `v0.22.2`, and it ships overlays for exactly this
+  deployment. CI installs each release on a fresh kind cluster before and after it ships.
 
-- it is not published (no Helm repository, no release artifact, no Pages index), so consuming it
-  would mean vendoring the chart into this repository or forking the chart repository;
-- its `appVersion` is 0.8.0 while the published image is 0.22.2, so it lags the agent it packages;
-- its pod defaults do not match the image it targets. It sets `runAsUser: 1000` and
-  `readOnlyRootFilesystem: true`, but the image rejects arbitrary UIDs and its s6 bootstrap expects
-  a root start (verified below).
+The third is chosen. It is a community chart, not an official release; the pin and the upgrade task
+make that explicit. It gives us the upstream image with no build step, and its `runtimeClassName`
+value supports gVisor.
 
-The house harness (`app-template`) already covers Deployment, PVC, Service, ConfigMap, probes and
-raw resources, and every automation release uses it. The chart is used as a specification of intent,
-not as a dependency.
+### 2 — The restricted profile is the security baseline
 
-### 2 — The image's entrypoint dictates the privilege model
+`values-hardened.yaml` is layered into the release:
 
-This was verified against `nousresearch/hermes-agent:v0.22.2`, not inferred:
+- `runAsNonRoot: true`, uid/gid `10000` (the image's `hermes` user), `fsGroup: 10000`;
+- `readOnlyRootFilesystem: true`;
+- `/run` and `/tmp` as size-bounded memory `emptyDir`s — s6-overlay's init lives under `/run` and
+  must be writable and executable, and the agent's tools need `/tmp`;
+- `allowPrivilegeEscalation: false`, all capabilities dropped;
+- `SeccompProfile: RuntimeDefault`.
 
-- the image ships an s6-overlay tree and a `hermes` user at uid/gid **10000**;
-- `docker run --user 10000:10000` fails: s6 stage0 cannot enter `/run/s6` and the entrypoint
-  explicitly rejects an arbitrary `--user` UID;
-- starting as root with `HERMES_UID`/`HERMES_GID` works; the bootstrap remaps the `hermes` user and
-  the long-running gateway drops to it;
-- mounting an empty tmpfs over `/run` breaks s6, because the basedir is baked into the image's
-  `/run`;
-- `readOnlyRootFilesystem: true` therefore cannot be taken from the community chart as-is: s6 needs
-  to write under `/run`, and that directory is part of the root filesystem.
+The `/run` mount is the part that is easy to get wrong. Verified against `v0.22.2`: pinning an
+arbitrary `--user` without a writable `/run` fails at s6 stage0, and a root-owned tmpfs over `/run`
+fails the same way. The chart's memory `emptyDir` with `fsGroup` ownership is the supported shape;
+its overlay documents that CI boots it. We still verify it on this cluster.
 
-Consequences for this release:
+The chart also turns off service-account token mounting by default, which the release keeps.
 
-- start as root (`runAsNonRoot: false`), set `HERMES_UID`/`HERMES_GID` to the target uid, and let
-  the image drop the gateway process. The root process is the s6 supervisor only;
-- keep the root filesystem writable for the first release, and record the deviation. A follow-up can
-  copy the image's `/run` into an emptyDir from an init container and mount it back, which is the
-  only path to a read-only root filesystem with this image; that is a task, not a claim;
-- drop all capabilities, disable service-account token mounting, use `RuntimeDefault` seccomp, and
-  keep the mutable surface to `/opt/data`, `/tmp`, and `/run`.
+### 3 — gVisor
 
-`gVisor` is what makes the root supervisor acceptable: it cannot reach the node's kernel directly,
-and the gateway process itself is unprivileged.
+The cluster exposes `runtimeClassName: gvisor` (`runsc`). The chart sets it on the Pod, so the
+gateway, its tools and its init containers share the sandbox. This is the main reason Hermes wins
+over the NanoClaw path: the agent's shell runs in a user-space kernel, not on the node, and it costs
+one values key.
 
-### 3 — gVisor, not a RunnerClass per workload
-
-The cluster already exposes `runtimeClassName: gvisor` (`runsc`). Every container in the Pod —
-init, gateway, dashboard — inherits it. This is the strongest boundary available here: stronger than
-runc, which is what NanoClaw's per-session containers would have used, and much stronger than
-OpenClaw's in-process separation.
-
-`[UNVERIFIED]` Chromium and the browser tools under gVisor. The first release disables the browser
-toolset; enabling it is a separate task with its own test.
+`[UNVERIFIED]` until the live run: the hardened profile and gVisor together, and any Chromium use
+inside the sandbox. The first release keeps browser tools off.
 
 ### 4 — No inbound surface
 
-Hermes uses Slack **Socket Mode**, so it opens an outbound WebSocket and needs no public URL. The
-release therefore has no IngressRoute, no Service, and no homepage entry. The dashboard that the
-image supervises stays bound inside the Pod and is not exposed. This removes the ingress, oauth2-proxy
-and token surface that OpenClaw needed for its Control UI.
+`hermes gateway run` is outbound-only. Slack uses Socket Mode, so no public URL, Service or Ingress
+is needed. Dashboard, API server and webhook stay disabled; the chart's NetworkPolicy denies ingress
+by default, which matches.
+
+This removes the ingress, oauth2-proxy and gateway-token surface that OpenClaw required for its
+Control UI.
 
 ### 5 — Network boundary
 
-NetworkPolicy egress:
+The chart's NetworkPolicy:
 
-- DNS to `kube-system` (UDP/TCP 53);
-- in-cluster LiteLLM on `data` port 4000;
-- TCP 443 to the internet, for Slack's WSS endpoint and the web tools Hermes may call.
+- `enabled: true`, `allowDns: true`;
+- `blockPrivateEgress: true`, so RFC1918 and the cloud metadata endpoint are denied by default;
+- one `extraEgress` rule for LiteLLM, scoped to the `data` namespace and the LiteLLM Pod label, port
+  4000;
+- public internet stays allowed, which is what Slack's WSS endpoint needs.
 
-Ingress: none. The 443 rule is broad because the cluster's CNI enforces L3/L4, not FQDN, policy;
-allowing Slack necessarily allows any HTTPS destination. The alternative is a Cilium FQDN policy or
-an egress proxy, neither of which is installed. This is named as a residual risk rather than hidden.
+Verified on this cluster from an earlier agent Pod: the network-policy controller denies a direct
+LiteLLM call unless the policy allows it, and allows the named destination. The 443-to-internet leg
+is necessarily broad because the CNI enforces L3/L4, not FQDN; narrowing it needs an egress proxy or
+a Cilium FQDN policy, neither of which is installed.
 
-`[VERIFIED]` on this cluster: a NetworkPolicy applied to an agent pod blocked direct LiteLLM access
-and allowed only the named destination. The same controller (`kube-router`) enforces this policy.
+### 6 — Credentials by reference
 
-### 6 — Credentials stay in Kubernetes secrets
-
-`envFrom` the existing secrets:
+`extraEnvFrom` the existing secrets:
 
 - `litellm-auth-credentials` → `OPENAI_API_KEY` (the LiteLLM key);
 - `mcp-slack-token` → `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`.
 
-No key is rendered into values or a ConfigMap. Hermes keeps the model key in the gateway process, so
-there is no equivalent of a credential gateway here; the mitigations are a read-only LiteLLM key,
-`security.redact_secrets`, MCP environment filtering, and gVisor. This is weaker than a vault and is
-accepted for a single-tenant homelab gateway.
+The chart's `env` map is set to `OPENAI_API_KEY: null`, not `{}`: Helm keeps the default
+`sk-REPLACE_ME` when the override is an empty map, and a null deletes the key so the chart's Secret
+renders empty. The real key arrives from the later `envFrom` source, which wins the duplicate key.
+No key enters values or a ConfigMap. Hermes keeps the model key in-process; mitigations are a read-only LiteLLM key,
+`security.redact_secrets`, and gVisor. A credential gateway would be stronger, but Hermes has no
+equivalent seam and this is a single-tenant homelab gateway.
 
 ### 7 — Model path
 
-LiteLLM is OpenAI-compatible, which is Hermes' native path:
+The chart's custom-provider shape maps directly onto LiteLLM:
 
 ```yaml
-model:
-  provider: custom
-  default: opencode-go/deepseek-v4.1-flash
-  base_url: http://<release>-data-litellm.data.svc.cluster.local:4000/v1
+config:
+  providers:
+    litellm:
+      base_url: http://<release>-data-litellm.data.svc.cluster.local:4000/v1
+      key_env: OPENAI_API_KEY
+      discover_models: true
+  model:
+    provider: litellm
+    default: opencode-go/deepseek-v4.1-flash
 ```
 
-`OPENAI_API_KEY` supplies the bearer token. The endpoint was probed from inside the cluster:
-`POST /v1/chat/completions` for that alias returned HTTP 200. Auxiliary tasks (compression, titles,
-approval scoring) default to the main model; that cost is accepted, with per-task overrides possible
-later.
+The endpoint was probed from inside the cluster: `POST /v1/chat/completions` for that alias returned
+HTTP 200. Auxiliary tasks default to the main model; per-task overrides can come later if cost
+matters.
 
 ### 8 — Slack reuses the existing app
 
-The existing app (`automation/mcp-slack-token`) is the `homelab` bot in `DataHub.local`. Checks
-against the live tokens:
+Live checks against `mcp-slack-token`:
 
-- `auth.test` → ok, bot `U08SHC076NL`;
+- `auth.test` → ok, bot `homelab` (`U08SHC076NL`) in `DataHub.local`;
 - `apps.connections.open` → ok, so Socket Mode is enabled;
-- the only human member is `alvsanand` (`U08RV08387L`), who becomes `SLACK_ALLOWED_USERS`.
+- the only human member is `alvsanand` (`U08RV08387L`), the sole `SLACK_ALLOWED_USERS` entry;
+- `GATEWAY_ALLOW_ALL_USERS=false`.
 
-The Slack MCP server runs the same app as **stdio**, so it does not hold a Socket Mode connection;
-Hermes can own the socket without the delivery conflict OpenClaw accepted. The app's event
-subscriptions and bot scopes are not readable with a bot token. Hermes needs `message.im`,
-`message.channels`, `app_mention` and `files:read`; if the app lacks them the bot will connect but
-stay silent. Verifying/adding them is a task, and a dedicated Hermes app is the fallback.
+The Slack MCP server uses the app over stdio, not Socket Mode, so there is no competing socket
+connection. Event subscriptions and bot scopes cannot be read with a bot token. Hermes needs
+`message.im`, `message.channels`, `app_mention` and `files:read`; if the app lacks them it will
+connect but stay silent. A live DM is the test, and a dedicated app is the fallback.
 
 ### 9 — State and lifecycle
 
-- One replica, `strategy: Recreate`: `HERMES_HOME` (`/opt/data`) is mutable and single-writer.
-- 5 Gi Longhorn PVC. RWO is enough because only one Pod mounts it; no node pin is needed, so the
-  gateway can reschedule.
-- `terminationGracePeriodSeconds` long enough for the gateway to finish a turn; the community
-  chart uses 120 s.
-- Probes use the gateway's own status command (`hermes gateway status`), not a TCP check: a process
-  that listens but has lost its channel socket is not healthy.
+- One replica; the chart forces `Recreate` when persistence is enabled, so the new Pod cannot race
+  the RWO volume.
+- 5 Gi Longhorn PVC at `/opt/data`; RWO is enough because only one Pod mounts it. No node pin, so
+  the gateway can reschedule.
+- `terminationGracePeriodSeconds` stays at the default unless the gateway drain is raised; the
+  image's current default interrupts in-flight work and exits fast. If `restart_drain_timeout` is
+  ever set, the grace period must exceed it.
+- Probes use `hermes gateway status` as an `exec` check. A TCP check would call a listening process
+  healthy even after it lost its channel socket.
 
 ### 10 — Explicitly out of scope
 
-Operator mode and `HermesTenant` CRDs, multi-tenant isolation, the dashboard behind ingress, the
-browser under gVisor, channels other than Slack, and a dedicated credential gateway.
+Dashboard and its ingress, API server/webhook, multi-tenant or team mode, channels other than Slack,
+browser tools under gVisor, and a dedicated credential gateway.
 
 ## Risks
 
-- **The image's root entrypoint.** It is upstream's supported model, but it is a root supervisor.
-  gVisor, dropped capabilities and no SA token are the compensating controls; a future image that
-  supports non-root s6 would remove the deviation.
-- **Writable root filesystem.** Accepted until the `/run` copy is proven; the mutable surface is
-  still limited by mount layout.
-- **Broad 443 egress.** Required by Slack with an L3/L4 CNI. An egress proxy would narrow it.
-- **Slack app scopes.** Socket Mode works, but event delivery is unproven until a DM is answered.
-- **Unofficial chart drift.** We copy its intent, not its code; upgrades are ours to review.
+- **Community chart.** Pinned version and Renovate tracking; upgrades are reviewed against the
+  chart changelog, not auto-merged blindly.
+- **Hardened profile + gVisor is a new combination.** The chart verifies the profile on kind, not
+  under gVisor. A failed start is a release blocker, not something to paper over with a writable
+  rootfs.
+- **Broad HTTPS egress.** Required by Slack with an L3/L4 CNI.
+- **Slack event scopes.** Socket Mode works; delivery is unproven until a DM is answered.
+- **Rootless image contract.** The chart's uid 10000 is the image's own user; a future image that
+  changes that uid requires a values change.

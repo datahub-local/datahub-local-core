@@ -2,52 +2,58 @@
 
 ## ADDED Requirements
 
-### Requirement: The gateway runs the upstream image, not a fork
+### Requirement: The gateway runs the upstream image through a pinned chart
 
-The release SHALL run `nousresearch/hermes-agent` pinned by both tag and index digest. It SHALL NOT
-build, patch, or vendor the agent source, and SHALL NOT require a custom session driver.
+The release SHALL use `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent` at chart version `1.21.0`
+and image tag `v0.22.2`. It SHALL NOT build, patch, or vendor the agent source, and SHALL NOT
+require a custom session driver.
 
 #### Scenario: No build step is involved
 
 - **WHEN** the release is rendered
-- **THEN** the image reference is an upstream tag plus digest
+- **THEN** the workload uses `nousresearch/hermes-agent:v0.22.2`
 - **AND** no image build, patch layer, or in-repo agent source is involved
+
+#### Scenario: An upgrade is deliberate
+
+- **WHEN** the chart or image pin changes
+- **THEN** the chart version and image tag change together in `values/_version.yaml`
 
 ### Requirement: The gateway runs under gVisor
 
-Every container in the gateway Pod SHALL carry `runtimeClassName: gvisor`. The browser toolset SHALL
-stay disabled until a browser launch and a page read are proven under that runtime.
+The Pod SHALL set `runtimeClassName: gvisor`. The browser toolset SHALL stay disabled until a
+browser launch and a page read are proven under that runtime.
 
 #### Scenario: The Pod is admitted with the sandbox runtime
 
 - **WHEN** the Pod spec is inspected
 - **THEN** `runtimeClassName` is `gvisor`
-- **AND** the gateway accepts a model turn while running under it
+- **AND** the gateway answers a model turn while running under it
 
-### Requirement: Privilege drop follows the image's supported contract
+### Requirement: The Pod runs the restricted security profile
 
-The Pod SHALL start the image's own entrypoint as root because the s6 bootstrap requires it, and
-SHALL set `HERMES_UID` and `HERMES_GID` so the gateway process drops to the unprivileged `hermes`
-user. The release SHALL NOT pin an arbitrary `runAsUser` that the image rejects. All capabilities
-SHALL be dropped, privilege escalation SHALL be disabled, `RuntimeDefault` seccomp SHALL be set, and
-the service-account token SHALL NOT be mounted. Any writable root filesystem SHALL be recorded as a
-deviation next to the values.
+The release SHALL layer the chart's hardened profile: `runAsNonRoot: true` with the image's `hermes`
+uid/gid `10000`, `readOnlyRootFilesystem: true`, size-bounded memory `emptyDir`s at `/run` and
+`/tmp`, `allowPrivilegeEscalation: false`, all capabilities dropped, and `RuntimeDefault` seccomp.
+The service-account token SHALL NOT be mounted. `/run` SHALL remain writable and executable, because
+s6-overlay's init runs from it.
 
-#### Scenario: The gateway process is not root
+#### Scenario: The gateway is not root
 
 - **WHEN** the running gateway is inspected
-- **THEN** its main process runs as the configured unprivileged uid
+- **THEN** its process runs as uid 10000
 - **AND** the container has no added capabilities and no service-account token
 
-#### Scenario: An unsupported uid pin is not used
+#### Scenario: The root filesystem is read-only
 
 - **WHEN** the rendered Pod spec is inspected
-- **THEN** it does not set `runAsUser` to an arbitrary non-hermes uid
+- **THEN** the main container sets `readOnlyRootFilesystem: true`
+- **AND** `/run` and `/tmp` are the only writable memory-backed mounts besides `/opt/data`
 
 ### Requirement: Nothing on the network can reach the gateway
 
-The release SHALL NOT create an IngressRoute, a public Service, or a homepage entry. Slack SHALL use
-Socket Mode, an outbound connection. The dashboard SHALL remain unexposed.
+The release SHALL NOT create an IngressRoute, a public Service, a dashboard, an API server, or a
+homepage entry. Slack SHALL use Socket Mode, which is an outbound connection.
 
 #### Scenario: No inbound route exists
 
@@ -57,21 +63,27 @@ Socket Mode, an outbound connection. The dashboard SHALL remain unexposed.
 
 ### Requirement: Egress is limited to DNS, LiteLLM, and HTTPS
 
-A NetworkPolicy SHALL allow DNS, in-cluster LiteLLM on port 4000, and outbound TCP 443, and SHALL
-deny everything else. The residual breadth of 443 SHALL be documented, because the CNI enforces
-L3/L4 and cannot restrict by Slack hostname.
+The chart's NetworkPolicy SHALL be enabled with `allowDns: true` and `blockPrivateEgress: true`, plus
+one explicit egress rule for LiteLLM on port 4000. Public HTTPS SHALL remain allowed for Slack. The
+residual breadth of HTTPS SHALL be documented, because the CNI enforces L3/L4 and cannot restrict by
+hostname.
 
 #### Scenario: The Kubernetes API is unreachable from the agent
 
-- **WHEN** the gateway tries to reach the API server or another in-cluster service outside the
-  allowed set
+- **WHEN** the gateway tries to reach the API server or another private address outside the allowed
+  set
 - **THEN** the connection is denied
+
+#### Scenario: LiteLLM is reachable
+
+- **WHEN** the gateway calls the in-cluster LiteLLM Service on port 4000
+- **THEN** the connection is allowed by the policy
 
 ### Requirement: Credentials come from existing secrets by reference
 
-The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and Slack tokens from
-`mcp-slack-token` through `envFrom` or `secretKeyRef`. No key SHALL appear in a values file, a
-ConfigMap, or a rendered manifest.
+The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from
+`mcp-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. No key SHALL
+appear in a values file, a ConfigMap, or a rendered manifest.
 
 #### Scenario: No credential is rendered
 
@@ -80,19 +92,20 @@ ConfigMap, or a rendered manifest.
 
 ### Requirement: The model path is the cluster LiteLLM endpoint
 
-The agent SHALL use the `custom` provider with `base_url` pointing at LiteLLM's `/v1` endpoint and
-model alias `opencode-go/deepseek-v4.1-flash`. It SHALL NOT call a public model API directly.
+The agent SHALL use a custom provider with `base_url` pointing at LiteLLM's `/v1` endpoint, the key
+from `OPENAI_API_KEY`, and model alias `opencode-go/deepseek-v4.1-flash`. It SHALL NOT call a public
+model API directly.
 
 #### Scenario: A turn is served by LiteLLM
 
 - **WHEN** a message reaches the agent
 - **THEN** the request is served by in-cluster LiteLLM
-- **AND** the reply is delivered back to the channel
+- **AND** the reply is delivered back to Slack
 
 ### Requirement: Slack is restricted to the owner
 
 The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, with
-`GATEWAY_ALLOW_ALL_USERS=false` and `SLACK_ALLOWED_USERS` containing only the owner's member ID.
+`GATEWAY_ALLOW_ALL_USERS=false` and `SLACK_ALLOWED_USERS` containing only `U08RV08387L`.
 
 #### Scenario: An unlisted user is ignored
 
@@ -101,9 +114,9 @@ The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, 
 
 ### Requirement: State is single-writer and survives restarts
 
-The release SHALL use one replica, `strategy: Recreate`, and a persistent volume mounted at
-`/opt/data`. Scaling above one replica with that volume SHALL be rejected by the chart or the
-values.
+The release SHALL use one replica, the chart's `Recreate` strategy, and a persistent volume mounted
+at `/opt/data`. Values requesting more than one replica with persistence SHALL be rejected or
+refused at review.
 
 #### Scenario: A rollout does not share the state directory
 
@@ -112,9 +125,8 @@ values.
 
 ### Requirement: Health is the gateway's own status
 
-Liveness and readiness SHALL run the gateway's status command (`hermes gateway status`) rather than
-a TCP or bare HTTP check, so a process that is listening but has lost its channel connection is not
-reported healthy.
+Liveness and readiness SHALL run `hermes gateway status` as an `exec` probe, so a process that is
+listening but has lost its channel connection is not reported healthy.
 
 #### Scenario: A dead channel connection is not ready
 
