@@ -49,11 +49,10 @@ extraVolumeMounts:
   - name: tmp-tmpfs
     mountPath: /tmp
 
-# One-off: seed-config copies config.yaml only when it is absent, so a new key
-# (mcp_servers here) never reaches an existing volume. Flip back to false after
-# this deploy so runtime config edits survive later rollouts.
-bootstrap:
-  overwrite: true
+# seed-config copies config.yaml only when it is absent, so a new key never
+# reaches an existing volume. Adding one (mcp_servers was the first) needs a
+# deploy with `bootstrap.overwrite=true`; it stays false so runtime edits to
+# config.yaml survive later rollouts.
 
 persistence:
   enabled: true
