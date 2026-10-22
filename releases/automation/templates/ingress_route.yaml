@@ -58,7 +58,7 @@ metadata:
     gethomepage.dev/name: "Sympozium"
     gethomepage.dev/pod-selector: "app.kubernetes.io/component=apiserver"
     gethomepage.dev/group: "Automation"
-    gethomepage.dev/icon: "mdi-robot-outline"
+    gethomepage.dev/icon: "https://sympozium.ai/icon-industrial.svg"
     gethomepage.dev/href: "https://automation-sympozium.{{ .Values.gateway_hostname }}/auth"
   name: '{{ include "name" . }}-sympozium'
 spec:
@@ -100,7 +100,7 @@ metadata:
     gethomepage.dev/name: "Hermes"
     gethomepage.dev/pod-selector: "app.kubernetes.io/name=hermes-agent"
     gethomepage.dev/group: "Automation"
-    gethomepage.dev/icon: "mdi-robot-outline"
+    gethomepage.dev/icon: "si-hermes-agent"
     gethomepage.dev/href: "https://automation-hermes.{{ .Values.gateway_hostname }}"
   name: '{{ include "name" . }}-hermes'
 spec:
