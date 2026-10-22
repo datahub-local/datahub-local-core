@@ -94,4 +94,7 @@
   call is refused, because `blockPrivateEgress` covers the whole namespace.
 - [x] 6.3 Seed once with `bootstrap.overwrite: true`: `seed-config` skips an existing `config.yaml`, so
   the new key never reaches the volume otherwise. The flag returns to `false` afterwards.
-- [ ] 6.4 `hermes mcp test` each server from the Pod and one turn that calls an MCP tool.
+- [ ] 6.4 `hermes mcp test` each server from the Pod and one turn that calls an MCP tool. k8s (20
+  tools), argocd (11), github (26), grafana (65), trino (6) and slack (8) connect; postgres does not,
+  because its own Deployment has been 0/1 for days — the adapter's `/healthz` and `/readyz` time out
+  and the container restarts, so the Service has no endpoints. That is upstream of Hermes.
