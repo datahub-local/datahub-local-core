@@ -144,36 +144,34 @@ networkPolicy:
         - protocol: TCP
           port: 9119
 
-# `hermes gateway status` exits 0 whether or not the gateway runs, so the probe
-# has to match its output. It reports the process, not the Slack socket: a live
-# gateway with a dead channel connection still reads healthy. Readiness also
-# waits for the dashboard listener so Traefik does not answer 502 during the
-# first, skill-syncing boot.
+# `hermes gateway status` answers correctly but takes ~35s inside this Pod, too
+# slow for a probe. s6 supervises the gateway, so its own service state is the
+# cheap equivalent; readiness also waits for the dashboard listener so Traefik
+# does not answer 502 during the first, skill-syncing boot. The service path is
+# image-specific, and the image tag is pinned.
 probes:
   startup:
     exec:
       command:
-        - /bin/sh
-        - -c
-        - hermes gateway status | grep -q "Gateway is running"
-    periodSeconds: 10
-    timeoutSeconds: 15
+        - /command/s6-svstat
+        - /run/service/main-hermes
+    periodSeconds: 5
+    timeoutSeconds: 5
     failureThreshold: 60
   liveness:
     exec:
       command:
-        - /bin/sh
-        - -c
-        - hermes gateway status | grep -q "Gateway is running"
-    periodSeconds: 60
-    timeoutSeconds: 15
+        - /command/s6-svstat
+        - /run/service/main-hermes
+    periodSeconds: 30
+    timeoutSeconds: 5
     failureThreshold: 3
   readiness:
     exec:
       command:
         - /bin/sh
         - -c
-        - hermes gateway status | grep -q "Gateway is running" && curl -fsS -o /dev/null http://127.0.0.1:9119/
-    periodSeconds: 30
-    timeoutSeconds: 15
+        - /command/s6-svstat /run/service/main-hermes && curl -fsS -o /dev/null http://127.0.0.1:9119/
+    periodSeconds: 10
+    timeoutSeconds: 5
     failureThreshold: 3

@@ -69,9 +69,9 @@
 
 ## 5. Lifecycle and verification
 
-- [ ] 5.1 Wire `hermes gateway status` as an `exec` liveness, readiness and startup probe, matching
-  its `Gateway is running` output because it exits 0 either way; verify readiness fails while the
-  gateway process is down.
+- [ ] 5.1 Probe the s6-supervised gateway service (`s6-svstat`) for liveness, readiness and startup,
+  with readiness also requiring the dashboard on 9119; `hermes gateway status` is too slow (~35 s)
+  and only reports the process. Verify readiness fails while the gateway service is down.
 - [ ] 5.2 Keep the chart's `Recreate` strategy; verify an upgrade does not attempt to mount
   `/opt/data` twice.
 - [ ] 5.3 Live checks: Pod admitted under gVisor, process uid 10000, read-only rootfs, model turn,
@@ -79,3 +79,5 @@
 - [ ] 5.4 Record the exact failures met on the way here — the hardened profile under gVisor is the
   one combination the chart's CI does not cover.
 - [ ] 5.5 Confirm the chart's `helm test` passes (it checks the image/entrypoint path).
+- [ ] 5.6 Revisit Postgres-backed state when upstream lands the `SessionDBProvider` seam
+  (NousResearch/hermes-agent#23717); nothing to configure in v0.22.2.

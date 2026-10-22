@@ -159,16 +159,25 @@ connect but stay silent. A live DM is the test, and a dedicated app is the fallb
 - `terminationGracePeriodSeconds` stays at the default unless the gateway drain is raised; the
   image's current default interrupts in-flight work and exits fast. If `restart_drain_timeout` is
   ever set, the grace period must exceed it.
-- Probes run `hermes gateway status` as an `exec` check and match its `Gateway is running` line,
-  because the command exits 0 whether or not the gateway is up. They see the process, not the
-  channel socket; a TCP check would be no better, since it only proves something listens. Readiness
-  also curls the dashboard port, so Traefik does not route to a Pod whose dashboard has not started
-  listening yet — the first boot syncs bundled skills and can take minutes.
+- Probes ask s6 for the supervised gateway service (`s6-svstat`) and, for readiness, curl the
+  dashboard port so Traefik does not route to a Pod whose dashboard has not started listening yet —
+  the first boot syncs bundled skills and can take minutes. `hermes gateway status` is the
+  documented check but takes ~35 s per call in this Pod and only reports the process, so it is not
+  a probe.
 
 ### 10 — Explicitly out of scope
 
 API server/webhook, multi-tenant or team mode, channels other than Slack, browser tools under gVisor,
-and a dedicated credential gateway.
+a dedicated credential gateway, and a Postgres-backed state store.
+
+On that last one: Hermes v0.22.2 keeps all of its state in SQLite. `SessionDB` in `hermes_state.py`
+hardcodes `sqlite3.connect`, and the only knob is `config.database.journal_mode`; the pluggable
+provider that would allow Postgres is still an open RFC ([#23717][rfc], `needs-decision`). The
+`asyncpg` dependency belongs to the Matrix extra, not core state. Longhorn is a network filesystem,
+so Hermes detects it and falls back to `journal_mode: DELETE` — its documented mitigation, WAL
+concurrency off. Revisit when the provider seam ships.
+
+[rfc]: https://github.com/NousResearch/hermes-agent/issues/23717
 
 ## Risks
 

@@ -156,14 +156,15 @@ refused at review.
 - **WHEN** the release is upgraded
 - **THEN** the old Pod terminates before the new one mounts `/opt/data`
 
-### Requirement: Health is the gateway's own status
+### Requirement: Health is the supervised gateway service
 
-Liveness, readiness and startup SHALL run `hermes gateway status` as an `exec` probe. That command
-exits 0 whether or not the gateway runs, so the probe SHALL match its `Gateway is running` output
-instead of relying on the exit status. It reports the gateway process, not channel connectivity: a
-live process with a dead socket still reads healthy, and nothing in the chart can observe the socket.
+Liveness, readiness and startup SHALL probe the s6-supervised gateway service
+(`/command/s6-svstat /run/service/main-hermes`), and readiness SHALL additionally require the dashboard
+listener to answer on port 9119. `hermes gateway status` SHALL NOT be the probe: it is accurate but
+takes about 35 seconds inside this Pod, and it reports the process rather than channel connectivity,
+so nothing is lost by asking s6 directly.
 
 #### Scenario: A dead gateway is not ready
 
-- **WHEN** the gateway process is not running
+- **WHEN** the supervised gateway service is down
 - **THEN** readiness fails
