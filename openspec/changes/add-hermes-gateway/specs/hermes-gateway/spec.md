@@ -122,6 +122,25 @@ because the CNI enforces L3/L4 and cannot restrict by hostname.
 - **WHEN** the dashboard starts a login and fetches dex's discovery document
 - **THEN** the request to the issuer hostname is allowed by the policy
 
+### Requirement: MCP tools are the namespace's own Sympozium servers
+
+`config.mcp_servers` SHALL register the seven `…-sympozium-mcp-*` Services of this namespace as HTTP
+MCP endpoints (`http://<release>-automation-sympozium-mcp-<name>.automation.svc.cluster.local:8080/mcp`),
+and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods on port 8080.
+These are the servers the Sympozium agents already use; their stdio adapter speaks MCP over HTTP and
+needs no credential the Deployments do not already mount. The `slack` entry is a tool surface on top
+of the built-in channel, which keeps its own Socket Mode connection.
+
+#### Scenario: The agent discovers the namespace's tools
+
+- **WHEN** the gateway enumerates MCP tools
+- **THEN** every registered server completes the MCP handshake and reports its tools
+
+#### Scenario: MCP is the only in-namespace egress besides LiteLLM
+
+- **WHEN** the agent connects to any other Service in this namespace
+- **THEN** the NetworkPolicy denies it
+
 ### Requirement: Credentials come from existing secrets by reference
 
 The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from

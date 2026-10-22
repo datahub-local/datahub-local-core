@@ -85,3 +85,13 @@
 - [ ] 5.5 Confirm the chart's `helm test` passes (it checks the image/entrypoint path).
 - [ ] 5.6 Revisit Postgres-backed state when upstream lands the `SessionDBProvider` seam
   (NousResearch/hermes-agent#23717); nothing to configure in v0.22.2.
+
+## 6. MCP tools
+
+- [x] 6.1 `config.mcp_servers` for the seven `…-sympozium-mcp-*` Services in this namespace, HTTP on
+  port 8080 at `/mcp`; the stdio adapter needs no credential beyond the tokens its Deployments mount.
+- [x] 6.2 `extraEgress` to the `app.kubernetes.io/name: mcpserver` pods on port 8080; without it every
+  call is refused, because `blockPrivateEgress` covers the whole namespace.
+- [x] 6.3 Seed once with `bootstrap.overwrite: true`: `seed-config` skips an existing `config.yaml`, so
+  the new key never reaches the volume otherwise. The flag returns to `false` afterwards.
+- [ ] 6.4 `hermes mcp test` each server from the Pod and one turn that calls an MCP tool.

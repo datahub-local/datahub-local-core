@@ -171,7 +171,30 @@ connect but stay silent. A live DM is the test, and a dedicated app is the fallb
   documented check but takes ~35 s per call in this Pod and only reports the process, so it is not
   a probe.
 
-### 10 — Explicitly out of scope
+### 10 — MCP tools are the Sympozium servers already in the namespace
+
+The namespace already runs seven MCP servers for Sympozium (`k8s`, `argocd`, `github`, `grafana`,
+`postgres`, `trino`, `slack`). Their stdio adapter publishes each as a plain-HTTP MCP endpoint on
+`Service:8080`, so Hermes needs only a `config.mcp_servers` entry per server plus one egress rule to
+the `app.kubernetes.io/name: mcpserver` pods — no new Deployment, no bridge, and no credential: the
+adapter reuses the `mcp-*-token` secrets its Deployments already mount.
+
+Verified from another Pod in this namespace: `initialize` over `POST /mcp` answers for all seven at
+the protocol version each one supports, and `GET` answers 405, so the endpoint is HTTP-transport MCP
+rather than SSE.
+
+`slack` is deliberately both a channel and an MCP tool surface. The channel is the Socket Mode
+connection Hermes makes itself; the MCP server exposes the Slack Web API as tools (search, read,
+post). They share the `mcp-slack-token` Secret but not a connection, and a second `apps.connections.open`
+is not requested.
+
+One operational trap: `bootstrap.overwrite` is `false`, so the chart's `seed-config` init container
+skips an existing `config.yaml` and a new key never reaches a live volume. Adding `mcp_servers` (or any
+later config key) therefore needs one deploy with `bootstrap.overwrite: true`; the flag goes back to
+`false` so runtime config edits survive later rollouts. The same caveat already applies to
+`dashboard.public_url` and `trusted_proxies`.
+
+### 11 — Explicitly out of scope
 
 API server/webhook, multi-tenant or team mode, channels other than Slack, browser tools under gVisor,
 a dedicated credential gateway, and a Postgres-backed state store.

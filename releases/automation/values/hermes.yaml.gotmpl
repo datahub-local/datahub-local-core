@@ -49,6 +49,12 @@ extraVolumeMounts:
   - name: tmp-tmpfs
     mountPath: /tmp
 
+# One-off: seed-config copies config.yaml only when it is absent, so a new key
+# (mcp_servers here) never reaches an existing volume. Flip back to false after
+# this deploy so runtime config edits survive later rollouts.
+bootstrap:
+  overwrite: true
+
 persistence:
   enabled: true
   storageClass: longhorn
@@ -65,6 +71,24 @@ config:
     default: opencode-go/deepseek-v4.1-flash
   terminal:
     backend: local
+  # Sympozium's MCP servers already run in this namespace and their stdio
+  # adapter serves MCP over HTTP on 8080. `slack` here is an extra tool surface,
+  # distinct from the built-in channel, which keeps its own Socket Mode socket.
+  mcp_servers:
+    sympozium-k8s:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-k8s.automation.svc.cluster.local:8080/mcp
+    sympozium-argocd:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-argocd.automation.svc.cluster.local:8080/mcp
+    sympozium-github:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-github.automation.svc.cluster.local:8080/mcp
+    sympozium-grafana:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-grafana.automation.svc.cluster.local:8080/mcp
+    sympozium-postgres:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-postgres.automation.svc.cluster.local:8080/mcp
+    sympozium-trino:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-trino.automation.svc.cluster.local:8080/mcp
+    sympozium-slack:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
   security:
     redact_secrets: true
   approvals:
@@ -143,6 +167,15 @@ networkPolicy:
       ports:
         - protocol: TCP
           port: 443
+    # Sympozium's MCP servers in this namespace, addressed by the pod label the
+    # controller puts on all of them; the stdio adapter is plain HTTP on 8080.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mcpserver
+      ports:
+        - protocol: TCP
+          port: 8080
   # Only the dashboard listener is reachable, and only from Traefik's node
   # addresses (hostNetwork, so a namespace/pod selector would match nothing).
   # The pod CIDR is required too: under gVisor a peer on another node arrives
