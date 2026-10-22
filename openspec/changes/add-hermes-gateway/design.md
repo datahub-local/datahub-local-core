@@ -89,7 +89,13 @@ The chart's NetworkPolicy:
 - `blockPrivateEgress: true`, so RFC1918 and the cloud metadata endpoint are denied by default;
 - one `extraEgress` rule for LiteLLM, scoped to the `data` namespace and the LiteLLM Pod label, port
   4000;
-- one `extraIngress` rule for the dashboard, port 9119, from Traefik's node network;
+- one `extraEgress` rule for the Traefik node network, port 443: dex is published through Traefik
+  (hostNetwork), so the issuer resolves inside RFC1918 and OIDC discovery is otherwise denied;
+- one `extraIngress` rule for the dashboard, port 9119, from Traefik's node network and the pod CIDR.
+  The pod CIDR is not belt-and-braces: verified on this cluster, a hostNetwork Traefik on another
+  node reaches a gVisor sandbox SNATed to the pod network's gateway address (`10.42.<n>.0/.1`), not
+  to `192.168.31.<node>`. With only the node block, the router on the pod's own node answered and
+  every other replica produced 502 Bad Gateway for the same service;
 - public internet stays allowed, which is what Slack's WSS endpoint needs.
 
 Verified on this cluster from an earlier agent Pod: the network-policy controller denies a direct

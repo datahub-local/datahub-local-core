@@ -73,8 +73,15 @@ registered redirect URI and the session cookies are marked `Secure`.
 
 #### Scenario: Nothing else reaches the pod
 
-- **WHEN** a connection to port 9119 arrives from an address outside Traefik's node network
+- **WHEN** a connection to port 9119 arrives from an address outside Traefik's node network and the
+  pod CIDR
 - **THEN** the NetworkPolicy denies it
+
+#### Scenario: Every Traefik replica can reach the dashboard
+
+- **WHEN** Traefik on a node other than the one hosting the Pod forwards a request to port 9119
+- **THEN** the request is admitted, because a gVisor sandbox sees such a peer SNATed to the pod
+  network's gateway address rather than the node address
 
 ### Requirement: The dex client names the dashboard callback
 
@@ -92,9 +99,12 @@ secret already used by the other dex clients. The dashboard SHALL read that secr
 ### Requirement: Egress is limited to DNS, LiteLLM, and HTTPS
 
 The chart's NetworkPolicy SHALL be enabled with `allowDns: true` and `blockPrivateEgress: true`, plus
-one explicit egress rule for LiteLLM on port 4000. Public HTTPS SHALL remain allowed for Slack. The
-residual breadth of HTTPS SHALL be documented, because the CNI enforces L3/L4 and cannot restrict by
-hostname.
+one explicit egress rule for LiteLLM on port 4000 and one for the Traefik node network on port 443.
+The second is needed because dex — the dashboard's OIDC issuer — is published through Traefik, which
+runs hostNetwork, so the issuer hostname resolves to an RFC1918 node address that
+`blockPrivateEgress` would otherwise deny, leaving the dashboard answering 503 on `/auth/login`.
+Public HTTPS SHALL remain allowed for Slack. The residual breadth of HTTPS SHALL be documented,
+because the CNI enforces L3/L4 and cannot restrict by hostname.
 
 #### Scenario: The Kubernetes API is unreachable from the agent
 
@@ -106,6 +116,11 @@ hostname.
 
 - **WHEN** the gateway calls the in-cluster LiteLLM Service on port 4000
 - **THEN** the connection is allowed by the policy
+
+#### Scenario: The OIDC issuer is reachable
+
+- **WHEN** the dashboard starts a login and fetches dex's discovery document
+- **THEN** the request to the issuer hostname is allowed by the policy
 
 ### Requirement: Credentials come from existing secrets by reference
 

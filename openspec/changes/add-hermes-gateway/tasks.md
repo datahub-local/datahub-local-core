@@ -49,9 +49,13 @@
   `dashboard.trustedProxies` listing Traefik's node network plus the pod CIDR.
 - [x] 3b.3 `HERMES_DASHBOARD_OIDC_CLIENT_SECRET` in `extraEnv`, from the shared
   `.StateValues.security_github_client_secret`; never in `config.yaml`.
-- [x] 3b.4 `extraIngress` for port 9119 from `192.168.31.0/24`.
+- [x] 3b.4 `extraIngress` for port 9119 from `10.42.0.0/16`: cross-node peers arrive under gVisor
+  SNATed to the pod network's gateway address, so a node-only rule answered 502 on every Traefik
+  replica except the one on the Pod's own node.
 - [x] 3b.5 IngressRoute `automation-hermes.<gateway_hostname>` to the dashboard port with a
   homepage entry, without an `oauth2-proxy` middleware.
+- [x] 3b.8 `extraEgress` to `192.168.31.0/24` on port 443: dex resolves to a node address behind
+  Traefik, and `blockPrivateEgress` denied it, so `/auth/login` answered 503.
 - [ ] 3b.6 Register the dex staticClient `hermes` with redirect URI
   `https://automation-hermes.<gateway_hostname>/auth/callback` and the shared secret (dex lives in
   another repository).

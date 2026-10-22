@@ -134,12 +134,26 @@ networkPolicy:
       ports:
         - protocol: TCP
           port: 4000
+    # dex is published through Traefik, which runs hostNetwork, so the issuer
+    # resolves to a node address inside RFC1918 and OIDC discovery is denied
+    # without this rule - the dashboard then answers 503 on /auth/login.
+    - to:
+        - ipBlock:
+            cidr: 192.168.31.0/24
+      ports:
+        - protocol: TCP
+          port: 443
   # Only the dashboard listener is reachable, and only from Traefik's node
   # addresses (hostNetwork, so a namespace/pod selector would match nothing).
+  # The pod CIDR is required too: under gVisor a peer on another node arrives
+  # SNATed to the pod network's gateway address, so a node-only rule left every
+  # Traefik replica except the one on this node answering 502.
   extraIngress:
     - from:
         - ipBlock:
             cidr: 192.168.31.0/24
+        - ipBlock:
+            cidr: 10.42.0.0/16
       ports:
         - protocol: TCP
           port: 9119
