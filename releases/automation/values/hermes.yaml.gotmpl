@@ -138,6 +138,20 @@ extraEnv:
   # the secret cannot live in config.dashboard.oauth.self_hosted.
   - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
     value: "{{ .StateValues.security_github_client_secret }}"
+  # The image sets PYTHONDONTWRITEBYTECODE=1, so every CLI/PTY start recompiles
+  # the 2.1 GB tree from source; a dashboard resume spawns a new process each
+  # time. A bytecode cache on the volume took a cold start's import from ~10 s
+  # to ~3 s. The path must stay outside the read-only rootfs.
+  - name: PYTHONDONTWRITEBYTECODE
+    value: "0"
+  - name: PYTHONPYCACHEPREFIX
+    value: /opt/data/.pycache
+
+# The gVisor RuntimeClass already pins datahub.local/gvisor; this adds the arch
+# because the agent's start-up is CPU-bound and the amd64 nodes are far faster
+# than the Pis.
+nodeSelector:
+  kubernetes.io/arch: amd64
 
 networkPolicy:
   enabled: true

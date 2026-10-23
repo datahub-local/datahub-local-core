@@ -98,3 +98,11 @@
   tools), argocd (11), github (26), grafana (65), trino (6) and slack (8) connect; postgres does not,
   because its own Deployment has been 0/1 for days — the adapter's `/healthz` and `/readyz` time out
   and the container restarts, so the Service has no endpoints. That is upstream of Hermes.
+
+## 7. Start-up latency
+
+- [x] 7.1 `PYTHONDONTWRITEBYTECODE=0` and `PYTHONPYCACHEPREFIX=/opt/data/.pycache`: the image disables
+  bytecode writes, so every process recompiled the tree; the same import measured 10.1 s → 3.0 s.
+- [x] 7.2 Pin the Pod to `kubernetes.io/arch: amd64`; the gVisor RuntimeClass owns the
+  `datahub.local/gvisor` selector and both merge.
+- [ ] 7.3 Re-measure a resume in the dashboard on the amd64 node.

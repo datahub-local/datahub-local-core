@@ -194,7 +194,21 @@ later config key) therefore needs one deploy with `bootstrap.overwrite: true`; t
 `false` so runtime config edits survive later rollouts. The same caveat already applies to
 `dashboard.public_url` and `trusted_proxies`.
 
-### 11 — Explicitly out of scope
+### 11 — Start-up cost is a feature of the deployment, not of resume
+
+Every dashboard resume opens a PTY and starts a new CLI process; nothing is reused, so resume costs
+the same as a fresh session. Measured on the release Pod: `import hermes_cli.main` 7.8–9.4 s,
+`hermes mcp list` 10–18 s, a one-shot turn 55–65 s to first token. Stack sampling attributes the
+silent part to module compilation, a `/proc/*/fd` scan for stale SQLite WAL holders, a glob in
+update-pause recovery on the Longhorn volume, MCP discovery, and the environment probe.
+
+Two changes cut it. The image runs with `PYTHONDONTWRITEBYTECODE=1` and ships almost no `.pyc`
+(three files in `hermes_cli/__pycache__`), so each process compiles the tree; setting it to `0` with
+`PYTHONPYCACHEPREFIX=/opt/data/.pycache` measured 10.1 s cold → 3.0 s warm for the same import. And
+because the work is CPU-bound, the Pod is pinned to the amd64 nodes — gVisor's RuntimeClass only
+supplies `datahub.local/gvisor`, so the arch selector merges with it rather than replacing it.
+
+### 12 — Explicitly out of scope
 
 API server/webhook, multi-tenant or team mode, channels other than Slack, browser tools under gVisor,
 a dedicated credential gateway, and a Postgres-backed state store.
