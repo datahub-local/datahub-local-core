@@ -105,4 +105,6 @@
   bytecode writes, so every process recompiled the tree; the same import measured 10.1 s → 3.0 s.
 - [x] 7.2 Pin the Pod to `kubernetes.io/arch: amd64`; the gVisor RuntimeClass owns the
   `datahub.local/gvisor` selector and both merge.
-- [ ] 7.3 Re-measure a resume in the dashboard on the amd64 node.
+- [x] 7.3 Re-measure a resume in the dashboard on the amd64 node: a one-shot turn went 65 s → 8 s and
+  a resumed session 57 s → 9 s; `hermes status` 41 s → 3 s. `import hermes_cli.main` is 2.3 s cold and
+  0.4 s warm against 7.8–9.4 s before.
