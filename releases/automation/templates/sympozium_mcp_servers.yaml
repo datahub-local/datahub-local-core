@@ -65,7 +65,9 @@ spec:
           # Named explicitly: the controller left command=/adapter/mcp-bridge on
           # the Deployment we adopt, and a merge cannot drop what we never set.
           command: ["/app/kubernetes-mcp-server"]
-          args: ["--port", "8080"]
+          # v0.0.69 dropped every runtime CLI flag; the image's own
+          # /etc/kubernetes-mcp-server/config.toml (MCP_CONFIG_PATH) sets port 8080.
+          args: []
           ports:
             - name: http
               containerPort: 8080
