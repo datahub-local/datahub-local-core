@@ -119,7 +119,7 @@ helm_chart_version:
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
     repository: https://stirling-tools.github.io/Stirling-PDF-chart
-    version: 3.1.0
+    version: 4.0.0
   superset:
     ref: superset/superset
     repository: https://apache.github.io/superset
