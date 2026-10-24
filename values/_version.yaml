@@ -1,20 +1,20 @@
 container_image_version:
   actualbudget/actual-server: 26.10.0
-  g33kphr33k/musicgrabber: 4.3.1
-  ghcr.io/browserless/chromium: v2.57.1
+  g33kphr33k/musicgrabber: 4.4.3
+  ghcr.io/browserless/chromium: v2.57.3
   ghcr.io/c4illin/convertx: v0.19.0
   ghcr.io/civilblur/mazanoke: v1.1.7
-  ghcr.io/containers/kubernetes-mcp-server: v0.0.67
+  ghcr.io/containers/kubernetes-mcp-server: v0.0.69
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
-  ghcr.io/gethomepage/homepage: v2.6.0
+  ghcr.io/gethomepage/homepage: v2.7.0
   ghcr.io/headlamp-k8s/headlamp: v0.46.0
-  ghcr.io/miniflux/miniflux: 2.3.3
+  ghcr.io/miniflux/miniflux: 2.3.4
   ghcr.io/sharevb/it-tools: 2026.9.27
-  ghcr.io/tailscale/tailscale: v1.104.1
+  ghcr.io/tailscale/tailscale: v1.104.2
   ghcr.io/tuannvm/mcp-trino: 4.3.1
-  iib0011/omni-tools: 0.6.0
+  iib0011/omni-tools: 0.7.0
   alpine/k8s: 1.37.1
   apache/polaris-admin-tool: 1.8.0
   crystaldba/postgres-mcp: 0.3.0
@@ -24,8 +24,8 @@ container_image_version:
   mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.44.3
-  nousresearch/hermes-agent: v0.22.2
+  n8nio/n8n: 2.45.3
+  nousresearch/hermes-agent: v0.22.5
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
   rclone/rclone: 1.75.2
@@ -51,7 +51,7 @@ helm_chart_version:
   garage:
     ref: garage-helm/garage
     repository: https://datahub-local.github.io/garage-helm
-    version: 0.8.0
+    version: 0.9.0
   headlamp:
     ref: headlamp/headlamp
     repository: https://kubernetes-sigs.github.io/headlamp
@@ -59,7 +59,7 @@ helm_chart_version:
   hermes-agent:
     ref: ghcr.io/jyje/hermes-agent-helm/hermes-agent
     repository: oci://ghcr.io/jyje/hermes-agent-helm
-    version: 1.21.0
+    version: 1.22.0
   homepage:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
@@ -67,15 +67,15 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 92.10.1
+    version: 92.11.0
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
-    version: 1.106.0
+    version: 1.106.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
-    version: 7.3.0
+    version: 7.5.0
   n8n:
     ref: 8gears/n8n
     repository: oci://8gears.container-registry.com/library
@@ -87,7 +87,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.89.0
+    version: 1.91.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -99,7 +99,7 @@ helm_chart_version:
   redpanda:
     ref: redpanda/redpanda
     repository: https://charts.redpanda.com
-    version: 26.2.4
+    version: 26.2.5
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
@@ -111,7 +111,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 15.0.0
+    version: 15.0.3
   spark-operator:
     ref: spark-operator/spark-operator
     repository: https://kubeflow.github.io/spark-operator
