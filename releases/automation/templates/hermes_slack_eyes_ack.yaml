@@ -52,8 +52,13 @@ data:
     or delays a message (worst case the reaction itself times out after 3s and is abandoned).
 
     Design notes:
-    - In-process class patch, applied once at gateway startup. If Hermes renames the entry
-      point, the plugin logs a warning and does nothing (fail-open, never breaks the adapter).
+    - Instance patch via ``ctx.register_platform_handler("slack", ...)``, applied at connect().
+      A class patch does not work: the loader imports the adapter as
+      ``hermes_plugins.platforms__slack.adapter`` while ``plugins.platforms.slack.adapter`` is a
+      second module object, so patching the imported class leaves the live adapter untouched
+      (that is exactly how the first version of this plugin became a silent no-op).
+      If Hermes renames the entry point, the plugin logs a warning and does nothing
+      (fail-open, never breaks the adapter).
     - Uses the adapter's own reaction helper, so team scoping, multi-workspace client routing
       and "already reacted" handling stay exactly as Hermes implements them.
     - Dedupe + rolling-minute rate cap, so an edit-event storm or a very busy channel cannot
@@ -237,40 +242,33 @@ data:
             return False
 
 
-    def _patch(cls, acker: _Acker) -> bool:
-        """Wrap ``cls._handle_slack_message_impl`` so the ack runs first. Idempotent."""
-        if getattr(cls, _PATCHED_FLAG, False):
-            return False
-        original = getattr(cls, _ENTRY_POINT, None)
+    def _wire(acker: _Acker, _native, adapter) -> None:
+        """Wrap this adapter instance's message entry point so the ack runs first. Idempotent."""
+        if getattr(adapter, _PATCHED_FLAG, False):
+            return
+        original = getattr(adapter, _ENTRY_POINT, None)
         if original is None or not asyncio.iscoroutinefunction(original):
             logger.warning(
                 "[slack-eyes-ack] %s.%s not found (Hermes renamed the Slack message entry "
-                "point?); :eyes: ack not installed", cls.__name__, _ENTRY_POINT)
-            return False
+                "point?); :eyes: ack not installed", type(adapter).__name__, _ENTRY_POINT)
+            return
 
-        async def _eyes_ack_first(self, event, *args, **kwargs):
+        async def _eyes_ack_first(event, *args, **kwargs):
             try:
-                await acker.ack(self, event)
+                await acker.ack(adapter, event)
             except Exception:  # never let the ack break message handling
                 logger.debug("[slack-eyes-ack] ack raised; continuing", exc_info=True)
-            return await original(self, event, *args, **kwargs)
+            return await original(event, *args, **kwargs)
 
         _eyes_ack_first.__name__ = "slack_eyes_ack_" + _ENTRY_POINT
         _eyes_ack_first.__wrapped__ = original
-        setattr(cls, _ENTRY_POINT, _eyes_ack_first)
-        setattr(cls, _PATCHED_FLAG, True)
-        return True
+        setattr(adapter, _ENTRY_POINT, _eyes_ack_first)
+        setattr(adapter, _PATCHED_FLAG, True)
+        logger.info(
+            "[slack-eyes-ack] every inbound Slack message now gets :%s: before gating "
+            "(skip_bots=%s, rate=%s/min)",
+            acker.cfg["emoji"], acker.cfg["skip_bots"], acker.cfg["max_per_minute"] or "unlimited")
 
 
     def register(ctx) -> None:
-        cfg = _settings(ctx)
-        try:
-            from plugins.platforms.slack.adapter import SlackAdapter
-        except Exception as exc:  # pragma: no cover - slack extra not installed
-            logger.warning("[slack-eyes-ack] Slack adapter unavailable (%s); ack not installed", exc)
-            return
-        if _patch(SlackAdapter, _Acker(cfg)):
-            logger.info(
-                "[slack-eyes-ack] every inbound Slack message now gets :%s: before gating "
-                "(skip_bots=%s, rate=%s/min)",
-                cfg["emoji"], cfg["skip_bots"], cfg["max_per_minute"] or "unlimited")
+        ctx.register_platform_handler("slack", lambda native, adapter: _wire(_Acker(_settings(ctx)), native, adapter))
