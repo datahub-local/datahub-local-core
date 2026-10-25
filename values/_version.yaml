@@ -4,30 +4,30 @@ container_image_version:
   ghcr.io/browserless/chromium: v2.57.3
   ghcr.io/c4illin/convertx: v0.19.0
   ghcr.io/civilblur/mazanoke: v1.1.7
-  ghcr.io/containers/kubernetes-mcp-server: v0.0.69
+  ghcr.io/containers/kubernetes-mcp-server: v0.0.69@sha256:1da9d62ad0c008a6cadcf2718c86c2e2d18753ca1d9f1f3313068980794b24f2
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
   ghcr.io/gethomepage/homepage: v2.7.0
+  ghcr.io/github/github-mcp-server: v2.0.3@sha256:250bc6ce70788207608ef74cef4397230ff2e8481218da74d6093e4bd9101132
   ghcr.io/headlamp-k8s/headlamp: v0.46.0
   ghcr.io/miniflux/miniflux: 2.3.4
   ghcr.io/sharevb/it-tools: 2026.9.27
   ghcr.io/tailscale/tailscale: v1.104.2
-  ghcr.io/tuannvm/mcp-trino: 4.3.1
+  ghcr.io/tuannvm/mcp-trino: 4.3.1@sha256:5ae7d6f845d3b2aa24dbbde7b783d5ffdb6a58070e54873033d4773e8417cf30
   iib0011/omni-tools: 0.7.0
   alpine/k8s: 1.37.1
   apache/polaris-admin-tool: 1.8.0
-  crystaldba/postgres-mcp: 0.3.0
+  crystaldba/postgres-mcp: 0.3.0@sha256:dbbd346860d29f1543e991f30f3284bf4ab5f096d049ecc3426528f20b1b6e6b
   curlimages/curl: 8.23.0
   kopia/kopia: 20251215.0.232403
   # Only latest is published for these two, so the digest is the pin.
-  mcp/github: latest@sha256:89fd71b6f2dd098de0d7517c1899b7fe90590d3193e253991d61a800b041bfd4
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
   n8nio/n8n: 2.45.3
   nousresearch/hermes-agent: v0.22.5
   python: "3.15"
-  quay.io/argoprojlabs/mcp-for-argocd: v0.9.0
+  quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
   rclone/rclone: 1.75.2
   valkey/valkey: 9.1.2
   velero/velero-plugin-for-aws: v1.14.4

@@ -18,7 +18,9 @@ metadata:
 rules:
   # Cluster-wide read: the enumerated groups this replaces covered no CRD, so
   # agents could not read velero, cnpg, longhorn or cert-manager objects.
-  # get/list/watch only, so pods/exec and every write stay denied.
+  # get/list/watch only, so pods/exec and every write stay denied. The wildcard
+  # also includes Secrets because RBAC cannot subtract from `*`; the server's
+  # denied_resources below is what blocks them.
   - apiGroups: ["*"]
     resources: ["*"]
     verbs: ["get", "list", "watch"]
@@ -35,6 +37,24 @@ subjects:
   - kind: ServiceAccount
     name: '{{ include "name" . }}-sympozium-mcp-k8s'
     namespace: '{{ .Release.Namespace }}'
+---
+# Layered on top of the image's own config.toml, which supplies port 8080.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-k8s-config'
+data:
+  deny.toml: |
+    # Denied on the MCPServer too, but that gate belongs to the controller; this
+    # removes the tools from the server itself.
+    disabled_tools = ["pods_exec", "pods_run"]
+
+    # RBAC grants get/list/watch on `*`, which includes Secrets, and cannot
+    # subtract a resource from a wildcard. This is where secret reads stop.
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "Secret"
 ---
 # Upstream runs this one as a controller-managed http server, but the server
 # answers only on /mcp while the controller publishes the Service root, so every
@@ -65,12 +85,17 @@ spec:
           # Named explicitly: the controller left command=/adapter/mcp-bridge on
           # the Deployment we adopt, and a merge cannot drop what we never set.
           command: ["/app/kubernetes-mcp-server"]
-          # v0.0.69 dropped every runtime CLI flag; the image's own
-          # /etc/kubernetes-mcp-server/config.toml (MCP_CONFIG_PATH) sets port 8080.
-          args: []
+          # v0.0.69 dropped every runtime CLI flag; --config-dir only picks the
+          # drop-in directory. The image's own /etc/kubernetes-mcp-server/config.toml
+          # (MCP_CONFIG_PATH) still supplies port 8080.
+          args: ["--config-dir", "/etc/kubernetes-mcp-server/conf.d"]
           ports:
             - name: http
               containerPort: 8080
+          volumeMounts:
+            - name: mcp-config
+              mountPath: /etc/kubernetes-mcp-server/conf.d
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /healthz
@@ -84,6 +109,10 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+      volumes:
+        - name: mcp-config
+          configMap:
+            name: '{{ include "name" . }}-sympozium-mcp-k8s-config'
 ---
 apiVersion: v1
 kind: Service
@@ -130,24 +159,23 @@ spec:
   transportType: stdio
   toolsPrefix: github
   timeout: 30
-  # add_issue_comment stays allowed: renovate-reviewer exists to comment on PRs.
+  # Projects is opt-in and absent from the default toolsets. The token needs
+  # read:project for projects_get/projects_list and project for projects_write.
+  # Renovate-reviewer comments on PRs; the rest of the PR workflow (branch, file
+  # write, PR, review, Projects) is allowed.
   toolsDeny:
-    - create_or_update_file
-    - push_files
     - create_repository
     - fork_repository
-    - create_branch
-    - create_issue
-    - update_issue
-    - create_pull_request
-    - create_pull_request_review
+    - delete_repository
+    - delete_file
     - merge_pull_request
-    - update_pull_request_branch
   deployment:
-    image: mcp/github:{{ index .Values.container_image_version "mcp/github" }}
-    cmd: node
+    image: ghcr.io/github/github-mcp-server:{{ index .Values.container_image_version "ghcr.io/github/github-mcp-server" }}
+    cmd: /server/github-mcp-server
     args:
-      - dist/index.js
+      - stdio
+    env:
+      GITHUB_TOOLSETS: default,projects
     secretRefs:
       - name: mcp-github-token
 ---

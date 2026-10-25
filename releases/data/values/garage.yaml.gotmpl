@@ -48,10 +48,16 @@ clusterConfig:
       secretKey: secretKey
       buckets:
         #{{- range $bucket := .StateValues.s3_buckets }}
-        - "{{ $bucket.name }}"
+        - name: "{{ $bucket.name }}"
+          read: true
+          write: true
+          owner: true
         #{{- end }}
         #{{- range $catalog := .StateValues.iceberg_catalogs }}
-        - "datahub-local-{{ $catalog }}"
+        - name: "datahub-local-{{ $catalog }}"
+          read: true
+          write: true
+          owner: true
         #{{- end }}
 
 webui:
