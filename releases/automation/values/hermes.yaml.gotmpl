@@ -151,8 +151,11 @@ env:
 extraEnvFrom:
   - secretRef:
       name: litellm-auth-credentials
+  # Hermes has its own Slack app: the @homelab app is held by Sympozium's channel
+  # responder, and Slack gives each event to one of an app's Socket Mode
+  # connections, so a shared app means Hermes never receives anything.
   - secretRef:
-      name: mcp-slack-token
+      name: hermes-slack-token
 
 extraEnv:
   - name: GATEWAY_ALLOW_ALL_USERS

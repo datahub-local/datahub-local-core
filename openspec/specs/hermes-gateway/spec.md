@@ -158,7 +158,7 @@ rather than a gateway misconfiguration.
 ### Requirement: Credentials come from existing secrets by reference
 
 The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from
-`mcp-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. The LiteLLM key
+`hermes-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. The LiteLLM key
 SHALL NOT appear in a values file, a ConfigMap, or a rendered manifest. The dex client secret is the
 one exception: it is the shared value already used by the other dex clients, it comes from
 `/helm-values/security.yaml` rather than this repository, and it reaches the Pod as
@@ -191,12 +191,11 @@ The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, 
 (`C0CBX92B6PQ`), so plain messages there are answered without an @mention.
 
 That channel is private, so the Slack app SHALL subscribe to `message.groups` and grant
-`groups:history`; without both, a plain message produces no event. Reinstalling the app to add a
-scope rotates the bot token, so `mcp-slack-token` SHALL be updated and the Pod restarted.
-
-Only one process may hold the app's Socket Mode connection: Slack delivers each event to one
-connection. The Sympozium channel responder uses the same app, so the responder SHALL be scaled to
-zero for the gateway to receive messages, and running both SHALL require a dedicated app.
+`groups:history`; without both, a plain message produces no event. The app SHALL be a dedicated one
+with its own bot and app-level tokens in `hermes-slack-token`, because Slack delivers each event to
+one of an app's Socket Mode connections: the `@homelab` app is held by Sympozium's channel responder,
+which received and dropped the gateway's messages. Reinstalling an app to add a scope rotates its bot
+token, so the Secret SHALL be updated and the Pod restarted.
 
 #### Scenario: An unlisted user is ignored
 

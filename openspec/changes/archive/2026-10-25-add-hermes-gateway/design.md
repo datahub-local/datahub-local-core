@@ -169,10 +169,14 @@ a reinstall rotates the bot token, so `mcp-slack-token` must be updated and the 
 
 The Sympozium channel responder mounts the same Secret and opens its own Socket Mode connection on
 the same app with `SLACK_ALLOWED_TRIGGERS=mention,dm`. Slack sends each event to **one** of an app's
-connections, so the two cannot both listen: with the responder running, it took the only event in
-this channel and Hermes logged nothing. Hermes receives only while
-`homelab-responder-homelab-oracle-channel-slack` is scaled to 0. A dedicated app is the only way to
-run both.
+connections, so the two cannot both listen: with the responder running, it received and dropped the
+gateway's message (`dropped inbound … access denied … chat=C0CBX92B6PQ`) and Hermes logged nothing.
+Scaling the responder to 0 only helped until its Agent controller reconciled it back to one replica.
+
+So Hermes runs its own Slack app (`@homelab_hermes`, `U0CBJ4Q361M`) with its own bot and app-level
+tokens in `hermes-slack-token`, which `extraEnvFrom` mounts instead of `mcp-slack-token`. The
+`@homelab` app keeps serving the responder and the slack MCP tool surface; nothing is shared but the
+workspace.
 
 ### 9 — State and lifecycle
 
@@ -261,10 +265,10 @@ concurrency off. Revisit when the provider seam ships.
   under gVisor. A failed start is a release blocker, not something to paper over with a writable
   rootfs.
 - **Broad HTTPS egress.** Required by Slack with an L3/L4 CNI.
-- **Slack is single-listener.** Hermes and the Sympozium channel responder share one app and one
-  Secret, and Slack sends each event to one connection, so Hermes only receives while that responder
-  is scaled to 0. Running both needs a dedicated app. The channel is private: `groups:history` plus
-  `message.groups` are required, and a reinstall rotates the token in `mcp-slack-token`.
+- **Slack needs its own app.** Slack sends each event to one of an app's Socket Mode connections, and
+  the `@homelab` app is held by the Sympozium channel responder, so Hermes runs a dedicated app
+  (`@homelab_hermes`) with tokens in `hermes-slack-token`. The channel is private: `groups:history`
+  plus `message.groups` are required, and a reinstall rotates the bot token in that Secret.
 - **Node TUI vs. gVisor's clock.** The dashboard chat is a Node process, and Node aborts on a
   backwards `CLOCK_MONOTONIC` (`GetNowUint64`). gVisor inherits the host TSC, so the Pod is pinned to
   amd-1; amd-2 would crash roughly one in fifteen session starts.
