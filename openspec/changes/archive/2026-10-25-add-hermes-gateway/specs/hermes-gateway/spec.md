@@ -30,6 +30,15 @@ browser launch and a page read are proven under that runtime.
 - **THEN** `runtimeClassName` is `gvisor`
 - **AND** the gateway answers a model turn while running under it
 
+#### Scenario: The Pod lands on a node with a monotonic clock
+
+- **WHEN** the Pod is scheduled
+- **THEN** `nodeSelector` names `datahublocal-amd-1`, whose clocksource is `tsc`
+- **AND** it is not placed on `datahublocal-amd-2`, where the kernel blacklists the TSC
+  (`available_clocksource` is `hpet acpi_pm` only) and gVisor's sandbox clock jumps backwards by up
+  to 1.6 s — enough to abort the dashboard's Node TUI in `GetNowUint64`'s monotonicity check, which
+  measured 53 of 800 `node` starts on that node
+
 ### Requirement: The Pod runs the restricted security profile
 
 The release SHALL layer the chart's hardened profile: `runAsNonRoot: true` with the image's `hermes`
@@ -129,7 +138,9 @@ MCP endpoints (`http://<release>-automation-sympozium-mcp-<name>.automation.svc.
 and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods on port 8080.
 These are the servers the Sympozium agents already use; their stdio adapter speaks MCP over HTTP and
 needs no credential the Deployments do not already mount. The `slack` entry is a tool surface on top
-of the built-in channel, which keeps its own Socket Mode connection.
+of the built-in channel, which keeps its own Socket Mode connection. `sympozium-github` currently
+fails the handshake with `duplicate "initialize" received`, an adapter-side fault on that server
+rather than a gateway misconfiguration.
 
 #### Scenario: The agent discovers the namespace's tools
 
@@ -169,15 +180,36 @@ model API directly.
 - **THEN** the request is served by in-cluster LiteLLM
 - **AND** the reply is delivered back to Slack
 
-### Requirement: Slack is restricted to the owner
+### Requirement: Slack is restricted to the owner and to one channel
 
 The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, with
-`GATEWAY_ALLOW_ALL_USERS=false` and `SLACK_ALLOWED_USERS` containing only `U08RV08387L`.
+`GATEWAY_ALLOW_ALL_USERS=false`, `SLACK_ALLOWED_USERS` containing only `U08RV08387L`, and
+`SLACK_ALLOWED_CHANNELS` plus `SLACK_FREE_RESPONSE_CHANNELS` containing only `#agent-hermes`
+(`C0CBX92B6PQ`), so plain messages there are answered without an @mention.
+
+That channel is private, so the Slack app SHALL subscribe to `message.groups` and grant
+`groups:history`; without both, a plain message produces no event. Reinstalling the app to add a
+scope rotates the bot token, so `mcp-slack-token` SHALL be updated and the Pod restarted.
+
+Only one process may hold the app's Socket Mode connection: Slack delivers each event to one
+connection. The Sympozium channel responder uses the same app, so the responder SHALL be scaled to
+zero for the gateway to receive messages, and running both SHALL require a dedicated app.
 
 #### Scenario: An unlisted user is ignored
 
 - **WHEN** a Slack user outside the allowlist messages the bot
 - **THEN** no agent turn runs
+
+#### Scenario: A message in the scoped channel is answered
+
+- **WHEN** the owner posts a plain message in `#agent-hermes`
+- **THEN** the gateway logs `inbound message: platform=slack`, opens a `source=slack` session, and
+  replies in the channel
+
+#### Scenario: Another channel is ignored
+
+- **WHEN** the bot is mentioned in a channel other than `#agent-hermes`
+- **THEN** no agent turn runs, because `SLACK_ALLOWED_CHANNELS` is set
 
 ### Requirement: State is single-writer and survives restarts
 

@@ -160,10 +160,19 @@ fallback.
 
 Hermes is scoped to `#agent-hermes` (`C0CBX92B6PQ`, bot and `alvsanand` already members) with
 `SLACK_ALLOWED_CHANNELS` and `SLACK_FREE_RESPONSE_CHANNELS`, so it answers plain messages there
-without an @mention. The Sympozium channel responder mounts the same Secret and opens its own Socket
-Mode connection on the same app with `SLACK_ALLOWED_TRIGGERS=mention,dm`; plain channel messages are
-outside that trigger set, which keeps the two apart in practice, but Slack still splits an app's
-events across its connections, so a DM can land on either one.
+without an @mention.
+
+That channel is private, so the app needs `groups:history` and the `message.groups` event; without
+them a plain message produces no event at all and Hermes stays silent (measured: `hello` at 12:35
+was never delivered, `Hello hello!` at 13:26 was, after both were added and the app reinstalled —
+a reinstall rotates the bot token, so `mcp-slack-token` must be updated and the Pod restarted).
+
+The Sympozium channel responder mounts the same Secret and opens its own Socket Mode connection on
+the same app with `SLACK_ALLOWED_TRIGGERS=mention,dm`. Slack sends each event to **one** of an app's
+connections, so the two cannot both listen: with the responder running, it took the only event in
+this channel and Hermes logged nothing. Hermes receives only while
+`homelab-responder-homelab-oracle-channel-slack` is scaled to 0. A dedicated app is the only way to
+run both.
 
 ### 9 — State and lifecycle
 
@@ -252,11 +261,10 @@ concurrency off. Revisit when the provider seam ships.
   under gVisor. A failed start is a release blocker, not something to paper over with a writable
   rootfs.
 - **Broad HTTPS egress.** Required by Slack with an L3/L4 CNI.
-- **Slack delivery is unproven.** The shared app also holds a Socket Mode connection from the
-  Sympozium channel responder, and Slack splits an app's events across its connections, so a message
-  in `#agent-hermes` can land on either one. Scoping Hermes to that channel with free-response keeps
-  plain channel messages with Hermes (the responder's triggers are `mention,dm`); DMs stay a coin
-  flip until a dedicated app exists.
+- **Slack is single-listener.** Hermes and the Sympozium channel responder share one app and one
+  Secret, and Slack sends each event to one connection, so Hermes only receives while that responder
+  is scaled to 0. Running both needs a dedicated app. The channel is private: `groups:history` plus
+  `message.groups` are required, and a reinstall rotates the token in `mcp-slack-token`.
 - **Node TUI vs. gVisor's clock.** The dashboard chat is a Node process, and Node aborts on a
   backwards `CLOCK_MONOTONIC` (`GetNowUint64`). gVisor inherits the host TSC, so the Pod is pinned to
   amd-1; amd-2 would crash roughly one in fifteen session starts.

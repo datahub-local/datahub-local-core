@@ -73,10 +73,11 @@
   (`apps.connections.open` → ok, bot `homelab`, team `DataHub.local`). `x-oauth-scopes` carries
   `channels:history`, `im:history`, `app_mentions:read`, `files:read`, `chat:write`; only
   `mpim:history` is missing, which matches the group-DM warning the adapter logs.
-- [ ] 4.2 Message in `#agent-hermes` (`C0CBX92B6PQ`, Hermes scoped there by
+- [x] 4.2 Message in `#agent-hermes` (`C0CBX92B6PQ`, Hermes scoped there by
   `SLACK_ALLOWED_CHANNELS` + `SLACK_FREE_RESPONSE_CHANNELS`) from `U08RV08387L` and get an answer.
-  If the responder takes the event, create a dedicated Hermes Slack app from
-  `hermes slack manifest --agent-view` and move the tokens to a new secret.
+  Verified 13:26:22: `inbound message: platform=slack user=Alvaro Santos Andres chat=C0CBX92B6PQ
+  msg='Hello hello!'`, session `20261025_132622_d4c84497` (`source=slack`), reply posted. This only
+  works with `homelab-responder-homelab-oracle-channel-slack` scaled to 0 — see design §8.
 - [ ] 4.3 Confirm a user outside the allowlist gets no response.
 
 ## 5. Lifecycle and verification
