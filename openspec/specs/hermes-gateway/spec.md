@@ -213,6 +213,30 @@ token, so the Secret SHALL be updated and the Pod restarted.
 - **WHEN** the bot is mentioned in a channel other than `#agent-hermes`
 - **THEN** no agent turn runs, because `SLACK_ALLOWED_CHANNELS` is set
 
+### Requirement: Inbound Slack messages are acknowledged with a reaction
+
+Every inbound Slack message SHALL get an `:eyes:` reaction before channel, mention and authorisation
+gating, so a message that produces no turn is still visibly acknowledged. Hermes's built-in lifecycle
+reaction covers only DMs and @mentions — it swaps `:eyes:` for `:white_check_mark:` or `:x:` when a
+tracked turn ends — so the broader ack comes from the `slack-eyes-ack` plugin.
+
+The plugin's two files SHALL ship as a ConfigMap mounted over `/opt/data/plugins/slack-eyes-ack`,
+because values cannot carry files and the gateway scans that directory only at startup, and
+`config.plugins` SHALL select it with `plugins.entries.slack-eyes-ack.settings.emoji: eyes`. The app
+needs `reactions:write`.
+
+#### Scenario: A plain channel message is acknowledged
+
+- **WHEN** the owner posts a plain message in `#agent-hermes`
+- **THEN** the message carries `:eyes:` while the turn runs
+- **AND** the plugin log line `every inbound Slack message now gets :eyes: before gating` appears once
+  per gateway start
+
+#### Scenario: A dropped message is still acknowledged
+
+- **WHEN** a message arrives that the channel or user gate will drop
+- **THEN** it still receives `:eyes:`, because the reaction is added before gating
+
 ### Requirement: State is single-writer and survives restarts
 
 The release SHALL use one replica, the chart's `Recreate` strategy, and a persistent volume mounted

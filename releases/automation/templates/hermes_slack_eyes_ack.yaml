@@ -1,0 +1,276 @@
+# The Slack ack reaction is a plugin, and values cannot carry files: the gateway
+# only scans /opt/data/plugins at startup, so the two files are mounted there over
+# the volume. `config.plugins` in values selects it and sets `emoji: eyes`.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "name" . }}-hermes-slack-eyes-ack'
+  namespace: automation
+data:
+  plugin.yaml: |
+    name: slack-eyes-ack
+    version: 1.0.0
+    description: "Adds a :eyes: reaction to every inbound Slack message the moment it arrives — before channel gating, mention checks, authorization, or the agent turn. The reaction is the first thing that happens; the normal pipeline then proceeds untouched."
+    author: "Hermes (local)"
+    tags: [slack, reaction, ack]
+    config_schema:
+      emoji:
+        type: str
+        default: eyes
+        description: "Slack emoji name (no colons) to add to every inbound message."
+      skip_bots:
+        type: bool
+        default: true
+        description: "Skip messages authored by bots/apps (prevents reaction loops with peer bots). Set false to ack those too."
+      skip_own_messages:
+        type: bool
+        default: true
+        description: "Never react to the bot's own posts."
+      skip_edited:
+        type: bool
+        default: true
+        description: "Skip message_changed / message_deleted events (edits, deletes, unfurls)."
+      max_per_minute:
+        type: int
+        default: 120
+        description: "Safety valve: stop adding reactions above this rate in a rolling minute (0 = unlimited)."
+      await_reaction:
+        type: bool
+        default: true
+        description: "Wait for the reaction call (max 3s) before handling the message, so :eyes: is visible before the reply. false = fire-and-forget."
+  __init__.py: |
+    """slack-eyes-ack — put :eyes: on every inbound Slack message, before anything else.
+
+    Hermes' built-in lifecycle reaction only fires while a message is being *processed*
+    (a :eyes: is added at processing start and immediately swapped for :white_check_mark:/:x:),
+    and only for 1:1 DMs and @mentions. Everything the adapter drops — plain channel chatter
+    the bot is not mentioned in, unauthorized users, ignored channels — never gets an ack.
+
+    This plugin wraps the Slack adapter's message entry point so the reaction is added at the
+    door: first statement of the turn, before channel/mention/authorization gating and before
+    the agent loop. The normal pipeline then runs untouched — the plugin never drops, rewrites
+    or delays a message (worst case the reaction itself times out after 3s and is abandoned).
+
+    Design notes:
+    - In-process class patch, applied once at gateway startup. If Hermes renames the entry
+      point, the plugin logs a warning and does nothing (fail-open, never breaks the adapter).
+    - Uses the adapter's own reaction helper, so team scoping, multi-workspace client routing
+      and "already reacted" handling stay exactly as Hermes implements them.
+    - Dedupe + rolling-minute rate cap, so an edit-event storm or a very busy channel cannot
+      queue thousands of reactions.add calls against Slack's rate limit.
+    """
+
+    from __future__ import annotations
+
+    import asyncio
+    import logging
+    import time
+    from collections import OrderedDict, deque
+
+    logger = logging.getLogger(__name__)
+
+    _ENTRY_POINT = "_handle_slack_message_impl"
+    _PATCHED_FLAG = "_hermes_slack_eyes_ack_patched"
+    _MAX_SEEN = 2048
+    _REACTION_TIMEOUT_SECS = 3.0
+
+    _DEFAULTS = {
+        "emoji": "eyes",
+        "skip_bots": True,
+        "skip_own_messages": True,
+        "skip_edited": True,
+        "max_per_minute": 120,
+        "await_reaction": True,
+    }
+
+    _SKIP_SUBTYPES = {"message_changed", "message_deleted"}
+
+
+    def _as_bool(value, default: bool) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+    def _settings(ctx) -> dict:
+        get = getattr(ctx, "get_config", None)
+
+        def cfg(key):
+            try:
+                return get(key, _DEFAULTS[key]) if callable(get) else _DEFAULTS[key]
+            except Exception:  # never let a config read break plugin load
+                return _DEFAULTS[key]
+
+        emoji = str(cfg("emoji") or _DEFAULTS["emoji"]).strip().strip(":")
+        try:
+            rate = int(cfg("max_per_minute"))
+        except (TypeError, ValueError):
+            rate = _DEFAULTS["max_per_minute"]
+        return {
+            "emoji": emoji or _DEFAULTS["emoji"],
+            "skip_bots": _as_bool(cfg("skip_bots"), _DEFAULTS["skip_bots"]),
+            "skip_own_messages": _as_bool(cfg("skip_own_messages"), _DEFAULTS["skip_own_messages"]),
+            "skip_edited": _as_bool(cfg("skip_edited"), _DEFAULTS["skip_edited"]),
+            "max_per_minute": max(0, rate),
+            "await_reaction": _as_bool(cfg("await_reaction"), _DEFAULTS["await_reaction"]),
+        }
+
+
+    class _Acker:
+        """Decides what to ack and how; shared by every adapter of one workspace."""
+
+        def __init__(self, cfg: dict):
+            self.cfg = cfg
+            self._seen: OrderedDict[str, None] = OrderedDict()
+            self._stamps: deque[float] = deque()
+            self._warned_helper = False
+
+        # -- gates ---------------------------------------------------------------
+        @staticmethod
+        def _unwrap(event):
+            if not isinstance(event, dict):
+                return None
+            inner = event.get("event")
+            if "ts" not in event and isinstance(inner, dict):
+                return inner
+            return event
+
+        def _first_time(self, key: str) -> bool:
+            if key in self._seen:
+                return False
+            self._seen[key] = None
+            while len(self._seen) > _MAX_SEEN:
+                self._seen.popitem(last=False)
+            return True
+
+        def _rate_ok(self) -> bool:
+            limit = self.cfg["max_per_minute"]
+            if limit <= 0:
+                return True
+            now = time.monotonic()
+            while self._stamps and now - self._stamps[0] > 60.0:
+                self._stamps.popleft()
+            if len(self._stamps) >= limit:
+                logger.debug("[slack-eyes-ack] rate cap (%d/min) reached; skipping ack", limit)
+                return False
+            self._stamps.append(now)
+            return True
+
+        def _is_bot_authored(self, adapter, ev: dict) -> bool:
+            declares = getattr(adapter, "_event_declares_bot_sender", None)
+            if callable(declares):
+                try:
+                    return bool(declares(ev))
+                except Exception:
+                    pass
+            return bool(ev.get("bot_id") or ev.get("bot_profile") or ev.get("subtype") == "bot_message")
+
+        def _helper(self, adapter):
+            for name in ("_add_reaction", "_react"):
+                fn = getattr(adapter, name, None)
+                if callable(fn):
+                    return name, fn
+            if not self._warned_helper:
+                self._warned_helper = True
+                logger.warning(
+                    "[slack-eyes-ack] Slack adapter exposes no reaction helper "
+                    "(_add_reaction/_react); :%s: ack disabled", self.cfg["emoji"])
+            return None, None
+
+        # -- main entry ----------------------------------------------------------
+        async def ack(self, adapter, event) -> bool:
+            ev = self._unwrap(event)
+            if ev is None:
+                return False
+            subtype = str(ev.get("subtype") or "")
+            if self.cfg["skip_edited"] and subtype in _SKIP_SUBTYPES:
+                return False
+            channel = str(ev.get("channel") or "")
+            ts = str(ev.get("ts") or "")
+            if not channel or not ts:
+                return False
+            user = str(ev.get("user") or "")
+            bot_uid = str(getattr(adapter, "_bot_user_id", "") or "")
+            if bot_uid and user and user == bot_uid:
+                return False  # never react to our own posts, whatever the config says
+            if self.cfg["skip_bots"] and self._is_bot_authored(adapter, ev):
+                return False
+            enabled = getattr(adapter, "_reactions_enabled", None)
+            if callable(enabled):
+                try:
+                    if not enabled():
+                        return False
+                except Exception:
+                    pass
+            if getattr(adapter, "_app", None) is None:
+                return False  # Socket Mode not connected yet
+            if not self._first_time(f"{channel}:{ts}"):
+                return False
+            if not self._rate_ok():
+                return False
+            name, fn = self._helper(adapter)
+            if fn is None:
+                return False
+            team_id = str(ev.get("team") or ev.get("team_id") or "")
+            emoji = self.cfg["emoji"]
+            try:
+                if name == "_react":
+                    coro = fn(channel, ts, emoji, team_id, remove=False)
+                else:
+                    coro = fn(channel, ts, emoji, team_id)
+            except Exception:
+                logger.debug("[slack-eyes-ack] reaction call setup failed", exc_info=True)
+                return False
+            if not self.cfg["await_reaction"]:
+                asyncio.create_task(coro)
+                return True
+            try:
+                await asyncio.wait_for(coro, timeout=_REACTION_TIMEOUT_SECS)
+                return True
+            except asyncio.TimeoutError:
+                logger.debug("[slack-eyes-ack] reaction timed out after %.1fs; continuing",
+                             _REACTION_TIMEOUT_SECS)
+            except Exception:
+                logger.debug("[slack-eyes-ack] reaction failed; continuing", exc_info=True)
+            return False
+
+
+    def _patch(cls, acker: _Acker) -> bool:
+        """Wrap ``cls._handle_slack_message_impl`` so the ack runs first. Idempotent."""
+        if getattr(cls, _PATCHED_FLAG, False):
+            return False
+        original = getattr(cls, _ENTRY_POINT, None)
+        if original is None or not asyncio.iscoroutinefunction(original):
+            logger.warning(
+                "[slack-eyes-ack] %s.%s not found (Hermes renamed the Slack message entry "
+                "point?); :eyes: ack not installed", cls.__name__, _ENTRY_POINT)
+            return False
+
+        async def _eyes_ack_first(self, event, *args, **kwargs):
+            try:
+                await acker.ack(self, event)
+            except Exception:  # never let the ack break message handling
+                logger.debug("[slack-eyes-ack] ack raised; continuing", exc_info=True)
+            return await original(self, event, *args, **kwargs)
+
+        _eyes_ack_first.__name__ = "slack_eyes_ack_" + _ENTRY_POINT
+        _eyes_ack_first.__wrapped__ = original
+        setattr(cls, _ENTRY_POINT, _eyes_ack_first)
+        setattr(cls, _PATCHED_FLAG, True)
+        return True
+
+
+    def register(ctx) -> None:
+        cfg = _settings(ctx)
+        try:
+            from plugins.platforms.slack.adapter import SlackAdapter
+        except Exception as exc:  # pragma: no cover - slack extra not installed
+            logger.warning("[slack-eyes-ack] Slack adapter unavailable (%s); ack not installed", exc)
+            return
+        if _patch(SlackAdapter, _Acker(cfg)):
+            logger.info(
+                "[slack-eyes-ack] every inbound Slack message now gets :%s: before gating "
+                "(skip_bots=%s, rate=%s/min)",
+                cfg["emoji"], cfg["skip_bots"], cfg["max_per_minute"] or "unlimited")

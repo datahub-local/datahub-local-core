@@ -15,6 +15,17 @@ controller:
 replicaCount: 1
 runtimeClassName: gvisor
 
+# Velero fs-backup of the `data` volume through the daily schedule. A raw copy of
+# a live HERMES_HOME is tearable (SQLite runs in WAL mode), so the pre-hook writes
+# hermes' own sqlite-consistent archive into backups/, which the zip format excludes
+# from itself and -k prunes to three.
+podLabels:
+  backup.velero.io/custom-backup-daily-fs: "true"
+podAnnotations:
+  backup.velero.io/backup-volumes: data
+  pre.hook.backup.velero.io/command: '["/bin/sh", "-c", "mkdir -p /opt/data/backups && hermes backup -o /opt/data/backups/hermes-backup-$(date +%Y%m%d-%H%M%S).zip -k 3"]'
+  pre.hook.backup.velero.io/timeout: 15m
+
 # values-hardened.yaml, copied because the chart ships it as a file next to the
 # chart, not as a values source at install time.
 podSecurityContext:
@@ -42,12 +53,18 @@ extraVolumes:
     emptyDir:
       medium: Memory
       sizeLimit: 64Mi
+  - name: slack-eyes-ack
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-slack-eyes-ack'
 
 extraVolumeMounts:
   - name: run-tmpfs
     mountPath: /run
   - name: tmp-tmpfs
     mountPath: /tmp
+  - name: slack-eyes-ack
+    mountPath: /opt/data/plugins/slack-eyes-ack
+    readOnly: true
 
 # seed-config's chown only runs when that init container starts as root; the
 # hardened profile starts it as 10000, so the Longhorn mountpoint stays
@@ -82,7 +99,7 @@ extraInitContainers:
 persistence:
   enabled: true
   storageClass: longhorn
-  size: 5Gi
+  size: 10Gi
 
 config:
   providers:
@@ -115,6 +132,16 @@ config:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
   security:
     redact_secrets: true
+  # The ack reaction is a plugin (template hermes_slack_eyes_ack.yaml) and this
+  # only selects it: seed-config writes config.yaml on a fresh volume only, so an
+  # existing volume keeps whatever `hermes config set` last wrote.
+  plugins:
+    enabled:
+      - slack-eyes-ack
+    entries:
+      slack-eyes-ack:
+        settings:
+          emoji: eyes
   approvals:
     mode: smart
     cron_mode: deny
