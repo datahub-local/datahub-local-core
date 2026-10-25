@@ -167,6 +167,10 @@ extraEnv:
     value: C0CBX92B6PQ
   - name: SLACK_FREE_RESPONSE_CHANNELS
     value: C0CBX92B6PQ
+  # The app has no /hermes slash command registered, so /hermes sethome cannot
+  # run; cron and cross-platform results need the home channel from the env.
+  - name: SLACK_HOME_CHANNEL
+    value: C0CBX92B6PQ
   # Same dex client secret as the other apps; config.yaml is a ConfigMap, so
   # the secret cannot live in config.dashboard.oauth.self_hosted.
   - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
