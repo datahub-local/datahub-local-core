@@ -304,6 +304,98 @@ spec:
         cpu: 250m
         memory: 256Mi
 ---
+# Upstream's arm64 image ships an amd64 binary (`/app/trino-mcp: exec format
+# error` on arm nodes), and MCPServer.deployment has no nodeSelector. So this
+# workload is ours, HTTP-mode like the k8s server, and pinned to amd64.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-trino'
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &mcpTrinoLabels
+      app.kubernetes.io/name: mcpserver
+      app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-trino'
+      app.kubernetes.io/managed-by: sympozium
+  template:
+    metadata:
+      labels: *mcpTrinoLabels
+    spec:
+      # Trino's arm64 images carry the amd64 executable, so avoid arm nodes.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: mcp-server
+          image: ghcr.io/tuannvm/mcp-trino:{{ index .Values.container_image_version "ghcr.io/tuannvm/mcp-trino" }}
+          # Named explicitly: the adopted Deployment still carries the bridge
+          # command and args from its stdio days, and a merge cannot drop them.
+          command: ["/app/trino-mcp"]
+          args: []
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: MCP_TRANSPORT
+              value: http
+            - name: MCP_HOST
+              value: "0.0.0.0"
+            - name: MCP_PORT
+              value: "8080"
+            - name: TRINO_SCHEME
+              value: http
+            - name: TRINO_SSL
+              value: "false"
+            - name: TRINO_HOST
+              value: '{{ .Values.release_name }}-data-trino-trino.data.svc'
+            - name: TRINO_PORT
+              value: "8080"
+            # Not the admin Superset uses: the coordinator's rules.json grants this
+            # identity read-only on the lake catalogs and nothing else, so the
+            # TRINO_ALLOW_WRITE_QUERIES below is the backstop rather than the fence.
+            - name: TRINO_USER
+              value: '{{ .Values.trino_mcp_user }}'
+            - name: TRINO_CATALOG
+              value: memory
+            - name: TRINO_SCHEMA
+              value: default
+            - name: TRINO_ALLOW_WRITE_QUERIES
+              value: "false"
+          readinessProbe:
+            # The adopted Deployment carries httpGet probes from its stdio
+            # days; this server answers neither /healthz nor /readyz.
+            httpGet: null
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: null
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-trino'
+spec:
+  selector:
+    app.kubernetes.io/name: mcpserver
+    app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-trino'
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
 metadata:
@@ -311,34 +403,11 @@ metadata:
   labels:
     sympozium.ai/catalog: "true"
 spec:
-  transportType: stdio
+  transportType: http
   toolsPrefix: trino
   # Iceberg scans over S3 are slower than the other servers' calls.
   timeout: 60
   # All six tools read: execute_query rejects anything but SELECT/SHOW/DESCRIBE/
   # EXPLAIN while TRINO_ALLOW_WRITE_QUERIES stays false. Nothing to deny.
-  deployment:
-    image: ghcr.io/tuannvm/mcp-trino:{{ index .Values.container_image_version "ghcr.io/tuannvm/mcp-trino" }}
-    cmd: /app/trino-mcp
-    env:
-      # The image ships MCP_TRANSPORT=http, and the binary defaults the Trino
-      # side to https; the coordinator serves plain http on 8080.
-      MCP_TRANSPORT: stdio
-      TRINO_SCHEME: http
-      TRINO_SSL: "false"
-      TRINO_HOST: '{{ .Values.release_name }}-data-trino-trino.data.svc'
-      TRINO_PORT: "8080"
-      # Not the admin Superset uses: the coordinator's rules.json grants this
-      # identity read-only on the lake catalogs and nothing else, so the
-      # TRINO_ALLOW_WRITE_QUERIES below is the backstop rather than the fence.
-      TRINO_USER: '{{ .Values.trino_mcp_user }}'
-      TRINO_CATALOG: memory
-      TRINO_SCHEMA: default
-      TRINO_ALLOW_WRITE_QUERIES: "false"
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
+  # Setting url also stops the controller reconciling a deployment of its own.
+  url: 'http://{{ include "name" . }}-sympozium-mcp-trino.{{ .Release.Namespace }}.svc:8080/mcp'
