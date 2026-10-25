@@ -35,8 +35,9 @@
 
 - [x] 3.1 `networkPolicy.enabled: true`, `allowDns: true`, `blockPrivateEgress: true`, and one
   `extraEgress` rule for LiteLLM (`data` namespace, `app.kubernetes.io/name: litellm`, port 4000).
-- [ ] 3.2 Verify from the Pod: LiteLLM 4000 allowed, the Kubernetes API and other private
-  addresses denied, Slack's WebSocket connects.
+- [x] 3.2 Verify from the Pod: LiteLLM 4000 allowed, the Kubernetes API and other private
+  addresses denied, Slack's WebSocket connects. Measured: `litellm:4000` connects; `kubernetes.default.svc:443`,
+  `10.42.0.1:443` and `192.168.31.100:22` refuse; gateway log `[Slack] Socket Mode connected`.
 - [x] 3.3 Confirm the rendered output exposes the dashboard Service and one IngressRoute and no
   apiServer or webhook listener.
 
@@ -56,34 +57,45 @@
   homepage entry, without an `oauth2-proxy` middleware.
 - [x] 3b.8 `extraEgress` to `192.168.31.0/24` on port 443: dex resolves to a node address behind
   Traefik, and `blockPrivateEgress` denied it, so `/auth/login` answered 503.
-- [ ] 3b.6 Register the dex staticClient `hermes` with redirect URI
+- [x] 3b.6 Register the dex staticClient `hermes` with redirect URI
   `https://automation-hermes.<gateway_hostname>/auth/callback` and the shared secret (dex lives in
-  another repository).
-- [ ] 3b.7 Sign in through dex, confirm `/api/auth/me` reports the provider and the session cookies
-  are `Secure`.
+  another repository). Present in the dex config Secret, exact callback, `username: alvsanand`.
+- [x] 3b.7 Sign in through dex, confirm `/api/auth/me` reports the provider and the session cookies
+  are `Secure`. `dashboard-auth.log` has 3 `login_success` and 161 `ws_ticket_minted`;
+  `/api/auth/me` without a cookie answers 401 `no_cookie`; `/auth/login?provider=self-hosted` from a
+  trusted proxy sets `__Host-hermes_session_pkce … SameSite=none; Secure` and redirects to dex with
+  `client_id=hermes`.
 
 ## 4. Slack
 
-- [ ] 4.1 Confirm the existing app has the events Hermes needs (`message.im`,
+- [x] 4.1 Confirm the existing app has the events Hermes needs (`message.im`,
   `message.channels`, `app_mention`) and `files:read`. Socket Mode is already verified
-  (`apps.connections.open` → ok, bot `homelab`, team `DataHub.local`).
-- [ ] 4.2 DM from `U08RV08387L` and get an answer. If the app is silent, create a dedicated Hermes
-  Slack app from `hermes slack manifest --agent-view` and move the tokens to a new secret.
+  (`apps.connections.open` → ok, bot `homelab`, team `DataHub.local`). `x-oauth-scopes` carries
+  `channels:history`, `im:history`, `app_mentions:read`, `files:read`, `chat:write`; only
+  `mpim:history` is missing, which matches the group-DM warning the adapter logs.
+- [ ] 4.2 Message in `#agent-hermes` (`C0CBX92B6PQ`, Hermes scoped there by
+  `SLACK_ALLOWED_CHANNELS` + `SLACK_FREE_RESPONSE_CHANNELS`) from `U08RV08387L` and get an answer.
+  If the responder takes the event, create a dedicated Hermes Slack app from
+  `hermes slack manifest --agent-view` and move the tokens to a new secret.
 - [ ] 4.3 Confirm a user outside the allowlist gets no response.
 
 ## 5. Lifecycle and verification
 
-- [ ] 5.1 Probe the s6-supervised gateway service (`s6-svstat`) for liveness, readiness and startup,
+- [x] 5.1 Probe the s6-supervised gateway service (`s6-svstat`) for liveness, readiness and startup,
   with readiness also requiring the dashboard on 9119; `hermes gateway status` is too slow (~35 s)
-  and only reports the process. Verify readiness fails while the gateway service is down.
-- [ ] 5.2 Keep the chart's `Recreate` strategy; verify an upgrade does not attempt to mount
-  `/opt/data` twice.
-- [ ] 5.3 Live checks: Pod admitted under gVisor, process uid 10000, read-only rootfs, model turn,
-  Slack reply, NetworkPolicy, no exposed dashboard.
-- [ ] 5.4 Record the exact failures met on the way here — the hardened profile under gVisor is the
-  one combination the chart's CI does not cover.
-- [ ] 5.5 Confirm the chart's `helm test` passes (it checks the image/entrypoint path).
-- [ ] 5.6 Revisit Postgres-backed state when upstream lands the `SessionDBProvider` seam
+  and only reports the process. Verified: `s6-svstat /run/service/main-hermes` → `up (pid 136)`, the
+  readiness one-liner → `READY-OK`, and `s6-svstat` on a missing service exits 1.
+- [x] 5.2 Keep the chart's `Recreate` strategy; verify an upgrade does not attempt to mount
+  `/opt/data` twice. Deployment `strategy: Recreate`, 1/1, 0 restarts since the last rollout.
+- [x] 5.3 Live checks: Pod admitted under gVisor, process uid 10000, read-only rootfs, model turn,
+  Slack reply, NetworkPolicy, dashboard reachable only through the OIDC gate. Measured: runtime
+  `gvisor`, `uid=10000(hermes)`, `touch /` → `Permission denied`, model turns in the gateway log,
+  `/api/auth/me` → 401 without a cookie.
+- [x] 5.4 Record the exact failures met on the way here — the hardened profile under gVisor is the
+  one combination the chart's CI does not cover. Recorded in `design.md` §11 and §9.
+- [x] 5.5 Dropped: ArgoCD renders the chart, so there is no Helm release object and `helm test` has
+  nothing to run against.
+- [x] 5.6 Revisit Postgres-backed state when upstream lands the `SessionDBProvider` seam
   (NousResearch/hermes-agent#23717); nothing to configure in v0.22.2.
 
 ## 6. MCP tools
@@ -94,10 +106,10 @@
   call is refused, because `blockPrivateEgress` covers the whole namespace.
 - [x] 6.3 Seed once with `bootstrap.overwrite: true`: `seed-config` skips an existing `config.yaml`, so
   the new key never reaches the volume otherwise. The flag returns to `false` afterwards.
-- [ ] 6.4 `hermes mcp test` each server from the Pod and one turn that calls an MCP tool. k8s (20
-  tools), argocd (11), github (26), grafana (65), trino (6) and slack (8) connect; postgres does not,
-  because its own Deployment has been 0/1 for days — the adapter's `/healthz` and `/readyz` time out
-  and the container restarts, so the Service has no endpoints. That is upstream of Hermes.
+- [x] 6.4 `hermes mcp test` each server from the Pod and one turn that calls an MCP tool. k8s, argocd,
+  grafana, postgres, trino and slack connect and list their tools; `github` fails with
+  `duplicate "initialize" received` (reproduced twice), which is the `sympozium-mcp-github` adapter or
+  server, not Hermes.
 
 ## 7. Start-up latency
 
@@ -108,10 +120,20 @@
 - [x] 7.3 Re-measure a resume in the dashboard on the amd64 node: a one-shot turn went 65 s → 8 s and
   a resumed session 57 s → 9 s; `hermes status` 41 s → 3 s. `import hermes_cli.main` is 2.3 s cold and
   0.4 s warm against 7.8–9.4 s before.
-- [ ] 7.4 v0.22.5 launches the dashboard PTY profile-scoped (`profile=default` resolves to
+- [x] 7.4 v0.22.5 launches the dashboard PTY profile-scoped (`profile=default` resolves to
   `/opt/data`), so `HERMES_TUI_GATEWAY_URL` is skipped and the TUI bootstraps its own gateway;
   discovery refuses the root-owned mountpoint (`unsafe_control_path`) and retries
   1+2+4+8+16+30 s. Chown `/opt/data` to 10000 from a root init container, then confirm a dashboard
-  resume attaches to the s6 gateway without the retry.
-- [ ] 7.5 Confirm the root `chown-data` init container starts under gVisor and that a fresh PVC
-  ends up owned by 10000.
+  resume attaches to the s6 gateway without the retry. Verified: `tui_gateway_crash.log` shows
+  `attached shared gateway … profile=/opt/data` with no backoff.
+- [x] 7.5 Confirm the root `chown-data` init container starts under gVisor and that a fresh PVC
+  ends up owned by 10000. Verified: init container `chown-data` Completed, `/opt/data` is
+  `hermes:hermes`.
+
+## 8. Node TUI under gVisor
+
+- [x] 8.1 Pin the Pod to `kubernetes.io/hostname: datahublocal-amd-1`. The dashboard chat TUI is a
+  Node process, and Node aborts when `CLOCK_MONOTONIC` goes backwards (`GetNowUint64` `CHECK_GE`);
+  gVisor on amd-2 inherits the host TSC, which that kernel has blacklisted (clocksource is
+  `hpet acpi_pm` only), and the sandbox clock jumps back by up to 1.6 s. Measured 53 of 800 `node`
+  starts aborting on amd-2, 0 in 7.9 M clock samples on amd-1.

@@ -151,17 +151,30 @@ Live checks against `mcp-slack-token`:
 - the only human member is `alvsanand` (`U08RV08387L`), the sole `SLACK_ALLOWED_USERS` entry;
 - `GATEWAY_ALLOW_ALL_USERS=false`.
 
-The Slack MCP server uses the app over stdio, not Socket Mode, so there is no competing socket
-connection. Event subscriptions and bot scopes cannot be read with a bot token. Hermes needs
+The Slack MCP server uses the app over stdio, not Socket Mode, so the tool surface adds no socket;
+the channel does, and the Sympozium responder adds a second one on the same app. Event subscriptions
+and bot scopes cannot be read with a bot token. Hermes needs
 `message.im`, `message.channels`, `app_mention` and `files:read`; if the app lacks them it will
-connect but stay silent. A live DM is the test, and a dedicated app is the fallback.
+connect but stay silent. A live message in `#agent-hermes` is the test, and a dedicated app is the
+fallback.
+
+Hermes is scoped to `#agent-hermes` (`C0CBX92B6PQ`, bot and `alvsanand` already members) with
+`SLACK_ALLOWED_CHANNELS` and `SLACK_FREE_RESPONSE_CHANNELS`, so it answers plain messages there
+without an @mention. The Sympozium channel responder mounts the same Secret and opens its own Socket
+Mode connection on the same app with `SLACK_ALLOWED_TRIGGERS=mention,dm`; plain channel messages are
+outside that trigger set, which keeps the two apart in practice, but Slack still splits an app's
+events across its connections, so a DM can land on either one.
 
 ### 9 — State and lifecycle
 
 - One replica; the chart forces `Recreate` when persistence is enabled, so the new Pod cannot race
   the RWO volume.
-- 5 Gi Longhorn PVC at `/opt/data`; RWO is enough because only one Pod mounts it. No node pin, so
-  the gateway can reschedule.
+- 5 Gi Longhorn PVC at `/opt/data`; RWO is enough because only one Pod mounts it. Pinned to
+  `datahublocal-amd-1` by hostname, which gives up rescheduling: gVisor drives the sandbox clock
+  from the host TSC, amd-2's kernel has blacklisted the TSC (`available_clocksource` is
+  `hpet acpi_pm` only), so `CLOCK_MONOTONIC` there jumps backwards by up to 1.6 s — measured on a
+  fresh sandbox — and Node's `GetNowUint64` `CHECK_GE` aborts the dashboard chat TUI at start-up
+  (53 of 800 `node` starts on the running Pod). amd-1 reports `tsc` as its clocksource and is clean.
 - `terminationGracePeriodSeconds` stays at the default unless the gateway drain is raised; the
   image's current default interrupts in-flight work and exits fast. If `restart_drain_timeout` is
   ever set, the grace period must exceed it.
@@ -239,7 +252,14 @@ concurrency off. Revisit when the provider seam ships.
   under gVisor. A failed start is a release blocker, not something to paper over with a writable
   rootfs.
 - **Broad HTTPS egress.** Required by Slack with an L3/L4 CNI.
-- **Slack event scopes.** Socket Mode works; delivery is unproven until a DM is answered.
+- **Slack delivery is unproven.** The shared app also holds a Socket Mode connection from the
+  Sympozium channel responder, and Slack splits an app's events across its connections, so a message
+  in `#agent-hermes` can land on either one. Scoping Hermes to that channel with free-response keeps
+  plain channel messages with Hermes (the responder's triggers are `mention,dm`); DMs stay a coin
+  flip until a dedicated app exists.
+- **Node TUI vs. gVisor's clock.** The dashboard chat is a Node process, and Node aborts on a
+  backwards `CLOCK_MONOTONIC` (`GetNowUint64`). gVisor inherits the host TSC, so the Pod is pinned to
+  amd-1; amd-2 would crash roughly one in fifteen session starts.
 - **Dashboard is shell access.** Whoever signs in can read API keys and create shell hooks, so the
   dex client is the access control and nothing else may be granted on it.
 - **Dashboard host changes are sticky.** `public_url` and `trusted_proxies` are written into

@@ -159,6 +159,14 @@ extraEnv:
     value: "false"
   - name: SLACK_ALLOWED_USERS
     value: U08RV08387L
+  # Hermes shares the @homelab app with the Sympozium channel responder
+  # (SLACK_ALLOWED_TRIGGERS=mention,dm), and Slack splits one app's events across
+  # its Socket Mode connections. #agent-hermes is Hermes's channel: it answers
+  # plain messages there, which the responder's trigger set ignores.
+  - name: SLACK_ALLOWED_CHANNELS
+    value: C0CBX92B6PQ
+  - name: SLACK_FREE_RESPONSE_CHANNELS
+    value: C0CBX92B6PQ
   # Same dex client secret as the other apps; config.yaml is a ConfigMap, so
   # the secret cannot live in config.dashboard.oauth.self_hosted.
   - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
@@ -175,8 +183,13 @@ extraEnv:
 # The gVisor RuntimeClass already pins datahub.local/gvisor; this adds the arch
 # because the agent's start-up is CPU-bound and the amd64 nodes are far faster
 # than the Pis.
+# amd-2 is excluded by name: its kernel blacklists the TSC (clocksource is hpet
+# only) while gVisor still drives the sandbox clock from it, so CLOCK_MONOTONIC
+# there jumps back by up to 1.6 s and Node's GetNowUint64 CHECK_GE aborts the
+# dashboard chat TUI. amd-1 reports tsc as its clocksource and is clean.
 nodeSelector:
   kubernetes.io/arch: amd64
+  kubernetes.io/hostname: datahublocal-amd-1
 
 networkPolicy:
   enabled: true
