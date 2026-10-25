@@ -208,6 +208,15 @@ Two changes cut it. The image runs with `PYTHONDONTWRITEBYTECODE=1` and ships al
 because the work is CPU-bound, the Pod is pinned to the amd64 nodes — gVisor's RuntimeClass only
 supplies `datahub.local/gvisor`, so the arch selector merges with it rather than replacing it.
 
+The v0.22.5 image adds a second, unrelated cost on the dashboard path. Every chat PTY now passes
+`profile=default`, which resolves to `/opt/data`, so `_resolve_chat_argv` skips
+`HERMES_TUI_GATEWAY_URL` and the TUI bootstraps a gateway of its own. That discovery refuses a
+`HERMES_HOME` it does not own (`unsafe_control_path`), and the Longhorn mountpoint is owned by root:
+the chart's `seed-config` chowns it only when that container starts as root, which the hardened
+profile prevents by running it as 10000. The TUI then backs off 1+2+4+8+16+30 s and the prompt stays
+queued. A root init container chowns the mountpoint alone (everything inside is already 10000), and
+the TUI attaches to the s6 gateway again; the main container keeps its non-root profile.
+
 ### 12 — Explicitly out of scope
 
 API server/webhook, multi-tenant or team mode, channels other than Slack, browser tools under gVisor,

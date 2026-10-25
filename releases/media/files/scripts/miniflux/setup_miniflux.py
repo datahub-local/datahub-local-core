@@ -1,8 +1,8 @@
+import json
 import logging
 import os
 
 import requests
-import yaml
 
 # Logging setup
 logger = logging.getLogger("setup_miniflux")
@@ -18,7 +18,7 @@ MINIFLUX_URL = os.environ.get("MINIFLUX_URL", "http://localhost:8080").rstrip("/
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 CLEANUP_OLD = os.environ.get("MINIFLUX_CLEANUP_OLD", "true").lower() == "true"
-CONFIG_FILE = os.environ.get("CONFIG_FILE", "/scripts/miniflux_config.yaml")
+CONFIG_FILE = os.environ.get("CONFIG_FILE", "/scripts/miniflux_config.json")
 
 session = requests.Session()
 
@@ -76,7 +76,7 @@ def load_config():
     if not os.path.exists(CONFIG_FILE):
         raise Exception(f"{CONFIG_FILE} does not exist")
     with open(CONFIG_FILE, "r") as f:
-        return yaml.safe_load(f) or {}
+        return json.load(f) or {}
 
 
 def apply_settings(config):

@@ -108,3 +108,10 @@
 - [x] 7.3 Re-measure a resume in the dashboard on the amd64 node: a one-shot turn went 65 s → 8 s and
   a resumed session 57 s → 9 s; `hermes status` 41 s → 3 s. `import hermes_cli.main` is 2.3 s cold and
   0.4 s warm against 7.8–9.4 s before.
+- [ ] 7.4 v0.22.5 launches the dashboard PTY profile-scoped (`profile=default` resolves to
+  `/opt/data`), so `HERMES_TUI_GATEWAY_URL` is skipped and the TUI bootstraps its own gateway;
+  discovery refuses the root-owned mountpoint (`unsafe_control_path`) and retries
+  1+2+4+8+16+30 s. Chown `/opt/data` to 10000 from a root init container, then confirm a dashboard
+  resume attaches to the s6 gateway without the retry.
+- [ ] 7.5 Confirm the root `chown-data` init container starts under gVisor and that a fresh PVC
+  ends up owned by 10000.

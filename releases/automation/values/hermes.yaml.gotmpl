@@ -1,4 +1,4 @@
-# https://github.com/jyje/hermes-agent-helm/blob/main/charts/hermes-agent/values-hardened.yaml
+# https://github.com/jyje/hermes-agent-helm/pull/405/blob/main/charts/hermes-agent/values-hardened.yaml
 
 # The chart appends its own name when the release name does not contain it, which
 # would name every object ...-automation-hermes-hermes-agent.
@@ -48,6 +48,31 @@ extraVolumeMounts:
     mountPath: /run
   - name: tmp-tmpfs
     mountPath: /tmp
+
+# seed-config's chown only runs when that init container starts as root; the
+# hardened profile starts it as 10000, so the Longhorn mountpoint stays
+# root-owned. Hermes refuses to discover the gateway through a HERMES_HOME it
+# does not own (unsafe_control_path), and since v0.22.5 a dashboard chat is
+# profile-scoped ("default" is this same directory), so the TUI never takes the
+# attach URL and every chat retries for a minute instead. Only the mountpoint
+# is root-owned; everything inside is already 10000.
+extraInitContainers:
+  - name: chown-data
+    image: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "nousresearch/hermes-agent") }}nousresearch/hermes-agent:{{ $value }}{{ end }}{{ end }}'
+    imagePullPolicy: IfNotPresent
+    command: ["chown", "10000:10000", "/opt/data"]
+    securityContext:
+      runAsNonRoot: false
+      runAsUser: 0
+      runAsGroup: 0
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+        add: [CHOWN]
+    volumeMounts:
+      - name: data
+        mountPath: /opt/data
 
 # seed-config copies config.yaml only when it is absent, so a new key never
 # reaches an existing volume. Adding one (mcp_servers was the first) needs a

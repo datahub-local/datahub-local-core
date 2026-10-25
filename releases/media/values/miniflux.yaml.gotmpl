@@ -178,8 +178,8 @@ configMaps:
     enabled: true
     includeInChecksum: false
     data:
-      miniflux_config.yaml: |
-        {{- readFile "../files/scripts/miniflux/miniflux_config.yaml" | nindent 10 }}
+      miniflux_config.json: |
+        {{- readFile "../files/scripts/miniflux/miniflux_config.json" | nindent 10 }}
       setup_miniflux_requirements.txt: |
         {{- readFile "../files/scripts/miniflux/requirements.txt" | nindent 10 }}
       setup_miniflux.py: |
