@@ -12,7 +12,7 @@ container_image_version:
   ghcr.io/github/github-mcp-server: v2.0.3@sha256:250bc6ce70788207608ef74cef4397230ff2e8481218da74d6093e4bd9101132
   ghcr.io/headlamp-k8s/headlamp: v0.46.0
   ghcr.io/miniflux/miniflux: 2.3.4
-  ghcr.io/sharevb/it-tools: 2026.9.27
+  ghcr.io/sharevb/it-tools: 2026.10.25
   ghcr.io/tailscale/tailscale: v1.104.2
   ghcr.io/tuannvm/mcp-trino: 4.3.1@sha256:5ae7d6f845d3b2aa24dbbde7b783d5ffdb6a58070e54873033d4773e8417cf30
   iib0011/omni-tools: 0.7.0
@@ -24,7 +24,7 @@ container_image_version:
   # Only latest is published for these two, so the digest is the pin.
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
-  n8nio/n8n: 2.45.3
+  n8nio/n8n: 2.45.4
   nousresearch/hermes-agent: v0.22.5
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
@@ -67,7 +67,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 92.13.1
+    version: 92.14.0
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
@@ -87,7 +87,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.91.0
+    version: 1.92.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -111,7 +111,7 @@ helm_chart_version:
   speedtest-exporter:
     ref: truecharts/speedtest-exporter
     repository: oci://oci.trueforge.org/truecharts
-    version: 15.0.3
+    version: 15.0.4
   spark-operator:
     ref: spark-operator/spark-operator
     repository: https://kubeflow.github.io/spark-operator
@@ -127,7 +127,7 @@ helm_chart_version:
   sympozium:
     ref: sympozium/sympozium
     repository: https://deploy.sympozium.ai/charts
-    version: 0.11.6
+    version: 0.12.0
   trino:
     ref: trino/trino
     repository: https://trinodb.github.io/charts
