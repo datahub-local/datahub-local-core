@@ -155,6 +155,20 @@ rather than a gateway misconfiguration.
 - **WHEN** the agent connects to any other Service in this namespace
 - **THEN** the NetworkPolicy denies it
 
+### Requirement: The semantic layer is registered as two metric servers
+
+`config.mcp_servers` SHALL also register the semantic layer at the literal hostnames
+`http://datahub-local-ai-mcp-semantic{,-finance}.automation.svc.cluster.local:8080/mcp`, because the
+`datahub-local-ai` release owns those `MCPServer` objects and this release's name is not theirs. The
+two servers answer metric questions only, compiling a metric and dimension name to Trino SQL over
+`silver`/`gold.bodega` and `silver`/`gold.finance`; arbitrary SQL stays with `sympozium-trino`. Egress
+to them SHALL be covered by the same `app.kubernetes.io/name: mcpserver` rule.
+
+#### Scenario: The semantic servers are reached by their literal hostnames
+
+- **WHEN** the gateway connects to the semantic layer
+- **THEN** it uses the `datahub-local-ai` release's names, not a name derived from this release
+
 ### Requirement: Credentials come from existing secrets by reference
 
 The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from

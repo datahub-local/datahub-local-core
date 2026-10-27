@@ -115,15 +115,15 @@ config:
   # Sympozium's MCP servers already run in this namespace and their stdio
   # adapter serves MCP over HTTP on 8080. `slack` here is an extra tool surface,
   # distinct from the built-in channel, which keeps its own Socket Mode socket.
-  # The two semantic entries are not this release's objects: the ai repo declares
-  # them as MCPServer datahub-local-ai-mcp-semantic{,-finance} in its own
-  # release, so their hostnames are literal rather than templated off
+  #
+  # The semantic entries below are not this release's objects: the ai repo
+  # declares them as MCPServer datahub-local-ai-mcp-semantic{,-finance} in its
+  # own release, so their hostnames are literal rather than templated off
   # .Values.release_name. They answer metric questions only - a metric and
   # dimension name compiled to Trino SQL over silver/gold.bodega and
-  # silver.finance - and carry their own registry, finest grain and exclusions in
-  # the server's ConfigMap; arbitrary SQL still goes through sympozium-trino.
-  # A key added here reaches the pod only in the deploy that sets
-  # bootstrap.overwrite=true (see the seed-config note above).
+  # silver/gold.finance - and carry their own registry, finest grain and
+  # exclusions in the server's ConfigMap; arbitrary SQL still goes through
+  # sympozium-trino.
   mcp_servers:
     sympozium-k8s:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-k8s.automation.svc.cluster.local:8080/mcp
@@ -139,11 +139,11 @@ config:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-trino.automation.svc.cluster.local:8080/mcp
     sympozium-slack:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
-    sympozium-semantic:
+    semantic:
       url: http://datahub-local-ai-mcp-semantic.automation.svc.cluster.local:8080/mcp
     # Same image as the entry above, mounted with configDir semantic-finance and
     # warehouse scopes silver/gold.finance, so it keeps a separate registry.
-    sympozium-semantic-finance:
+    semantic-finance:
       url: http://datahub-local-ai-mcp-semantic-finance.automation.svc.cluster.local:8080/mcp
   security:
     redact_secrets: true
