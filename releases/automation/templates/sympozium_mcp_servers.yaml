@@ -179,6 +179,82 @@ spec:
     secretRefs:
       - name: mcp-github-token
 ---
+# Sympozium's stdio bridge initialises its long-lived child and then forwards
+# every client's initialize to it; github-mcp-server v2 rejects the duplicate,
+# so Hermes cannot use the catalog's stdio instance. This is upstream's own
+# HTTP mode, private to Hermes, which accepts repeated initialise calls. The
+# token arrives as a request header: http mode ignores
+# GITHUB_PERSONAL_ACCESS_TOKEN, and Hermes expands the header from the Pod env.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-github-hermes'
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &mcpGithubHermesLabels
+      app.kubernetes.io/name: mcpserver
+      app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-github-hermes'
+  template:
+    metadata:
+      labels: *mcpGithubHermesLabels
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: mcp-server
+          image: ghcr.io/github/github-mcp-server:{{ index .Values.container_image_version "ghcr.io/github/github-mcp-server" }}
+          command: ["/server/github-mcp-server"]
+          # The catalog server's deny list lives in its MCPServer object, which
+          # this instance bypasses; the same tools are excluded here so the
+          # write surface stays what the Sympozium agents get.
+          args:
+            - http
+            - --port
+            - "8080"
+            - --listen-host
+            - 0.0.0.0
+            - --exclude-tools
+            - create_repository,fork_repository,delete_repository,delete_file,merge_pull_request
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: GITHUB_TOOLSETS
+              value: default,projects
+          envFrom:
+            - secretRef:
+                name: mcp-github-token
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-github-hermes'
+spec:
+  selector:
+    app.kubernetes.io/name: mcpserver
+    app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-github-hermes'
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
 metadata:

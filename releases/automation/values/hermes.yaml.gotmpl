@@ -121,7 +121,11 @@ config:
     sympozium-argocd:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-argocd.automation.svc.cluster.local:8080/mcp
     sympozium-github:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-github.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
+      headers:
+        # Expanded when the gateway loads config.yaml, so no token lands in the
+        # ConfigMap; extraEnvFrom supplies GITHUB_PERSONAL_ACCESS_TOKEN.
+        Authorization: "Bearer ${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
     sympozium-grafana:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-grafana.automation.svc.cluster.local:8080/mcp
     sympozium-postgres:
@@ -183,16 +187,20 @@ extraEnvFrom:
   # connections, so a shared app means Hermes never receives anything.
   - secretRef:
       name: hermes-slack-token
+  # The dedicated github HTTP instance takes the token as a request header, and
+  # Hermes expands `${env:GITHUB_PERSONAL_ACCESS_TOKEN}` from this.
+  - secretRef:
+      name: mcp-github-token
 
 extraEnv:
   - name: GATEWAY_ALLOW_ALL_USERS
     value: "false"
   - name: SLACK_ALLOWED_USERS
     value: U08RV08387L
-  # Hermes shares the @homelab app with the Sympozium channel responder
-  # (SLACK_ALLOWED_TRIGGERS=mention,dm), and Slack splits one app's events across
-  # its Socket Mode connections. #agent-hermes is Hermes's channel: it answers
-  # plain messages there, which the responder's trigger set ignores.
+  # Hermes has its own Slack app (@homelab_hermes): the @homelab app is held by
+  # Sympozium's channel responder and Slack splits one app's events across its
+  # Socket Mode connections. #agent-hermes is Hermes's channel: it answers plain
+  # messages there, which the responder's trigger set ignores.
   - name: SLACK_ALLOWED_CHANNELS
     value: C0CBX92B6PQ
   - name: SLACK_FREE_RESPONSE_CHANNELS

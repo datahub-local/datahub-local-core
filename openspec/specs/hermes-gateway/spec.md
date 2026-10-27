@@ -1,20 +1,24 @@
 # hermes-gateway Specification
 
 ## Purpose
-TBD - created by archiving change add-hermes-gateway. Update Purpose after archive.
+
+Run Hermes Agent as this cluster's chat-driven agent gateway: one Deployment in the `automation`
+namespace, sandboxed by gVisor and the restricted Pod Security profile, reachable only through an
+OIDC-gated dashboard, wired to one Slack channel and to the namespace's Sympozium MCP servers, with
+in-cluster LiteLLM as the only model path and all state on a single Longhorn volume.
 
 ## Requirements
 
 ### Requirement: The gateway runs the upstream image through a pinned chart
 
-The release SHALL use `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent` at chart version `1.21.0`
-and image tag `v0.22.2`. It SHALL NOT build, patch, or vendor the agent source, and SHALL NOT
+The release SHALL use `oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent` at chart version `1.22.0`
+and image tag `v0.22.5`. It SHALL NOT build, patch, or vendor the agent source, and SHALL NOT
 require a custom session driver.
 
 #### Scenario: No build step is involved
 
 - **WHEN** the release is rendered
-- **THEN** the workload uses `nousresearch/hermes-agent:v0.22.2`
+- **THEN** the workload uses `nousresearch/hermes-agent:v0.22.5`
 - **AND** no image build, patch layer, or in-repo agent source is involved
 
 #### Scenario: An upgrade is deliberate
@@ -48,7 +52,8 @@ The release SHALL layer the chart's hardened profile: `runAsNonRoot: true` with 
 uid/gid `10000`, `readOnlyRootFilesystem: true`, size-bounded memory `emptyDir`s at `/run` and
 `/tmp`, `allowPrivilegeEscalation: false`, all capabilities dropped, and `RuntimeDefault` seccomp.
 The service-account token SHALL NOT be mounted. `/run` SHALL remain writable and executable, because
-s6-overlay's init runs from it.
+s6-overlay's init runs from it. One init container SHALL run as uid 0 solely to take ownership of the
+`/opt/data` mountpoint, with every capability dropped but `CHOWN` and the root filesystem read-only.
 
 #### Scenario: The gateway is not root
 
@@ -65,8 +70,9 @@ s6-overlay's init runs from it.
 ### Requirement: The only inbound surface is the OIDC-gated dashboard
 
 The release SHALL expose the chart's management dashboard through one Traefik `IngressRoute` at
-`automation-hermes.<gateway_hostname>`, backed by the release's Service on port 9119. The API server,
-the webhook receiver and every other listener SHALL stay disabled. The dashboard SHALL authenticate
+`automation-hermes.<gateway_hostname>`, backed by the release's Service on port 9119. It SHALL be the
+only listener bound off loopback: the chart's API server binds `127.0.0.1` only and the webhook
+receiver SHALL stay disabled. The dashboard SHALL authenticate
 against dex (`dashboard.auth.provider: oidc`, client `hermes`), because upstream fails closed without
 a provider, and SHALL set `public_url` and `trusted_proxies` so the callback origin matches the
 registered redirect URI and the session cookies are marked `Secure`.
@@ -75,7 +81,7 @@ registered redirect URI and the session cookies are marked `Secure`.
 
 - **WHEN** cluster resources for the release are listed
 - **THEN** there is exactly one IngressRoute, pointing at the dashboard Service port
-- **AND** no API server or webhook listener is enabled
+- **AND** no listener other than the dashboard binds a non-loopback address
 
 #### Scenario: Sign-in goes through dex
 
@@ -136,19 +142,32 @@ because the CNI enforces L3/L4 and cannot restrict by hostname.
 
 ### Requirement: MCP tools are the namespace's own Sympozium servers
 
-`config.mcp_servers` SHALL register the seven `…-sympozium-mcp-*` Services of this namespace as HTTP
-MCP endpoints (`http://<release>-automation-sympozium-mcp-<name>.automation.svc.cluster.local:8080/mcp`),
-and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods on port 8080.
-These are the servers the Sympozium agents already use; their stdio adapter speaks MCP over HTTP and
-needs no credential the Deployments do not already mount. The `slack` entry is a tool surface on top
-of the built-in channel, which keeps its own Socket Mode connection. `sympozium-github` currently
-fails the handshake with `duplicate "initialize" received`, an adapter-side fault on that server
-rather than a gateway misconfiguration.
+`config.mcp_servers` SHALL register the namespace's Sympozium MCP servers as HTTP MCP endpoints on
+port 8080, and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods
+on that port. Six of them are the shared `…-sympozium-mcp-*` Services the Sympozium agents already
+use; their stdio bridge speaks MCP over HTTP and needs no credential the Deployments do not already
+mount. The `slack` entry is a tool surface on top of the built-in channel, which keeps its own Socket
+Mode connection.
+
+`sympozium-github` SHALL instead point at a dedicated `…-sympozium-mcp-github-hermes` Service running
+the upstream server in its `http` mode, because the bridge re-sends `initialize` to a long-lived
+child and `github-mcp-server` v2 rejects the duplicate, while every other server tolerates it. That
+instance SHALL authenticate with `Authorization: Bearer` resolved from `GITHUB_PERSONAL_ACCESS_TOKEN`
+at gateway start, never from a literal in `config.yaml`, SHALL exclude the tools the catalog server
+denies (`create_repository`, `fork_repository`, `delete_repository`, `delete_file`,
+`merge_pull_request`), and SHALL stay out of Sympozium's MCPServer catalog so its agents keep their
+own stdio instance.
 
 #### Scenario: The agent discovers the namespace's tools
 
 - **WHEN** the gateway enumerates MCP tools
 - **THEN** every registered server completes the MCP handshake and reports its tools
+
+#### Scenario: github uses its own transport
+
+- **WHEN** the gateway connects to `sympozium-github`
+- **THEN** it reaches the dedicated HTTP instance rather than the shared stdio bridge
+- **AND** the request carries the token from the Pod environment
 
 #### Scenario: MCP is the only in-namespace egress besides LiteLLM
 
@@ -157,18 +176,22 @@ rather than a gateway misconfiguration.
 
 ### Requirement: Credentials come from existing secrets by reference
 
-The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials` and the Slack tokens from
-`hermes-slack-token` through `extraEnvFrom`. The chart's own `env` map SHALL stay empty. The LiteLLM key
-SHALL NOT appear in a values file, a ConfigMap, or a rendered manifest. The dex client secret is the
-one exception: it is the shared value already used by the other dex clients, it comes from
-`/helm-values/security.yaml` rather than this repository, and it reaches the Pod as
-`HERMES_DASHBOARD_OIDC_CLIENT_SECRET`, because the dashboard reads that key from the environment and
-`config.yaml` renders into a ConfigMap.
+The Pod SHALL consume `OPENAI_API_KEY` from `litellm-auth-credentials`, the Slack tokens from
+`hermes-slack-token`, and `GITHUB_PERSONAL_ACCESS_TOKEN` from `mcp-github-token` through
+`extraEnvFrom`. The chart's own `env` map SHALL carry no credential: its only entry is
+`OPENAI_API_KEY: null`, which deletes the chart's `sk-REPLACE_ME` default so the `extraEnvFrom` source
+wins the duplicate name. The LiteLLM key SHALL NOT appear in a values file, a ConfigMap, or a
+rendered manifest. The dex client secret is the one exception: it is the shared value already used by
+the other dex clients, it comes from `/helm-values/security.yaml` rather than this repository, and it
+reaches the Pod as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET`, because the dashboard reads that key from
+the environment and `config.yaml` renders into a ConfigMap. The GitHub token SHALL reach the
+`sympozium-github` header only through that environment expansion.
 
 #### Scenario: No credential is rendered
 
 - **WHEN** the Helm output is searched for key material
 - **THEN** the LiteLLM key appears only as a secret reference
+- **AND** the GitHub token appears only as `${env:GITHUB_PERSONAL_ACCESS_TOKEN}`
 - **AND** the only literal secret is the dex client secret, which is not this repository's to hold
 
 ### Requirement: The model path is the cluster LiteLLM endpoint
@@ -247,6 +270,20 @@ refused at review.
 
 - **WHEN** the release is upgraded
 - **THEN** the old Pod terminates before the new one mounts `/opt/data`
+
+### Requirement: The state volume is backed up through Hermes' own archive
+
+The `data` volume SHALL be included in the daily Velero filesystem backup, and that backup SHALL run
+a pre-hook writing `hermes backup -o /opt/data/backups/hermes-backup-<timestamp>.zip -k 3` first,
+because a raw copy of a live `HERMES_HOME` can tear a WAL-mode SQLite database. The hook SHALL be
+bounded by a 15-minute timeout. Hermes' archive snapshots `*.db` through `sqlite3.backup()` and skips
+its own `backups/` directory, so the hook does not nest archives.
+
+#### Scenario: A daily backup holds a consistent archive
+
+- **WHEN** the daily filesystem backup runs
+- **THEN** the pre-hook exits only after writing a database-consistent zip under `/opt/data/backups`
+- **AND** earlier `hermes-backup-*.zip` files beyond the newest three are pruned by `-k 3`
 
 ### Requirement: Health is the supervised gateway service
 
