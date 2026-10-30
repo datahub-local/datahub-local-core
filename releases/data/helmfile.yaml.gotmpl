@@ -40,6 +40,14 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "valkey").version }}'
     values:
       - values/valkey.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-data-firecrawl"
+    namespace: data
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    needs:
+      - "{{ .Values.release_name }}-data-valkey"
+    values:
+      - values/firecrawl.yaml.gotmpl
   - name: "{{ .Values.release_name }}-data-trino"
     namespace: data
     chart: '{{ (.StateValues.helm_chart_version | get "trino").ref }}'

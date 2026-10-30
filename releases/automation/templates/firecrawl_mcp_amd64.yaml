@@ -1,0 +1,48 @@
+# The official firecrawl-mcp-server image is published for linux/amd64 only,
+# while three cluster nodes are arm64. The MCPServer CRD has no nodeSelector and
+# the controller rewrites the Deployment on every reconcile, so this policy is
+# the declarative pin: it matches the Deployment the controller creates for the
+# Firecrawl MCPServer and adds the selector on create and update.
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: '{{ include "name" . }}-firecrawl-mcp-amd64'
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  failurePolicy: Fail
+  reinvocationPolicy: IfNeeded
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments"]
+        scope: Namespaced
+    objectSelector:
+      matchLabels:
+        app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-firecrawl'
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          [
+            JSONPatch{
+              op: "add",
+              path: "/spec/template/spec/nodeSelector",
+              value: {"kubernetes.io/arch": "amd64"}
+            }
+          ]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: '{{ include "name" . }}-firecrawl-mcp-amd64'
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  policyName: '{{ include "name" . }}-firecrawl-mcp-amd64'
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: '{{ .Release.Namespace }}'

@@ -8,6 +8,14 @@ container_image_version:
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
+  ghcr.io/firecrawl/firecrawl: 2.11.637@sha256:e45ad30ee017a9fee49d33ba77dea63adfbac6b8dbbf3673f5778dc1707964f1
+  # The MCP server image is amd64-only; the Deployment is pinned by a
+  # MutatingAdmissionPolicy. The other Firecrawl images are multi-arch.
+  ghcr.io/firecrawl/firecrawl-mcp-server: v3.36.0@sha256:ea86999758c5aae84579d6ef5f9268e0979ba5c1eb9c83fad69715bad258ca58
+  # PG17 + pg_cron + nuq.sql at initdb. Only `latest` is published, so the
+  # digest is the pin; the queue is disposable and needs no backup.
+  ghcr.io/firecrawl/nuq-postgres: latest@sha256:d719b36160eac2fcbe16dc7e7360ddb9c82c40ea5da183d07bf4a755c6a0b2ae
+  ghcr.io/firecrawl/playwright-service: latest@sha256:637fb8c8399634b02c2179da72566ce11644435e5d93e895bdbde4b1f9b0882a
   ghcr.io/gethomepage/homepage: v2.7.0
   ghcr.io/github/github-mcp-server: v2.0.3@sha256:250bc6ce70788207608ef74cef4397230ff2e8481218da74d6093e4bd9101132
   ghcr.io/headlamp-k8s/headlamp: v0.46.0

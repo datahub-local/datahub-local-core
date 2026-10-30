@@ -1,0 +1,413 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# The upstream example chart renders five workloads plus a bundled Redis and
+# NuQ Postgres. This release keeps the workloads, runs its own small disposable
+# NuQ Postgres, and reuses the shared Valkey for cache and rate limits.
+
+defaultPodOptions:
+  automountServiceAccountToken: false
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+configMaps:
+  env:
+    enabled: true
+    # With one configMap the chart names it after the release; force the
+    # conventional -env suffix so the envFrom reference stays explicit.
+    forceRename: '{{ .Values.release_name }}-data-firecrawl-env'
+    data:
+      PORT: "3002"
+      HOST: "0.0.0.0"
+      WORKER_PORT: "3005"
+      EXTRACT_WORKER_PORT: "3004"
+      NUQ_WORKER_PORT: "3006"
+      NUQ_PREFETCH_WORKER_PORT: "3011"
+      CCLOG_WORKER_PORT: "3013"
+      NUQ_WORKER_COUNT: "1"
+      NUM_WORKERS_PER_QUEUE: "2"
+      MAX_CONCURRENT_JOBS: "2"
+      CRAWL_CONCURRENT_REQUESTS: "2"
+      BROWSER_POOL_SIZE: "2"
+      USE_DB_AUTHENTICATION: "false"
+      IS_KUBERNETES: "true"
+      ENV: "production"
+      LOGGING_LEVEL: "INFO"
+      FIRECRAWL_APP_SCHEME: "http"
+      FIRECRAWL_APP_HOST: "{{ .Values.release_name }}-data-firecrawl-api"
+      FIRECRAWL_APP_PORT: "3002"
+      PLAYWRIGHT_MICROSERVICE_URL: "http://{{ .Values.release_name }}-data-firecrawl-playwright:3000/scrape"
+      # No RabbitMQ in this release: an unset URL already selects polling, and
+      # the only paths that need the broker (webhooks, monitors) are not exposed.
+      NUQ_WAIT_MODE: "poll"
+
+controllers:
+  # The queue's Postgres is deliberately its own small, disposable instance:
+  # the shared CNPG cluster holds Polaris, n8n and the rest, and a lost job is
+  # just a retry. The image runs nuq.sql (pg_cron + schema) at initdb.
+  nuq-postgres:
+    replicas: 1
+    strategy: Recreate
+    pod:
+      terminationGracePeriodSeconds: 60
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/nuq-postgres
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/nuq-postgres" }}'
+        # nuq.sql sets cluster-wide values for a large host; override the ones
+        # that do not fit 512Mi and an emptyDir. Command-line -c wins over the
+        # ALTER SYSTEM values written during initdb.
+        args:
+          - postgres
+          - -c
+          - max_wal_size=256MB
+          - -c
+          - min_wal_size=32MB
+          - -c
+          - wal_buffers=16MB
+          - -c
+          - shared_buffers=64MB
+          - -c
+          - max_connections=50
+          - -c
+          - work_mem=2MB
+          - -c
+          - maintenance_work_mem=32MB
+          - -c
+          - effective_io_concurrency=16
+        env:
+          POSTGRES_USER: firecrawl
+          # The image bakes cron.database_name = 'postgres', and pg_cron
+          # refuses CREATE EXTENSION in any other database. The instance is
+          # dedicated, so the queue lives in the default database.
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: firecrawl-credentials
+                key: POSTGRES_PASSWORD
+        # The entrypoint starts as root to chown the emptyDir and gosu to the
+        # postgres user; dropping capabilities breaks both.
+        probes:
+          liveness:
+            enabled: true
+            type: COMMAND
+            command: ["pg_isready", "-h", "127.0.0.1", "-U", "firecrawl", "-d", "postgres"]
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 6
+          readiness:
+            enabled: true
+            type: COMMAND
+            command: ["pg_isready", "-h", "127.0.0.1", "-U", "firecrawl", "-d", "postgres"]
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 6
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+  api:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      terminationGracePeriodSeconds: 180
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/firecrawl
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl" }}'
+        command: ["node"]
+        args: ["--max-old-space-size=2048", "dist/src/index.js"]
+        envFrom:
+          - configMapRef:
+              name: '{{ .Values.release_name }}-data-firecrawl-env'
+          - secretRef:
+              name: firecrawl-credentials
+        env:
+          FLY_PROCESS_GROUP: app
+          NUQ_POD_NAME:
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /v0/health/liveness
+            port: 3002
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /v0/health/readiness
+            port: 3002
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+
+  worker:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      terminationGracePeriodSeconds: 60
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/firecrawl
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl" }}'
+        command: ["node"]
+        args: ["--max-old-space-size=1024", "dist/src/services/queue-worker.js"]
+        envFrom:
+          - configMapRef:
+              name: '{{ .Values.release_name }}-data-firecrawl-env'
+          - secretRef:
+              name: firecrawl-credentials
+        env:
+          FLY_PROCESS_GROUP: worker
+          WORKER_PORT: "3005"
+          NUQ_POD_NAME:
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /liveness
+            port: 3005
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 384Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+
+  nuq-worker:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      terminationGracePeriodSeconds: 60
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/firecrawl
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl" }}'
+        command: ["node"]
+        args: ["--max-old-space-size=1024", "dist/src/services/worker/nuq-worker.js"]
+        envFrom:
+          - configMapRef:
+              name: '{{ .Values.release_name }}-data-firecrawl-env'
+          - secretRef:
+              name: firecrawl-credentials
+        env:
+          FLY_PROCESS_GROUP: nuq-worker
+          NUQ_WORKER_PORT: "3006"
+          NUQ_POD_NAME:
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3006
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3006
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 384Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+
+  nuq-prefetch-worker:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      terminationGracePeriodSeconds: 60
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/firecrawl
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl" }}'
+        command: ["node"]
+        args: ["--max-old-space-size=512", "dist/src/services/worker/nuq-prefetch-worker.js"]
+        envFrom:
+          - configMapRef:
+              name: '{{ .Values.release_name }}-data-firecrawl-env'
+          - secretRef:
+              name: firecrawl-credentials
+        env:
+          FLY_PROCESS_GROUP: nuq-prefetch-worker
+          NUQ_PREFETCH_WORKER_PORT: "3011"
+          NUQ_PREFETCH_REPLICAS: "1"
+          NUQ_POD_NAME:
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3011
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3011
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 250m
+            memory: 512Mi
+
+  playwright:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      terminationGracePeriodSeconds: 30
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/playwright-service
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/playwright-service" }}'
+        env:
+          PORT: "3000"
+          MAX_CONCURRENT_PAGES: "2"
+          BLOCK_MEDIA: "false"
+          ALLOW_LOCAL_WEBHOOKS: "false"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3000
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3000
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+
+persistence:
+  pgdata:
+    # Small, disposable, but persistent enough that a rollout or node drain
+    # does not throw away the queue. No backup: losing the volume is a retry.
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: longhorn
+    size: 1Gi
+    advancedMounts:
+      nuq-postgres:
+        main:
+          - path: /var/lib/postgresql/data
+
+service:
+  api:
+    controller: api
+    ports:
+      http:
+        port: 3002
+  playwright:
+    controller: playwright
+    ports:
+      http:
+        port: 3000
+  nuq-postgres:
+    controller: nuq-postgres
+    ports:
+      postgres:
+        port: 5432

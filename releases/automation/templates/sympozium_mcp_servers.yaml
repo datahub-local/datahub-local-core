@@ -487,3 +487,35 @@ spec:
   # EXPLAIN while TRINO_ALLOW_WRITE_QUERIES stays false. Nothing to deny.
   # Setting url also stops the controller reconciling a deployment of its own.
   url: 'http://{{ include "name" . }}-sympozium-mcp-trino.{{ .Release.Namespace }}.svc:8080/mcp'
+---
+# The Firecrawl server's tools are already named firecrawl_*, and the bridge
+# registers <toolsPrefix>_<tool.Name>, so a "firecrawl" prefix would produce
+# firecrawl_firecrawl_scrape. "fc" keeps the names short and unambiguous.
+# Only scrape, search and map are exposed: crawl, agent, monitor, interact,
+# parse and feedback are long-running or need surfaces we do not run, and the
+# full 27-tool surface would be injected into every prompt.
+apiVersion: sympozium.ai/v1alpha1
+kind: MCPServer
+metadata:
+  name: '{{ include "name" . }}-sympozium-mcp-firecrawl'
+  labels:
+    sympozium.ai/catalog: "true"
+spec:
+  transportType: stdio
+  toolsPrefix: fc
+  timeout: 60
+  toolsAllow:
+    - firecrawl_scrape
+    - firecrawl_search
+    - firecrawl_map
+  deployment:
+    image: ghcr.io/firecrawl/firecrawl-mcp-server:{{ index .Values.container_image_version "ghcr.io/firecrawl/firecrawl-mcp-server" }}
+    env:
+      FIRECRAWL_API_URL: 'http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002'
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi

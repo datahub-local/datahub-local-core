@@ -134,6 +134,8 @@ config:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-trino.automation.svc.cluster.local:8080/mcp
     sympozium-slack:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
+    sympozium-firecrawl:
+      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp
   security:
     redact_secrets: true
   # The ack reaction is a plugin (template hermes_slack_eyes_ack.yaml) and this
