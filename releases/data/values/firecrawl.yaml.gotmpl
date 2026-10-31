@@ -58,7 +58,7 @@ controllers:
           repository: ghcr.io/firecrawl/nuq-postgres
           tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/nuq-postgres" }}'
         # nuq.sql sets cluster-wide values for a large host; override the ones
-        # that do not fit 512Mi and an emptyDir. Command-line -c wins over the
+        # that do not fit 512Mi. Command-line -c wins over the
         # ALTER SYSTEM values written during initdb.
         args:
           - postgres
@@ -93,7 +93,7 @@ controllers:
               secretKeyRef:
                 name: firecrawl-credentials
                 key: POSTGRES_PASSWORD
-        # The entrypoint starts as root to chown the emptyDir and gosu to the
+        # The entrypoint starts as root to chown the PVC and gosu to the
         # postgres user; dropping capabilities breaks both.
         probes:
           liveness:
@@ -207,6 +207,17 @@ controllers:
           capabilities:
             drop: ["ALL"]
         probes:
+          # arm64 + 500m CPU can take >20s to bind the port; gate liveness on it.
+          startup:
+            enabled: true
+            type: HTTP
+            path: /liveness
+            port: 3005
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 30
           liveness:
             enabled: true
             type: HTTP
@@ -254,6 +265,17 @@ controllers:
           capabilities:
             drop: ["ALL"]
         probes:
+          # arm64 + 500m CPU can take >20s to bind the port; gate liveness on it.
+          startup:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 3006
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 5
+              failureThreshold: 30
           liveness:
             enabled: true
             type: HTTP

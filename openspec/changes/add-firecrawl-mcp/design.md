@@ -63,7 +63,7 @@ and `PGDATA=/var/lib/postgresql/data/pgdata` because `initdb` refuses a mount ro
   name is only a label);
 - `POSTGRES_PASSWORD` from `firecrawl-credentials`;
 - command-line overrides for the upstream `ALTER SYSTEM` tuning that assumes a large host:
-  `max_wal_size=512MB`, `min_wal_size=64MB`, `wal_buffers=16MB`, `shared_buffers=64MB`,
+  `max_wal_size=256MB`, `min_wal_size=32MB`, `wal_buffers=16MB`, `shared_buffers=64MB`,
   `max_connections=50`, `work_mem=2MB`, `maintenance_work_mem=32MB`, `effective_io_concurrency=16`. Command-line
   `-c` wins over the values `nuq.sql` writes during initdb;
 - a 1Gi PVC, `strategy: Recreate`, `pg_isready` probes over TCP so they do not pass during the initdb
@@ -168,7 +168,7 @@ secret and SaaS egress, point `opencode.json` at the bridge URL, and rename its 
 
 Concurrency knobs are cut with the replicas: `NUM_WORKERS_PER_QUEUE=2`, `MAX_CONCURRENT_JOBS=2`,
 `CRAWL_CONCURRENT_REQUESTS=2`, `BROWSER_POOL_SIZE=2`, `NUQ_WORKER_COUNT=1`. Total requests are about
-2.3Gi and 0.85 CPU. Raise any value only after reading actual usage.
+2.0Gi and 0.8 CPU. Raise any value only after reading actual usage.
 
 ### 12 — Failure and restart behavior
 
@@ -180,6 +180,9 @@ and rate-limit keys and has AOF. The API and workers are stateless.
   loses it, by design; clients retry and no backup is taken.
 - An `active` row whose worker dies is returned to `queued` by
   `nuq_queue_scrape_lock_reaper` after one minute, which is why the image's `pg_cron` matters.
+- Both queue workers carry a `startupProbe` with a 150 s budget (30 × 5 s), and liveness starts only
+  after it passes. Their Node process can exceed the 20 s liveness grace to bind the health port on
+  an arm64 node capped at 500m CPU, which restarted the first rollout 4–7 times.
 
 ### 13 — Out of scope
 

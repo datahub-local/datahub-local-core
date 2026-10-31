@@ -10,53 +10,53 @@
 
 ## 2. Dedicated Postgres
 
-- [ ] 2.1 Add a `nuq-postgres` controller on `ghcr.io/firecrawl/nuq-postgres` (pinned in
+- [x] 2.1 Add a `nuq-postgres` controller on `ghcr.io/firecrawl/nuq-postgres` (pinned in
   `values/_version.yaml`), one replica, `Recreate`, a 1Gi Longhorn RWO PVC at
   `/var/lib/postgresql/data` and `PGDATA=/var/lib/postgresql/data/pgdata`.
-- [ ] 2.2 Set `POSTGRES_USER=firecrawl`, `POSTGRES_DB=postgres`, `POSTGRES_PASSWORD` from
+- [x] 2.2 Set `POSTGRES_USER=firecrawl`, `POSTGRES_DB=postgres`, `POSTGRES_PASSWORD` from
   `firecrawl-credentials`. The database is `postgres` because the image's `cron.database_name` is
   `postgres` and `pg_cron` refuses any other database.
-- [ ] 2.3 Override the upstream tuning with `-c max_wal_size=512MB -c min_wal_size=64MB -c
+- [x] 2.3 Override the upstream tuning with `-c max_wal_size=256MB -c min_wal_size=32MB -c
   wal_buffers=16MB -c shared_buffers=64MB -c max_connections=50 -c work_mem=2MB -c
   maintenance_work_mem=32MB -c effective_io_concurrency=16`; the image's `ALTER SYSTEM` block assumes a large host.
-- [ ] 2.4 Set 256Mi/100m requests and 512Mi/500m limits. Use one 1Gi Longhorn RWO PVC; do not
+- [x] 2.4 Set 256Mi/100m requests and 512Mi/500m limits. Use one 1Gi Longhorn RWO PVC; do not
   back it up.
-- [ ] 2.5 Add `pg_isready -h 127.0.0.1 -U firecrawl -d postgres` liveness/readiness probes, so they
+- [x] 2.5 Add `pg_isready -h 127.0.0.1 -U firecrawl -d postgres` liveness/readiness probes, so they
   do not pass during the initdb temporary server.
-- [ ] 2.6 Expose a `nuq-postgres` Service on 5432. Point `NUQ_DATABASE_URL` and
+- [x] 2.6 Expose a `nuq-postgres` Service on 5432. Point `NUQ_DATABASE_URL` and
   `NUQ_DATABASE_URL_LISTEN` at `…-data-firecrawl-nuq-postgres:5432/postgres`.
-- [ ] 2.7 Confirm the entrypoint runs as root only to chown the mounted volume and `gosu` to `postgres`; do
+- [x] 2.7 Confirm the entrypoint runs as root only to chown the mounted volume and `gosu` to `postgres`; do
   not drop capabilities or set `runAsNonRoot` on this container.
-- [ ] 2.8 Verify `SHOW max_wal_size` is `512MB`, not the image's `16GB`, and `SELECT * FROM cron.job`
+- [ ] 2.8 Verify `SHOW max_wal_size` is `256MB`, not the image's `16GB`, and `SELECT * FROM cron.job`
   returns the queue jobs after first start.
 - [ ] 2.9 Delete the Postgres Pod and confirm the PVC is reattached with the queue intact. Delete the
   PVC separately and confirm it re-initializes from `nuq.sql`; that is the accepted data-loss boundary.
 
 ## 3. Firecrawl release
 
-- [ ] 3.1 Pin the Firecrawl API (`2.11.637`), Playwright (`latest` by digest), NuQ Postgres (`latest`
+- [x] 3.1 Pin the Firecrawl API (`2.11.637`), Playwright (`latest` by digest), NuQ Postgres (`latest`
   by digest) and MCP server (`v3.36.0`) in `values/_version.yaml`. No `winkkgmbh/*`.
-- [ ] 3.2 Add the `app-template` release to `releases/data/helmfile.yaml.gotmpl`, with `needs` on
+- [x] 3.2 Add the `app-template` release to `releases/data/helmfile.yaml.gotmpl`, with `needs` on
   Valkey, and `values/firecrawl.yaml.gotmpl`.
-- [ ] 3.3 Add controllers `api`, `worker`, `nuq-worker`, `playwright` and
-  `nuq-postgres` with the commands, ports, probes and termination grace from the upstream chart.
-  Omit `extract-worker`, `cclog-worker`, `nuq-prefetch-worker` and RabbitMQ: the prefetch worker
-  delivers jobs only over the broker.
-- [ ] 3.4 Add one ConfigMap with `PORT`, `HOST`, worker ports, `NUQ_WORKER_COUNT: "1"`,
+- [x] 3.3 Add controllers `api`, `worker`, `nuq-worker`, `playwright` and
+  `nuq-postgres` with the commands, ports, probes and termination grace from the upstream chart,
+  plus a startup probe on both queue workers. Omit `extract-worker`, `cclog-worker`,
+  `nuq-prefetch-worker` and RabbitMQ: the prefetch worker delivers jobs only over the broker.
+- [x] 3.4 Add one ConfigMap with `PORT`, `HOST`, worker ports, `NUQ_WORKER_COUNT: "1"`,
   `NUQ_WAIT_MODE: "poll"`, `USE_DB_AUTHENTICATION: "false"`, `IS_KUBERNETES: "true"`,
   `ENV: "production"`, `NUM_WORKERS_PER_QUEUE: "2"`, `MAX_CONCURRENT_JOBS: "2"`,
   `CRAWL_CONCURRENT_REQUESTS: "2"`, `BROWSER_POOL_SIZE: "2"`, `PLAYWRIGHT_MICROSERVICE_URL`, and the
   Playwright config.
-- [ ] 3.5 Add `firecrawl-credentials` to `datahub-local-secrets`
+- [x] 3.5 Add `firecrawl-credentials` to `datahub-local-secrets`
   (`external_secrets.firecrawl-credentials`), composed from a new `firecrawl-postgres-root` and the
   existing `admin-root` for Valkey. Keys: `POSTGRES_PASSWORD`, `REDIS_URL`,
   `REDIS_RATE_LIMIT_URL`, `NUQ_DATABASE_URL`, `NUQ_DATABASE_URL_LISTEN`; the database URLs point at
   `…-data-firecrawl-nuq-postgres:5432/postgres`.
-- [ ] 3.5b Load `POSTGRES_PASSWORD`, `REDIS_URL`, `REDIS_RATE_LIMIT_URL`, `NUQ_DATABASE_URL` and
+- [x] 3.5b Load `POSTGRES_PASSWORD`, `REDIS_URL`, `REDIS_RATE_LIMIT_URL`, `NUQ_DATABASE_URL` and
   `NUQ_DATABASE_URL_LISTEN` from `firecrawl-credentials`.
-- [ ] 3.6 Expose only `api:3002`, `playwright:3000` and `nuq-postgres:5432` as Services. No
+- [x] 3.6 Expose only `api:3002`, `playwright:3000` and `nuq-postgres:5432` as Services. No
   IngressRoute and no UI.
-- [ ] 3.7 Set one replica per controller, the resource envelope from design §11, and the one 1Gi PVC.
+- [x] 3.7 Set one replica per controller, the resource envelope from design §11, and the one 1Gi PVC.
 - [ ] 3.8 Render with `helmfile template` and confirm: exactly five Deployments, no `redis`, no
   `rabbitmq`, no `prefetch`, no `extract-worker`, exactly one 1Gi PVC, no Ingress, and no CNPG
   resource.
@@ -65,7 +65,7 @@
 
 ## 4. Valkey
 
-- [ ] 4.1 Keep the shared Valkey release unchanged; `REDIS_URL` uses db 0 and
+- [x] 4.1 Keep the shared Valkey release unchanged; `REDIS_URL` uses db 0 and
   `REDIS_RATE_LIMIT_URL` uses db 1.
 - [ ] 4.2 Confirm `maxmemory-policy` is `noeviction`.
 - [ ] 4.3 After Firecrawl is running, confirm keys exist in db 0 (`DBSIZE` with `-n 0`) and db 1
@@ -75,20 +75,20 @@
 
 ## 5. MCP catalog and Hermes
 
-- [ ] 5.1 Add `{{ include "name" . }}-sympozium-mcp-firecrawl` to
+- [x] 5.1 Add `{{ include "name" . }}-sympozium-mcp-firecrawl` to
   `releases/automation/templates/sympozium_mcp_servers.yaml`: `transportType: stdio`,
   `toolsPrefix: fc`, `timeout: 60`, `label sympozium.ai/catalog: "true"`, image pinned, env
   `FIRECRAWL_API_URL: http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002`,
   `cmd: node`, `args: [dist/index.js]`, and
   `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`.
-- [ ] 5.2 Add the `MutatingAdmissionPolicy` + binding that injects `kubernetes.io/arch: amd64` into
+- [x] 5.2 Add the `MutatingAdmissionPolicy` + binding that injects `kubernetes.io/arch: amd64` into
   the MCP Deployment. The binding needs an explicit `matchResources.namespaceSelector` for
   `automation`; without it the policy did not fire in a live test.
 - [ ] 5.3 Confirm the controller sets `app.kubernetes.io/name: mcpserver` on the Pod. If it does not,
   fix the label before relying on 8080 egress.
 - [ ] 5.4 Verify `MCPServer` reports ready, the Pod is on an amd64 node, and `tools/list` over
   `svc:8080/mcp` returns exactly `fc_firecrawl_scrape`, `fc_firecrawl_search`, `fc_firecrawl_map`.
-- [ ] 5.5 Add `sympozium-firecrawl` to `releases/automation/values/hermes.yaml.gotmpl` under
+- [x] 5.5 Add `sympozium-firecrawl` to `releases/automation/values/hermes.yaml.gotmpl` under
   `config.mcp_servers`, pointing at
   `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
 - [ ] 5.6 Deploy Hermes once with `bootstrap.overwrite=true`, confirm the key lands in `config.yaml`,
@@ -100,11 +100,11 @@
 
 ## 6. Supersede the SaaS server in `add-opencode-agent`
 
-- [ ] 6.1 Update that change's proposal, design and spec to remove its `firecrawl-mcp` Deployment,
+- [x] 6.1 Update that change's proposal, design and spec to remove its `firecrawl-mcp` Deployment,
   `firecrawl-token` Secret and `api.firecrawl.dev` egress.
-- [ ] 6.2 Point its `opencode.json` Firecrawl entry at
+- [x] 6.2 Point its `opencode.json` Firecrawl entry at
   `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
-- [ ] 6.3 Rename its allowed tools to `fc_firecrawl_scrape` and `fc_firecrawl_search`; keep crawl,
+- [x] 6.3 Rename its allowed tools to `fc_firecrawl_scrape` and `fc_firecrawl_search`; keep crawl,
   agent, monitor, interact, parse and feedback denied.
 - [ ] 6.4 Re-render that release and confirm no Firecrawl API key is referenced and no SaaS host
   remains.
@@ -126,6 +126,6 @@
 
 ## 8. Docs and spec
 
-- [ ] 8.1 Update `docs/services/data.md` in `datahub-local/datahub-local` with the Firecrawl release,
+- [x] 8.1 Update `docs/services/data.md` in `datahub-local/datahub-local` with the Firecrawl release,
   the disposable Postgres, Valkey db 0/1 and the MCP entry.
-- [ ] 8.2 Run `openspec validate add-firecrawl-mcp --strict` and `helmfile template` before review.
+- [x] 8.2 Run `openspec validate add-firecrawl-mcp --strict` and `helmfile template` before review.

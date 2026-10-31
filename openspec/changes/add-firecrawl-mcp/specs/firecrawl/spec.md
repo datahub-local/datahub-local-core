@@ -70,8 +70,9 @@ backed up. It SHALL use
 The `nuq-postgres` image SHALL run `nuq.sql` at initdb, creating the `nuq` schema, its tables and
 indexes, and the `pg_cron` jobs. The `postgres` database SHALL be used because the image sets
 `cron.database_name = 'postgres'`. The upstream `ALTER SYSTEM` values that assume a large host SHALL
-be overridden on the command line, at minimum `max_wal_size`, `min_wal_size`, `wal_buffers`,
-`shared_buffers`, `max_connections` and `maintenance_work_mem`.
+be overridden on the command line to `max_wal_size=256MB`, `min_wal_size=32MB`, `wal_buffers=16MB`,
+`shared_buffers=64MB`, `max_connections=50`, `work_mem=2MB`, `maintenance_work_mem=32MB` and
+`effective_io_concurrency=16`.
 
 #### Scenario: The queue and scheduler exist
 
@@ -83,7 +84,7 @@ be overridden on the command line, at minimum `max_wal_size`, `min_wal_size`, `w
 #### Scenario: The small instance keeps its limits
 
 - **WHEN** `SHOW max_wal_size` and `SHOW shared_buffers` run
-- **THEN** they return the command-line values, not the image's `16GB` / large-host defaults
+- **THEN** they return `256MB` and `64MB`, not the image's `16GB` / large-host defaults
 
 ### Requirement: Valkey is the shared instance with logical database separation
 
@@ -129,7 +130,10 @@ SHALL be mounted.
 
 The Firecrawl workloads SHALL consume `POSTGRES_PASSWORD`, `REDIS_URL`, `REDIS_RATE_LIMIT_URL`,
 `NUQ_DATABASE_URL` and `NUQ_DATABASE_URL_LISTEN` from `firecrawl-credentials`, created outside this
-repository. No credential SHALL appear in a values file, a ConfigMap, or a rendered manifest.
+repository. The password SHALL be composed from a dedicated `firecrawl-postgres-root`, never from the
+shared cluster's `admin-root`, so a queue credential cannot unlock the CNPG cluster. The Valkey URLs
+MAY reuse `admin-root`. No credential SHALL appear in a values file, a ConfigMap, or a rendered
+manifest.
 
 #### Scenario: The render holds references, not secrets
 
@@ -137,20 +141,36 @@ repository. No credential SHALL appear in a values file, a ConfigMap, or a rende
 - **THEN** the password and URLs appear only as Secret references
 - **AND** no password or API key is a literal
 
+#### Scenario: The queue password is not the cluster password
+
+- **WHEN** the `firecrawl-postgres-root` value is compared with `admin-root`
+- **THEN** they are different secrets
+- **AND** `firecrawl-credentials` sources `POSTGRES_PASSWORD` from `firecrawl-postgres-root`
+
 ### Requirement: The MCP server is a catalog entry with a narrow tool surface
 
 `{{ include "name" . }}-sympozium-mcp-firecrawl` SHALL be a `sympozium.ai/v1alpha1 MCPServer` in the
 Sympozium catalog with `transportType: stdio`, `toolsPrefix: fc`, `timeout: 60`, and an image pinned
 to `ghcr.io/firecrawl/firecrawl-mcp-server`. It SHALL allow exactly `firecrawl_scrape`,
 `firecrawl_search` and `firecrawl_map`, and SHALL point `FIRECRAWL_API_URL` at the `data` API
-Service without a Firecrawl API key. Because that image is amd64-only, a `MutatingAdmissionPolicy`
-SHALL pin its Deployment to amd64 nodes.
+Service without a Firecrawl API key. It SHALL set the image's own entrypoint as
+`deployment.cmd: node` and `deployment.args: [dist/index.js]`, because the controller always runs the
+image as the stdio bridge and passes those through `STDIO_CMD`/`STDIO_ARGS`. Because that image is
+amd64-only, a `MutatingAdmissionPolicy` SHALL pin its Deployment to amd64 nodes, and its binding
+SHALL explicitly scope `matchResources` to the `automation` namespace or the policy does not fire.
+The MCP Pod SHALL be allowed to reach the `data` API Service on 3002.
 
 #### Scenario: The bridge exposes three tools
 
 - **WHEN** `tools/list` is called on the bridge
 - **THEN** it returns `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map`
 - **AND** no crawl, agent, monitor, interact, parse, feedback or credit tool is listed
+
+#### Scenario: The bridge starts the image's own entrypoint
+
+- **WHEN** the MCP Deployment is rendered
+- **THEN** `deployment.cmd` is `node` and `deployment.args` is `[dist/index.js]`
+- **AND** the bridge starts them through `STDIO_CMD`/`STDIO_ARGS` rather than exiting
 
 #### Scenario: The Pod is reachable by the agent policies
 
@@ -162,7 +182,13 @@ SHALL pin its Deployment to amd64 nodes.
 
 - **WHEN** the controller creates or updates the MCP Deployment
 - **THEN** the admission policy adds `kubernetes.io/arch: amd64` to its pod template
+- **AND** the binding matches the `automation` namespace
 - **AND** the Pod does not land on an arm64 node
+
+#### Scenario: The bridge reaches the API
+
+- **WHEN** the MCP Pod calls the `data` API Service on 3002
+- **THEN** no NetworkPolicy denies the egress
 
 ### Requirement: Hermes and OpenCode use the same self-hosted server
 
@@ -209,7 +235,7 @@ SHALL NOT exceed 512Mi of memory.
 #### Scenario: The release fits the cluster
 
 - **WHEN** the rendered resources are summed
-- **THEN** total requests stay near 2.3Gi of memory and below 1 CPU
+- **THEN** total requests stay near 2.0Gi of memory and about 0.8 CPU
 - **AND** every controller has both a request and a limit
 
 #### Scenario: Growth is evidence-based
