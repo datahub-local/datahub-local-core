@@ -144,6 +144,14 @@ config:
           - firecrawl_scrape
           - firecrawl_search
           - firecrawl_map
+  # The built-in web and browser toolsets stay off on every surface, not only
+  # Slack. platform_toolsets is per platform, so CLI and dashboard chats kept
+  # web_extract; this list is the global suppression applied last. Firecrawl is
+  # the web surface.
+  agent:
+    disabled_toolsets:
+      - web
+      - browser
   # `hermes tools disable web browser --platform slack` wrote this list; the
   # defaults stay out of config.yaml. Firecrawl is the web surface instead.
   platform_toolsets:

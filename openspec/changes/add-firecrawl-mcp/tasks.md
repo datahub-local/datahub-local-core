@@ -97,16 +97,16 @@
   `config.mcp_servers`, pointing at
   `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`,
   filtering with `tools.include: [firecrawl_scrape, firecrawl_search, firecrawl_map]`, and set
-  `config.platform_toolsets.slack` without the `web` and `browser` toolsets.
+  `config.agent.disabled_toolsets: [web, browser]` so the native tools are off on every platform.
 - [ ] 5.6 Deploy Hermes once with `bootstrap.overwrite=true`, confirm the key lands in `config.yaml`,
   then return the flag to `false`.
 - [ ] 5.7 Verify the MCP Pod can reach `data:3002` and that no NetworkPolicy in either namespace
   denies it.
 - [ ] 5.8 From Hermes, list MCP servers and run one scrape of a real URL through
   `sympozium-firecrawl`.
-- [ ] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and confirm `web` and
-  `browser` are absent, `sympozium-firecrawl` is listed, and only its three included tools are
-  offered.
+- [ ] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and `--platform cli`
+  and confirm `web` and `browser` are absent on both, `sympozium-firecrawl` is listed, and only its
+  three included tools are offered.
 
 ## 6. Supersede the SaaS server in `add-opencode-agent`
 

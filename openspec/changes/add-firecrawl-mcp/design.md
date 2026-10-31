@@ -152,8 +152,11 @@ the replacement Pod scheduled on `datahublocal-amd-1`.
 and its `tools.include` keeps only the three raw Firecrawl names. Hermes' existing egress rule allows
 `name=mcpserver` in its own namespace on 8080, so no new Hermes policy is needed.
 
-`config.platform_toolsets.slack` omits the native `web` and `browser` toolsets, so `web_search`,
-`web_extract` and the browser tools are not offered; the Firecrawl bridge is the web surface instead.
+`config.agent.disabled_toolsets` suppresses the native `web` and `browser` toolsets on every
+platform, so `web_search`, `web_extract` and the browser tools are not offered to Slack, CLI,
+dashboard or cron sessions; the Firecrawl bridge is the web surface instead. A per-platform
+`platform_toolsets` entry was not enough: it only filters the platform it names, which left the
+built-in tools enabled in CLI and dashboard chats.
 This is a tool-surface control, not a network boundary: public egress stays allowed because Slack
 Socket Mode needs it, and `terminal` can still reach the internet. Blocking that would need an
 explicit egress proxy, not another NetworkPolicy (the chart's policy always allows public egress).

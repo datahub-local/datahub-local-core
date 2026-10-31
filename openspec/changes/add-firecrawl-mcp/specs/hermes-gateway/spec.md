@@ -14,8 +14,9 @@ Mode connection.
 The seventh, `sympozium-firecrawl`, SHALL be the bridge in front of
 `ghcr.io/firecrawl/firecrawl-mcp-server`, which proxies the self-hosted Firecrawl API in `data`. It
 SHALL expose only the scrape, search and map tools through the server's `tools.include` filter, and
-SHALL need no Firecrawl account key. The gateway SHALL omit the native `web` and `browser` toolsets
-from its Slack surface, so those tools are not offered. Public egress SHALL remain allowed for
+SHALL need no Firecrawl account key. The gateway SHALL disable the native `web` and `browser`
+toolsets on every platform through `config.agent.disabled_toolsets`, so those tools are not offered
+on Slack, CLI, dashboard or cron surfaces. Public egress SHALL remain allowed for
 Slack; this is not a network boundary.
 
 `sympozium-github` SHALL instead point at a dedicated `…-sympozium-mcp-github-hermes` Service running
@@ -46,7 +47,7 @@ own stdio instance.
 
 #### Scenario: Firecrawl replaces the native web tools
 
-- **WHEN** the gateway's Slack tool list is read
+- **WHEN** the gateway's tool list is read for any platform
 - **THEN** `web` and `browser` are absent
 - **AND** only the three included Firecrawl tools are registered from `sympozium-firecrawl`
 - **AND** public egress remains allowed for Slack
