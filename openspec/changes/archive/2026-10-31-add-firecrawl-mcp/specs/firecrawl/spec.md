@@ -156,7 +156,9 @@ servers under `controllers`/`service` and the `MCPServer` objects plus cluster R
 `{{ .Values.release_name }}-automation-mcp-firecrawl-http` SHALL be a Deployment and Service running
 `ghcr.io/firecrawl/firecrawl-mcp-server` in its own stateless HTTP mode, with
 `HTTP_STREAMABLE_SERVER=true`, `HOST=0.0.0.0`, `PORT=8080`, and `FIRECRAWL_API_URL` pointing at the
-`data` API Service without a Firecrawl API key. It SHALL NOT use Sympozium's stdio bridge: the bridge
+`data` API Service without a Firecrawl API key. It SHALL set `FIRECRAWL_MCP_ALLOWED_HOSTS` to the
+Service's short and FQDN names, because FastMCP rejects an unknown `Host` header even when the health
+probe passes. It SHALL NOT use Sympozium's stdio bridge: the bridge
 misroutes replies, so a `tools/call` can wait out the timeout while a later request receives the
 previous result. The Deployment SHALL pin `kubernetes.io/arch: amd64` directly, because the image is
 amd64-only and no controller rewrites this pod template. The Pod SHALL carry

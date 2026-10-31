@@ -130,7 +130,9 @@ stdio bridge. The bridge keeps one long-lived child and forwards every client's 
 live testing showed replies misalign — a `tools/call` hung past the 60 s timeout while a later
 request received the previous result — even though the server alone answers a scrape in about 0.6 s.
 The server's stateless HTTP transport has no shared session state, which is the same reason
-`github-hermes` runs its own HTTP instance.
+`github-hermes` runs its own HTTP instance. FastMCP also validates the `Host` header, so
+`FIRECRAWL_MCP_ALLOWED_HOSTS` lists the Service's short and FQDN forms; otherwise the controller's
+discovery gets a 403 even though the probe passes.
 
 The `MCPServer` remains the catalog entry, with `transportType: http`, `url` at that Service,
 `toolsPrefix: fc`, `timeout: 60`, and `toolsAllow` of scrape, search and map. Those are applied when
@@ -154,7 +156,9 @@ once after the first sync, along with the old stdio Firecrawl workload.
 
 `config.mcp_servers.sympozium-firecrawl` points at the HTTP instance in `automation`, not at `data`,
 and its `tools.include` keeps only the three raw Firecrawl names. Hermes' existing egress rule allows
-`name=mcpserver` in its own namespace on 8080, so no new Hermes policy is needed.
+`name=mcpserver` in its own namespace on 8080, so no new Hermes policy is needed. It sets
+`keepalive_interval: 3600` because stateless FastMCP closes the GET event stream; the default probe
+reads that as a dead transport and tears it down mid-call, since there is no session to refresh.
 
 `config.agent.disabled_toolsets` suppresses the native `web` and `browser` toolsets on every
 platform, so `web_search`, `web_extract` and the browser tools are not offered to Slack, CLI,

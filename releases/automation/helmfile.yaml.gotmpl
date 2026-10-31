@@ -69,6 +69,7 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "hermes-agent").version }}'
     values:
       - values/hermes.yaml.gotmpl
+    jsonPatches: {{ toYaml .Values.kustomize.hermes | nindent 6 }}
   - name: "{{ .Values.release_name }}-automation"
     namespace: automation
     chart: "."

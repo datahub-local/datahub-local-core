@@ -37,6 +37,8 @@ container_image_version:
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
   rclone/rclone: 1.75.2
+  # Ubuntu publishes no stable version tag for this image; latest is the pin.
+  ubuntu/squid: latest@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
   valkey/valkey: 9.1.2
   velero/velero-plugin-for-aws: v1.14.4
 helm_chart_version:

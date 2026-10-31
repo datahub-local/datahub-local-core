@@ -1,0 +1,18 @@
+# Domains the egress proxy may reach, keyed by squid ACL name. Everything absent
+# is denied: browsing is the Firecrawl bridge's job, not the proxy's. A new
+# allowlisted host is one list entry here, and the ConfigMap checksum rolls the
+# proxy on the next sync.
+egress_proxy_domains:
+  pypi: # pip / uv
+    - .pypi.org
+    - pypi.python.org
+    - .pythonhosted.org
+  github: # git clone/push, GitHub App token minting, release assets
+    - .github.com
+    - .githubusercontent.com
+  npm: # the LiteLLM plugin OpenCode installs at startup
+    - registry.npmjs.org
+  alpine: # the apk init container that installs git
+    - dl-cdn.alpinelinux.org
+  slack: # Hermes' Socket Mode socket, Web API and file uploads
+    - .slack.com

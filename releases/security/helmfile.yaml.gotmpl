@@ -24,3 +24,9 @@ releases:
     version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
     values:
       - values/tailscale.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-security-egress-proxy"
+    namespace: security
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    values:
+      - values/egress_proxy.yaml.gotmpl

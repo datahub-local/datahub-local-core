@@ -56,6 +56,12 @@ observability:
 defaultMcpServers:
   enabled: false
 
+# The chart installs ten SkillPacks; only `memory` and `code-review` are mounted
+# by the homelab personas, so those two are vendored in
+# ../templates/sympozium_skillpacks.yaml and the rest are left out.
+defaultSkills:
+  enabled: false
+
 # https://agent-sandbox.sigs.k8s.io - the alternative execution backend, giving a
 # run a Sandbox CR with a real kernel boundary instead of a plain pod.
 agentSandbox:

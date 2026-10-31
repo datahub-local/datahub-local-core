@@ -1,0 +1,192 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# The only workload allowed to open a public socket. The ACLs in squid.conf are
+# the allowlist; the NetworkPolicies here keep the proxy out of the cluster and
+# keep every other Pod out of the proxy. Browsing is the Firecrawl bridge's job,
+# not this proxy's.
+
+fullnameOverride: '{{ .Values.release_name }}-security-egress-proxy'
+
+defaultPodOptions:
+  automountServiceAccountToken: false
+  securityContext:
+    # squid drops to the image's own `proxy` uid, and fsGroup makes the
+    # emptyDirs writable by it.
+    runAsNonRoot: true
+    runAsUser: 13
+    runAsGroup: 13
+    fsGroup: 13
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  main:
+    replicas: 1
+    strategy: Recreate
+    containers:
+      main:
+        image:
+          repository: ubuntu/squid
+          tag: '{{ index .StateValues.container_image_version "ubuntu/squid" }}'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        # Squid answers 400 to an origin-form GET, so a TCP probe is the only
+        # honest check on the proxy port.
+        probes:
+          readiness:
+            enabled: true
+            type: TCP
+            port: 3128
+            spec:
+              initialDelaySeconds: 3
+              periodSeconds: 10
+          liveness:
+            enabled: true
+            type: TCP
+            port: 3128
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 30
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 3128
+
+networkpolicies:
+  egress:
+    enabled: true
+    controller: main
+    policyTypes:
+      - Egress
+    rules:
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+        # Squid needs a socket to any public address to honour the ACLs; the
+        # except list is what keeps the Pod CIDR, the Service CIDR, loopback and
+        # the metadata endpoint out of reach, so a CONNECT cannot become an
+        # SSRF into the cluster.
+        - to:
+            - ipBlock:
+                cidr: 0.0.0.0/0
+                except:
+                  - 0.0.0.0/8
+                  - 10.0.0.0/8
+                  - 127.0.0.0/8
+                  - 169.254.0.0/16
+                  - 172.16.0.0/12
+                  - 192.168.0.0/16
+          ports:
+            - protocol: TCP
+              port: 443
+  ingress:
+    enabled: true
+    controller: main
+    policyTypes:
+      - Ingress
+    rules:
+      ingress:
+        # Only the automation namespace may use the proxy; everyone else is
+        # refused at L3, not merely in the ACLs.
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: automation
+          ports:
+            - protocol: TCP
+              port: 3128
+
+configMaps:
+  squid-config:
+    enabled: true
+    data:
+      squid.conf: |
+        # Egress proxy for the automation agent. Squid is the only workload
+        # allowed to open public sockets, and the ACLs below are the whole
+        # allowlist: everything else is denied. Browsing goes through the
+        # self-hosted Firecrawl bridge.
+
+        http_port 3128
+        visible_hostname egress-proxy
+
+        # No caching: responses carry GitHub tokens, private repo metadata and
+        # package wheels. The memory cache is capped because the Pod is 128Mi.
+        cache deny all
+        cache_mem 4 MB
+
+        # The agent's address never reaches an upstream host.
+        forwarded_for delete
+
+        # No NET_RAW in the Pod, and the pinger only feeds netdb measurements.
+        pinger_enable off
+
+        acl SSL_ports port 443
+        acl Safe_ports port 443
+        acl CONNECT method CONNECT
+        
+        {{- range $name, $domains := .Values.egress_proxy_domains }}
+        acl {{ $name }} dstdomain {{ join " " $domains }}
+        {{- end }}
+
+        # Cluster addresses, loopback and the metadata endpoint stay unreachable
+        # even for an allowlisted name.
+        acl private dst 0.0.0.0/8 10.0.0.0/8 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16
+        acl private dst ::1/128 fc00::/7 fe80::/10
+
+        http_access deny !Safe_ports
+        http_access deny CONNECT !SSL_ports
+        http_access deny private
+        
+        {{- range $name, $domains := .Values.egress_proxy_domains }}
+        http_access allow {{ $name }}
+        {{- end }}
+
+        http_access deny all
+
+        access_log stdio:/dev/stdout
+        cache_log stdio:/dev/stderr
+        cache_store_log none
+
+persistence:
+  squid-config:
+    type: configMap
+    identifier: squid-config
+    globalMounts:
+      - path: /etc/squid/squid.conf
+        subPath: squid.conf
+        readOnly: true
+  # `squid -z` still prepares the swap dirs and squid writes its pid file; the
+  # root filesystem is read-only.
+  run:
+    type: emptyDir
+    globalMounts:
+      - path: /run
+  spool:
+    type: emptyDir
+    globalMounts:
+      - path: /var/spool/squid
+  tmp:
+    type: emptyDir
+    globalMounts:
+      - path: /tmp

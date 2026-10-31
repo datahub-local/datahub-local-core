@@ -27,10 +27,11 @@
   `NUQ_DATABASE_URL_LISTEN` at `…-data-firecrawl-nuq-postgres:5432/postgres`.
 - [x] 2.7 Confirm the entrypoint runs as root only to chown the mounted volume and `gosu` to `postgres`; do
   not drop capabilities or set `runAsNonRoot` on this container.
-- [ ] 2.8 Verify `SHOW max_wal_size` is `256MB`, not the image's `16GB`, and `SELECT * FROM cron.job`
+- [x] 2.8 Verify `SHOW max_wal_size` is `256MB`, not the image's `16GB`, and `SELECT * FROM cron.job`
   returns the queue jobs after first start.
-- [ ] 2.9 Delete the Postgres Pod and confirm the PVC is reattached with the queue intact. Delete the
-  PVC separately and confirm it re-initializes from `nuq.sql`; that is the accepted data-loss boundary.
+- [x] 2.9a Delete the Postgres Pod and confirm the PVC is reattached with the queue intact.
+- [ ] 2.9b Delete the PVC separately and confirm it re-initializes from `nuq.sql`; that is the
+  accepted data-loss boundary.
 
 ## 3. Firecrawl release
 
@@ -57,18 +58,18 @@
 - [x] 3.6 Expose only `api:3002`, `playwright:3000` and `nuq-postgres:5432` as Services. No
   IngressRoute and no UI.
 - [x] 3.7 Set one replica per controller, the resource envelope from design §11, and the one 1Gi PVC.
-- [ ] 3.8 Render with `helmfile template` and confirm: exactly five Deployments, no `redis`, no
+- [x] 3.8 Render with `helmfile template` and confirm: exactly five Deployments, no `redis`, no
   `rabbitmq`, no `prefetch`, no `extract-worker`, exactly one 1Gi PVC, no Ingress, and no CNPG
   resource.
-- [ ] 3.9 Confirm the render contains no credential: search for passwords, `sk-`, Supabase and
+- [x] 3.9 Confirm the render contains no credential: search for passwords, `sk-`, Supabase and
   Firecrawl API keys.
 
 ## 4. Valkey
 
 - [x] 4.1 Keep the shared Valkey release unchanged; `REDIS_URL` uses db 0 and
   `REDIS_RATE_LIMIT_URL` uses db 1.
-- [ ] 4.2 Confirm `maxmemory-policy` is `noeviction`.
-- [ ] 4.3 After Firecrawl is running, confirm keys exist in db 0 (`DBSIZE` with `-n 0`) and db 1
+- [x] 4.2 Confirm `maxmemory-policy` is `noeviction`.
+- [x] 4.3 After Firecrawl is running, confirm keys exist in db 0 (`DBSIZE` with `-n 0`) and db 1
   (`-n 1`), and that LiteLLM still serves a request.
 - [ ] 4.4 Watch `valkey_memory_used_bytes` for an hour of normal agent use; record the peak. If it
   approaches the limit, split Firecrawl onto its own Redis rather than evicting LiteLLM keys.
@@ -100,16 +101,16 @@
   `http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp`,
   filtering with `tools.include: [firecrawl_scrape, firecrawl_search, firecrawl_map]`, and set
   `config.agent.disabled_toolsets: [web, browser]` so the native tools are off on every platform.
-- [ ] 5.6 Deploy Hermes once with `bootstrap.overwrite=true`, confirm the key lands in `config.yaml`,
-  then return the flag to `false`.
-- [ ] 5.7 Verify the MCP Pod can reach `data:3002` and that no NetworkPolicy in either namespace
+- [x] 5.6 Land the key in the live `config.yaml` (via `hermes config set`; the volume is
+  seed-once) and verify the MCP URL, include list and keepalive in place.
+- [x] 5.7 Verify the MCP Pod can reach `data:3002` and that no NetworkPolicy in either namespace
   denies it.
-- [ ] 5.8 From Hermes, list MCP servers and run one scrape of a real URL through
+- [x] 5.8 From Hermes, list MCP servers and run one scrape of a real URL through
   `sympozium-firecrawl`.
-- [ ] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and `--platform cli`
+- [x] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and `--platform cli`
   and confirm `web` and `browser` are absent on both, `sympozium-firecrawl` is listed, and only its
   three included tools are offered.
-- [ ] 5.10 After the first sync of the `app-template` release, delete every old
+- [x] 5.10 After the first sync of the `app-template` release, delete every old
   `…-sympozium-mcp-*` object (8 MCPServers, their derived Deployments/Services, the old custom
   Deployments/Services, ConfigMap, ServiceAccount, ClusterRole and binding) and the now-unused
   `firecrawl-mcp-amd64` MutatingAdmissionPolicy and binding. Confirm the controller does not
@@ -121,25 +122,26 @@
   `firecrawl-token` Secret and `api.firecrawl.dev` egress.
 - [x] 6.2 Point its `opencode.json` Firecrawl entry at
   `http://{{ .Values.release_name }}-automation-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
-- [ ] 6.3 Allow the raw Firecrawl tool names under OpenCode's server-name prefix; `fc_*` does not
-  exist on the bridge. Keep crawl, agent, monitor, interact, parse and feedback denied.
-- [ ] 6.4 Re-render that release and confirm no Firecrawl API key is referenced and no SaaS host
-  remains.
+- [ ] 6.3 (tracked in `add-opencode-agent`) Allow the raw Firecrawl tool names under OpenCode's
+  server-name prefix; `fc_*` does not exist on the HTTP instance. Keep crawl, agent, monitor,
+  interact, parse and feedback denied.
+- [ ] 6.4 (tracked in `add-opencode-agent`) Re-render that release and confirm no Firecrawl API key
+  is referenced and no SaaS host remains.
 
 ## 7. Verification
 
 - [x] 7.1 `GET /v0/health/readiness` on the API Service returns 200.
 - [x] 7.2 `POST /v2/scrape {"url":"https://example.com","formats":["markdown"]}` returns markdown
   with no `Authorization` header.
-- [ ] 7.3 The job appears in `nuq.queue_scrape` and reaches `completed`; no row stays `active` beyond
+- [x] 7.3 The job appears in `nuq.queue_scrape` and reaches `completed`; no row stays `active` beyond
   one minute.
-- [ ] 7.4 Force a scrape failure and confirm there is no orphaned `active` row and the row is
+- [x] 7.4 Force a scrape failure and confirm there is no orphaned `active` row and the row is
   `failed` with a reason.
 - [ ] 7.5 Delete the API Pod and one nuq worker during a scrape; confirm the queue resumes and the
   job completes.
 - [ ] 7.6 Delete the Postgres Pod and confirm the queue survives; delete the PVC and confirm a new
   empty queue comes up and a new scrape succeeds. That is the accepted data-loss boundary.
-- [ ] 7.7 Confirm no Firecrawl account key exists and no SaaS egress is used.
+- [x] 7.7 Confirm no Firecrawl account key exists and no SaaS egress is used.
 - [x] 7.8 `POST /v2/search {"query":"opencode","limit":2}` returns results; keyless `search` works
   against the self-hosted API (200, two web results on 2026-10-31).
 
@@ -148,4 +150,4 @@
 - [x] 8.1 Update `docs/services/data.md` in `datahub-local/datahub-local` with the Firecrawl release,
   the disposable Postgres, Valkey db 0/1 and the MCP entry.
 - [x] 8.2 Run `openspec validate add-firecrawl-mcp --strict`.
-- [ ] 8.3 Run `helmfile template` before review.
+- [x] 8.3 Run `helmfile template` before review.
