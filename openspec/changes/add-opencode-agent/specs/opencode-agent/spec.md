@@ -2,23 +2,60 @@
 
 ## ADDED Requirements
 
-### Requirement: The server runs the upstream image with a pinned plugin
+### Requirement: The server runs the datahub-local OpenCode image
 
-The `opencode-server` workload SHALL run `ghcr.io/anomalyco/opencode` at the tag pinned in
-`values/_version.yaml`, by digest. It SHALL NOT build or patch the image. The litellm plugin SHALL be
-`opencode-plugin-litellm` at the version pinned beside the image, installed by an init container into
-the writable plugin cache on the state volume, and listed in `opencode.json`.
+The `opencode-server` workload SHALL run
+`ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` by digest, pinned in
+`values/_version.yaml`. The image SHALL be built in `datahub-local-ai/agents/adapters/opencode/`
+from a Debian bookworm base with the pinned upstream OpenCode Linux release binary copied in. The
+release SHALL NOT deploy `ghcr.io/anomalyco/opencode` or any other upstream OpenCode image. The
+litellm plugin SHALL be `opencode-plugin-litellm` at the version pinned beside the image, installed
+by an init container into the writable plugin cache on the state volume, and listed in
+`opencode.json`.
 
-#### Scenario: The image is upstream
+#### Scenario: The image is ours and pinned
 
 - **WHEN** the rendered Pod spec is inspected
-- **THEN** the server image is the official OpenCode image by digest
-- **AND** no derived OpenCode image is involved
+- **THEN** the server image is `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` by digest
+- **AND** no upstream OpenCode image is referenced anywhere in the release
 
 #### Scenario: The plugin install is idempotent
 
 - **WHEN** the init container runs with a warm cache for the pinned version
 - **THEN** it exits without a registry request
+
+### Requirement: The image carries the platform toolchain
+
+The image SHALL provide, on `PATH` and as a non-root user under a read-only root filesystem:
+`git`, `bash`, `curl`, `openssh-client`, `ca-certificates`, `jq`, `yq`, `kubectl`, `helm`,
+`helmfile`, `kustomize`, `gh`, `node`/`npm`, `python3` with `venv` and `pip`, and `uv` with a
+managed Python 3.13. Every tool SHALL be installed at build time from a pinned version; nothing
+SHALL be installed at container start, and no container SHALL run `apk`, `apt` or an installer.
+
+`ansible`, `dbt`, `dlt` and other project dependencies SHALL NOT be baked into the image; they
+SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be published for
+`linux/amd64` and `linux/arm64`, and tool versions SHALL be tracked by Renovate in
+`datahub-local-ai/renovate.json`.
+
+#### Scenario: The agent can run the repositories' own checks
+
+- **WHEN** the agent runs `helmfile template` in a `datahub-local-core` checkout and `uv sync` in a
+  `datahub-local-ai` checkout
+- **THEN** both commands run with the tools already in the image
+- **AND** no package is installed by a root process
+
+#### Scenario: The image is the only toolchain
+
+- **WHEN** the rendered Pod spec is inspected
+- **THEN** there is no `apk --root` init container and no init container other than the plugin
+- **AND** every long-running container starts as uid 1000 with a read-only root filesystem
+
+#### Scenario: A version bump reaches the cluster by digest
+
+- **WHEN** Renovate raises the OpenCode `ARG` in `datahub-local-ai` and that PR merges
+- **THEN** `publish-images.yaml` builds and publishes a new multi-arch digest
+- **AND** Renovate in this repository changes `values/_version.yaml` to that digest
+- **AND** the release never deploys a moving tag
 
 ### Requirement: Configuration, instructions, and the git helper are ConfigMaps
 
@@ -59,19 +96,6 @@ target the server; the web proxy is the only published surface.
 
 - **WHEN** a request reaches `/api/*` without the Basic credential
 - **THEN** the server answers 401
-
-### Requirement: Git is installed into the state volume
-
-An init container SHALL install Alpine's `git` into `/opt/data/git` with
-`apk --root` and the image's key and repository files, and the server container SHALL expose it via
-`PATH`, `LD_LIBRARY_PATH`, and `GIT_EXEC_PATH`. The install SHALL be idempotent. The server
-container SHALL keep a read-only root filesystem; the init container is the only root process and
-drops every capability.
-
-#### Scenario: Git runs as the agent user
-
-- **WHEN** the agent runs `git --version` and `git clone` over HTTPS
-- **THEN** both succeed as uid 1000
 
 ### Requirement: GitHub credentials live in a minter sidecar, not the server
 
@@ -178,8 +202,8 @@ The OpenCode config SHALL resolve every permission check without a silent `ask`:
 - deny `webfetch`, `websearch`;
 - allow `question`, so the agent can ask and the shim reports `needs_input`;
 - deny reads of `*.env` and `*.env.*`;
-- deny `external_directory` for `*`, then allow `/workspace/*`, `/tmp/*`,
-  `/opt/data/.config/opencode/*`, and `/opt/data/git/*`;
+- deny `external_directory` for `*`, then allow `/workspace/*`, `/tmp/*`, and
+  `/opt/data/.config/opencode/*`;
 - allow `fc_firecrawl_scrape`, `fc_firecrawl_search`, and `fc_firecrawl_map`; the bridge registers
   nothing else, so crawl, agent, monitor, interact, parse, and feedback never reach the permission
   layer.
@@ -209,22 +233,22 @@ datahublocal-amd-1`, and `kubernetes.io/arch: amd64`.
 
 ### Requirement: Every container runs the restricted profile
 
-All containers SHALL run as a non-root uid: 1000 for the OpenCode, minter, and shim containers, and
-the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
+All containers SHALL run as a non-root uid: 1000 for the OpenCode, minter, plugin-init and shim
+containers, and the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
 `allowPrivilegeEscalation: false`, all capabilities dropped, and `RuntimeDefault` seccomp. The
-service-account token SHALL NOT be mounted. The git-install init container SHALL be the only root
-process, with all capabilities dropped, writing only to `/opt/data`. Writable paths SHALL be limited
-to `/opt/data`, `/workspace`, and a size-bounded memory `/tmp`.
+service-account token SHALL NOT be mounted. No container SHALL run as uid 0. Writable paths SHALL be
+limited to `/opt/data`, `/workspace`, and a size-bounded memory `/tmp`.
 
-#### Scenario: No long-running process is root
+#### Scenario: No process is root
 
 - **WHEN** the running containers are inspected
-- **THEN** no long-running process runs as uid 0
+- **THEN** every process runs as a non-root uid
 - **AND** no service-account token is mounted
+- **AND** no container has an init path that installs packages
 
 ### Requirement: Server state is single-writer on two volumes
 
-The server SHALL use one replica, `Recreate`, a Longhorn RWO volume at `/opt/data` (home, git,
+The server SHALL use one replica, `Recreate`, a Longhorn RWO volume at `/opt/data` (home and
 plugin cache), and a second at `/workspace` (repositories). `HOME` SHALL be `/opt/data`.
 
 #### Scenario: A rollout does not share a volume
@@ -241,8 +265,9 @@ plugin cache), and a second at `/workspace` (repositories). `HOME` SHALL be `/op
 - Shim Pod: DNS and the server on 4096 only.
 
 The server SHALL set `HTTP_PROXY` and `HTTPS_PROXY` to the proxy Service and `NO_PROXY` to the
-cluster domains, so installs and GitHub calls work; a client that ignores them is denied rather than
-leaking. The proxy's own allowlist is the `egress-proxy` capability.
+cluster domains, so installs, GitHub calls and `helmfile` chart resolution work; a client that
+ignores them is denied rather than leaking. The proxy's own allowlist is the `egress-proxy`
+capability, and SHALL include the helm chart repositories and OCI registries these releases use.
 
 #### Scenario: The API server is unreachable
 
@@ -253,7 +278,7 @@ leaking. The proxy's own allowlist is the `egress-proxy` capability.
 
 - **WHEN** the server resolves a public host and opens a socket
 - **THEN** the policy permits only the proxy Pod on 3128
-- **AND** the proxy allows only its `pypi`, `github`, `npm` and `alpine` domains
+- **AND** the proxy allows only its `pypi`, `github`, `npm`, `helm`, `alpine` and `slack` domains
 
 ### Requirement: The shim is registered for Hermes and personas
 
@@ -271,11 +296,11 @@ create one `sympozium.ai/v1alpha1 MCPServer` named for the shim, labelled
 ### Requirement: Health reflects the server, the plugin, and the proxy
 
 Server liveness SHALL probe port 4096. Server readiness SHALL require a resolvable `litellm/*`
-model, because a cold cache installs the plugin and git. Startup SHALL allow at least 120 seconds.
-The proxy and shim SHALL expose readiness against the server.
+model, because a cold cache installs the plugin. Startup SHALL allow at least 120 seconds. The
+proxy and shim SHALL expose readiness against the server.
 
 #### Scenario: A cold install is not killed
 
-- **WHEN** the first start is still installing the plugin or git
+- **WHEN** the first start is still installing the plugin
 - **THEN** the startup probe keeps the container alive
 - **AND** readiness stays false until a model is listed

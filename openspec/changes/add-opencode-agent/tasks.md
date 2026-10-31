@@ -1,18 +1,50 @@
 # Tasks
 
-## 1. Pins and release
+## 1. Image and pins
 
-- [ ] 1.1 Add to `values/_version.yaml`: `ghcr.io/anomalyco/opencode` (tag),
-  `opencode-plugin-litellm` (version), `nginxinc/nginx-unprivileged` (tag), the Alpine git
-  version, and the shim image (digest). Firecrawl is pinned by `add-firecrawl-mcp`.
-- [ ] 1.2 Add the three workloads to `releases/automation/` on `bjw-s-labs/app-template`:
+- [ ] 1.1 Add `agents/adapters/opencode/` to `datahub-local-ai`: a `Dockerfile` on
+  `node:22-bookworm-slim` that copies the pinned upstream OpenCode Linux release binary for the
+  target architecture, keeps `ENTRYPOINT ["opencode"]`, and installs the toolchain from pinned
+  release tarballs — `git`, `bash`, `curl`, `openssh-client`, `ca-certificates`, `jq`, `yq`,
+  `kubectl`, `helm`, `helmfile`, `kustomize`, `gh`, `node`/`npm`, `python3` + `venv`/`pip`, and `uv`.
+- [ ] 1.2 Add the managed Python 3.13: `uv python install 3.13` into `/opt/uv/python` and set
+  `UV_PYTHON_INSTALL_DIR`; bookworm's system Python stays 3.11. Assert every tool in the build with
+  `git --version`, `helm version`, `helmfile version`, `kubectl version --client`, `kustomize
+  version`, `yq --version`, `gh --version`, `node --version`, `npm --version`, `uv --version`,
+  `python3 --version`.
+- [ ] 1.3 Pin every tool as a Dockerfile `ARG` and make Renovate own the bumps:
+  - OpenCode: `ARG OPENCODE_VERSION=<version>` plus a `customManager` with
+    `datasourceTemplate: github-releases`, `depNameTemplate: sst/opencode`, and
+    `extractVersionTemplate: ^v?(?<version>.*)$`.
+  - Toolchain: a `# renovate: datasource=github-releases depName=<owner>/<repo>` line above each
+    `ARG`, and one `customManager` whose regex matches the annotation plus the next `ARG`, so helm,
+    helmfile, kubectl, kustomize, yq, gh and uv need no per-tool block.
+  - The weekly adapter rebuild in `publish-images.yaml` carries base CVE fixes, and merging a
+    Renovate bump publishes a new digest. Do not pin a release-asset sha256 that Renovate cannot
+    update, or every bump will fail the build until it is edited by hand.
+  - Add a `README.md` stating upstream revision, the enabled toolchain, and that this is **not** a
+    Sympozium harness adapter — no contract, no capabilities.
+- [ ] 1.4 Publish `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` multi-arch
+  (`linux/amd64`, `linux/arm64`). No workflow edit is needed: `publish-images.yaml` discovers
+  `agents/adapters/*/Dockerfile` and names the image from the directory.
+- [ ] 1.5 Add to `values/_version.yaml`: the adapter image
+  (`ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:<digest>` from 1.4),
+  `opencode-plugin-litellm` under a `package_version` map, `nginxinc/nginx-unprivileged` (tag), and
+  the shim image (digest). Keep the `tag@sha256:…` shape: the existing `container_image_version`
+  jsonata manager then proposes the digest bump. No upstream OpenCode image and no Alpine git
+  version. Firecrawl is pinned by `add-firecrawl-mcp`.
+- [ ] 1.6 Add the three workloads to `releases/automation/` on `bjw-s-labs/app-template`:
   `opencode-server`, `opencode-web`, `opencode-mcp`.
-- [ ] 1.3 Server: one replica, `Recreate`, `runtimeClassName: gvisor`, nodeSelector
+- [ ] 1.7 Server: one replica, `Recreate`, `runtimeClassName: gvisor`, nodeSelector
   `datahublocal-amd-1` + `kubernetes.io/arch: amd64`, uid/gid/fsGroup 1000, read-only root,
   capabilities dropped, no service-account token, `HOME=/opt/data`, `/opt/data` + `/workspace`
-  PVCs, `/tmp` memory emptyDir of at least 1Gi.
-- [ ] 1.4 Render with `helmfile template` and confirm: server + minter + two init containers, web
-  proxy, shim, three Services, no ingress to the server.
+  PVCs, `/tmp` memory emptyDir of at least 1Gi. `command: ["opencode"]`, `args: ["serve", …]`.
+- [ ] 1.8 Render with `helmfile template` and confirm: server + minter + one plugin init container,
+  web proxy, shim, three Services, no ingress to the server, no root container.
+- [ ] 1.9 Prove the Renovate path before merging: run
+  `renovate --platform=local --dry-run=full --repository-cache=reset --onboarding=false` in
+  `datahub-local-ai` and confirm it lists `sst/opencode` and each tool ARG; after the first
+  publish, confirm core's Dependency Dashboard proposes a digest update for the adapter.
 
 ## 2. Server configuration
 
@@ -22,15 +54,16 @@
   ruleset from design §9.
 - [ ] 2.2 Add `AGENTS.md` with the agent's operating rules: work inside `/workspace`, report changed
   files, push only to a branch it created.
-- [ ] 2.3 Add `git-credential-opencode` (shell, `wget`-based) and mount it at
+- [ ] 2.3 Add `git-credential-opencode` (shell, `curl`-based) and mount it at
   `/opt/data/bin/git-credential-opencode` with mode `0755`.
 - [ ] 2.4 Add `releases/automation/templates/opencode_config.yaml` as one ConfigMap with the three
   keys via `.Files.Get`.
 - [ ] 2.5 Mount the config and instructions as `subPath` files; do not replace the config directory.
-- [ ] 2.6 Init containers: plugin (`opencode plugin add` when the cache is cold) and git
-  (`apk add --root /opt/data/git --initdb --no-cache --keys-dir /etc/apk/keys --repositories-file /etc/apk/repositories git=<version>`).
-- [ ] 2.7 Set `PATH`, `LD_LIBRARY_PATH`, `GIT_EXEC_PATH` for the git install and verify
-  `git --version` and `git clone` as uid 1000.
+- [ ] 2.6 The only init container installs the plugin (`opencode plugin add` when the cache is cold)
+  as uid 1000. No `apk`, no `--root`, no git install.
+- [ ] 2.7 Verify as uid 1000 under a read-only root filesystem: `git`, `helm`, `helmfile`,
+  `kubectl`, `kustomize`, `yq`, `jq`, `gh`, `node`, `npm`, `uv`, `python3` and `curl` all run, and
+  `git clone` over HTTPS works through the minter helper.
 
 ## 3. Minter sidecar
 
@@ -108,18 +141,23 @@
 
 ## 9. Isolation and state
 
-- [ ] 9.1 Confirm the server Pod is under gVisor on `datahublocal-amd-1`, every long-running
-  container is non-root, and git/plugin caches survive a restart.
+- [ ] 9.1 Confirm the server Pod is under gVisor on `datahublocal-amd-1`, every container is
+  non-root, and the plugin cache survives a restart.
 - [ ] 9.2 Confirm no service-account token is mounted and only `/opt/data`, `/workspace`, `/tmp` are
   writable.
 - [ ] 9.3 Confirm a rollout terminates the old server Pod before the new one mounts either PVC.
+- [ ] 9.4 Confirm no container runs `apk`, `apt`, `--initdb` or a runtime installer, and that no
+  process runs as uid 0.
 
 ## 10. Verification
 
 - [ ] 10.1 A task edits a file, runs a test, returns the final text and the changed file.
 - [ ] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
 - [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
-- [ ] 10.4 Record cold-start (plugin + git install → ready) and warm-start.
+- [ ] 10.4 Record cold-start (plugin install → ready) and warm-start.
+- [ ] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
+  `datahub-local-ai` and run `uv sync --extra dev`. Both succeed through the proxy with no tool
+  installed at runtime.
 
 ## 11. Egress proxy consumer (moved from `add-egress-proxy`)
 
@@ -128,3 +166,9 @@
   `NO_PROXY` to the cluster domains.
 - [ ] 11.2 Replace the server's public 443 egress with the proxy rule on 3128 and update the
   "no egress proxy" residual in the design and spec.
+- [ ] 11.3 Add the `helm` allowlist group to `releases/security/values/default.yaml.gotmpl`:
+  `.github.io`, `airflow.apache.org`, `downloads.apache.org`, `helm.openwebui.com`,
+  `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`,
+  `ghcr.io`, `8gears.container-registry.com`, `oci.trueforge.org`.
+- [ ] 11.4 Verify `helmfile template` in a cloned `datahub-local-core` resolves every chart through
+  the proxy, and that an unlisted chart repository is refused.
