@@ -38,9 +38,10 @@
   by digest) and MCP server (`v3.36.0`) in `values/_version.yaml`. No `winkkgmbh/*`.
 - [ ] 3.2 Add the `app-template` release to `releases/data/helmfile.yaml.gotmpl`, with `needs` on
   Valkey, and `values/firecrawl.yaml.gotmpl`.
-- [ ] 3.3 Add controllers `api`, `worker`, `nuq-worker`, `nuq-prefetch-worker`, `playwright` and
+- [ ] 3.3 Add controllers `api`, `worker`, `nuq-worker`, `playwright` and
   `nuq-postgres` with the commands, ports, probes and termination grace from the upstream chart.
-  Omit `extract-worker`, `cclog-worker` and RabbitMQ.
+  Omit `extract-worker`, `cclog-worker`, `nuq-prefetch-worker` and RabbitMQ: the prefetch worker
+  delivers jobs only over the broker.
 - [ ] 3.4 Add one ConfigMap with `PORT`, `HOST`, worker ports, `NUQ_WORKER_COUNT: "1"`,
   `NUQ_WAIT_MODE: "poll"`, `USE_DB_AUTHENTICATION: "false"`, `IS_KUBERNETES: "true"`,
   `ENV: "production"`, `NUM_WORKERS_PER_QUEUE: "2"`, `MAX_CONCURRENT_JOBS: "2"`,
@@ -56,8 +57,9 @@
 - [ ] 3.6 Expose only `api:3002`, `playwright:3000` and `nuq-postgres:5432` as Services. No
   IngressRoute and no UI.
 - [ ] 3.7 Set one replica per controller, the resource envelope from design §11, and the one 1Gi PVC.
-- [ ] 3.8 Render with `helmfile template` and confirm: exactly six Deployments, no `redis`, no
-  `rabbitmq`, no `extract-worker`, exactly one 1Gi PVC, no Ingress, and no CNPG resource.
+- [ ] 3.8 Render with `helmfile template` and confirm: exactly five Deployments, no `redis`, no
+  `rabbitmq`, no `prefetch`, no `extract-worker`, exactly one 1Gi PVC, no Ingress, and no CNPG
+  resource.
 - [ ] 3.9 Confirm the render contains no credential: search for passwords, `sk-`, Supabase and
   Firecrawl API keys.
 

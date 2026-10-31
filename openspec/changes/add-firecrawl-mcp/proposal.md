@@ -16,7 +16,7 @@ database 0/1.
 ## What Changes
 
 - Add release `{{ .Values.release_name }}-data-firecrawl` in `data` on `bjw-s-labs/app-template`,
-  reproducing the upstream example chart's `api`, `worker`, `nuq-worker`, `nuq-prefetch-worker`,
+  reproducing the upstream example chart's `api`, `worker`, `nuq-worker`, `playwright`,
   `playwright` and `nuq-postgres` workloads. No bundled Redis, no RabbitMQ, no extract worker, no
   cclog worker, no UI, no ingress.
 - Run Firecrawl's `nuq-postgres` as a dedicated 512Mi / 0.5 CPU Deployment with a 1Gi Longhorn PVC, pinned

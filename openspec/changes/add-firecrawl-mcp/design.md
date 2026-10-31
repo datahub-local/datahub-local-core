@@ -24,14 +24,13 @@ unconditionally and whose resource defaults exceed the cluster. The house chart 
 `bjw-s-labs/app-template`, already used for `polaris-jobs` and `s3-gdrive`; it renders exactly the
 controllers we declare, so there are no hidden workloads to gate.
 
-Six controllers, one replica each:
+Five controllers, one replica each:
 
 | Controller | Command | Port |
 |---|---|---|
 | `api` | `node --max-old-space-size=2048 dist/src/index.js` | 3002 |
 | `worker` | `node --max-old-space-size=1024 dist/src/services/queue-worker.js` | 3005 |
 | `nuq-worker` | `node --max-old-space-size=1024 dist/src/services/worker/nuq-worker.js` | 3006 |
-| `nuq-prefetch-worker` | `node --max-old-space-size=512 dist/src/services/worker/nuq-prefetch-worker.js` | 3011 |
 | `playwright` | image entrypoint | 3000 |
 | `nuq-postgres` | `docker-entrypoint.sh postgres` + `-c` overrides | 5432 |
 
@@ -43,7 +42,9 @@ The upstream compose sets `NUQ_RABBITMQ_URL`, but Firecrawl treats it as an opti
 `nuq.ts` selects `listen` only when the URL is set and otherwise polls, backing off to 10 s. RabbitMQ
 also defaults `guest` to loopback, so deploying it adds a credential and a policy for no acceptance
 criterion. `NUQ_WAIT_MODE=poll` is explicit. Webhooks and monitors are the paths that need the broker;
-neither is exposed.
+neither is exposed. The prefetch worker is omitted with the broker: `prefetchJobs()` flips queued jobs
+to active and hands them to workers only through RabbitMQ, so running it without a broker strands every
+scrape and crawl. `nuq-worker` polls `nuq.queue_scrape` for queued rows directly.
 
 ### 3 — A dedicated, disposable Postgres rather than the CNPG cluster
 
@@ -162,7 +163,6 @@ secret and SaaS egress, point `opencode.json` at the bridge URL, and rename its 
 | api | 512Mi / 250m | 2Gi / 1 |
 | worker | 384Mi / 100m | 1Gi / 500m |
 | nuq-worker | 384Mi / 100m | 1Gi / 500m |
-| nuq-prefetch-worker | 256Mi / 50m | 512Mi / 250m |
 | playwright | 512Mi / 250m | 2Gi / 1 |
 | nuq-postgres | 256Mi / 100m | 512Mi / 500m |
 

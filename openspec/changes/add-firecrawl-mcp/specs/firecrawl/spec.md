@@ -6,15 +6,16 @@
 
 The release `{{ .Values.release_name }}-data-firecrawl` SHALL be rendered by
 `bjw-s-labs/app-template` in the `data` namespace and SHALL contain exactly the `api`, `worker`,
-`nuq-worker`, `nuq-prefetch-worker`, `playwright` and `nuq-postgres` controllers. It SHALL NOT render
-a Redis, a RabbitMQ, an extract worker, a cclog worker, a browser UI, or an Ingress, and it SHALL NOT
+`nuq-worker`, `playwright` and `nuq-postgres` controllers. It SHALL NOT render
+a Redis, a RabbitMQ, a prefetch worker, an extract worker, a cclog worker, a browser UI, or an Ingress,
+and it SHALL NOT
 add a role, database, extension or setting to the CNPG cluster.
 
 #### Scenario: The render is self-contained
 
 - **WHEN** the release is rendered
-- **THEN** the output contains six Deployments and no `redis`, `rabbitmq`, `extract-worker` or
-  `cclog-worker` workload
+- **THEN** the output contains five Deployments and no `redis`, `rabbitmq`, `prefetch`, `extract-worker`
+  or `cclog-worker` workload
 - **AND** the only Services are the API on 3002, Playwright on 3000 and NuQ Postgres on 5432
 - **AND** no CloudNativePG resource is changed by this release
 

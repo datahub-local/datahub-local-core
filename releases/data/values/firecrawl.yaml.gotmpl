@@ -22,7 +22,6 @@ configMaps:
       WORKER_PORT: "3005"
       EXTRACT_WORKER_PORT: "3004"
       NUQ_WORKER_PORT: "3006"
-      NUQ_PREFETCH_WORKER_PORT: "3011"
       CCLOG_WORKER_PORT: "3013"
       NUQ_WORKER_COUNT: "1"
       NUM_WORKERS_PER_QUEUE: "2"
@@ -39,6 +38,9 @@ configMaps:
       PLAYWRIGHT_MICROSERVICE_URL: "http://{{ .Values.release_name }}-data-firecrawl-playwright:3000/scrape"
       # No RabbitMQ in this release: an unset URL already selects polling, and
       # the only paths that need the broker (webhooks, monitors) are not exposed.
+      # The prefetch worker is omitted for the same reason: it flips jobs to
+      # active and delivers them only over RabbitMQ, so without a broker every
+      # queued scrape and crawl is stranded.
       NUQ_WAIT_MODE: "poll"
 
 controllers:
@@ -279,64 +281,6 @@ controllers:
           limits:
             cpu: 500m
             memory: 1Gi
-
-  nuq-prefetch-worker:
-    replicas: 1
-    strategy: RollingUpdate
-    pod:
-      terminationGracePeriodSeconds: 60
-    containers:
-      main:
-        image:
-          repository: ghcr.io/firecrawl/firecrawl
-          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl" }}'
-        command: ["node"]
-        args: ["--max-old-space-size=512", "dist/src/services/worker/nuq-prefetch-worker.js"]
-        envFrom:
-          - configMapRef:
-              name: '{{ .Values.release_name }}-data-firecrawl-env'
-          - secretRef:
-              name: firecrawl-credentials
-        env:
-          FLY_PROCESS_GROUP: nuq-prefetch-worker
-          NUQ_PREFETCH_WORKER_PORT: "3011"
-          NUQ_PREFETCH_REPLICAS: "1"
-          NUQ_POD_NAME:
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ["ALL"]
-        probes:
-          liveness:
-            enabled: true
-            type: HTTP
-            path: /health
-            port: 3011
-            spec:
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 3
-          readiness:
-            enabled: true
-            type: HTTP
-            path: /health
-            port: 3011
-            spec:
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 3
-        resources:
-          requests:
-            cpu: 50m
-            memory: 256Mi
-          limits:
-            cpu: 250m
-            memory: 512Mi
 
   playwright:
     replicas: 1
