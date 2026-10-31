@@ -130,6 +130,11 @@ configMaps:
         http_port 3128
         visible_hostname egress-proxy
 
+        # The image is built --with-filedescriptors=65536 and squid sizes its
+        # fd table from that at startup, which costs ~170Mi RSS before it even
+        # binds the port. Capped, a cold start is ~25Mi.
+        max_filedescriptors 1024
+
         # No caching: responses carry GitHub tokens, private repo metadata and
         # package wheels. The memory cache is capped because the Pod is 128Mi.
         cache deny all

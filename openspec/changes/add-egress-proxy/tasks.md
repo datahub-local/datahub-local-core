@@ -27,6 +27,8 @@
   `--cap-drop ALL`): `pypi.org`, `files.pythonhosted.org`, `github.com`, `api.github.com`,
   `registry.npmjs.org` and `dl-cdn.alpinelinux.org` return 200 through the proxy, while
   `example.com`, `1.1.1.1` and `http://10.0.0.1/` return `TCP_DENIED/403`.
+- [x] 2.6 Cap `max_filedescriptors` at 1024: the image's 65536 default allocates a ~173Mi fd table
+  at startup and OOMKills the Pod at 128Mi before it binds; the cap gives ~25Mi.
 
 ## 3. Policy
 

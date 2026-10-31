@@ -33,12 +33,16 @@ The ACL is `dstdomain`, so `CONNECT pypi.org:443` is tunnelled untouched and a h
 list is answered `403` before any socket opens. No CA, no forged certificate, no client changes
 beyond `HTTPS_PROXY`.
 
-Two Squid behaviours were measured against the pinned image (6.13) and shape the config:
+Three Squid behaviours were measured against the pinned image (6.13) and shape the config:
 
 - `.pypi.org` already covers `pypi.org`; listing both is a **fatal** config error
   (`'.pypi.org' is a subdomain of 'pypi.org'`). The file keeps only the dotted form.
 - A `CONNECT` to a bare IP address never matches a `dstdomain` ACL, so `https://1.1.1.1` is denied
   without a separate numeric-IP rule.
+- The image is built `--with-filedescriptors=65536`, and Squid allocates the fd table from that
+  value during startup: ~173Mi RSS, OOMKilled under the 128Mi limit right after it parses the
+  config and before it binds 3128. `max_filedescriptors 1024` brings a cold start to ~25Mi; the
+  same config serves `CONNECT pypi.org:443` at 128Mi and still answers `example.com` with 403.
 
 ### 3 — The allowlist is the five things the agent actually runs
 
