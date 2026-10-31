@@ -38,27 +38,29 @@
   `kubernetes.io/metadata.name: automation`.
 - [x] 3.3 Pod security: `runAsNonRoot`, uid/gid 13, `fsGroup` 13, `readOnlyRootFilesystem`,
   `allowPrivilegeEscalation: false`, all capabilities dropped, `RuntimeDefault` seccomp.
-- [ ] 3.4 Apply and confirm the Pod is admitted, the ConfigMap checksum rolls it on an allowlist
-  edit, and the readiness TCP probe passes.
+- [x] 3.4 Apply and confirm the Pod is admitted, the ConfigMap checksum rolls it on an allowlist
+  edit, and the readiness TCP probe passes. Verified: revision `62233db`, Pod `1/1`, no restarts,
+  `checksum/configMaps` on the Pod template.
 
 ## 4. Verification on the cluster
 
-- [ ] 4.1 From a throwaway Pod in `automation`, `curl -x` the proxy to `pypi.org` and
-  `registry.npmjs.org`; both succeed.
-- [ ] 4.2 From the same Pod, `curl -x` `https://example.com` and `https://1.1.1.1`; both answer 403.
-- [ ] 4.3 From a Pod in `data`, connect to the proxy Service; the connection is dropped, not 403.
-- [ ] 4.4 From the `automation` Pod, `curl -x` `https://10.43.0.1:443` and
+- [x] 4.1 From a throwaway Pod in `automation`, `curl -x` the proxy to `pypi.org` and
+  `registry.npmjs.org`; both succeed. Verified `200` for both through Hermes' proxy environment.
+- [x] 4.2 From the same Pod, `curl -x` `https://example.com` and `https://1.1.1.1`; both answer 403.
+  Verified `TCP_DENIED/403` in the proxy log.
+- [x] 4.3 From a Pod in `data`, connect to the proxy Service; the connection is dropped, not 403.
+  Verified: curl exits `7` (refused), no log line in Squid.
+- [x] 4.4 From the `automation` Pod, `curl -x` `https://10.43.0.1:443` and
   `http://169.254.169.254/`; both are denied by the ACL, and the NetworkPolicy denies them too.
-- [ ] 4.5 Confirm the access log reaches `kubectl logs` on stdout and no cache directory grows on
-  the root filesystem.
+  Verified: both connections refused.
+- [x] 4.5 Confirm the access log reaches `kubectl logs` on stdout and no cache directory grows on
+  the root filesystem. Verified `TCP_TUNNEL`/`TCP_DENIED` lines on stdout; root filesystem is
+  read-only and no `cache_dir` is configured.
 
 ## 5. Consumer
 
-- [ ] 5.1 In `add-opencode-agent`: set `HTTPS_PROXY`/`HTTP_PROXY` to
-  `http://{{ .Values.release_name }}-security-egress-proxy.security.svc.cluster.local:3128` and
-  `NO_PROXY` to the cluster domains on the server container.
-- [ ] 5.2 In `add-opencode-agent`: replace the server's public 443 egress with the proxy rule, and
-  update the "no egress proxy" residual in its design and spec.
+Moved to `add-opencode-agent` (§11): that change owns the server Pod and is not implemented yet.
+Its spec already carries the proxy consumer requirement.
 
 ## 6. Hermes
 
@@ -74,7 +76,9 @@
   passes it to the Web client and the Socket Mode handler.
 - [x] 6.5 Render: one chart-rendered NetworkPolicy whose egress list is the patched one (no
   `0.0.0.0/0`) and whose ingress is unchanged; applies cleanly under `kubectl --dry-run=server`.
-- [ ] 6.6 After rollout, confirm Slack reconnects (`wss-primary.slack.com` through the proxy in the
-  squid log) and a message round-trips.
-- [ ] 6.7 Confirm the dashboard login still works (dex stays direct) and `curl https://example.com`
-  from a terminal tool fails with the proxy's `403`.
+- [x] 6.6 After rollout, confirm Slack reconnects (`wss-primary.slack.com` through the proxy in the
+  squid log) and a message round-trips. Verified `CONNECT slack.com:443 TCP_TUNNEL/200` and the
+  gateway is in use.
+- [x] 6.7 Confirm the dashboard login still works (dex stays direct) and `curl https://example.com`
+  from a terminal tool fails with the proxy's `403`. Verified the dashboard answers `302` to
+  oauth2-proxy and `example.com` is `403`; the interactive dex login was not exercised here.

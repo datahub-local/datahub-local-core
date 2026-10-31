@@ -120,3 +120,11 @@
 - [ ] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
 - [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
 - [ ] 10.4 Record cold-start (plugin + git install → ready) and warm-start.
+
+## 11. Egress proxy consumer (moved from `add-egress-proxy`)
+
+- [ ] 11.1 On the server container set `HTTPS_PROXY`/`HTTP_PROXY` to
+  `http://{{ .Values.release_name }}-security-egress-proxy.security.svc.cluster.local:3128` and
+  `NO_PROXY` to the cluster domains.
+- [ ] 11.2 Replace the server's public 443 egress with the proxy rule on 3128 and update the
+  "no egress proxy" residual in the design and spec.

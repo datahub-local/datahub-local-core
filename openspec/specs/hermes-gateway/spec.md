@@ -114,15 +114,29 @@ secret already used by the other dex clients. The dashboard SHALL read that secr
 - **THEN** the callback URI matches the registered entry and the login completes
 - **AND** the client secret reaches the Pod only as an environment variable
 
-### Requirement: Egress is limited to DNS, LiteLLM, and HTTPS
+### Requirement: Egress is DNS, LiteLLM, MCP, the egress proxy, and dex
 
-The chart's NetworkPolicy SHALL be enabled with `allowDns: true` and `blockPrivateEgress: true`, plus
-one explicit egress rule for LiteLLM on port 4000 and one for the Traefik node network on port 443.
-The second is needed because dex — the dashboard's OIDC issuer — is published through Traefik, which
-runs hostNetwork, so the issuer hostname resolves to an RFC1918 node address that
-`blockPrivateEgress` would otherwise deny, leaving the dashboard answering 503 on `/auth/login`.
-Public HTTPS SHALL remain allowed for Slack. The residual breadth of HTTPS SHALL be documented,
-because the CNI enforces L3/L4 and cannot restrict by hostname.
+The chart's NetworkPolicy SHALL stay enabled and its `/spec/egress` list SHALL be replaced by a
+`jsonPatch` in `releases/automation/values/_kustomize.yaml.gotmpl`, because the chart template always
+emits either `0.0.0.0/0` except RFC1918 or an allow-all and has no "no internet" switch; a strategic
+merge would keep the public rule, so the patch replaces the list.
+
+Egress SHALL allow DNS to `kube-system`'s kube-dns, the `app.kubernetes.io/name: mcpserver` pods on
+8080, LiteLLM on 4000, the `security` egress proxy on 3128, and `192.168.31.0/24` on 443. That last
+rule is dex: the dashboard's OIDC issuer is published through Traefik, which runs hostNetwork, so
+the issuer hostname resolves to an RFC1918 node address that no Service selector can match.
+No rule SHALL allow a general public address. Ingress SHALL stay limited to the dashboard listener
+on 9119 from Traefik's node network and the pod CIDR.
+
+The gateway SHALL set `HTTP_PROXY` and `HTTPS_PROXY` to the proxy Service and `NO_PROXY` to the
+cluster and gateway-host suffix, so LiteLLM, the MCP pods, the API server and dex bypass the proxy
+while Slack, GitHub and PyPI go through it.
+
+#### Scenario: There is no direct path to the internet
+
+- **WHEN** the gateway or a tool in it opens a socket to a public address without the proxy
+- **THEN** the NetworkPolicy denies it
+- **AND** the same request through `HTTPS_PROXY` succeeds only when the proxy's allowlist matches
 
 #### Scenario: The Kubernetes API is unreachable from the agent
 
@@ -133,7 +147,7 @@ because the CNI enforces L3/L4 and cannot restrict by hostname.
 #### Scenario: LiteLLM is reachable
 
 - **WHEN** the gateway calls the in-cluster LiteLLM Service on port 4000
-- **THEN** the connection is allowed by the policy
+- **THEN** the connection is allowed by the policy and bypasses the proxy
 
 #### Scenario: The OIDC issuer is reachable
 
@@ -157,7 +171,8 @@ account key. Like `sympozium-github`, it SHALL bypass the stdio bridge, because 
 each client's `initialize` to one long-lived child and misroutes this server's replies. The gateway
 SHALL disable the native `web` and `browser` toolsets on every platform through
 `config.agent.disabled_toolsets`, so those tools are not offered on Slack, CLI, dashboard or cron
-surfaces. Public egress SHALL remain allowed for Slack; this is not a network boundary.
+surfaces. Slack SHALL be reached through the egress proxy, whose allowlist carries `.slack.com`;
+there SHALL be no direct public rule for it.
 
 `sympozium-github` SHALL instead point at a dedicated `…-mcp-github-hermes` Service running
 the upstream server in its `http` mode, because the bridge re-sends `initialize` to a long-lived
@@ -190,7 +205,7 @@ own stdio instance.
 - **WHEN** the gateway's tool list is read for any platform
 - **THEN** `web` and `browser` are absent
 - **AND** only the three included Firecrawl tools are registered from `sympozium-firecrawl`
-- **AND** public egress remains allowed for Slack
+- **AND** Slack still receives events, through the egress proxy
 
 #### Scenario: MCP is the only in-namespace egress besides LiteLLM
 

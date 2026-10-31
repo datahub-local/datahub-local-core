@@ -1,12 +1,12 @@
-# Spec Delta
+# egress-proxy Specification
 
 ## Purpose
-
 `security` runs the cluster's only forward proxy: a Squid allowlist that lets the automation
 workloads reach the package registries, GitHub and Slack they need, and nothing else. Everything
-else is either in-cluster or denied, and browsing is the Firecrawl bridge's job.
+else is either in-cluster or denied, and browsing is the Firecrawl bridge's job. The OpenCode agent
+consumer contract lives in the `opencode-agent` capability.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: The proxy is one release in `security` and the only public egress
 
@@ -15,7 +15,9 @@ The release `{{ .Values.release_name }}-security-egress-proxy` SHALL be rendered
 Service on 3128, one ConfigMap carrying `squid.conf`, and two NetworkPolicies. The container SHALL
 run as non-root with a read-only root filesystem and all capabilities dropped, and SHALL mount
 `emptyDir` volumes at `/run`, `/var/spool/squid` and `/tmp`. The image SHALL be pinned by digest in
-`values/_version.yaml`.
+`values/_version.yaml`. The container SHALL set `max_filedescriptors 1024`: the image is built with
+`65536` and Squid allocates that fd table at startup, which exceeds the 128Mi memory limit before
+the port is bound.
 
 #### Scenario: The render is self-contained
 
@@ -28,8 +30,6 @@ run as non-root with a read-only root filesystem and all capabilities dropped, a
 
 - **WHEN** the egress policies of the `automation` and `security` namespaces are listed
 - **THEN** the proxy Pod is the only workload with an egress rule to a public address
-- **AND** the agent workload's public 443 rule is replaced by the proxy rule described in
-  `add-opencode-agent`
 
 ### Requirement: The allowlist is a domain list, not a host list
 
@@ -99,24 +99,6 @@ and no certificate SHALL be forged.
 - **WHEN** a client fetches `https://pypi.org/simple/` through the proxy
 - **THEN** the TLS chain is the upstream chain
 - **AND** the proxy log records the tunnel, not the request body
-
-### Requirement: The agent consumes the proxy and keeps no direct public path
-
-The server workload SHALL set `HTTP_PROXY` and `HTTPS_PROXY` to the proxy Service on 3128 and a
-`NO_PROXY` covering `data.svc`, `automation.svc` and the cluster suffix. Its NetworkPolicy egress
-SHALL allow only DNS, LiteLLM on 4000, the Firecrawl bridge on 8080 and the proxy on 3128.
-
-#### Scenario: A tool that ignores the variables fails closed
-
-- **WHEN** a binary in the agent connects directly to a public address on 443
-- **THEN** the NetworkPolicy denies it
-- **AND** the same request succeeds when sent through the proxy
-
-#### Scenario: In-cluster calls bypass the proxy
-
-- **WHEN** the agent calls LiteLLM or the Firecrawl bridge
-- **THEN** the request goes direct, because both are listed in `NO_PROXY`
-- **AND** the proxy log shows no entry for them
 
 ### Requirement: Hermes reaches the internet only through the proxy
 
