@@ -51,8 +51,8 @@ observability:
       deployment.environment: cluster
       k8s.cluster.name: "{{ .StateValues.cluster_name }}"
 
-# Catalog is owned by ../templates/sympozium_mcp_servers.yaml so the workloads
-# the controller derives from each name are prefixed.
+# Catalog is owned by the sibling app-template release (values/mcp.yaml.gotmpl)
+# so the workloads the controller derives from each name are prefixed.
 defaultMcpServers:
   enabled: false
 

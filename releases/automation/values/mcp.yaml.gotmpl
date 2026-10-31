@@ -1,0 +1,545 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# The MCP catalog used to be raw manifests split into this release. Workloads
+# and Services are now app-template objects; MCPServer CRs and cluster RBAC
+# stay raw. fullnameOverride keeps every existing resource name, and
+# extraSelectorLabels keeps app.kubernetes.io/name=mcpserver on the Pods
+# because the Hermes and Sympozium egress policies select it on 8080.
+
+fullnameOverride: '{{ .Values.release_name }}-automation-mcp'
+
+defaultPodOptions:
+  automountServiceAccountToken: false
+
+controllers:
+  k8s:
+    strategy: RollingUpdate
+    # Upstream runs this one as a controller-managed http server, but it answers
+    # only on /mcp while the controller publishes the Service root, so every
+    # k8s_* call 404s. stdio is no way out: the mcp-bridge shares one child
+    # session across all callers and this server rejects the second initialize.
+    extraSelectorLabels:
+      app.kubernetes.io/name: mcpserver
+    pod:
+      automountServiceAccountToken: true
+    serviceAccount:
+      identifier: k8s
+    containers:
+      main:
+        image:
+          repository: ghcr.io/containers/kubernetes-mcp-server
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/containers/kubernetes-mcp-server" }}'
+        # Named explicitly: the controller left command=/adapter/mcp-bridge on
+        # the Deployment we adopt, and a merge cannot drop what we never set.
+        command: ["/app/kubernetes-mcp-server"]
+        # v0.0.69 dropped every runtime CLI flag; --config-dir only picks the
+        # drop-in directory. The image's own config.toml still supplies port 8080.
+        args: ["--config-dir", "/etc/kubernetes-mcp-server/conf.d"]
+        probes:
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /healthz
+            port: 8080
+            spec:
+              initialDelaySeconds: 3
+              periodSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+  github-hermes:
+    strategy: RollingUpdate
+    serviceAccount:
+      name: default
+    # Sympozium's stdio bridge forwards every client's initialize to one
+    # long-lived child; github-mcp-server v2 rejects the duplicate. This is
+    # upstream's own HTTP mode, private to Hermes. The token arrives as a
+    # request header because http mode ignores GITHUB_PERSONAL_ACCESS_TOKEN.
+    extraSelectorLabels:
+      app.kubernetes.io/name: mcpserver
+    containers:
+      main:
+        image:
+          repository: ghcr.io/github/github-mcp-server
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/github/github-mcp-server" }}'
+        command: ["/server/github-mcp-server"]
+        args:
+          - http
+          - --port
+          - "8080"
+          - --listen-host
+          - 0.0.0.0
+          - --exclude-tools
+          - create_repository,fork_repository,delete_repository,delete_file,merge_pull_request
+        env:
+          - name: GITHUB_TOOLSETS
+            value: default,projects
+        envFrom:
+          - secretRef:
+              name: mcp-github-token
+        probes:
+          readiness:
+            enabled: true
+            type: TCP
+            port: 8080
+            spec:
+              initialDelaySeconds: 3
+              periodSeconds: 5
+          liveness:
+            enabled: true
+            type: TCP
+            port: 8080
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+  trino:
+    strategy: RollingUpdate
+    serviceAccount:
+      name: default
+    # Upstream's arm64 image ships an amd64 binary; the MCPServer CRD has no
+    # nodeSelector, so this workload is ours and pinned.
+    extraSelectorLabels:
+      app.kubernetes.io/name: mcpserver
+    pod:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+    containers:
+      main:
+        image:
+          repository: ghcr.io/tuannvm/mcp-trino
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/tuannvm/mcp-trino" }}'
+        command: ["/app/trino-mcp"]
+        args: []
+        env:
+          - name: MCP_TRANSPORT
+            value: http
+          - name: MCP_HOST
+            value: "0.0.0.0"
+          - name: MCP_PORT
+            value: "8080"
+          - name: TRINO_SCHEME
+            value: http
+          - name: TRINO_SSL
+            value: "false"
+          - name: TRINO_HOST
+            value: '{{ .Values.release_name }}-data-trino-trino.data.svc'
+          - name: TRINO_PORT
+            value: "8080"
+          # Not the admin Superset uses: the coordinator's rules.json grants this
+          # identity read-only on the lake catalogs and nothing else.
+          - name: TRINO_USER
+            value: '{{ .Values.trino_mcp_user }}'
+          - name: TRINO_CATALOG
+            value: memory
+          - name: TRINO_SCHEMA
+            value: default
+          - name: TRINO_ALLOW_WRITE_QUERIES
+            value: "false"
+        probes:
+          readiness:
+            enabled: true
+            type: TCP
+            port: 8080
+            spec:
+              initialDelaySeconds: 3
+              periodSeconds: 5
+          liveness:
+            enabled: true
+            type: TCP
+            port: 8080
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+  firecrawl-http:
+    strategy: RollingUpdate
+    serviceAccount:
+      name: default
+    # The stdio bridge keeps one child and forwards every client's initialize to
+    # it; Firecrawl's replies arrive misaligned (a call can wait out the 60s
+    # timeout while the next request gets the previous result). Run the server's
+    # own stateless HTTP transport. The image is amd64-only.
+    extraSelectorLabels:
+      app.kubernetes.io/name: mcpserver
+    pod:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+    containers:
+      main:
+        image:
+          repository: ghcr.io/firecrawl/firecrawl-mcp-server
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/firecrawl/firecrawl-mcp-server" }}'
+        command: ["node"]
+        args: ["dist/index.js"]
+        env:
+          - name: HTTP_STREAMABLE_SERVER
+            value: "true"
+          - name: HOST
+            value: 0.0.0.0
+          - name: PORT
+            value: "8080"
+          - name: FIRECRAWL_API_URL
+            value: 'http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002'
+        probes:
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 8080
+            spec:
+              initialDelaySeconds: 3
+              periodSeconds: 5
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 8080
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+service:
+  k8s:
+    controller: k8s
+    ports:
+      http:
+        port: 8080
+  github-hermes:
+    controller: github-hermes
+    ports:
+      http:
+        port: 8080
+  trino:
+    controller: trino
+    ports:
+      http:
+        port: 8080
+  firecrawl-http:
+    controller: firecrawl-http
+    ports:
+      http:
+        port: 8080
+
+serviceAccount:
+  k8s:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-k8s'
+
+configMaps:
+  k8s-config:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-k8s-config'
+    # Only this controller mounts it; do not restart the others on a change.
+    includeChecksumInControllers:
+      - k8s
+    # Layered on top of the image's own config.toml, which supplies port 8080.
+    data:
+      deny.toml: |
+        # Denied on the MCPServer too, but that gate belongs to the controller;
+        # this removes the tools from the server itself.
+        disabled_tools = ["pods_exec", "pods_run"]
+
+        # RBAC grants get/list/watch on `*`, which includes Secrets, and cannot
+        # subtract a resource from a wildcard. This is where secret reads stop.
+        [[denied_resources]]
+        group = ""
+        version = "v1"
+        kind = "Secret"
+
+persistence:
+  mcp-config:
+    type: configMap
+    identifier: k8s-config
+    advancedMounts:
+      k8s:
+        main:
+          - path: /etc/kubernetes-mcp-server/conf.d
+            readOnly: true
+
+rawResources:
+  mcp-k8s-rbac:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-k8s'
+    manifest:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-k8s'
+      rules:
+        # Cluster-wide read: the enumerated groups this replaces covered no CRD,
+        # so agents could not read velero, cnpg, longhorn or cert-manager
+        # objects. get/list/watch only; the server's deny.toml keeps Secrets out.
+        - apiGroups: ["*"]
+          resources: ["*"]
+          verbs: ["get", "list", "watch"]
+  mcp-k8s-rbac-binding:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-k8s'
+    manifest:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-k8s'
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: '{{ .Values.release_name }}-automation-mcp-k8s'
+      subjects:
+        - kind: ServiceAccount
+          name: '{{ .Values.release_name }}-automation-mcp-k8s'
+          namespace: automation
+
+  mcp-k8s:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-k8s'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-k8s'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: http
+        toolsPrefix: k8s
+        timeout: 30
+        # The controller would derive a bare `k8s` name and a root-path URL;
+        # this points at the Service below, including /mcp.
+        url: 'http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc:8080/mcp'
+        # Upstream denies delete_resource/create_resource/update_resource,
+        # which this server has never had; these are the names it registers.
+        toolsDeny:
+          - pods_delete
+          - pods_exec
+          - pods_run
+          - resources_create_or_update
+          - resources_delete
+          - resources_scale
+
+  mcp-github:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-github'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-github'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: stdio
+        toolsPrefix: github
+        timeout: 30
+        # Projects is opt-in and absent from the default toolsets. The token
+        # needs read:project for projects_get/list and project for
+        # projects_write. Renovate-reviewer comments on PRs; the rest of the PR
+        # workflow (branch, file write, PR, review, Projects) is allowed.
+        toolsDeny:
+          - create_repository
+          - fork_repository
+          - delete_repository
+          - delete_file
+          - merge_pull_request
+        deployment:
+          image: ghcr.io/github/github-mcp-server:{{ index .StateValues.container_image_version "ghcr.io/github/github-mcp-server" }}
+          cmd: /server/github-mcp-server
+          args:
+            - stdio
+          env:
+            GITHUB_TOOLSETS: default,projects
+          secretRefs:
+            - name: mcp-github-token
+
+  mcp-grafana:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-grafana'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-grafana'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: stdio
+        toolsPrefix: grafana
+        timeout: 30
+        # grafana_api_request passes through to the whole Grafana API, so the
+        # other thirteen denies mean nothing without it.
+        toolsDeny:
+          - grafana_api_request
+          - update_dashboard
+          - update_datasource
+          - create_datasource
+          - create_folder
+          - create_annotation
+          - update_annotation
+          - create_snapshot
+          - delete_snapshot
+          - create_incident
+          - add_activity_to_incident
+          - install_plugin
+          - alerting_manage_rules
+          - alerting_manage_routing
+        deployment:
+          image: mcp/grafana:{{ index .StateValues.container_image_version "mcp/grafana" }}
+          cmd: /app/mcp-grafana
+          args:
+            - -t
+            - stdio
+          secretRefs:
+            - name: mcp-grafana-token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+  mcp-postgres:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-postgres'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-postgres'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: stdio
+        toolsPrefix: pg
+        timeout: 60
+        # execute_sql is the only write tool; --access-mode blocks it at the
+        # server, so this deny is the backstop rather than the enforcement.
+        toolsDeny:
+          - execute_sql
+        deployment:
+          image: crystaldba/postgres-mcp:{{ index .StateValues.container_image_version "crystaldba/postgres-mcp" }}
+          cmd: /app/docker-entrypoint.sh
+          args:
+            - postgres-mcp
+            - --access-mode=restricted
+          secretRefs:
+            - name: mcp-postgres-token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+  mcp-argocd:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-argocd'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-argocd'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: stdio
+        toolsPrefix: argocd
+        timeout: 30
+        # All eleven tools are reads; nothing to deny.
+        deployment:
+          image: quay.io/argoprojlabs/mcp-for-argocd:{{ index .StateValues.container_image_version "quay.io/argoprojlabs/mcp-for-argocd" }}
+          cmd: node
+          args:
+            - dist/index.js
+            - stdio
+          secretRefs:
+            - name: mcp-argocd-token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+  mcp-slack:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-slack'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-slack'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: stdio
+        toolsPrefix: slack
+        timeout: 30
+        deployment:
+          image: mcp/slack:{{ index .StateValues.container_image_version "mcp/slack" }}
+          cmd: node
+          args:
+            - dist/index.js
+          secretRefs:
+            - name: mcp-slack-token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+  mcp-trino:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-trino'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-trino'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: http
+        toolsPrefix: trino
+        timeout: 60
+        # All six tools read: execute_query rejects anything but SELECT/SHOW/
+        # DESCRIBE/EXPLAIN while TRINO_ALLOW_WRITE_QUERIES stays false.
+        url: 'http://{{ .Values.release_name }}-automation-mcp-trino.automation.svc:8080/mcp'
+
+  mcp-firecrawl:
+    forceRename: '{{ .Values.release_name }}-automation-mcp-firecrawl'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-mcp-firecrawl'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: http
+        toolsPrefix: fc
+        timeout: 60
+        url: 'http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc:8080/mcp'
+        toolsAllow:
+          - firecrawl_scrape
+          - firecrawl_search
+          - firecrawl_map

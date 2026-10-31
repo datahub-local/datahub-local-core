@@ -24,11 +24,12 @@ database 0/1.
   tuning is overridden on the command line so it fits the small instance.
 - Point `REDIS_URL` at the shared Valkey logical db 0 and `REDIS_RATE_LIMIT_URL` at db 1. The
   instance is sized for both; no Redis workload and no Valkey resource change are added here.
-- Add `{{ include "name" . }}-sympozium-mcp-firecrawl` to the Sympozium catalog as a stdio MCP server
-  running the official `ghcr.io/firecrawl/firecrawl-mcp-server`: `toolsPrefix: fc`, `toolsAllow` of
-  scrape, search and map for Sympozium agents (direct clients filter themselves), `timeout: 60`. The official image is amd64-only, so a cluster-scoped
-  `MutatingAdmissionPolicy` pins that Deployment to amd64 nodes; the other Firecrawl images are
-  multi-arch.
+- Add `{{ .Values.release_name }}-automation-mcp-firecrawl` to the Sympozium catalog as an HTTP MCP
+  server running the official `ghcr.io/firecrawl/firecrawl-mcp-server` in its own stateless HTTP
+  transport: `toolsPrefix: fc`, `toolsAllow` of scrape, search and map for Sympozium agents (direct
+  clients filter themselves), `timeout: 60`. The stdio bridge misroutes this server's replies. The
+  official image is amd64-only, so the workload's pod selector pins amd64; the other Firecrawl images
+  are multi-arch.
 - Add `sympozium-firecrawl` to Hermes' `config.mcp_servers`, which needs one deploy with
   `bootstrap.overwrite=true`.
 - Supersede the SaaS Firecrawl MCP planned by `add-opencode-agent`: that change drops its
@@ -55,7 +56,8 @@ other MCP servers, and every other release. Issue
 - `releases/data/helmfile.yaml.gotmpl`: one new `app-template` release.
 - `releases/data/values/firecrawl.yaml.gotmpl`: six controllers, three Services, one ConfigMap, one
   1Gi PVC.
-- `releases/automation/templates/sympozium_mcp_servers.yaml`: one `MCPServer`.
+- `releases/automation/values/mcp.yaml.gotmpl`: the `app-template` MCP release, with one `MCPServer`
+  per server and four workloads in `controllers`/`service`.
 - `releases/automation/templates/firecrawl_mcp_amd64.yaml`: one `MutatingAdmissionPolicy` and binding.
 - `releases/automation/values/hermes.yaml.gotmpl`: one `mcp_servers` entry.
 - `values/_version.yaml`: Firecrawl API, Playwright, `nuq-postgres` and MCP server images, pinned by

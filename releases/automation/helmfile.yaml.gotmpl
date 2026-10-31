@@ -55,6 +55,14 @@ releases:
     values:
       - values/sympozium.yaml.gotmpl
     strategicMergePatches: {{ toYaml .Values.kustomize.sympozium | nindent 6 }}
+  - name: "{{ .Values.release_name }}-automation-mcp"
+    namespace: automation
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    needs:
+      - "{{ .Values.release_name }}-automation-sympozium"
+    values:
+      - values/mcp.yaml.gotmpl
   - name: "{{ .Values.release_name }}-automation-hermes"
     namespace: automation
     chart: "oci://ghcr.io/jyje/hermes-agent-helm/hermes-agent"

@@ -6,22 +6,24 @@
 
 `config.mcp_servers` SHALL register the namespace's Sympozium MCP servers as HTTP MCP endpoints on
 port 8080, and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods
-on that port. Seven of them are the shared `…-sympozium-mcp-*` Services the Sympozium agents already
+on that port. Seven of them are the shared `…-mcp-*` Services the Sympozium agents already
 use; their stdio bridge speaks MCP over HTTP and needs no credential the Deployments do not already
 mount. The `slack` entry is a tool surface on top of the built-in channel, which keeps its own Socket
 Mode connection.
 
-The seventh, `sympozium-firecrawl`, SHALL be the bridge in front of
-`ghcr.io/firecrawl/firecrawl-mcp-server`, which proxies the self-hosted Firecrawl API in `data`. It
-SHALL expose only the scrape, search and map tools through the server's `tools.include` filter, and
-SHALL need no Firecrawl account key. The gateway SHALL disable the native `web` and `browser`
-toolsets on every platform through `config.agent.disabled_toolsets`, so those tools are not offered
-on Slack, CLI, dashboard or cron surfaces. Public egress SHALL remain allowed for
-Slack; this is not a network boundary.
+The seventh, `sympozium-firecrawl`, SHALL point at a dedicated
+`…-mcp-firecrawl-http` Service running `ghcr.io/firecrawl/firecrawl-mcp-server` in its own
+stateless HTTP mode, which proxies the self-hosted Firecrawl API in `data`. It SHALL expose only the
+scrape, search and map tools through the server's `tools.include` filter, and SHALL need no Firecrawl
+account key. Like `sympozium-github`, it SHALL bypass the stdio bridge, because the bridge forwards
+each client's `initialize` to one long-lived child and misroutes this server's replies. The gateway
+SHALL disable the native `web` and `browser` toolsets on every platform through
+`config.agent.disabled_toolsets`, so those tools are not offered on Slack, CLI, dashboard or cron
+surfaces. Public egress SHALL remain allowed for Slack; this is not a network boundary.
 
-`sympozium-github` SHALL instead point at a dedicated `…-sympozium-mcp-github-hermes` Service running
+`sympozium-github` SHALL instead point at a dedicated `…-mcp-github-hermes` Service running
 the upstream server in its `http` mode, because the bridge re-sends `initialize` to a long-lived
-child and `github-mcp-server` v2 rejects the duplicate, while every other server tolerates it. That
+child and `github-mcp-server` v2 rejects the duplicate. That
 instance SHALL authenticate with `Authorization: Bearer` resolved from `GITHUB_PERSONAL_ACCESS_TOKEN`
 at gateway start, never from a literal in `config.yaml`, SHALL exclude the tools the catalog server
 denies (`create_repository`, `fork_repository`, `delete_repository`, `delete_file`,

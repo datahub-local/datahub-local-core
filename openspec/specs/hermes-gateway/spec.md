@@ -144,12 +144,12 @@ because the CNI enforces L3/L4 and cannot restrict by hostname.
 
 `config.mcp_servers` SHALL register the namespace's Sympozium MCP servers as HTTP MCP endpoints on
 port 8080, and the NetworkPolicy SHALL allow egress to the `app.kubernetes.io/name: mcpserver` pods
-on that port. Six of them are the shared `…-sympozium-mcp-*` Services the Sympozium agents already
+on that port. Six of them are the shared `…-mcp-*` Services the Sympozium agents already
 use; their stdio bridge speaks MCP over HTTP and needs no credential the Deployments do not already
 mount. The `slack` entry is a tool surface on top of the built-in channel, which keeps its own Socket
 Mode connection.
 
-`sympozium-github` SHALL instead point at a dedicated `…-sympozium-mcp-github-hermes` Service running
+`sympozium-github` SHALL instead point at a dedicated `…-mcp-github-hermes` Service running
 the upstream server in its `http` mode, because the bridge re-sends `initialize` to a long-lived
 child and `github-mcp-server` v2 rejects the duplicate, while every other server tolerates it. That
 instance SHALL authenticate with `Authorization: Bearer` resolved from `GITHUB_PERSONAL_ACCESS_TOKEN`

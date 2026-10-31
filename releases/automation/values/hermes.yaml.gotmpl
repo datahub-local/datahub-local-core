@@ -101,6 +101,16 @@ persistence:
   storageClass: longhorn
   size: 10Gi
 
+soul:
+  # Seeded only when HERMES_HOME/SOUL.md is absent (bootstrap.overwrite stays
+  # false), so the running volume keeps its edits. A fresh volume gets the
+  # identity plus the Firecrawl routing rule below.
+  text: |
+    You are Hermes Agent, built by Nous Research. Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short report of what changed, what's verified, and what's left, never a replay of the process. No filler ("Great question," "I'd be happy to"), no restating the request back, no re-summarizing what you already said, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said it. Depth is earned — give it when the user asks for detail, teaches, or the stakes demand it, not by default.
+
+    ## Web access
+    For any web page or URL, use the Firecrawl tools: `firecrawl_scrape` (one URL), `firecrawl_search` (discover pages), `firecrawl_map` (list a site's URLs). Do not fetch pages with `curl`, `wget`, or other shell HTTP clients unless the user explicitly asks for raw HTTP.
+
 config:
   providers:
     litellm:
@@ -117,28 +127,29 @@ config:
   # distinct from the built-in channel, which keeps its own Socket Mode socket.
   mcp_servers:
     sympozium-k8s:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-k8s.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc.cluster.local:8080/mcp
     sympozium-argocd:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-argocd.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-argocd.automation.svc.cluster.local:8080/mcp
     sympozium-github:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
       headers:
         # Expanded when the gateway loads config.yaml, so no token lands in the
         # ConfigMap; extraEnvFrom supplies GITHUB_PERSONAL_ACCESS_TOKEN.
         Authorization: "Bearer ${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
     sympozium-grafana:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-grafana.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-grafana.automation.svc.cluster.local:8080/mcp
     sympozium-postgres:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-postgres.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-postgres.automation.svc.cluster.local:8080/mcp
     sympozium-trino:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-trino.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-trino.automation.svc.cluster.local:8080/mcp
     sympozium-slack:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-slack.automation.svc.cluster.local:8080/mcp
     sympozium-firecrawl:
-      url: http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp
-      # The bridge serves the upstream server's raw 28 tools; toolsAllow only
-      # filters what Sympozium registers for its own agents. Hermes connects
-      # directly, so it needs its own include list.
+      # The server's own stateless HTTP transport, not the stdio bridge: the
+      # bridge misroutes replies for this server (a call can hang to timeout).
+      url: http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp
+      # toolsAllow only filters what Sympozium registers for its own agents.
+      # Hermes connects directly, so it needs its own include list.
       tools:
         include:
           - firecrawl_scrape

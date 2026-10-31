@@ -75,27 +75,29 @@
 
 ## 5. MCP catalog and Hermes
 
-- [x] 5.1 Add `{{ include "name" . }}-sympozium-mcp-firecrawl` to
-  `releases/automation/templates/sympozium_mcp_servers.yaml`: `transportType: stdio`,
-  `toolsPrefix: fc`, `timeout: 60`, `label sympozium.ai/catalog: "true"`, image pinned, env
-  `FIRECRAWL_API_URL: http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002`,
-  `cmd: node`, `args: [dist/index.js]`, and
-  `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`.
-- [x] 5.2 Add the `MutatingAdmissionPolicy` + binding that injects `kubernetes.io/arch: amd64` into
-  the MCP Deployment. Match the Deployment by name: the controller sets
-  `app.kubernetes.io/instance` only on the Pod template, so the original `objectSelector` never
-  fired and the first Deployment had no selector. The binding needs an explicit
-  `matchResources.namespaceSelector` for `automation`. Verified live with an update replacing the
-  Pod on `datahublocal-amd-1`.
-- [x] 5.3 Confirm the controller sets `app.kubernetes.io/name: mcpserver` on the Pod. If it does not,
-  fix the label before relying on 8080 egress.
-- [x] 5.4 Verify `MCPServer` reports ready, the Pod carries `app.kubernetes.io/name: mcpserver` and
-  the amd64 selector, and a direct `tools/list` over `svc:8080/mcp` returns the upstream raw names
-  (28 tools). `toolsAllow`/`toolsPrefix` only filter Sympozium agent registration; direct clients
-  filter with their own include list.
+- [x] 5.1 Add the catalog as its own `app-template` release in
+  `releases/automation/values/mcp.yaml.gotmpl`: four `controllers` (k8s, github-hermes, trino,
+  firecrawl-http) and four `service` entries, the k8s ConfigMap/ServiceAccount, and the eight
+  `MCPServer` CRs plus k8s RBAC under `rawResources`. Use
+  `fullnameOverride: {{ .Values.release_name }}-automation-mcp`, `forceRename` on raw objects, and
+  `extraSelectorLabels: {app.kubernetes.io/name: mcpserver}` on each controller so the existing
+  egress selectors survive. Controller keys are unprefixed (`k8s`, `github-hermes`, `trino`,
+  `firecrawl-http`), giving `…-automation-mcp-<key>` names.
+- [x] 5.2 Run the Firecrawl server in its own HTTP mode with
+  `HTTP_STREAMABLE_SERVER=true`, `HOST=0.0.0.0`, `PORT=8080` and `FIRECRAWL_API_URL` at the `data`
+  API, and point its `MCPServer` at the `-http` Service with `transportType: http`, `url`,
+  `toolsPrefix: fc`, `timeout: 60`, `label sympozium.ai/catalog: "true"`, and
+  `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`. Do not use the stdio bridge:
+  it misroutes this server's replies.
+- [x] 5.3 Confirm the Pod carries `app.kubernetes.io/name: mcpserver`; the agent and Hermes egress
+  policies select on it for port 8080.
+- [x] 5.4 Verify the `MCPServer` reports ready, a direct `tools/list` over `svc:8080/mcp` returns the
+  upstream raw names (28 tools), and a `tools/call` returns its own JSON-RPC id within a few seconds.
+  `toolsAllow`/`toolsPrefix` only filter Sympozium agent registration; direct clients filter with
+  their own include list.
 - [x] 5.5 Add `sympozium-firecrawl` to `releases/automation/values/hermes.yaml.gotmpl` under
   `config.mcp_servers`, pointing at
-  `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`,
+  `http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp`,
   filtering with `tools.include: [firecrawl_scrape, firecrawl_search, firecrawl_map]`, and set
   `config.agent.disabled_toolsets: [web, browser]` so the native tools are off on every platform.
 - [ ] 5.6 Deploy Hermes once with `bootstrap.overwrite=true`, confirm the key lands in `config.yaml`,
@@ -107,13 +109,18 @@
 - [ ] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and `--platform cli`
   and confirm `web` and `browser` are absent on both, `sympozium-firecrawl` is listed, and only its
   three included tools are offered.
+- [ ] 5.10 After the first sync of the `app-template` release, delete every old
+  `…-sympozium-mcp-*` object (8 MCPServers, their derived Deployments/Services, the old custom
+  Deployments/Services, ConfigMap, ServiceAccount, ClusterRole and binding) and the now-unused
+  `firecrawl-mcp-amd64` MutatingAdmissionPolicy and binding. Confirm the controller does not
+  recreate the old catalog and that only the `…-automation-mcp-*` tools remain.
 
 ## 6. Supersede the SaaS server in `add-opencode-agent`
 
 - [x] 6.1 Update that change's proposal, design and spec to remove its `firecrawl-mcp` Deployment,
   `firecrawl-token` Secret and `api.firecrawl.dev` egress.
 - [x] 6.2 Point its `opencode.json` Firecrawl entry at
-  `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
+  `http://{{ .Values.release_name }}-automation-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
 - [ ] 6.3 Allow the raw Firecrawl tool names under OpenCode's server-name prefix; `fc_*` does not
   exist on the bridge. Keep crawl, agent, monitor, interact, parse and feedback denied.
 - [ ] 6.4 Re-render that release and confirm no Firecrawl API key is referenced and no SaaS host

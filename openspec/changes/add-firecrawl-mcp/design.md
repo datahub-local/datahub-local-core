@@ -113,50 +113,57 @@ cluster) and the existing `admin-root` for the Valkey URLs. The Postgres contain
 the API reads the URLs. Both database URLs target
 `…-data-firecrawl-nuq-postgres:5432/postgres`; there is no pgbouncer in front of this instance.
 
-### 8 — The MCP server is a stdio catalog entry; filtering is per client
+### 8 — The MCP catalog is one app-template release; Firecrawl runs its own HTTP transport
 
-Sympozium wraps stdio servers with its HTTP bridge on 8080. `toolsAllow` is applied when Sympozium
-registers a catalog server for its own agents, not by the bridge: a direct `tools/list` returns the
-upstream server's raw 28 tools (verified live). For Sympozium agents the allowlist narrows that to
-`firecrawl_scrape`, `firecrawl_search` and `firecrawl_map`, and `toolsPrefix: fc` exposes them as
-`fc_firecrawl_scrape` and friends. Crawl, agent, monitor, interact, parse and feedback can be added
-later by name.
+The catalog is its own `app-template` release, `…-automation-mcp`, defined in
+`releases/automation/values/mcp.yaml.gotmpl`. Workloads and Services are `controllers` and `service`
+entries; the eight `MCPServer` CRs and the k8s cluster RBAC live under `rawResources`.
+`fullnameOverride: …-automation-mcp` and `forceRename` on the raw objects keep every existing name, and
+`extraSelectorLabels: {app.kubernetes.io/name: mcpserver}` keeps the Pod label the Hermes and
+Sympozium egress policies select, while app-template's controller label keeps each Service selector
+distinct.
 
-Hermes and OpenCode connect over HTTP directly, so neither inherits `toolsAllow` or `toolsPrefix`.
-Hermes filters with `mcp_servers.sympozium-firecrawl.tools.include` (three raw names) and Hermes adds
-its own `mcp_<server>_` prefix. OpenCode likewise sees the raw names behind its server-name prefix;
-the `fc_*` names do not exist for either client. Narrowing at the bridge itself would need a proxy,
-because the upstream image has no include-list option.
+`…-mcp-firecrawl-http` is therefore an app-template controller and Service, running the
+upstream image with `HTTP_STREAMABLE_SERVER=true`, `HOST=0.0.0.0`, `PORT=8080` and
+`FIRECRAWL_API_URL` at the `data` Service, with no key. It deliberately does not use Sympozium's
+stdio bridge. The bridge keeps one long-lived child and forwards every client's `initialize` to it;
+live testing showed replies misalign — a `tools/call` hung past the 60 s timeout while a later
+request received the previous result — even though the server alone answers a scrape in about 0.6 s.
+The server's stateless HTTP transport has no shared session state, which is the same reason
+`github-hermes` runs its own HTTP instance.
 
-The server runs without `FIRECRAWL_API_KEY`; `FIRECRAWL_API_URL` points at the internal Service in
-`data`. The controller always starts the workload as `/adapter/mcp-bridge --stdio-adapter` and passes
-`deployment.cmd`/`args` through `STDIO_CMD`/`STDIO_ARGS`, so the MCPServer must set the image's own
-entrypoint (`node dist/index.js`, workdir `/app`); without it the bridge exits with
-`STDIO_CMD is required in stdio-adapter mode`. The controller sets
-`app.kubernetes.io/name: mcpserver` on the Pod, which the agent and Hermes egress policies require for
-port 8080.
+The `MCPServer` remains the catalog entry, with `transportType: http`, `url` at that Service,
+`toolsPrefix: fc`, `timeout: 60`, and `toolsAllow` of scrape, search and map. Those are applied when
+Sympozium registers the server for its own agents, not by the transport; agents therefore see
+`fc_firecrawl_scrape` and friends. Hermes and OpenCode connect directly, so neither inherits
+`toolsAllow` or `toolsPrefix`: Hermes filters with `tools.include` (three raw names) and adds its own
+`mcp_<server>_` prefix.
 
 The official `firecrawl-mcp-server:v3.36.0` image is amd64-only, while three of the six nodes are
-arm64. The MCPServer CRD exposes no `nodeSelector`, and the controller rewrites the Deployment on
-every reconcile, so a one-off patch is drift. A cluster-scoped `MutatingAdmissionPolicy` injects
-`kubernetes.io/arch: amd64` into the Deployment, matched by the Deployment's exact name: the
-controller sets `app.kubernetes.io/instance` only on the Pod template, so an `objectSelector` on
-Deployment metadata never fires (the first live Deployment had no selector and landed on amd-2 by
-chance). The binding needs an explicit `matchResources.namespaceSelector` for `automation`. It is
-declarative and survives reconciles; verified live on 2026-10-31: an update added the selector and
-the replacement Pod scheduled on `datahublocal-amd-1`.
+arm64. This controller is ours, not rewritten by the MCPServer controller, so its
+`pod.nodeSelector` pins `kubernetes.io/arch: amd64` directly; the earlier stdio workload needed an
+admission policy only because the controller replaced its pod template. The Pod carries
+`app.kubernetes.io/name: mcpserver`, so the agent and Hermes egress policies admit port 8080, and it
+reaches the `data` API Service on 3002. The `sympozium-mcp-` prefix is dropped in this move, so every
+new object is `…-automation-mcp-*` and the app-template selectors are created fresh — no immutable
+Deployment selector to replace. The old `…-sympozium-mcp-*` Deployments, Services, MCPServers,
+ConfigMap, ServiceAccount and RBAC are orphaned because ArgoCD does not prune; delete that prefix
+once after the first sync, along with the old stdio Firecrawl workload.
 
-### 9 — Hermes uses the same bridge, without its own web tools
+### 9 — Hermes uses the same server, without its own web tools
 
-`config.mcp_servers.sympozium-firecrawl` points at the automation-namespace bridge, not at `data`,
+`config.mcp_servers.sympozium-firecrawl` points at the HTTP instance in `automation`, not at `data`,
 and its `tools.include` keeps only the three raw Firecrawl names. Hermes' existing egress rule allows
 `name=mcpserver` in its own namespace on 8080, so no new Hermes policy is needed.
 
 `config.agent.disabled_toolsets` suppresses the native `web` and `browser` toolsets on every
 platform, so `web_search`, `web_extract` and the browser tools are not offered to Slack, CLI,
-dashboard or cron sessions; the Firecrawl bridge is the web surface instead. A per-platform
+dashboard or cron sessions; the Firecrawl MCP server is the web surface instead. A per-platform
 `platform_toolsets` entry was not enough: it only filters the platform it names, which left the
-built-in tools enabled in CLI and dashboard chats.
+built-in tools enabled in CLI and dashboard chats. Disabling toolsets does not remove the shell's
+network, so the gateway identity (`SOUL.md`, seeded from `soul.text` in the Helm values and
+then runtime state on the PVC) also tells the model to use
+`firecrawl_scrape`/`search`/`map` for URLs and not `curl`/`wget` unless raw HTTP is requested.
 This is a tool-surface control, not a network boundary: public egress stays allowed because Slack
 Socket Mode needs it, and `terminal` can still reach the internet. Blocking that would need an
 explicit egress proxy, not another NetworkPolicy (the chart's policy always allows public egress).

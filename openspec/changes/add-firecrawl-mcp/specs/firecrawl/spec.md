@@ -149,20 +149,25 @@ manifest.
 
 ### Requirement: The MCP server is a catalog entry with a narrow tool surface
 
-`{{ include "name" . }}-sympozium-mcp-firecrawl` SHALL be a `sympozium.ai/v1alpha1 MCPServer` in the
-Sympozium catalog with `transportType: stdio`, `toolsPrefix: fc`, `timeout: 60`, and an image pinned
-to `ghcr.io/firecrawl/firecrawl-mcp-server`. It SHALL allow exactly `firecrawl_scrape`,
-`firecrawl_search` and `firecrawl_map`, and SHALL point `FIRECRAWL_API_URL` at the `data` API
-Service without a Firecrawl API key. It SHALL set the image's own entrypoint as
-`deployment.cmd: node` and `deployment.args: [dist/index.js]`, because the controller always runs the
-image as the stdio bridge and passes those through `STDIO_CMD`/`STDIO_ARGS`. Because that image is
-amd64-only, a `MutatingAdmissionPolicy` SHALL pin its Deployment to amd64 nodes, and its binding
-SHALL explicitly scope `matchResources` to the `automation` namespace or the policy does not fire.
-The MCP Pod SHALL be allowed to reach the `data` API Service on 3002.
+The catalog and its workloads SHALL be one `bjw-s-labs/app-template` release, with the four custom
+servers under `controllers`/`service` and the `MCPServer` objects plus cluster RBAC under
+`rawResources`; `fullnameOverride` and `forceRename` SHALL produce `…-automation-mcp-*` names.
 
-`toolsAllow` and `toolsPrefix` SHALL be treated as Sympozium agent-registration filters, not as
-bridge-side filters: the bridge serves the upstream raw name set, and each direct HTTP client SHALL
-narrow it itself. A client that cannot filter SHALL NOT be pointed at the bridge.
+`{{ .Values.release_name }}-automation-mcp-firecrawl-http` SHALL be a Deployment and Service running
+`ghcr.io/firecrawl/firecrawl-mcp-server` in its own stateless HTTP mode, with
+`HTTP_STREAMABLE_SERVER=true`, `HOST=0.0.0.0`, `PORT=8080`, and `FIRECRAWL_API_URL` pointing at the
+`data` API Service without a Firecrawl API key. It SHALL NOT use Sympozium's stdio bridge: the bridge
+misroutes replies, so a `tools/call` can wait out the timeout while a later request receives the
+previous result. The Deployment SHALL pin `kubernetes.io/arch: amd64` directly, because the image is
+amd64-only and no controller rewrites this pod template. The Pod SHALL carry
+`app.kubernetes.io/name: mcpserver` and SHALL be allowed to reach the `data` API Service on 3002.
+
+The `MCPServer` `{{ .Values.release_name }}-automation-mcp-firecrawl` SHALL use `transportType: http` with
+`url` at that Service, `toolsPrefix: fc`, `timeout: 60`, and SHALL allow exactly
+`firecrawl_scrape`, `firecrawl_search` and `firecrawl_map`. `toolsAllow` and `toolsPrefix` SHALL be
+treated as Sympozium agent-registration filters, not transport filters: the server exposes the raw
+upstream name set, and each direct HTTP client SHALL narrow it itself. A client that cannot filter
+SHALL NOT be pointed at the server.
 
 #### Scenario: Sympozium agents see three prefixed tools
 
@@ -170,56 +175,55 @@ narrow it itself. A client that cannot filter SHALL NOT be pointed at the bridge
 - **THEN** it is offered `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map`
 - **AND** no crawl, agent, monitor, interact, parse, feedback or credit tool is offered
 
-#### Scenario: The bridge serves the raw upstream names
+#### Scenario: The server exposes the raw upstream names
 
-- **WHEN** `tools/list` is called on the bridge directly
+- **WHEN** `tools/list` is called on the HTTP instance directly
 - **THEN** it returns the upstream names such as `firecrawl_scrape` without the `fc_` prefix
 - **AND** that is why every direct client filters with its own include list
 
-#### Scenario: The bridge starts the image's own entrypoint
+#### Scenario: The server runs its own HTTP transport
 
 - **WHEN** the MCP Deployment is rendered
-- **THEN** `deployment.cmd` is `node` and `deployment.args` is `[dist/index.js]`
-- **AND** the bridge starts them through `STDIO_CMD`/`STDIO_ARGS` rather than exiting
+- **THEN** it runs `node dist/index.js` with `HTTP_STREAMABLE_SERVER=true` and no stdio adapter
+- **AND** readiness and liveness probe `/health` on 8080
 
 #### Scenario: The Pod is reachable by the agent policies
 
-- **WHEN** an agent connects to the bridge on 8080
+- **WHEN** an agent connects to the server on 8080
 - **THEN** the Pod carries `app.kubernetes.io/name: mcpserver`
 - **AND** the call is admitted by the agent egress policy
 
 #### Scenario: The amd64-only image is scheduled safely
 
-- **WHEN** the controller creates or updates the MCP Deployment
-- **THEN** the admission policy adds `kubernetes.io/arch: amd64` to its pod template
-- **AND** the policy matches the Deployment by name, because the controller leaves its metadata
-  labels empty
-- **AND** the binding matches the `automation` namespace
+- **WHEN** the MCP Deployment is rendered
+- **THEN** its pod template has `kubernetes.io/arch: amd64`
+- **AND** it does not rely on an admission policy, because this Deployment is not controller-managed
 - **AND** the Pod does not land on an arm64 node
 
-#### Scenario: The bridge reaches the API
+#### Scenario: The server reaches the API
 
 - **WHEN** the MCP Pod calls the `data` API Service on 3002
 - **THEN** no NetworkPolicy denies the egress
 
 ### Requirement: Hermes and OpenCode use the same self-hosted server
 
-Hermes SHALL register `sympozium-firecrawl` in `config.mcp_servers` at the automation bridge URL,
-with `tools.include` of `firecrawl_scrape`, `firecrawl_search` and `firecrawl_map`, and SHALL omit
-the native `web` and `browser` toolsets from `config.platform_toolsets.slack`. That is a tool-surface
-control only: public egress SHALL stay allowed because Slack Socket Mode needs it, and the spec SHALL
-NOT claim a network boundary. The OpenCode change SHALL use the same bridge and SHALL NOT deploy a
-second Firecrawl or hold a Firecrawl account key.
+Hermes SHALL register `sympozium-firecrawl` in `config.mcp_servers` at the
+`…-mcp-firecrawl-http` Service URL, with `tools.include` of `firecrawl_scrape`,
+`firecrawl_search` and `firecrawl_map`, and SHALL disable the native `web` and `browser` toolsets on
+every platform through `config.agent.disabled_toolsets`. That is a tool-surface control only: public
+egress SHALL stay allowed because Slack Socket Mode needs it, and the spec SHALL NOT claim a network
+boundary. The OpenCode change SHALL use the same HTTP instance and SHALL NOT deploy a second Firecrawl
+or hold a Firecrawl account key.
 
-#### Scenario: Hermes scrapes through the bridge
+#### Scenario: Hermes scrapes through the HTTP instance
 
 - **WHEN** Hermes enumerates its MCP servers and calls a scrape tool
 - **THEN** `sympozium-firecrawl` is listed
-- **AND** the scrape returns page markdown from the `data` API
+- **AND** the call returns page markdown from the `data` API without waiting out the MCP timeout
 
 #### Scenario: Hermes has no built-in web tools
 
-- **WHEN** `hermes tools list --platform slack` runs
+- **WHEN** `hermes tools list --platform cli` or `--platform slack` runs
 - **THEN** `web` and `browser` are absent
 - **AND** only the three included Firecrawl tools are offered by `sympozium-firecrawl`
 
