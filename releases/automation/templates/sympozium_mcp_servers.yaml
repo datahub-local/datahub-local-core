@@ -510,6 +510,13 @@ spec:
     - firecrawl_map
   deployment:
     image: ghcr.io/firecrawl/firecrawl-mcp-server:{{ index .Values.container_image_version "ghcr.io/firecrawl/firecrawl-mcp-server" }}
+    # The controller always runs the image as /adapter/mcp-bridge and feeds the
+    # server command through STDIO_CMD, so an absent cmd leaves it empty and the
+    # bridge exits with "STDIO_CMD is required in stdio-adapter mode". These are
+    # the image's own entrypoint (node dist/index.js, workdir /app).
+    cmd: node
+    args:
+      - dist/index.js
     env:
       FIRECRAWL_API_URL: 'http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002'
     resources:

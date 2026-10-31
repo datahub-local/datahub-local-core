@@ -52,7 +52,9 @@ The queue needs the `nuq` schema, `pg_crypto`, `pg_cron` and a set of cron jobs.
 `shared_preload_libraries = 'pg_cron'` and `cron.database_name = 'postgres'` in the initdb template,
 and `apps/nuq-postgres/nuq.sql` copied to `/docker-entrypoint-initdb.d/010-nuq.sql`.
 
-It runs as one Deployment with a 1Gi Longhorn `ReadWriteOnce` PVC at `/var/lib/postgresql/data`:
+It runs as one Deployment with a 1Gi Longhorn `ReadWriteOnce` PVC at `/var/lib/postgresql/data`,
+and `PGDATA=/var/lib/postgresql/data/pgdata` because `initdb` refuses a mount root containing
+`lost+found`:
 
 - 512Mi memory limit, 500m CPU limit, 256Mi / 100m requests;
 - `POSTGRES_USER=firecrawl`, `POSTGRES_DB=postgres` (the image's `cron.database_name` is `postgres`,
@@ -123,8 +125,12 @@ named `firecrawl_scrape`. `toolsPrefix: firecrawl` would therefore register
 and friends, and the OpenCode permission rules use the same names.
 
 The server runs without `FIRECRAWL_API_KEY`; `FIRECRAWL_API_URL` points at the internal Service in
-`data`. The controller sets `app.kubernetes.io/name: mcpserver` on the Pod, which the agent and Hermes
-egress policies require for port 8080.
+`data`. The controller always starts the workload as `/adapter/mcp-bridge --stdio-adapter` and passes
+`deployment.cmd`/`args` through `STDIO_CMD`/`STDIO_ARGS`, so the MCPServer must set the image's own
+entrypoint (`node dist/index.js`, workdir `/app`); without it the bridge exits with
+`STDIO_CMD is required in stdio-adapter mode`. The controller sets
+`app.kubernetes.io/name: mcpserver` on the Pod, which the agent and Hermes egress policies require for
+port 8080.
 
 The official `firecrawl-mcp-server:v3.36.0` image is amd64-only, while three of the six nodes are
 arm64. The MCPServer CRD exposes no `nodeSelector`, and the controller rewrites the Deployment on

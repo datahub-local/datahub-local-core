@@ -12,7 +12,7 @@
 
 - [ ] 2.1 Add a `nuq-postgres` controller on `ghcr.io/firecrawl/nuq-postgres` (pinned in
   `values/_version.yaml`), one replica, `Recreate`, a 1Gi Longhorn RWO PVC at
-  `/var/lib/postgresql/data`.
+  `/var/lib/postgresql/data` and `PGDATA=/var/lib/postgresql/data/pgdata`.
 - [ ] 2.2 Set `POSTGRES_USER=firecrawl`, `POSTGRES_DB=postgres`, `POSTGRES_PASSWORD` from
   `firecrawl-credentials`. The database is `postgres` because the image's `cron.database_name` is
   `postgres` and `pg_cron` refuses any other database.
@@ -77,7 +77,8 @@
   `releases/automation/templates/sympozium_mcp_servers.yaml`: `transportType: stdio`,
   `toolsPrefix: fc`, `timeout: 60`, `label sympozium.ai/catalog: "true"`, image pinned, env
   `FIRECRAWL_API_URL: http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002`,
-  and `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`.
+  `cmd: node`, `args: [dist/index.js]`, and
+  `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`.
 - [ ] 5.2 Add the `MutatingAdmissionPolicy` + binding that injects `kubernetes.io/arch: amd64` into
   the MCP Deployment. The binding needs an explicit `matchResources.namespaceSelector` for
   `automation`; without it the policy did not fire in a live test.

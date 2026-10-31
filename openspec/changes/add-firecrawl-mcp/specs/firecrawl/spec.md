@@ -40,8 +40,9 @@ pinned in `values/_version.yaml`. No workload SHALL run a `winkkgmbh/*` image or
 ### Requirement: PostgreSQL is a dedicated, disposable instance
 
 The queue SHALL run on the official `ghcr.io/firecrawl/nuq-postgres` image as one Deployment with an
-1Gi Longhorn `ReadWriteOnce` PVC at `/var/lib/postgresql/data`, one replica, `Recreate`. The PVC
-SHALL NOT be backed up. It SHALL use
+1Gi Longhorn `ReadWriteOnce` PVC at `/var/lib/postgresql/data`, `PGDATA=/var/lib/postgresql/data/pgdata`
+(so `initdb` does not see the volume's `lost+found`), one replica, `Recreate`. The PVC SHALL NOT be
+backed up. It SHALL use
 `POSTGRES_USER=firecrawl`, `POSTGRES_DB=postgres`, and `POSTGRES_PASSWORD` from
 `firecrawl-credentials`. It SHALL be capped at 512Mi memory and 500m CPU.
 
