@@ -148,6 +148,10 @@ config:
       # The server's own stateless HTTP transport, not the stdio bridge: the
       # bridge misroutes replies for this server (a call can hang to timeout).
       url: http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp
+      # FastMCP stateless mode closes the GET event stream, which Hermes reads as
+      # a failed keepalive and tears down the transport mid-call. The transport
+      # has no session to refresh, so keep the probe out of normal use.
+      keepalive_interval: 3600
       # toolsAllow only filters what Sympozium registers for its own agents.
       # Hermes connects directly, so it needs its own include list.
       tools:
