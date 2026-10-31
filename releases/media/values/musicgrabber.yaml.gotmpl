@@ -1,6 +1,10 @@
 # https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 # https://gitlab.com/g33kphr33k/musicgrabber
 
+defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
 controllers:
   main:
     strategy: Recreate

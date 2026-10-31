@@ -13,6 +13,9 @@ s3-configuration: &s3-configuration
     s3ForcePathStyle: true
     s3Url: "https://{{ .Values.s3_gdrive_endpoint }}"
 
+nodeSelector:
+  kubernetes.io/arch: arm64
+
 configuration:
   backupStorageLocation:
     - <<: *s3-configuration

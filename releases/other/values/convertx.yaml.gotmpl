@@ -1,6 +1,8 @@
 # https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
 defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64
   securityContext:
     # Run as a non-root user to mitigate privilege escalation attack attempts
     runAsUser: 1000

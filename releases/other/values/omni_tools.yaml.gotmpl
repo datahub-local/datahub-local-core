@@ -1,5 +1,9 @@
 # https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
 
+defaultPodOptions:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+
 controllers:
   main:
     strategy: RollingUpdate

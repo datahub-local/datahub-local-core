@@ -3,6 +3,9 @@
 {{- $maxInputTokens := 500000 }}
 {{- $maxOutputTokens := 131072 }}
 
+nodeSelector:
+  kubernetes.io/arch: arm64
+
 db:
   useExisting: true
   deployStandalone: false
