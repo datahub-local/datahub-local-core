@@ -200,6 +200,10 @@ controllers:
             value: "8080"
           - name: FIRECRAWL_API_URL
             value: 'http://{{ .Values.release_name }}-data-firecrawl-api.data.svc.cluster.local:3002'
+          # FastMCP rejects any Host it does not know; allow the Service names
+          # the controller and Hermes reach it by (ports are stripped).
+          - name: FIRECRAWL_MCP_ALLOWED_HOSTS
+            value: '{{ .Values.release_name }}-automation-mcp-firecrawl-http,{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation,{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc,{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local'
         probes:
           readiness:
             enabled: true
