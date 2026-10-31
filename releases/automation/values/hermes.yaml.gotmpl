@@ -136,6 +136,33 @@ config:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-slack.automation.svc.cluster.local:8080/mcp
     sympozium-firecrawl:
       url: http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp
+      # The bridge serves the upstream server's raw 28 tools; toolsAllow only
+      # filters what Sympozium registers for its own agents. Hermes connects
+      # directly, so it needs its own include list.
+      tools:
+        include:
+          - firecrawl_scrape
+          - firecrawl_search
+          - firecrawl_map
+  # `hermes tools disable web browser --platform slack` wrote this list; the
+  # defaults stay out of config.yaml. Firecrawl is the web surface instead.
+  platform_toolsets:
+    slack:
+      - clarify
+      - code_execution
+      - computer_use
+      - connections
+      - cronjob
+      - delegation
+      - file
+      - image_gen
+      - memory
+      - session_search
+      - skills
+      - terminal
+      - todo
+      - tts
+      - vision
   security:
     redact_secrets: true
   # The ack reaction is a plugin (template hermes_slack_eyes_ack.yaml) and this

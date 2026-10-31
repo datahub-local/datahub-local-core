@@ -12,6 +12,9 @@ metadata:
 spec:
   failurePolicy: Fail
   reinvocationPolicy: IfNeeded
+  matchConditions:
+    - name: firecrawl-mcp-deployment
+      expression: 'object.metadata.name == "{{ include "name" . }}-sympozium-mcp-firecrawl"'
   matchConstraints:
     resourceRules:
       - apiGroups: ["apps"]
@@ -19,9 +22,6 @@ spec:
         operations: ["CREATE", "UPDATE"]
         resources: ["deployments"]
         scope: Namespaced
-    objectSelector:
-      matchLabels:
-        app.kubernetes.io/instance: '{{ include "name" . }}-sympozium-mcp-firecrawl'
   mutations:
     - patchType: JSONPatch
       jsonPatch:

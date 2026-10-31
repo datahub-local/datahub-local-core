@@ -82,21 +82,31 @@
   `cmd: node`, `args: [dist/index.js]`, and
   `toolsAllow: [firecrawl_scrape, firecrawl_search, firecrawl_map]`.
 - [x] 5.2 Add the `MutatingAdmissionPolicy` + binding that injects `kubernetes.io/arch: amd64` into
-  the MCP Deployment. The binding needs an explicit `matchResources.namespaceSelector` for
-  `automation`; without it the policy did not fire in a live test.
-- [ ] 5.3 Confirm the controller sets `app.kubernetes.io/name: mcpserver` on the Pod. If it does not,
+  the MCP Deployment. Match the Deployment by name: the controller sets
+  `app.kubernetes.io/instance` only on the Pod template, so the original `objectSelector` never
+  fired and the first Deployment had no selector. The binding needs an explicit
+  `matchResources.namespaceSelector` for `automation`. Verified live with an update replacing the
+  Pod on `datahublocal-amd-1`.
+- [x] 5.3 Confirm the controller sets `app.kubernetes.io/name: mcpserver` on the Pod. If it does not,
   fix the label before relying on 8080 egress.
-- [ ] 5.4 Verify `MCPServer` reports ready, the Pod is on an amd64 node, and `tools/list` over
-  `svc:8080/mcp` returns exactly `fc_firecrawl_scrape`, `fc_firecrawl_search`, `fc_firecrawl_map`.
+- [x] 5.4 Verify `MCPServer` reports ready, the Pod carries `app.kubernetes.io/name: mcpserver` and
+  the amd64 selector, and a direct `tools/list` over `svc:8080/mcp` returns the upstream raw names
+  (28 tools). `toolsAllow`/`toolsPrefix` only filter Sympozium agent registration; direct clients
+  filter with their own include list.
 - [x] 5.5 Add `sympozium-firecrawl` to `releases/automation/values/hermes.yaml.gotmpl` under
   `config.mcp_servers`, pointing at
-  `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
+  `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`,
+  filtering with `tools.include: [firecrawl_scrape, firecrawl_search, firecrawl_map]`, and set
+  `config.platform_toolsets.slack` without the `web` and `browser` toolsets.
 - [ ] 5.6 Deploy Hermes once with `bootstrap.overwrite=true`, confirm the key lands in `config.yaml`,
   then return the flag to `false`.
 - [ ] 5.7 Verify the MCP Pod can reach `data:3002` and that no NetworkPolicy in either namespace
   denies it.
 - [ ] 5.8 From Hermes, list MCP servers and run one scrape of a real URL through
   `sympozium-firecrawl`.
+- [ ] 5.9 After the overwrite deploy, run `hermes tools list --platform slack` and confirm `web` and
+  `browser` are absent, `sympozium-firecrawl` is listed, and only its three included tools are
+  offered.
 
 ## 6. Supersede the SaaS server in `add-opencode-agent`
 
@@ -104,15 +114,15 @@
   `firecrawl-token` Secret and `api.firecrawl.dev` egress.
 - [x] 6.2 Point its `opencode.json` Firecrawl entry at
   `http://{{ .Values.release_name }}-automation-sympozium-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
-- [x] 6.3 Rename its allowed tools to `fc_firecrawl_scrape` and `fc_firecrawl_search`; keep crawl,
-  agent, monitor, interact, parse and feedback denied.
+- [ ] 6.3 Allow the raw Firecrawl tool names under OpenCode's server-name prefix; `fc_*` does not
+  exist on the bridge. Keep crawl, agent, monitor, interact, parse and feedback denied.
 - [ ] 6.4 Re-render that release and confirm no Firecrawl API key is referenced and no SaaS host
   remains.
 
 ## 7. Verification
 
-- [ ] 7.1 `GET /v0/health/readiness` on the API Service returns 200.
-- [ ] 7.2 `POST /v2/scrape {"url":"https://example.com","formats":["markdown"]}` returns markdown
+- [x] 7.1 `GET /v0/health/readiness` on the API Service returns 200.
+- [x] 7.2 `POST /v2/scrape {"url":"https://example.com","formats":["markdown"]}` returns markdown
   with no `Authorization` header.
 - [ ] 7.3 The job appears in `nuq.queue_scrape` and reaches `completed`; no row stays `active` beyond
   one minute.
@@ -123,9 +133,12 @@
 - [ ] 7.6 Delete the Postgres Pod and confirm the queue survives; delete the PVC and confirm a new
   empty queue comes up and a new scrape succeeds. That is the accepted data-loss boundary.
 - [ ] 7.7 Confirm no Firecrawl account key exists and no SaaS egress is used.
+- [x] 7.8 `POST /v2/search {"query":"opencode","limit":2}` returns results; keyless `search` works
+  against the self-hosted API (200, two web results on 2026-10-31).
 
 ## 8. Docs and spec
 
 - [x] 8.1 Update `docs/services/data.md` in `datahub-local/datahub-local` with the Firecrawl release,
   the disposable Postgres, Valkey db 0/1 and the MCP entry.
-- [x] 8.2 Run `openspec validate add-firecrawl-mcp --strict` and `helmfile template` before review.
+- [x] 8.2 Run `openspec validate add-firecrawl-mcp --strict`.
+- [ ] 8.3 Run `helmfile template` before review.

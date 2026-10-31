@@ -26,7 +26,7 @@ database 0/1.
   instance is sized for both; no Redis workload and no Valkey resource change are added here.
 - Add `{{ include "name" . }}-sympozium-mcp-firecrawl` to the Sympozium catalog as a stdio MCP server
   running the official `ghcr.io/firecrawl/firecrawl-mcp-server`: `toolsPrefix: fc`, `toolsAllow` of
-  scrape, search and map only, `timeout: 60`. The official image is amd64-only, so a cluster-scoped
+  scrape, search and map for Sympozium agents (direct clients filter themselves), `timeout: 60`. The official image is amd64-only, so a cluster-scoped
   `MutatingAdmissionPolicy` pins that Deployment to amd64 nodes; the other Firecrawl images are
   multi-arch.
 - Add `sympozium-firecrawl` to Hermes' `config.mcp_servers`, which needs one deploy with

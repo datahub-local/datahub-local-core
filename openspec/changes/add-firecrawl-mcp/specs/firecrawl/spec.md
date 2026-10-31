@@ -160,11 +160,21 @@ amd64-only, a `MutatingAdmissionPolicy` SHALL pin its Deployment to amd64 nodes,
 SHALL explicitly scope `matchResources` to the `automation` namespace or the policy does not fire.
 The MCP Pod SHALL be allowed to reach the `data` API Service on 3002.
 
-#### Scenario: The bridge exposes three tools
+`toolsAllow` and `toolsPrefix` SHALL be treated as Sympozium agent-registration filters, not as
+bridge-side filters: the bridge serves the upstream raw name set, and each direct HTTP client SHALL
+narrow it itself. A client that cannot filter SHALL NOT be pointed at the bridge.
 
-- **WHEN** `tools/list` is called on the bridge
-- **THEN** it returns `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map`
-- **AND** no crawl, agent, monitor, interact, parse, feedback or credit tool is listed
+#### Scenario: Sympozium agents see three prefixed tools
+
+- **WHEN** a Sympozium agent enumerates the catalog server
+- **THEN** it is offered `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map`
+- **AND** no crawl, agent, monitor, interact, parse, feedback or credit tool is offered
+
+#### Scenario: The bridge serves the raw upstream names
+
+- **WHEN** `tools/list` is called on the bridge directly
+- **THEN** it returns the upstream names such as `firecrawl_scrape` without the `fc_` prefix
+- **AND** that is why every direct client filters with its own include list
 
 #### Scenario: The bridge starts the image's own entrypoint
 
@@ -182,6 +192,8 @@ The MCP Pod SHALL be allowed to reach the `data` API Service on 3002.
 
 - **WHEN** the controller creates or updates the MCP Deployment
 - **THEN** the admission policy adds `kubernetes.io/arch: amd64` to its pod template
+- **AND** the policy matches the Deployment by name, because the controller leaves its metadata
+  labels empty
 - **AND** the binding matches the `automation` namespace
 - **AND** the Pod does not land on an arm64 node
 
@@ -192,15 +204,24 @@ The MCP Pod SHALL be allowed to reach the `data` API Service on 3002.
 
 ### Requirement: Hermes and OpenCode use the same self-hosted server
 
-Hermes SHALL register `sympozium-firecrawl` in `config.mcp_servers` at the automation bridge URL.
-The OpenCode change SHALL use the same bridge and SHALL NOT deploy a second Firecrawl or hold a
-Firecrawl account key.
+Hermes SHALL register `sympozium-firecrawl` in `config.mcp_servers` at the automation bridge URL,
+with `tools.include` of `firecrawl_scrape`, `firecrawl_search` and `firecrawl_map`, and SHALL omit
+the native `web` and `browser` toolsets from `config.platform_toolsets.slack`. That is a tool-surface
+control only: public egress SHALL stay allowed because Slack Socket Mode needs it, and the spec SHALL
+NOT claim a network boundary. The OpenCode change SHALL use the same bridge and SHALL NOT deploy a
+second Firecrawl or hold a Firecrawl account key.
 
 #### Scenario: Hermes scrapes through the bridge
 
 - **WHEN** Hermes enumerates its MCP servers and calls a scrape tool
 - **THEN** `sympozium-firecrawl` is listed
 - **AND** the scrape returns page markdown from the `data` API
+
+#### Scenario: Hermes has no built-in web tools
+
+- **WHEN** `hermes tools list --platform slack` runs
+- **THEN** `web` and `browser` are absent
+- **AND** only the three included Firecrawl tools are offered by `sympozium-firecrawl`
 
 #### Scenario: There is only one Firecrawl
 

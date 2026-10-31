@@ -488,12 +488,15 @@ spec:
   # Setting url also stops the controller reconciling a deployment of its own.
   url: 'http://{{ include "name" . }}-sympozium-mcp-trino.{{ .Release.Namespace }}.svc:8080/mcp'
 ---
-# The Firecrawl server's tools are already named firecrawl_*, and the bridge
-# registers <toolsPrefix>_<tool.Name>, so a "firecrawl" prefix would produce
-# firecrawl_firecrawl_scrape. "fc" keeps the names short and unambiguous.
-# Only scrape, search and map are exposed: crawl, agent, monitor, interact,
-# parse and feedback are long-running or need surfaces we do not run, and the
-# full 27-tool surface would be injected into every prompt.
+# The Firecrawl server's tools are already named firecrawl_*. toolsPrefix is
+# applied when Sympozium registers this server for its agents, not by the HTTP
+# bridge itself: a direct tools/list returns the raw upstream names. A
+# "firecrawl" prefix would produce firecrawl_firecrawl_scrape, so "fc" keeps the
+# agent-facing names short and unambiguous.
+# Only scrape, search and map are exposed to Sympozium agents: crawl, agent,
+# monitor, interact, parse and feedback are long-running or need surfaces we do
+# not run, and the full 28-tool surface would be injected into every prompt.
+# Direct clients (Hermes, OpenCode) must filter with their own include list.
 apiVersion: sympozium.ai/v1alpha1
 kind: MCPServer
 metadata:
