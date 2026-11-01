@@ -58,8 +58,10 @@ controllers:
       name: default
     # Sympozium's stdio bridge forwards every client's initialize to one
     # long-lived child; github-mcp-server v2 rejects the duplicate. This is
-    # upstream's own HTTP mode, private to Hermes. The token arrives as a
-    # request header because http mode ignores GITHUB_PERSONAL_ACCESS_TOKEN.
+    # upstream's own HTTP mode, private to Hermes. http mode ignores
+    # GITHUB_PERSONAL_ACCESS_TOKEN and authenticates per request from the
+    # Authorization header, so the sidecar mints the manager App's installation
+    # token and injects it. The server itself listens on loopback only.
     extraSelectorLabels:
       app.kubernetes.io/name: mcpserver
     containers:
@@ -71,21 +73,54 @@ controllers:
         args:
           - http
           - --port
-          - "8080"
+          - "8081"
           - --listen-host
-          - 0.0.0.0
+          - 127.0.0.1
           - --exclude-tools
           - create_repository,fork_repository,delete_repository,delete_file,merge_pull_request
         env:
           - name: GITHUB_TOOLSETS
             value: default,projects
+        # No probes: the server answers on loopback, which a kubelet probe cannot
+        # reach. The proxy in front of it owns readiness for the pair.
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      # Holds the manager App's key, mints an installation token and puts it on
+      # every request. The Service points here, so Hermes talks to this port.
+      proxy:
+        image:
+          repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter" }}'
+        command: ["node", "/usr/local/bin/github-proxy.mjs"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
         envFrom:
           - secretRef:
-              name: mcp-github-token
+              name: github-app-manager
+        env:
+          - name: PROXY_PORT
+            value: "8080"
+          - name: UPSTREAM_PORT
+            value: "8081"
+          - name: HTTP_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: HTTPS_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: NO_PROXY
+            value: '{{ .Values.egress_no_proxy }},127.0.0.1,localhost'
         probes:
           readiness:
             enabled: true
-            type: TCP
+            type: HTTP
+            path: /healthz
             port: 8080
             spec:
               initialDelaySeconds: 3
@@ -95,15 +130,14 @@ controllers:
             type: TCP
             port: 8080
             spec:
-              initialDelaySeconds: 10
-              periodSeconds: 15
+              initialDelaySeconds: 15
+              periodSeconds: 30
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 20m
+            memory: 32Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
+            memory: 128Mi
 
   trino:
     strategy: RollingUpdate
