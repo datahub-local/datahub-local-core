@@ -137,3 +137,22 @@ iterate.
 
 - **WHEN** a board item's issue is closed and its status is still `Testing`
 - **THEN** the tick sets `Done` before anything else looks at the item
+
+### Requirement: A tick ends before the work does
+
+The dispatch SHALL return as soon as the session exists, SHALL record the session and
+the status, and SHALL NOT hold the tick open for the turn. A tick SHALL stop after a
+bounded number of tool calls, because the next tick is ten minutes away and a
+wandering tick holds the only agent.
+
+#### Scenario: A dispatched turn runs for minutes
+
+- **WHEN** `run_task` answers `running` after a short wait
+- **THEN** the tick records the session, sets `In Progress` and ends
+- **AND** a later tick polls it with `get_session`
+
+#### Scenario: The tick starts investigating the cluster
+
+- **WHEN** the tick has made twenty tool calls without finishing
+- **THEN** it posts what moved and ends
+- **AND** it does not use `execute_code`, which cron mode blocks

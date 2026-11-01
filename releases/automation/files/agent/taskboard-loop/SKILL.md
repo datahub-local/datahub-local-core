@@ -65,7 +65,7 @@ Work the `Ready` items lowest number first. For each, read `issue <n>` first:
 - It already records a session: a previous tick started work and died before the
   status moved. Set `In Progress`, comment that it resumed, and do not dispatch a
   second session.
-- Otherwise dispatch: call `mcp__opencode__run_task` with `wait_seconds: 300`, the
+- Otherwise dispatch: call `mcp__opencode__run_task` with `wait_seconds: 10`, the
   `directory` from `repos` when the issue names exactly one repository, and this
   prompt:
 
@@ -86,7 +86,10 @@ Then:
   has one. Stop dispatching this tick. Say nothing and change nothing.
 - `ERROR:`: comment the error on the issue, change no status, stop dispatching.
 - Anything else: take the `session:` id, run `start <n> <id>`, set `In Progress`,
-  and continue with the next ready issue.
+  and continue with the next ready issue. This is the whole dispatch: the turn runs
+  for minutes and the next tick polls it. Do not wait for it, do not inspect the
+  cluster, and do not use `execute_code` (cron mode blocks it by design). If `start`
+  or `status` fails, comment the error and stop dispatching.
 
 ### 3. Comments the session has not seen
 
@@ -170,6 +173,14 @@ run `pr <repo> <branch>`.
 - `open` and the issue is `Blocked`: nothing. A question outranks an old pull
   request; only the owner's answer leaves `Blocked`.
 - `merged`: set `Done`, comment the merge, and post one Slack line.
+
+## The tick has a budget
+
+- `run_task` waits at most 10 seconds here; the turn is not the tick's turn.
+- If the tick passes 20 tool calls, stop: post what moved and end. A tick that
+  wanders holds the agent, and the next tick is in ten minutes.
+- `terminal` is the only shell. `execute_code` is blocked in cron mode; if a script
+  is needed, write it with `terminal` or ask the agent to run it.
 
 ## Reporting
 
