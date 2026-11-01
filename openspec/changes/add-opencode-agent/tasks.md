@@ -28,7 +28,7 @@
     Sympozium harness adapter — no contract, no capabilities.
 - [x] 1.4 Publish `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` multi-arch
   (`linux/amd64`, `linux/arm64`); published index digest
-  `sha256:cd16756b87c70ff0af498886740ba901406f870061ad67358fcd8d4dcc70c912`. No workflow edit is needed: `publish-images.yaml` discovers
+  `sha256:6cd7f90206b910c544313f21223d4f1828468f6f35f304acd92aeb1554ade967`. No workflow edit is needed: `publish-images.yaml` discovers
   `agents/adapters/*/Dockerfile` and names the image from the directory.
 - [x] 1.5 Add to `values/_version.yaml`: the adapter image
   (`ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:<digest>` from 1.4),

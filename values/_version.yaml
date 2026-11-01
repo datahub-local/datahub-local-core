@@ -9,7 +9,7 @@ container_image_version:
   # Both images are published multi-arch (linux/amd64, linux/arm64); these are the
   # index digests, so the same pin schedules on either architecture. Keep the
   # `tag@sha256:…` shape the jsonata manager proposes bumps for.
-  ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:cd16756b87c70ff0af498886740ba901406f870061ad67358fcd8d4dcc70c912
+  ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:6cd7f90206b910c544313f21223d4f1828468f6f35f304acd92aeb1554ade967
   ghcr.io/datahub-local/mcp-opencode: main@sha256:e423ffd2b9b7db6932d28eacec1f14831a23ca0f84dc29a53af43ebd8f16a05c
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621

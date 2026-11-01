@@ -73,6 +73,11 @@ controllers:
           # the Service address is the one value the image cannot know.
           - name: OPENCODE_FIRECRAWL_MCP_URL
             value: 'http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp'
+          # The cluster surface. The server has no route to the Kubernetes API and
+          # no client credential, so this read-only MCP server is the only way it
+          # can see what it changed.
+          - name: OPENCODE_K8S_MCP_URL
+            value: 'http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc.cluster.local:8080/mcp'
 
           # Never fall back to a prompt: nothing is watching one.
           - name: GIT_TERMINAL_PROMPT
