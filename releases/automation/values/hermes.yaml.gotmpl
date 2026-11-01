@@ -159,6 +159,11 @@ config:
           - firecrawl_scrape
           - firecrawl_search
           - firecrawl_map
+    # The coding agent's shim. run_task waits up to 300s by design, so the MCP
+    # client timeout has to clear that wait rather than be tuned to it.
+    opencode:
+      url: http://{{ .Values.release_name }}-automation-opencode-mcp.automation.svc.cluster.local:8080/mcp
+      timeout: 900
   # The built-in web and browser toolsets stay off on every surface, not only
   # Slack. platform_toolsets is per platform, so CLI and dashboard chats kept
   # web_extract; this list is the global suppression applied last. Firecrawl is
@@ -279,11 +284,11 @@ extraEnv:
   # the Socket Mode handler, so the wss:// socket is tunnelled too. LiteLLM, the
   # MCP pods, the API server and dex are private and must bypass it.
   - name: HTTP_PROXY
-    value: 'http://{{ .Values.release_name }}-security-egress-proxy.security.svc.cluster.local:3128'
+    value: '{{ .Values.egress_proxy_url }}'
   - name: HTTPS_PROXY
-    value: 'http://{{ .Values.release_name }}-security-egress-proxy.security.svc.cluster.local:3128'
+    value: '{{ .Values.egress_proxy_url }}'
   - name: NO_PROXY
-    value: "localhost,127.0.0.1,::1,10.42.0.0/16,10.43.0.0/16,.svc,.svc.cluster.local,.homelab.alvsanand.com"
+    value: '{{ .Values.egress_no_proxy }}'
 
 # The gVisor RuntimeClass already pins datahub.local/gvisor; this adds the arch
 # because the agent's start-up is CPU-bound and the amd64 nodes are far faster

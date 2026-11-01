@@ -6,6 +6,11 @@ container_image_version:
   ghcr.io/civilblur/mazanoke: v1.1.7
   ghcr.io/containers/kubernetes-mcp-server: v0.0.69@sha256:1da9d62ad0c008a6cadcf2718c86c2e2d18753ca1d9f1f3313068980794b24f2
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
+  # Both images are published multi-arch (linux/amd64, linux/arm64); these are the
+  # index digests, so the same pin schedules on either architecture. Keep the
+  # `tag@sha256:…` shape the jsonata manager proposes bumps for.
+  ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:cd16756b87c70ff0af498886740ba901406f870061ad67358fcd8d4dcc70c912
+  ghcr.io/datahub-local/mcp-opencode: main@sha256:e423ffd2b9b7db6932d28eacec1f14831a23ca0f84dc29a53af43ebd8f16a05c
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
   ghcr.io/firecrawl/firecrawl: 2.11.637@sha256:e45ad30ee017a9fee49d33ba77dea63adfbac6b8dbbf3673f5778dc1707964f1
@@ -32,6 +37,9 @@ container_image_version:
   # Only latest is published for these two, so the digest is the pin.
   mcp/grafana: latest@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014
   mcp/slack: latest@sha256:4cc10c3f4bd988bd2dce40e3068fe38fa3b3bad1da99f9653eb5fa5cce35baa1
+  # The nginx-unprivileged tag, not the digest: the adapter release publishes no
+  # nginx image, and Renovate tracks the tag through the docker datasource.
+  nginxinc/nginx-unprivileged: 1.31.7-alpine
   n8nio/n8n: 2.45.4
   nousresearch/hermes-agent: v0.22.5
   python: "3.15"

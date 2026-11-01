@@ -25,22 +25,26 @@ startup and left everything else missing. This change makes the image the toolch
   `python3` + `venv`/`pip`, and `uv` with a managed Python 3.13. `ansible`, `dbt` and `dlt` are
   project dependencies and arrive through `uv sync` in the repository that needs them.
 - Add an `opencode-server` Deployment: `opencode serve` on 4096, state on `/opt/data`, workspace on
-  `/workspace`, the LiteLLM plugin installed into the volume at startup, and a **minter sidecar**
-  holding the GitHub App key.
+  `/workspace`, and the LiteLLM plugin installed into the volume at startup. No GitHub credential:
+  the App-backed minter is a documented gap, not a prerequisite.
 - Add an `opencode-web` Deployment: an nginx reverse proxy to the server, preserving SSE and
   WebSocket; the only workload published through Traefik and dex.
-- Add an `opencode-mcp` Deployment: a stateless MCP shim (`run_task`, `get_session`, `respond`,
-  `abort_session`) that Hermes and Sympozium personas call.
+- Add an `opencode-mcp` Deployment: a stateless MCP shim (`run_task`, `get_session`, `get_diff`,
+  `list_sessions`, `get_transcript`, `respond`, `abort_session`) that Hermes and Sympozium personas
+  call.
 - Remove the `apk --root` git install. The image ships `git`, so the only init container left is the
   plugin install, and the Pod has no root process at all.
 - Consume the self-hosted Firecrawl MCP bridge from `add-firecrawl-mcp`; no Firecrawl workload, no
   account key, and no `api.firecrawl.dev` egress in this release.
-- Add one ConfigMap with `opencode.json`, `AGENTS.md`, and the git credential helper; the config
-  names the model, the plugin, Firecrawl, the helper, and the permission ruleset.
+- Bake `opencode.json`, `AGENTS.md`, `gitconfig`, the git credential helper and the token minter into
+  the adapter image (`/etc/opencode`, `/etc/gitconfig`, `/usr/local/bin`); the config names the
+  model, the plugin, Firecrawl, the helper, and the permission ruleset.
 - Extend the `egress-proxy` allowlist with the helm chart repositories and OCI registries a
   `helmfile template` in these repositories needs.
-- Mint GitHub installation tokens on demand in the minter sidecar; git asks it through the helper
-  whenever it runs. No credential file, no rotation loop, no PAT in the server.
+- Give OpenCode its own GitHub Secret: an `automation/opencode-github` ExternalSecret derived from
+  `github-root` for now, read by the git helper as `GITHUB_TOKEN`. No container reads the root
+  directly. SSH deploy keys are not usable here (GitHub cannot attach one key to several
+  repositories); the App-backed minter stays deferred.
 - Expose the UI at `automation-opencode.<gateway_hostname>` through the existing
   `security/oauth2-proxy-auth` middleware, with a Traefik header injecting the Basic credential.
 - Keep `websearch` and `webfetch` disabled; search is the Firecrawl MCP tools only.
@@ -68,17 +72,18 @@ other release.
 
 - One new release in `releases/automation/` with three workloads, three Services, one IngressRoute,
   one headers Middleware, and one catalog `MCPServer`.
-- One ConfigMap rendered from `releases/automation/files/opencode/` (config, instructions, helper).
+- The agent's config, instructions, git files and minter in the adapter image; nothing of theirs in a
+  ConfigMap, because `/opt/data` is a volume and would hide them.
 - One new image in `datahub-local-ai/agents/adapters/opencode/`, built multi-arch and published by
   that repository's `publish-images.yaml`; the cluster pins it by digest. nginx and the shim stay
   digest-pinned too. No upstream OpenCode image is deployed.
 - Two Longhorn RWO PVCs for the server.
-- Secrets created outside this repository: `github-app` (`app-id`, `installation-id`, `private-key`).
-  The LiteLLM key still comes from `automation/litellm-auth-credentials`; the server password is
-  derived and rendered into a Secret. Firecrawl needs no key: the self-hosted MCP bridge from
-  `add-firecrawl-mcp` is keyless.
-- A GitHub App installed on the intended repositories with `contents: write`, `pull_requests:
-  write`, `metadata: read`.
+- A Secret created outside this repository: `opencode-github` (`GITHUB_TOKEN`), derived from
+  `github-root` in `datahub-local-secrets` until #253 provides a dedicated credential or App. The LiteLLM
+  key comes from `automation/litellm-auth-credentials`; the server password is derived. Firecrawl
+  needs no key.
+- Future gap: an App with `contents: write`, `pull_requests: write`, `metadata: read`, its
+  `github-app` Secret and the minter sidecar.
 - Public egress is not direct: the server sends 443 through the `security` egress proxy deployed by
   `add-egress-proxy`, whose allowlist is PyPI, GitHub, npm, helm chart repositories and their OCI
   registries; everything else is denied.

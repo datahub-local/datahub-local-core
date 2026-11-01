@@ -57,18 +57,28 @@ SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be 
 - **AND** Renovate in this repository changes `values/_version.yaml` to that digest
 - **AND** the release never deploys a moving tag
 
-### Requirement: Configuration, instructions, and the git helper are ConfigMaps
+### Requirement: The image carries the agent's config, instructions and git files
 
-One ConfigMap SHALL carry `opencode.json`, `AGENTS.md`, and `git-credential-opencode`, mounted at
-`/opt/data/.config/opencode/opencode.json`, `/opt/data/.config/opencode/AGENTS.md`, and
-`/opt/data/bin/git-credential-opencode` (mode `0755`). The config SHALL name the default model, the
-pinned plugin, the Firecrawl MCP server, the git credential helper, and the permission ruleset.
+The adapter image SHALL carry `opencode.json` at `/etc/opencode/opencode.json` (the OpenCode v2
+system configuration directory), `AGENTS.md` at `/opt/opencode/AGENTS.md` and referenced from the
+config's `instructions`, `gitconfig` at `/etc/gitconfig`, the credential helper at
+`/usr/local/bin/git-credential-opencode` (mode `0755`), the token minter at
+`/usr/local/bin/opencode-minter.mjs`, and the plugin pre-warm at
+`/usr/local/bin/opencode-plugin-prewarm`. The release SHALL NOT ship those files in a ConfigMap and
+SHALL NOT mount them under `/opt/data`, because the state volume is mounted there and hides what the
+image carries.
 
-#### Scenario: All three files are present before the server starts
+The config SHALL use the v2 shapes: `permissions` as ordered `{action, resource, effect}` rules,
+`mcp.servers`, `plugins`, `update: "disable"`, the default model, the pinned LiteLLM plugin, and the
+Firecrawl server. The Firecrawl URL SHALL be `{env:OPENCODE_FIRECRAWL_MCP_URL}`, the one
+cluster-specific value.
 
-- **WHEN** the Pod starts
-- **THEN** the config, the instructions, and an executable helper exist at those paths
-- **AND** none is written by the container at runtime
+#### Scenario: The files survive the state volume
+
+- **WHEN** the server Pod mounts `/opt/data` and starts
+- **THEN** the config, the instructions, `gitconfig`, an executable helper and the minter are read
+  from the image
+- **AND** no ConfigMap in the release carries any of them
 
 ### Requirement: LiteLLM is the only model path, through the plugin
 
@@ -97,39 +107,55 @@ target the server; the web proxy is the only published surface.
 - **WHEN** a request reaches `/api/*` without the Basic credential
 - **THEN** the server answers 401
 
-### Requirement: GitHub credentials live in a minter sidecar, not the server
+### Requirement: OpenCode gets its own GitHub Secret
 
-The `opencode-server` Pod SHALL include a minter sidecar holding `GITHUB_APP_ID`,
-`GITHUB_APP_INSTALLATION_ID`, and `GITHUB_APP_PRIVATE_KEY` by secret reference. The minter SHALL
-expose a loopback token endpoint that returns a cached installation token while it has more than ten
-minutes left and otherwise mints a fresh one. The git helper SHALL call that endpoint when git runs,
-so a session may live for days without a credential file or a refresh loop. The server container
-SHALL NOT receive the App key or any long-lived GitHub credential.
+The `opencode-server` container SHALL receive `GITHUB_TOKEN` from a Secret named `opencode-github`.
+For now that Secret SHALL be derived from `github-root` by an ExternalSecret — there is no
+OpenCode-specific root yet — so the deployment reads one purpose-named Secret and changing the
+credential's source later is a single entry in `datahub-local-secrets`. No container SHALL reference
+`github-root` directly.
 
-#### Scenario: Git works days into a session
+The git credential helper SHALL answer from `GITHUB_TOKEN` and SHALL otherwise fall back to the
+minter endpoint, so no credential file is written under `/opt/data`. Pull requests SHALL be opened by
+the caller through the GitHub MCP server rather than `gh` in the Pod. SSH deploy keys SHALL NOT be
+used: GitHub cannot attach one key to several repositories, which the three-repository workspace
+needs.
 
-- **WHEN** a session started days ago runs `git fetch`
-- **THEN** the helper receives a freshly minted token
+A GitHub App with on-demand installation tokens remains the intended long-term design, but the
+release SHALL NOT require one.
+
+#### Scenario: A task pushes with the OpenCode Secret
+
+- **WHEN** a task runs `git push` on a branch
+- **THEN** the helper answers from `GITHUB_TOKEN`
+- **AND** that value comes from the `opencode-github` Secret
+
+#### Scenario: The shared root is not in the Pod
+
+- **WHEN** the rendered Pod spec is inspected
+- **THEN** no container references `github-root` or an App key
 - **AND** no credential file exists under `/opt/data`
 
-#### Scenario: The key is not in the server container
+#### Scenario: The Pod starts without the App
 
-- **WHEN** the server container's environment and filesystem are inspected
-- **THEN** the App key is absent
-- **AND** only the minter holds it
+- **WHEN** the release is rendered with no `github-app` Secret in the cluster
+- **THEN** the Pod starts and serves its API
+- **AND** no minter container is present
 
 ### Requirement: The MCP shim is a separate stateless Pod
 
-The `opencode-mcp` Deployment SHALL expose exactly `run_task`, `get_session`, `respond`, and
-`abort_session` over MCP at `/mcp`, and SHALL hold no state. It SHALL talk to the server's HTTP API
-with the Basic credential and SHALL run one replica.
+The `opencode-mcp` Deployment SHALL expose exactly `run_task`, `get_session`, `get_diff`,
+`list_sessions`, `get_transcript`, `respond`, and `abort_session` over MCP at `/mcp`, and SHALL hold
+no state. It SHALL talk to the server's HTTP API with the Basic credential and SHALL run one replica.
 
 `run_task` SHALL take a prompt, an optional workspace-relative directory, an optional session id,
 and an optional `wait_seconds` (default 120, maximum 300); it SHALL create or resume a session, wait
 at most that long, and return the session id, one of `running`, `idle`, `needs_input`, or `error`,
 the latest assistant text, and changed files when idle. `get_session` SHALL return the same state
 without waiting. `respond` SHALL submit an answer to the pending question or permission.
-`abort_session` SHALL interrupt a running session.
+`get_diff` SHALL return the patch text a session produced, optionally narrowed to a message's turn.
+`list_sessions` SHALL return the newest sessions with their state, searchable by title. `get_transcript`
+SHALL return the newest messages, oldest first. `abort_session` SHALL interrupt a running session.
 
 While a session is active, `run_task` SHALL return busy with that session's id and SHALL NOT create
 a second one. Sessions SHALL NOT be bounded by the tool wait: a session MAY stay active for days.
@@ -180,7 +206,8 @@ middleware SHALL inject `Authorization: Basic …` so a signed-in user gets one 
 
 The release SHALL NOT deploy a Firecrawl server or hold a Firecrawl account key. The server's
 `opencode.json` SHALL register the `add-firecrawl-mcp` bridge at
-`http://…-automation-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`. The server
+`http://…-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp` (the HTTP transport
+Service). The server
 SHALL NOT enable the native `websearch` or `webfetch` tools.
 
 #### Scenario: Search works through the bridge
@@ -197,18 +224,21 @@ SHALL NOT enable the native `websearch` or `webfetch` tools.
 
 ### Requirement: Permissions name every needed directory and tool
 
-The OpenCode config SHALL resolve every permission check without a silent `ask`:
+The OpenCode config SHALL resolve every permission check without a silent `ask`, using the v2
+ordered `permissions` ruleset:
 
-- deny `webfetch`, `websearch`;
-- allow `question`, so the agent can ask and the shim reports `needs_input`;
+- deny `webfetch` and `websearch`;
 - deny reads of `*.env` and `*.env.*`;
 - deny `external_directory` for `*`, then allow `/workspace/*`, `/tmp/*`, and
   `/opt/data/.config/opencode/*`;
+- allow `question`, so the agent can ask and the shim reports `needs_input`;
 - allow `fc_firecrawl_scrape`, `fc_firecrawl_search`, and `fc_firecrawl_map`; the bridge registers
   nothing else, so crawl, agent, monitor, interact, parse, and feedback never reach the permission
   layer.
 
-`read`, `edit`, `shell`, `glob` and `grep` SHALL otherwise remain allowed inside the workspace.
+The Firecrawl server SHALL set `codemode: false`, so its tools appear as native
+`<server>_<tool>` actions rather than only through Code Mode. `read`, `edit`, `shell`, `glob` and
+`grep` SHALL otherwise remain allowed inside the workspace.
 
 #### Scenario: The directories the agent needs are reachable
 

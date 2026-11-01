@@ -2,8 +2,8 @@
 
 ## Context
 
-One owner, one long-lived coding agent, reachable from a browser and from Hermes, with GitHub
-credentials and a search tool. The cluster already has Hermes (chat), Sympozium (runs), Traefik,
+One owner, one long-lived coding agent, reachable from a browser and from Hermes, with a search
+tool and GitHub credentials (deferred for now — §4). The cluster already has Hermes (chat), Sympozium (runs), Traefik,
 dex, oauth2-proxy, and LiteLLM. OpenCode supplies the agent, its web UI, and an HTTP API.
 
 The agent's work is this repository's helmfile releases and the uv projects in
@@ -42,31 +42,48 @@ smallest thing that bridges them:
 
 - `run_task(prompt, directory?, session_id?, wait_seconds=120)`;
 - `get_session(session_id)`;
+- `get_diff(session_id, from_message?, context?)` — the patches, for review;
+- `list_sessions(limit?, search?)` — how a stateless shim finds a session again;
+- `get_transcript(session_id, limit?)` — the newest messages, oldest first;
 - `respond(session_id, form_id | request_id, answer)`;
 - `abort_session(session_id)`.
 
 It holds no state. "One active session" is read from `GET /api/session/active`, not from memory, so
-a shim restart cannot start a second writer. `run_task` waits at most 300 seconds and returns
+a shim restart cannot start a second writer.
+
+It targets the v2 API (`/api/session*`, `/api/experimental/session/:id/wait`). The npm package
+`opencode-mcp` is not used: 3.1.0 documents OpenCode 1.x support, with v2 planned for 4.0, and it
+exposes 70 tools — context no persona needs. `run_task` waits at most 300 seconds and returns
 `running|idle|needs_input|error`; the session itself is unbounded and can live for days.
 
 `question` is allowed in OpenCode so the agent can ask the owner; the shim surfaces it as
 `needs_input` and `respond` answers the form or permission. Every other `ask` is denied, because
 nobody is watching a prompt.
 
-### 4 — GitHub credentials are a minter sidecar, not a PAT
+### 4 — One OpenCode Secret, derived from github-root for now
 
-The server runs for days and its shell is the agent. A PAT in its environment is a write credential
-the agent can read and, with 443 open, send anywhere. So the App key lives in a sidecar:
+The server runs for days and its shell is the agent, so it needs a credential; it does not need a
+*new* root yet. OpenCode receives `GITHUB_TOKEN` from an `automation/opencode-github` Secret, and that
+Secret is an ExternalSecret over `github-root` — the same PAT Airflow and the GitHub MCP server use.
+The deployment therefore reads one purpose-named Secret, and swapping the source later (a
+fine-grained token or an App installation token) is a single entry in `datahub-local-secrets` with no
+change to the Pod.
 
-- The minter signs a ≤10-minute JWT and exchanges it for an installation token valid ≤1h.
-- It serves a loopback endpoint that returns the cached token while >10 minutes remain, otherwise
-  mints.
-- `git-credential-opencode` (a ConfigMap shell script using `curl`, which the image now carries)
-  asks that endpoint whenever git runs.
+SSH was tried first and does not work for this workspace: the existing `gitSshKey` is a deploy key
+scoped to `datahub-local-ai` (verified with `ssh -T`), and GitHub cannot attach the same key to the
+other two repositories. Three deploy keys plus a multi-key agent would work, but it is more moving
+parts than an interim token under its own Secret name.
 
-Nothing is written to disk, so a session that runs for a week still works: the next `git` call gets
-a token minted at that moment. The server container never sees the App key. A stolen token dies
-within the hour.
+The cost is honest: no per-repository scoping yet, and revoking the PAT still breaks Airflow and the
+MCP server together. That is the gap in #253, not a property of this release. Pull requests stay
+Hermes' job through the GitHub MCP server; the agent's part ends at pushing a branch.
+
+The git helper is the only consumer: `git-credential-opencode` answers `get` from `GITHUB_TOKEN` and
+otherwise falls back to the minter's loopback endpoint. Nothing is written to disk.
+
+On-demand installation tokens stay the intended design. The image still carries
+`opencode-minter.mjs`, so wiring the App later is the `github-app` Secret plus a sidecar, not a
+rebuild.
 
 ### 5 — The image is built in `datahub-local-ai`, with the toolchain baked in
 
@@ -110,6 +127,14 @@ It lives under `agents/adapters/` only because `publish-images.yaml` discovers e
 `agents/adapters/<dir>/Dockerfile`. It is **not** a Sympozium harness adapter: it implements no
 harness contract and declares no capabilities, and its README says so.
 
+The agent's own files ship in the image, not in a ConfigMap: `opencode.json` at
+`/etc/opencode/opencode.json` (v2's machine-wide directory), `AGENTS.md` at
+`/opt/opencode/AGENTS.md` and named by `instructions`, `gitconfig` at `/etc/gitconfig`, and under
+`/usr/local/bin` the credential helper, the minter and the plugin pre-warm. `/opt/data` is a volume, so anything baked
+under `$HOME` would be hidden; `/etc` and `/usr/local` are not. The Firecrawl endpoint is the only
+cluster-specific value and is read from `OPENCODE_FIRECRAWL_MCP_URL` through v2's `{env:…}`
+substitution, so the image never hardcodes a Service address.
+
 Consequences: no `apk`, no `--initdb`, no root process, no runtime download of `git` or a plugin
 toolchain, and a read-only root filesystem that still lets the agent clone, render and test.
 
@@ -119,7 +144,8 @@ Firecrawl is one of OpenCode's five native websearch providers (Exa, Firecrawl, 
 TinyFish), but the requirement here is the MCP server, not the provider: it gives `search`,
 `scrape` and `map` tools that the native `websearch` does not. The MCP server is the one deployed by
 `add-firecrawl-mcp` in `automation`; this release only registers it as a remote MCP at
-`http://{{ .Values.release_name }}-automation-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
+`http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp`
+(the HTTP transport Service, not the MCPServer name).
 
 There is no Firecrawl Deployment, no `firecrawl-token` Secret and no `api.firecrawl.dev` egress here.
 That change runs the server keyless against the self-hosted API in `data`.
@@ -155,18 +181,23 @@ every path, and content inspection would need TLS interception.
 
 ### 8 — Model path and plugin
 
-The litellm plugin is installed at startup into `$HOME/.cache/opencode/npm/<spec>` and listed in
-`opencode.json`. Measured: a cold `opencode models` once raced the install and failed with
-`Location plugins did not finish activating`; a second run completed it and listed
-`litellm/opencode-go/deepseek-v4.1-flash`. The init container removes the race by running before the
-server; readiness additionally waits for a model.
+v2 installs a package plugin when a server starts, not in `opencode plugin add`, into
+`$HOME/.cache/opencode/npm/<spec>`. Measured: a cold `opencode models` races the activation and exits
+non-zero with `Location plugins did not finish activating` after writing the cache. The init
+container therefore runs the image's `opencode-plugin-prewarm`, which invokes
+`opencode models --standalone`, treats the cache directory as its assertion rather than the exit
+status, and short-circuits when the cache is already warm.
+
+Readiness does not use the CLI for the same reason: it asks the running server for
+`/api/model` and requires a `litellm` provider, which only exists once the plugin activated.
 
 The image ships `node` and `npm`, so the install no longer depends on what the upstream image
 happens to carry, but the cache still lives on the state volume because `HOME` is `/opt/data`.
 
 ### 9 — Permissions
 
-Ordered (last match wins):
+v2 uses an ordered `permissions` ruleset of `{action, resource, effect}`, in the image so a policy
+change is reviewed and shipped like the code it governs. Ordered (last match wins):
 
 ```
 deny   webfetch, websearch

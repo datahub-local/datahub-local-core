@@ -16,3 +16,17 @@ egress_proxy_domains:
     - dl-cdn.alpinelinux.org
   slack: # Hermes' Socket Mode socket, Web API and file uploads
     - .slack.com
+  # Chart resolution for the agent's own `helmfile template`. GitHub Pages chart
+  # repos, Apache's release hosts, and the OCI registries the releases use; an
+  # unlisted repository means the toolchain cannot render a release.
+  helm:
+    - .github.io
+    - airflow.apache.org
+    - downloads.apache.org
+    - helm.openwebui.com
+    - charts.redpanda.com
+    - deploy.sympozium.ai
+    - robusta-charts.storage.googleapis.com
+    - ghcr.io
+    - 8gears.container-registry.com
+    - oci.trueforge.org

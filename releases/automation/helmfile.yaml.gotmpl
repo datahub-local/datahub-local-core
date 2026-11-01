@@ -82,3 +82,14 @@ releases:
       - ../../values/global.yaml.gotmpl
       - ../../values/_version.yaml
       - values/default.yaml.gotmpl
+  - name: "{{ .Values.release_name }}-automation-opencode"
+    namespace: automation
+    chart: '{{ (.StateValues.helm_chart_version | get "app-template").ref }}'
+    version: '{{ (.StateValues.helm_chart_version | get "app-template").version }}'
+    needs:
+      # Its ConfigMap and IngressRoute are rendered by the umbrella release below
+      # (chart "."), and it reads the Firecrawl bridge from the mcp release.
+      - "{{ .Values.release_name }}-automation"
+      - "{{ .Values.release_name }}-automation-mcp"
+    values:
+      - values/opencode.yaml.gotmpl

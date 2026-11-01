@@ -1,0 +1,577 @@
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+#
+# The OpenCode agent, in three workloads with one job each:
+#
+#   server  `opencode serve` with the toolchain image
+#   web     an nginx reverse proxy; the only workload with an IngressRoute
+#   mcp     the HTTP shim Hermes and Sympozium personas call
+#
+# The server is never published and is the only stateful piece. The proxy and the
+# shim are stateless. See openspec/changes/add-opencode-agent/design.md.
+
+fullnameOverride: '{{ .Values.release_name }}-automation-opencode'
+
+defaultPodOptions:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  server:
+    replicas: 1
+    # Two Longhorn RWO volumes; a rolling update would try to attach both to the
+    # new Pod before the old one releases them.
+    strategy: Recreate
+    pod:
+      # amd-2 blacklists the TSC and gVisor drives the sandbox clock from it, so
+      # Node's monotonic-clock check aborts there. Pin the node that is clean.
+      runtimeClassName: gvisor
+      nodeSelector:
+        kubernetes.io/hostname: datahublocal-amd-1
+        kubernetes.io/arch: amd64
+    initContainers:
+      plugin:
+        image:
+          repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter" }}'
+        # The pre-warm logic lives in the image (`opencode-plugin-prewarm`): it
+        # reads the baked plugin pin, skips a warm cache, and asserts the cache
+        # directory rather than the installer's exit status.
+        command: ["opencode-plugin-prewarm"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+    containers:
+      main:
+        image:
+          repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter" }}'
+        # The image keeps upstream's ENTRYPOINT ["opencode"]; the release supplies
+        # only the subcommand.
+        args: ["serve", "--hostname", "0.0.0.0", "--port", "4096"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        env:
+          # The proxy and the shim authenticate with the same credential; Traefik
+          # injects it, so the browser never prompts. Derived rather than stored
+          # so no extra Secret has to be minted and rotated by hand.
+          - name: OPENCODE_SERVER_PASSWORD
+            value: '{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}'
+          - name: LITELLM_BASE_URL
+            value: 'http://{{ .Values.release_name }}-data-litellm.data.svc.cluster.local:4000/v1'
+          - name: LITELLM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: litellm-auth-credentials
+                key: API_KEY
+          # Git and gh read this. The Secret is OpenCode's own, derived from
+          # github-root for now: no OpenCode-specific root exists yet. Change the
+          # source in datahub-local-secrets and this line does not move.
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: opencode-github
+                key: GITHUB_TOKEN
+          # The baked config names the server as {env:OPENCODE_FIRECRAWL_MCP_URL};
+          # the Service address is the one value the image cannot know.
+          - name: OPENCODE_FIRECRAWL_MCP_URL
+            value: 'http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp'
+
+          # Never fall back to a prompt: nothing is watching one.
+          - name: GIT_TERMINAL_PROMPT
+            value: "0"
+          - name: HTTP_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: HTTPS_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: NO_PROXY
+            value: '{{ .Values.egress_no_proxy }}'
+        probes:
+          # The init container has already installed the plugin, but a cold start
+          # still registers MCP and the LiteLLM provider; a tight startup probe
+          # kills that and looks like a crash loop.
+          startup:
+            enabled: true
+            type: TCP
+            port: 4096
+            spec:
+              periodSeconds: 5
+              failureThreshold: 60
+          liveness:
+            enabled: true
+            type: TCP
+            port: 4096
+            spec:
+              periodSeconds: 30
+              failureThreshold: 3
+          # A model must be resolvable, not merely a listening port: the server's
+          # own model list proves the plugin activated and LiteLLM answered. The
+          # CLI (`opencode models`) is not used here: right after start it races
+          # its own plugin activation and exits non-zero for a few seconds.
+          readiness:
+            enabled: true
+            type: COMMAND
+            command:
+              - /bin/sh
+              - -c
+              - |
+                curl -fsS -u "opencode:$OPENCODE_SERVER_PASSWORD" \
+                  http://127.0.0.1:4096/api/model \
+                  | grep -q '"providerID":"litellm"'
+            spec:
+              periodSeconds: 10
+              timeoutSeconds: 10
+              failureThreshold: 6
+        resources:
+          requests:
+            cpu: 250m
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 4Gi
+  web:
+    replicas: 1
+    strategy: RollingUpdate
+    pod:
+      # The image's own nginx uid; it is not the OpenCode 1000.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+    containers:
+      main:
+        image:
+          repository: nginxinc/nginx-unprivileged
+          tag: '{{ index .StateValues.container_image_version "nginxinc/nginx-unprivileged" }}'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        # /healthz is answered here, not proxied: the server requires Basic auth
+        # and only Traefik injects it, so a kubelet probe would get 401.
+        probes:
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /healthz
+            port: 8080
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /healthz
+            port: 8080
+            spec:
+              periodSeconds: 30
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+
+  mcp:
+    replicas: 1
+    strategy: RollingUpdate
+    extraSelectorLabels:
+      # Hermes' and Sympozium's egress policies select MCP pods on this label.
+      app.kubernetes.io/name: mcpserver
+    containers:
+      main:
+        image:
+          repository: ghcr.io/datahub-local/mcp-opencode
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/mcp-opencode" }}'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        env:
+          - name: OPENCODE_SERVER_URL
+            value: 'http://{{ .Values.release_name }}-automation-opencode-server:4096'
+          - name: OPENCODE_SERVER_USERNAME
+            value: opencode
+          - name: OPENCODE_SERVER_PASSWORD
+            value: '{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}'
+          # The shim refuses a directory outside this root; it never mounts it.
+          - name: OPENCODE_WORKSPACE_ROOT
+            value: /workspace
+          - name: HOME
+            value: /tmp
+        probes:
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /healthz
+            port: 8080
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /healthz
+            port: 8080
+            spec:
+              periodSeconds: 30
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+
+configMaps:
+  nginx-config:
+    enabled: true
+    data:
+      nginx.conf: |
+        # /tmp is the only writable path on a read-only root filesystem.
+        pid /tmp/nginx.pid;
+        error_log /dev/stderr warn;
+
+        events {}
+
+        http {
+          access_log /dev/stdout;
+          error_log /dev/stderr warn;
+          client_max_body_size 0;
+          server {
+            listen 8080;
+            location = /healthz {
+              return 200 "ok\n";
+            }
+            location / {
+              proxy_pass http://{{ .Values.release_name }}-automation-opencode-server:4096;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection "upgrade";
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              # Without these the session view stalls: the server streams events.
+              proxy_buffering off;
+              proxy_cache off;
+              proxy_read_timeout 24h;
+              proxy_send_timeout 24h;
+            }
+          }
+        }
+
+service:
+  server:
+    controller: server
+    ports:
+      http:
+        port: 4096
+  web:
+    controller: web
+    ports:
+      http:
+        port: 8080
+  mcp:
+    controller: mcp
+    ports:
+      http:
+        port: 8080
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: longhorn
+    size: 5Gi
+    advancedMounts:
+      server:
+        main:
+          - path: /opt/data
+        plugin:
+          - path: /opt/data
+  workspace:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    storageClass: longhorn
+    size: 20Gi
+    advancedMounts:
+      server:
+        main:
+          - path: /workspace
+  nginx-config:
+    type: configMap
+    identifier: nginx-config
+    advancedMounts:
+      web:
+        main:
+          - path: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
+  tmp:
+    type: emptyDir
+    sizeLimit: 1Gi
+    advancedMounts:
+      server:
+        main:
+          - path: /tmp
+        plugin:
+          - path: /tmp
+      mcp:
+        main:
+          - path: /tmp
+  nginx-tmp:
+    type: emptyDir
+    advancedMounts:
+      web:
+        main:
+          - path: /tmp
+  nginx-cache:
+    type: emptyDir
+    advancedMounts:
+      web:
+        main:
+          - path: /var/cache/nginx
+
+# Egress is per workload and ingress only where something calls it. The server
+# keeps no public rule at all: a client that ignores HTTP(S)_PROXY fails instead
+# of leaking around the proxy.
+networkpolicies:
+  server-egress:
+    enabled: true
+    type: native
+    controller: server
+    policyTypes:
+      - Egress
+    rules:
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: data
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: litellm
+          ports:
+            - protocol: TCP
+              port: 4000
+        # The Firecrawl bridge in this namespace: search and scrape only.
+        - to:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: mcpserver
+          ports:
+            - protocol: TCP
+              port: 8080
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: security
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: '{{ .Values.release_name }}-security-egress-proxy'
+          ports:
+            - protocol: TCP
+              port: 3128
+  server-ingress:
+    enabled: true
+    type: native
+    controller: server
+    policyTypes:
+      - Ingress
+    rules:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: web
+                  app.kubernetes.io/instance: '{{ .Values.release_name }}-automation-opencode'
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: mcp
+                  app.kubernetes.io/instance: '{{ .Values.release_name }}-automation-opencode'
+          ports:
+            - protocol: TCP
+              port: 4096
+  web-egress:
+    enabled: true
+    type: native
+    controller: web
+    policyTypes:
+      - Egress
+    rules:
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+        - to:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: server
+                  app.kubernetes.io/instance: '{{ .Values.release_name }}-automation-opencode'
+          ports:
+            - protocol: TCP
+              port: 4096
+  web-ingress:
+    enabled: true
+    type: native
+    controller: web
+    policyTypes:
+      - Ingress
+    rules:
+      ingress:
+        # Traefik. The Pod network is named rather than a Traefik label because
+        # the entry point also admits the LAN address directly.
+        - from:
+            - ipBlock:
+                cidr: 10.42.0.0/16
+            - ipBlock:
+                cidr: 192.168.31.0/24
+          ports:
+            - protocol: TCP
+              port: 8080
+  mcp-egress:
+    enabled: true
+    type: native
+    controller: mcp
+    policyTypes:
+      - Egress
+    rules:
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+          ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+        - to:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/controller: server
+                  app.kubernetes.io/instance: '{{ .Values.release_name }}-automation-opencode'
+          ports:
+            - protocol: TCP
+              port: 4096
+  mcp-ingress:
+    enabled: true
+    type: native
+    controller: mcp
+    policyTypes:
+      - Ingress
+    rules:
+      ingress:
+        # Hermes, Sympozium agent runs and post-run hooks all live in this
+        # namespace; their egress policies select these Pods on 8080.
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: automation
+          ports:
+            - protocol: TCP
+              port: 8080
+
+rawResources:
+  mcp-server:
+    forceRename: '{{ .Values.release_name }}-automation-opencode-mcp'
+    manifest:
+      apiVersion: sympozium.ai/v1alpha1
+      kind: MCPServer
+      metadata:
+        name: '{{ .Values.release_name }}-automation-opencode-mcp'
+        labels:
+          sympozium.ai/catalog: "true"
+      spec:
+        transportType: http
+        toolsPrefix: opencode
+        # A run_task turn may wait up to 300s; the client timeout has to clear it.
+        timeout: 900
+        url: 'http://{{ .Values.release_name }}-automation-opencode-mcp.automation.svc:8080/mcp'
+
+  ingress:
+    forceRename: '{{ .Values.release_name }}-automation-opencode'
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: "OpenCode"
+          gethomepage.dev/pod-selector: "app.kubernetes.io/controller=web"
+          gethomepage.dev/group: "Automation"
+          gethomepage.dev/icon: "sh-opencode"
+          gethomepage.dev/href: "https://automation-opencode.{{ .Values.gateway_hostname }}"
+        name: '{{ .Values.release_name }}-automation-opencode'
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - match: Host(`automation-opencode.{{ .Values.gateway_hostname }}`)
+            kind: Rule
+            services:
+              - name: '{{ .Values.release_name }}-automation-opencode-web'
+                port: http
+            middlewares:
+              - name: oauth2-proxy-auth
+                namespace: security
+              - name: '{{ .Values.release_name }}-automation-opencode-basic'
+          - match: Host(`automation-opencode.{{ .Values.gateway_hostname }}`) && PathPrefix(`/oauth2/`)
+            kind: Rule
+            services:
+              - name: oauth2-proxy
+                namespace: security
+                port: http
+
+  basic-auth:
+    forceRename: '{{ .Values.release_name }}-automation-opencode-basic'
+    manifest:
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: '{{ .Values.release_name }}-automation-opencode-basic'
+      spec:
+        headers:
+          customRequestHeaders:
+            # oauth2-proxy has already identified the user; this is the server's
+            # own Basic credential, and the browser never sees a prompt for it.
+            Authorization: 'Basic {{ printf "opencode:%s" (.StateValues.security_github_client_secret | sha256sum | trunc 32) | b64enc }}'
