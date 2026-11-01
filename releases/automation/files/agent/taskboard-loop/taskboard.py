@@ -250,7 +250,20 @@ def main(argv: list[str]) -> int:
         missing = missing_on_board(issues, project["items"])
         added = []
         for issue in missing:
-            github.graphql(ADD_ITEM, {"project": project["id"], "content": issue["node_id"]})
+            created = github.graphql(
+                ADD_ITEM, {"project": project["id"], "content": issue["node_id"]}
+            )
+            # A new item carries no Status until it is written; without this the
+            # card sits outside every column.
+            github.graphql(
+                SET_STATUS,
+                {
+                    "project": project["id"],
+                    "item": created["addProjectV2ItemById"]["item"]["id"],
+                    "field": project["field"],
+                    "option": project["options"]["Backlog"],
+                },
+            )
             added.append(issue["number"])
         github.invalidate()
         print(json.dumps({"added": added, "on_board": len(github.project()["items"])}))
