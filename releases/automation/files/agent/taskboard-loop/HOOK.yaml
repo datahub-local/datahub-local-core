@@ -1,0 +1,4 @@
+name: taskboard-tick
+description: Create the issue-to-PR tick job if HERMES_HOME has never had it
+events:
+  - gateway:startup

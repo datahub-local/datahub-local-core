@@ -61,6 +61,13 @@ controllers:
               secretKeyRef:
                 name: litellm-auth-credentials
                 key: API_KEY
+          # The two models, read by the baked opencode.json through {env:...}: the
+          # one that writes the change, and the one that reviews it. A different
+          # reviewer is a values edit and a rollout, not an image rebuild.
+          - name: OPENCODE_MODEL
+            value: litellm/opencode-go/deepseek-v4.1-flash
+          - name: OPENCODE_REVIEW_MODEL
+            value: litellm/opencode-go/glm-5.3-flash
           # Git and gh read this. The Secret is OpenCode's own, derived from
           # github-root for now: no OpenCode-specific root exists yet. Change the
           # source in datahub-local-secrets and this line does not move.

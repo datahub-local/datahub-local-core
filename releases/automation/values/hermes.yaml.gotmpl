@@ -56,6 +56,20 @@ extraVolumes:
   - name: slack-eyes-ack
     configMap:
       name: '{{ .Values.release_name }}-automation-hermes-slack-eyes-ack'
+  # The issue-to-PR loop: its instructions and the script that reads and writes the
+  # board. Mounted over the data volume, so the repository is the source and a
+  # deploy replaces whatever the live volume holds.
+  - name: taskboard-loop
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
+  - name: taskboard-hook
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
+      items:
+        - key: HOOK.yaml
+          path: HOOK.yaml
+        - key: handler.py
+          path: handler.py
 
 extraVolumeMounts:
   - name: run-tmpfs
@@ -64,6 +78,15 @@ extraVolumeMounts:
     mountPath: /tmp
   - name: slack-eyes-ack
     mountPath: /opt/data/plugins/slack-eyes-ack
+    readOnly: true
+  - name: taskboard-loop
+    mountPath: /opt/data/skills/devops/taskboard-loop
+    readOnly: true
+  # The gateway:startup hook that creates the tick job. Hermes only loads hooks
+  # from a directory holding HOOK.yaml and handler.py, and re-reads them at every
+  # start, so a restored volume repairs itself without an init container.
+  - name: taskboard-hook
+    mountPath: /opt/data/hooks/taskboard-tick
     readOnly: true
 
 # seed-config's chown only runs when that init container starts as root; the
@@ -90,12 +113,6 @@ extraInitContainers:
     volumeMounts:
       - name: data
         mountPath: /opt/data
-
-# seed-config copies config.yaml only when it is absent, so a new key never
-# reaches an existing volume. Adding one (mcp_servers was the first) needs a
-# deploy with `bootstrap.overwrite=true`; it stays false so runtime edits to
-# config.yaml survive later rollouts.
-
 persistence:
   enabled: true
   storageClass: longhorn
