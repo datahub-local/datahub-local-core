@@ -41,11 +41,10 @@ Run `sync` once. It adds any open issue labelled `agent` that never reached the
 board, at `Backlog`. Nothing else adds them, so an issue missing here is invisible
 to the rest of the tick.
 
-### 1. A Ready issue, when the agent is free
+### 1. Ready issues, until the agent is full
 
-Run `ready`. If the list is empty, go to step 2.
-
-Call `mcp__opencode__run_task` with `wait_seconds: 300` and this prompt, filled in:
+Run `ready`. Work the list lowest number first, and for each issue call
+`mcp__opencode__run_task` with `wait_seconds: 300` and this prompt, filled in:
 
 ```
 Issue datahub-local/datahub-local#<n>: <title>
@@ -56,16 +55,25 @@ Work it per your taskboard skill. This repository is the one named under `Repo`
 in the issue. Ask with the question tool if a decision is yours to make.
 ```
 
+Read `issue <n>` first and pass `directory` when it names exactly one repository
+(`repos` has one entry): that repository's name. The shim refuses two turns in one
+checkout, so a distinct directory per repository is what lets two issues run at the
+same time. Omit it when the issue names several.
+
 Then:
 
-- `status: busy` in the answer means another turn is running. Change nothing and
-  say which session holds the queue.
-- `ERROR:` in the answer means the shim or the server failed. Comment the error on
-  the issue, change no status, and stop.
+- `status: busy` in the answer means the configured turns are all running, or this
+  checkout already has one. Stop dispatching this tick; it is not a failure and it
+  is not a reason to comment.
+- `ERROR:` means the shim or the server failed. Comment the error on the issue,
+  change no status, and stop dispatching.
 - Anything else is a started session. Take the id from the `session:` line, run
-  `start <n> <id>`, then `status <n> "In Progress"`.
+  `start <n> <id>`, then `status <n> "In Progress"`, and continue with the next
+  ready issue.
 
-Only one issue is dispatched per tick, lowest number first.
+The shim runs one turn at a time by default (`OPENCODE_MAX_CONCURRENT`), so today
+the loop dispatches exactly one issue per tick and stops on the next `busy`. That
+is the configured limit, not a rule of the loop.
 
 ### 2. In Progress issues
 

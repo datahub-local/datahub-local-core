@@ -162,6 +162,31 @@ class GitHub:
         ]
 
 
+REPO_HEADING = re.compile(r"^##\s*Repo\s*$", re.IGNORECASE | re.MULTILINE)
+BACKTICK = re.compile(r"`([^`]+)`")
+
+
+def repos_of(body: str) -> list[str]:
+    """The repositories the issue names under its `## Repo` heading.
+
+    The section is the contract the intake shape already states, and reading it
+    here is what lets the tick start a task inside that repository's checkout
+    instead of the workspace root, which is the difference between two parallel
+    sessions and two writers in one tree.
+    """
+    match = REPO_HEADING.search(body or "")
+    if not match:
+        return []
+    section = (body or "")[match.end() :]
+    section = re.split(r"^##\s", section, maxsplit=1, flags=re.MULTILINE)[0]
+    repos = []
+    for token in BACKTICK.findall(section):
+        name = token.strip().rstrip("/").split("/")[-1]
+        if name and name not in repos:
+            repos.append(name)
+    return repos
+
+
 def missing_on_board(issues: list[dict], items: list[dict]) -> list[dict]:
     """Open agent issues that never reached the board.
 
@@ -289,6 +314,7 @@ def main(argv: list[str]) -> int:
                     "status": (item.get("fieldValueByName") or {}).get("name"),
                     "labels": [n["name"] for n in content["labels"]["nodes"]],
                     "body": content.get("body", "")[:4000] if content.get("body") else None,
+                    "repos": repos_of(content.get("body") or ""),
                     "session": last_session(comments),
                     "help": help_state(comments),
                     "comments": comments,

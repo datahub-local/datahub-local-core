@@ -22,5 +22,7 @@
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
   answers `idle` with nothing ready.
-- [ ] 1.9 Move issue #116 to `Ready` and confirm one tick starts it, sets
+- [ ] 1.9 With the default limit, one tick dispatches one issue and stops on the
+  next `busy` without commenting.
+- [ ] 1.10 Move issue #116 to `Ready` and confirm one tick starts it, sets
   `In Progress`, and records the session on the issue.

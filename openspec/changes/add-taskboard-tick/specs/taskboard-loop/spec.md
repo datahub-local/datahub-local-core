@@ -74,3 +74,16 @@ invisible.
 - **WHEN** an open issue with `agent` is not among the project's items
 - **THEN** the tick adds it, at `Backlog`
 - **AND** the same tick does not also dispatch it
+
+### Requirement: Dispatch stops at the shim's limit, not at a count of its own
+
+The tick SHALL dispatch ready issues in order and SHALL stop at the first `busy`,
+treating the shim's configured concurrency as the only cap. It SHALL pass the
+repository name as the session directory when the issue names exactly one
+repository.
+
+#### Scenario: The agent is full
+
+- **WHEN** `run_task` answers `status: busy`
+- **THEN** the tick dispatches no further issues this run
+- **AND** it neither comments nor changes a status because of the refusal

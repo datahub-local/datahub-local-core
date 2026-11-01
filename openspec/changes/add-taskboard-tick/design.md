@@ -45,12 +45,15 @@ ConfigMap over `jobs.json` would delete whatever the owner has scheduled since.
 the Slack MCP server only when something moved, so an idle tick is silent by
 construction rather than by prompt discipline.
 
-### 5 — One dispatch per tick, lowest number first
+### 5 — Dispatch until the agent is full, lowest number first
 
-The shim is serial: an active session, including one waiting on a question, makes
-`run_task` return `busy`. Dispatching several issues in one tick would produce
-`busy` on all but the first. One dispatch per tick, and the queue is reported once
-rather than every ten minutes.
+The tick walks the `ready` list in order and stops at the first `busy`. It does not
+count sessions, cap parallel work, or decide what "full" means: the shim's
+`OPENCODE_MAX_CONCURRENT` does, so the one knob that changes concurrency lives with
+the thing that enforces it. Each dispatch passes `directory=<repo>` when the issue
+names exactly one repository, which is what makes two issues in different
+repositories safe to run at once and two in the same repository queue behind each
+other.
 
 ### 6 — Failures do not look like questions
 
@@ -61,6 +64,9 @@ list as work waiting on a decision.
 
 ## Residuals
 
+- The default limit is one, so the loop dispatches one issue per tick until
+  `OPENCODE_MAX_CONCURRENT` is raised, and raising it also needs a resource bump on
+  `opencode-server` (2 CPU / 4Gi is sized for one turn).
 - Zero cost when idle is not claimed: the tick is a model run every ten minutes,
   even when it answers `idle`. A monitor script over the board could suppress the
   run entirely; that is a follow-up, and it needs its own quiet signal.

@@ -115,3 +115,17 @@ def test_missing_on_board_finds_labelled_issues_never_added():
 def test_missing_on_board_is_empty_when_every_issue_is_there():
     issues = [{"number": 116, "node_id": "I_116", "title": "t"}]
     assert taskboard.missing_on_board(issues, [item(116, "Ready", ["agent"])]) == []
+
+
+def test_repos_of_reads_the_named_repositories():
+    body = "## What\ntext\n\n## Repo\n\n`datahub-local`\n"
+    assert taskboard.repos_of(body) == ["datahub-local"]
+
+
+def test_repos_of_keeps_several_and_drops_the_org():
+    body = "## Repo\n`datahub-local/` `datahub-local-core`, `datahub-local`\n"
+    assert taskboard.repos_of(body) == ["datahub-local", "datahub-local-core"]
+
+
+def test_repos_of_returns_nothing_for_an_issue_without_the_section():
+    assert taskboard.repos_of("## What\nno repo line here, only `code`\n") == []
