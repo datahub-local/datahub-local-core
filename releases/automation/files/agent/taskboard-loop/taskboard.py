@@ -13,9 +13,11 @@ Usage:
   taskboard.py sync
   taskboard.py ready
   taskboard.py issue <n>
+  taskboard.py inbox <n>              (comments the session has not been given)
   taskboard.py status <n> <Status>
   taskboard.py comment <n>            (body on stdin)
   taskboard.py start <n> <session>    (records the session on the issue)
+  taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
   taskboard.py pr <repo> <branch>
   taskboard.py review <repo> <pr>
 """
@@ -34,6 +36,8 @@ MARKER = "<!-- taskboard:"
 HELP_MARKER = "<!-- taskboard:help -->"
 AGENT_MARKER = "<!-- taskboard:agent -->"
 SESSION_RE = re.compile(r"<!-- taskboard:session (\S+) -->")
+FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
+BRANCH_RE = re.compile(r"Branch `([^`]+)`")
 MAX_COMMENT_CHARS = 1500
 
 ORG = os.environ.get("TASKBOARD_ORG", "datahub-local")
@@ -152,6 +156,7 @@ class GitHub:
         raw = self._call("GET", f"/repos/{REPO}/issues/{number}/comments?per_page=100")
         return [
             {
+                "id": c.get("id"),
                 "author": (c.get("user") or {}).get("login", ""),
                 "created_at": c.get("created_at", ""),
                 "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
@@ -226,6 +231,55 @@ def pick_ready(items: list[dict]) -> list[dict]:
             }
         )
     return sorted(ready, key=lambda r: r["number"])
+
+
+def last_forwarded(comments: list[dict]) -> str:
+    """The newest comment timestamp already sent to the session."""
+    found = ""
+    for comment in comments:
+        for match in FORWARDED_RE.finditer(comment["body"]):
+            found = match.group(1)
+    return found
+
+
+def pending_comments(comments: list[dict]) -> list[dict]:
+    """Human comments the session has not been given yet, oldest first.
+
+    Forwarding is not the same as reading: the owner can write on the issue at any
+    point, including while a pull request waits for review, and each of those is a
+    message the agent has to receive exactly once.
+    """
+    since = last_forwarded(comments)
+    return [
+        comment
+        for comment in comments
+        if not comment["machine"] and comment["created_at"] > since
+    ]
+
+
+def last_branch(comments: list[dict]) -> str:
+    found = ""
+    for comment in comments:
+        for match in BRANCH_RE.finditer(comment["body"]):
+            found = match.group(1)
+    return found
+
+
+def merge_pending(
+    issue_comments: list[dict], review_comments: list[dict], since: str
+) -> list[dict]:
+    """One queue for a session, whatever surface the words arrived on.
+
+    A review comment on the pull request is the owner writing to the agent just as
+    much as a comment on the issue is; the agent should not have to learn the
+    difference, and the tick should not have two bookkeeping paths.
+    """
+    items = [
+        comment
+        for comment in list(issue_comments) + list(review_comments)
+        if not comment["machine"] and comment["created_at"] > since
+    ]
+    return sorted(items, key=lambda c: c["created_at"])
 
 
 def last_session(comments: list[dict]) -> str | None:
@@ -324,6 +378,57 @@ def main(argv: list[str]) -> int:
         )
         return 0
 
+    if command == "inbox":
+        number = int(args[0])
+        item = github.item(number)
+        body = item["content"].get("body") or ""
+        issue_comments = github.comments(number)
+        repos = repos_of(body)
+        branch = last_branch(issue_comments)
+        since = last_forwarded(issue_comments)
+        repo = f"{ORG}/{repos[0]}" if len(repos) == 1 else None
+        pull = None
+        review_comments = []
+        if repo and branch:
+            found = github._call(
+                "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
+            )
+            if found:
+                pull = found[0]
+                review_comments = [
+                    {
+                        "id": c.get("id"),
+                        "author": (c.get("user") or {}).get("login", ""),
+                        "created_at": c.get("created_at", ""),
+                        "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
+                        "url": c.get("html_url", ""),
+                        "machine": MARKER in (c.get("body") or ""),
+                        "path": c.get("path"),
+                        "line": c.get("line") or c.get("original_line"),
+                    }
+                    for c in github._call(
+                        "GET", f"/repos/{repo}/pulls/{found[0]['number']}/comments?per_page=100"
+                    )
+                ]
+        print(
+            json.dumps(
+                {
+                    "number": number,
+                    "repo": repo,
+                    "branch": branch,
+                    "since": since,
+                    "pull": (
+                        {"number": pull["number"], "url": pull["html_url"], "state": pull["state"]}
+                        if pull
+                        else None
+                    ),
+                    "items": merge_pending(issue_comments, review_comments, since),
+                },
+                indent=2,
+            )
+        )
+        return 0
+
     if command == "status":
         number, wanted = int(args[0]), args[1]
         project = github.project()
@@ -360,9 +465,23 @@ def main(argv: list[str]) -> int:
 
     if command == "start":
         number, session = int(args[0]), args[1]
-        body = f"Started session `{session}`.\n\n<!-- taskboard:session {session} -->"
+        # The marker carries the newest comment so the tick does not replay the
+        # issue's history into a session that already has the body.
+        newest = max((c["created_at"] for c in github.comments(number)), default="")
+        body = (
+            f"Started session `{session}`.\n\n"
+            f"<!-- taskboard:session {session} -->\n"
+            f"<!-- taskboard:forwarded {newest} -->"
+        )
         created = github._call("POST", f"/repos/{REPO}/issues/{number}/comments", {"body": body})
         print(json.dumps({"number": number, "session": session, "url": created.get("html_url", "")}))
+        return 0
+
+    if command == "forwarded":
+        number, since = int(args[0]), args[1]
+        body = f"Forwarded to the session.\n\n<!-- taskboard:forwarded {since} -->"
+        created = github._call("POST", f"/repos/{REPO}/issues/{number}/comments", {"body": body})
+        print(json.dumps({"number": number, "since": since, "url": created.get("html_url", "")}))
         return 0
 
     if command == "pr":

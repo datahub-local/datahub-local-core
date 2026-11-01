@@ -77,57 +77,55 @@ The shim runs one turn at a time by default (`OPENCODE_MAX_CONCURRENT`), so toda
 the loop dispatches exactly one issue per tick and stops on the next `busy`. That
 is the configured limit, not a rule of the loop.
 
-### 2. In Progress issues
+### 2. Comments the session has not seen
 
-For each issue whose status is `In Progress`:
+Every issue with a session gets this, whatever its status except `Done`. Run `inbox
+<n>`: it returns the comments written since the last one you forwarded, from the
+issue and from the pull request's review, in order. One queue, because to the agent
+both are the owner talking to it.
 
-1. `issue <n>` for the body, the comments and the recorded session.
-2. No session recorded: comment that the session was lost, leave the status, and
-   report it.
-3. `get_session <id>` and act on its `status:` line:
-   - `running`: nothing. Do not poll it again this tick.
-   - `idle`: the turn finished. Read the first line of its last text. If it says
-     `BLOCKED`, go to step 3b. Otherwise run `pr <repo> <branch>` for the branch
-     recorded in the issue, and go to step 4.
-   - `needs_input`: go to step 3.
-   - `error`: post the `error:` line and the last `get_transcript` lines as a
-     comment, set `Blocked`, and say the owner must decide. Do not retry.
+If `items` is not empty:
 
-### 3. A question
+1. Join them, oldest first. Say where each came from when it is a review comment:
+   `<path>:<line>: <body>`.
+2. Send them to the session:
+   - `get_session` says `needs_input`: `respond` with the form or permission id and
+     that text. If the form has several fields, answer each from the comment.
+   - otherwise: `run_task` with `session_id` and the text, prefixed with
+     `The owner wrote:`.
+3. `forwarded <n> <the created_at of the newest item you sent>`. That marker is what
+   stops the same words being sent twice.
+4. `status <n> "In Progress"`, and say in Slack that the owner's comment restarted
+   the work, when the issue was `Blocked` or `Testing`.
 
-A session that reports `needs_input` has asked something. Do this once per form or
-permission id, not once per tick:
+Relayed words are the owner's: a comment you post from a Slack answer carries no
+taskboard marker, so `inbox` picks it up like any other.
 
-1. Comment on the issue, with `taskboard.py comment <n>` on stdin:
+### 3. Session state
 
-   ```
-   **The agent needs a decision**
+`get_session <id>` and act on its `status:` line:
 
-   <the question and its fields, copied from get_session>
+- `running`: nothing more for this issue this tick.
+- `needs_input`: the agent asked something. Publish it once per form or permission
+  id, not once per tick:
 
-   @alvsanand answer here, or through the session in the web UI.
-   <!-- taskboard:help -->
-   ```
+  ```
+  **The agent needs a decision**
 
-2. `status <n> Blocked`.
-3. Post the same text, without the marker, to Slack.
+  <the question and its fields, copied from get_session>
 
-An answer can arrive three ways, and all three end in `respond`:
+  @alvsanand answer here, or through the session in the web UI.
+  <!-- taskboard:help -->
+  ```
 
-- a comment on the issue, written by the owner;
-- the form answered in the OpenCode web UI, which `get_session` reflects;
-- the owner telling you in Slack. Relay it on the issue verbatim, without a
-  taskboard marker, because the words are theirs; the tick then treats it as the
-  answer, which it is.
-
-Then, for an issue already `Blocked`, resume when the owner answered:
-
-- `issue <n>` and read `help.answered`. If true, call `respond` with the session
-  id, the form or permission id from `get_session`, and the answer text from
-  `help.answer.body`. Then `status <n> "In Progress"`.
-- If `help.answered` is false but `get_session` no longer says `needs_input`, the
-  owner answered in the web UI. Set `In Progress` and forward nothing.
-- When both are present, forward the issue answer and ignore the form answer.
+  Then `status <n> Blocked` and post the same text, without the marker, to Slack.
+  The answer arrives as a comment, as the form in the web UI, or from Slack through
+  Hermes, and step 2 forwards it.
+- `idle`: the turn finished. Read the first line of its last text.
+  - `BLOCKED`: go to step 3b.
+  - otherwise: run `pr <repo> <branch>` and go to step 4.
+- `error`: post the `error:` line and the last `get_transcript` lines as a comment,
+  set `Blocked`, and say the owner must decide. Do not retry.
 
 ### 3b. A blocked report
 
@@ -135,17 +133,15 @@ A turn can end `BLOCKED` without asking a question: a missing tool, a permission
 does not have, a destructive step only the owner may take, three failed fixes.
 
 1. Comment the first line of the report and the part that explains what would
-   unblock it. Use `taskboard.py comment <n>` on stdin, with
-   `<!-- taskboard:help -->` so the tick does not read your own comment as an
-   answer, and mention the owner.
+   unblock it, with `<!-- taskboard:help -->` so the tick does not read your own
+   comment as an answer, and mention the owner.
 2. `status <n> Blocked`.
 3. Say it once in Slack. It is not a missing pull request and must not be reported
    as one.
 
-Resume the same way as a question: the owner's next comment becomes the new prompt
-through `run_task(session_id=...)`, and the status goes back to `In Progress`.
+The owner's next comment reaches the session through step 2, like any other.
 
-### 4. Pull requests
+### 4. Pull request state
 
 From the issue, take the branch recorded in the session comment or the pull request
 the agent linked. Run `pr <repo> <branch>`.
@@ -153,9 +149,13 @@ the agent linked. Run `pr <repo> <branch>`.
 - `prs` empty and the session is idle, with a report that is not `BLOCKED`:
   comment the branch name and that no pull request exists, keep `In Progress`, and
   report it. A `BLOCKED` report went to step 3b instead.
-- The newest pull request is `open`: run `review <repo> <number>`, comment its URL
-  and what changed on the issue, set `Testing`, and post one Slack line saying it
-  is ready to review.
+- The pull request is `open` while the issue is `Testing`: comment and status are
+  already right. Step 2 has already forwarded anything new the owner wrote.
+- The newest pull request is `open` and the issue is not `Testing`: run `review
+  <repo> <number>`, comment its URL and what changed on the issue, set `Testing`,
+  and post one Slack line saying it is ready to review.
+- It is `open` and the issue is already `Testing`: nothing here. Only step 2 has
+  anything to do, and it does it when the owner writes.
 - It is `merged`: set `Done`, comment the merge, and post one Slack line.
 
 ### 5. Closed issues

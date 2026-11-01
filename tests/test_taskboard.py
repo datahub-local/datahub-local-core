@@ -129,3 +129,76 @@ def test_repos_of_keeps_several_and_drops_the_org():
 
 def test_repos_of_returns_nothing_for_an_issue_without_the_section():
     assert taskboard.repos_of("## What\nno repo line here, only `code`\n") == []
+
+
+def comment_with_id(body, created_at, ident=1):
+    c = comment(body, created_at)
+    c["id"] = ident
+    return c
+
+
+def test_pending_comments_are_every_human_comment_without_a_forwarder_marker():
+    comments = [
+        comment_with_id("do it", "2026-11-01T09:00:00Z"),
+        comment_with_id("Started session `abc`.\n\n<!-- taskboard:session abc -->", "2026-11-01T09:01:00Z"),
+    ]
+    assert [c["body"] for c in taskboard.pending_comments(comments)] == ["do it"]
+
+
+def test_pending_comments_start_after_the_newest_forwarded_marker():
+    comments = [
+        comment_with_id("old", "2026-11-01T09:00:00Z"),
+        comment_with_id("Forwarded.\n\n<!-- taskboard:forwarded 2026-11-01T09:30:00Z -->", "2026-11-01T09:31:00Z"),
+        comment_with_id("new", "2026-11-01T10:00:00Z"),
+        comment_with_id("Claimed.\n\n<!-- taskboard:agent -->", "2026-11-01T10:05:00Z"),
+    ]
+    assert [c["body"] for c in taskboard.pending_comments(comments)] == ["new"]
+
+
+def test_pending_comments_never_include_a_machine_comment():
+    comments = [
+        comment_with_id("Forwarded.\n\n<!-- taskboard:forwarded 2026-11-01T09:30:00Z -->", "2026-11-01T09:31:00Z", 1),
+        comment_with_id("**The agent needs a decision**\n<!-- taskboard:help -->", "2026-11-01T10:00:00Z", 2),
+    ]
+    assert taskboard.pending_comments(comments) == []
+
+
+def test_merge_pending_orders_issue_and_review_comments_together():
+    issue_comments = [comment_with_id("issue note", "2026-11-01T10:05:00Z", 1)]
+    review = [
+        {
+            "id": 2,
+            "author": "alvsanand",
+            "created_at": "2026-11-01T10:00:00Z",
+            "body": "rename this",
+            "url": "",
+            "machine": False,
+            "path": "src/a.py",
+            "line": 12,
+        }
+    ]
+    merged = taskboard.merge_pending(issue_comments, review, "2026-11-01T09:00:00Z")
+    assert [c["body"] for c in merged] == ["rename this", "issue note"]
+
+
+def test_merge_pending_drops_a_review_comment_already_forwarded():
+    review = [
+        {
+            "id": 2,
+            "author": "alvsanand",
+            "created_at": "2026-11-01T09:00:00Z",
+            "body": "old",
+            "url": "",
+            "machine": False,
+            "path": None,
+            "line": None,
+        }
+    ]
+    assert taskboard.merge_pending([], review, "2026-11-01T10:00:00Z") == []
+
+
+def test_last_branch_reads_the_claim_comment():
+    comments = [
+        comment_with_id("Claimed. Branch `feat/116-org-profile-readme` in datahub-local.", "2026-11-01T09:00:00Z")
+    ]
+    assert taskboard.last_branch(comments) == "feat/116-org-profile-readme"

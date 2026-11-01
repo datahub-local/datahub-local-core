@@ -70,5 +70,6 @@ list as work waiting on a decision.
 - Zero cost when idle is not claimed: the tick is a model run every ten minutes,
   even when it answers `idle`. A monitor script over the board could suppress the
   run entirely; that is a follow-up, and it needs its own quiet signal.
-- Review comments on a pull request do not reach the agent automatically. The
-  `run_task(session_id=...)` path exists; the trigger is a follow-up.
+- A comment is forwarded as one joined turn. If the owner writes three comments in
+  a minute, the agent sees one message made of three; the alternative is one turn
+  per comment, which spends a slot and a model call each time.
