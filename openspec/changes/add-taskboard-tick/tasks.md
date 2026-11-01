@@ -34,5 +34,7 @@
   answers `idle` with nothing ready.
 - [ ] 1.9 With the default limit, one tick dispatches one issue and stops on the
   next `busy` without commenting.
+- [ ] 1.11 Confirm the dispatch no longer holds the tick: `wait_seconds: 10`, the
+  session recorded, the tick ends, and the next tick polls it.
 - [ ] 1.10 Move issue #116 to `Ready` and confirm one tick starts it, sets
   `In Progress`, and records the session on the issue.
