@@ -112,3 +112,22 @@ session, exactly as if the owner had typed it on the issue.
 - **WHEN** the owner gives the answer in a chat and Hermes posts it on the issue
 - **THEN** the comment carries no marker
 - **AND** the next tick forwards it with `respond` and sets `In Progress`
+
+### Requirement: The tick's work list comes from the board
+
+Every run SHALL read the set of issues it acts on from the project board, because a
+scheduled session has no memory of the previous one. The list SHALL contain every
+open, agent-labelled issue that is not `Done`, with its status and issue state, so
+that the comment, question, blocked and pull-request steps have something to
+iterate.
+
+#### Scenario: A tick starts
+
+- **WHEN** the job runs
+- **THEN** it reads the board before acting
+- **AND** every issue it touches came from that list or from the dispatch step
+
+#### Scenario: An issue is closed but its status is not Done
+
+- **WHEN** a board item's issue is closed and its status is still `Testing`
+- **THEN** the tick sets `Done` before anything else looks at the item

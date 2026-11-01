@@ -1,7 +1,7 @@
 ---
 name: taskboard-loop
-description: Run one tick of the issue-to-PR loop. Dispatch a Ready issue to the coding agent, resume a blocked one when the owner answers, move the issue to Testing when its pull request exists, and to Done when it merges. Use when the scheduled taskboard-tick runs, or when the owner asks for the queue state.
-version: 1.0.0
+description: Run one tick of the issue-to-PR loop. Dispatch a Ready issue to the coding agent, forward the owner's comments, move the issue to Testing when its pull request exists, and to Done when it merges. Use when the scheduled taskboard-tick runs, or when the owner asks for the queue state.
+version: 1.1.0
 metadata:
   hermes:
     tags: [taskboard, github, opencode, orchestration]
@@ -16,98 +16,112 @@ moves a card.
 
 ## Tools
 
-- Board, issues, pull requests: `terminal` running
+- Board, issues and pull requests: `terminal` running
   `python3 /opt/data/skills/devops/taskboard-loop/taskboard.py <command>`.
   Never compose GraphQL or REST yourself; the script already answers.
 - The agent: `mcp__opencode__run_task`, `mcp__opencode__get_session`,
   `mcp__opencode__respond`, `mcp__opencode__get_diff`,
-  `mcp__opencode__abort_session`.
+  `mcp__opencode__get_transcript`, `mcp__opencode__abort_session`,
+  `mcp__opencode__list_sessions`.
 - Reporting: `mcp__sympozium_slack__slack_post_message` to the home channel.
 
-`taskboard.py` subcommands: `sync`, `ready`, `issue <n>`, `status <n> <Status>`,
-`comment <n>` (body on stdin), `start <n> <session>`, `pr <repo> <branch>`,
-`review <repo> <pr>`.
+`taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `inbox <n>`,
+`status <n> <Status>`, `comment <n> [--owner]` (body on stdin), `start <n>
+<session>`, `forwarded <n> <since>`, `pr <repo> <branch>`, `review <repo> <pr>`.
 
 Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
 `Done`.
 
+When you post a body that came from somewhere else, pass it through a quoted
+heredoc, never `echo`: the text can contain backticks and `$(...)`.
+
+```
+cat <<'EOF' | python3 /opt/data/skills/devops/taskboard-loop/taskboard.py comment 116
+> the body, verbatim
+EOF
+```
+
 ## The tick
 
-Do these in order. Stop reading an issue once you have acted on it.
+The tick has no memory between runs, so it starts by reading the board. Run `sync`,
+then `board`, then work the list. Nothing below is reached by guessing an issue
+number.
 
 ### 0. Board membership
 
-Run `sync` once. It adds any open issue labelled `agent` that never reached the
-board, at `Backlog`. Nothing else adds them, so an issue missing here is invisible
-to the rest of the tick.
+`sync` adds any open issue labelled `agent` that never reached the board, at
+`Backlog`. Nothing else adds them, so an issue missing here stays invisible.
 
-### 1. Ready issues, until the agent is full
+### 1. Closed issues
 
-Run `ready`. Work the list lowest number first, and for each issue call
-`mcp__opencode__run_task` with `wait_seconds: 300` and this prompt, filled in:
+For any board item whose `state` is `CLOSED` and whose status is not `Done`: set
+`Done`, comment the merge or the close, and post one Slack line. Skip everything
+else for that issue.
 
-```
-Issue datahub-local/datahub-local#<n>: <title>
+### 2. Ready issues, until the agent is full
 
-<the issue body>
+Work the `Ready` items lowest number first. For each, read `issue <n>` first:
 
-Work it per your `router` skill and the skills it sends you to. This repository is
-the one named under `Repo` in the issue. Decide yourself whether the change needs an
-OpenSpec delta, by the reviewed repository's rule. Ask with the question tool if a
-decision is yours to make.
-```
+- It already records a session: a previous tick started work and died before the
+  status moved. Set `In Progress`, comment that it resumed, and do not dispatch a
+  second session.
+- Otherwise dispatch: call `mcp__opencode__run_task` with `wait_seconds: 300`, the
+  `directory` from `repos` when the issue names exactly one repository, and this
+  prompt:
 
-Read `issue <n>` first and pass `directory` when it names exactly one repository
-(`repos` has one entry): that repository's name. The shim refuses two turns in one
-checkout, so a distinct directory per repository is what lets two issues run at the
-same time. Omit it when the issue names several.
+  ```
+  Issue datahub-local/datahub-local#<n>: <title>
+
+  <the issue body>
+
+  Work it per your `router` skill and the skills it sends you to. This repository is
+  the one named under `Repo` in the issue. Decide yourself whether the change needs
+  an OpenSpec delta, by the reviewed repository's rule. Ask with the question tool
+  if a decision is yours to make.
+  ```
 
 Then:
 
-- `status: busy` in the answer means the configured turns are all running, or this
-  checkout already has one. Stop dispatching this tick; it is not a failure and it
-  is not a reason to comment.
-- `ERROR:` means the shim or the server failed. Comment the error on the issue,
-  change no status, and stop dispatching.
-- Anything else is a started session. Take the id from the `session:` line, run
-  `start <n> <id>`, then `status <n> "In Progress"`, and continue with the next
-  ready issue.
+- `status: busy`: the configured turns are all running, or that checkout already
+  has one. Stop dispatching this tick. Say nothing and change nothing.
+- `ERROR:`: comment the error on the issue, change no status, stop dispatching.
+- Anything else: take the `session:` id, run `start <n> <id>`, set `In Progress`,
+  and continue with the next ready issue.
 
-The shim runs one turn at a time by default (`OPENCODE_MAX_CONCURRENT`), so today
-the loop dispatches exactly one issue per tick and stops on the next `busy`. That
-is the configured limit, not a rule of the loop.
+### 3. Comments the session has not seen
 
-### 2. Comments the session has not seen
-
-Every issue with a session gets this, whatever its status except `Done`. Run `inbox
-<n>`: it returns the comments written since the last one you forwarded, from the
-issue and from the pull request's review, in order. One queue, because to the agent
-both are the owner talking to it.
+For every board item that is `In Progress`, `Blocked` or `Testing`, run `inbox <n>`.
+It returns the comments written since the last one you forwarded, from the issue
+and from the pull request's review, in order. One queue, because to the agent both
+are the owner talking to it.
 
 If `items` is not empty:
 
-1. Join them, oldest first. Say where each came from when it is a review comment:
-   `<path>:<line>: <body>`.
-2. Send them to the session:
-   - `get_session` says `needs_input`: `respond` with the form or permission id and
-     that text. If the form has several fields, answer each from the comment.
+1. Check `get_session` first. If the session is `running`, stop here and leave the
+   marker alone: forwarding into a live turn returns `busy`, and marking it would
+   lose the comment. The next tick sends it.
+2. Join the items, oldest first. Say where each came from when it is a review
+   comment: `<path>:<line>: <body>`.
+3. Send them:
+   - `needs_input`: `respond` with the form or permission id and that text. If the
+     form has several fields, answer each from the comment.
    - otherwise: `run_task` with `session_id` and the text, prefixed with
      `The owner wrote:`.
-3. `forwarded <n> <the created_at of the newest item you sent>`. That marker is what
-   stops the same words being sent twice.
-4. `status <n> "In Progress"`, and say in Slack that the owner's comment restarted
+4. `forwarded <n> <the created_at of the newest item you sent>`.
+5. `status <n> "In Progress"`, and say in Slack that the owner's comment restarted
    the work, when the issue was `Blocked` or `Testing`.
 
-Relayed words are the owner's: a comment you post from a Slack answer carries no
-taskboard marker, so `inbox` picks it up like any other.
+Relayed words are the owner's: post a Slack answer with `comment <n> --owner`, which
+leaves it unmarked so `inbox` forwards it like any other.
 
-### 3. Session state
+### 4. Session state
 
 `get_session <id>` and act on its `status:` line:
 
 - `running`: nothing more for this issue this tick.
 - `needs_input`: the agent asked something. Publish it once per form or permission
-  id, not once per tick:
+  id: read `issue <n>` and skip if the newest comment carrying
+  `<!-- taskboard:help -->` already names this id. Otherwise post:
 
   ```
   **The agent needs a decision**
@@ -119,15 +133,16 @@ taskboard marker, so `inbox` picks it up like any other.
   ```
 
   Then `status <n> Blocked` and post the same text, without the marker, to Slack.
-  The answer arrives as a comment, as the form in the web UI, or from Slack through
-  Hermes, and step 2 forwards it.
 - `idle`: the turn finished. Read the first line of its last text.
-  - `BLOCKED`: go to step 3b.
-  - otherwise: run `pr <repo> <branch>` and go to step 4.
-- `error`: post the `error:` line and the last `get_transcript` lines as a comment,
-  set `Blocked`, and say the owner must decide. Do not retry.
+  - `BLOCKED`: go to step 4b.
+  - otherwise: run `pr <repo> <branch>` and go to step 5.
+- `ERROR: no session`: the recorded session is gone. Comment that it was lost and
+  what the last known state was, leave the status, and report it. Do not start a
+  new session on your own.
+- `ERROR:` otherwise: comment the error, set `Blocked`, and say the owner must
+  decide which way to go. Do not retry.
 
-### 3b. A blocked report
+### 4b. A blocked report
 
 A turn can end `BLOCKED` without asking a question: a missing tool, a permission it
 does not have, a destructive step only the owner may take, three failed fixes.
@@ -139,28 +154,22 @@ does not have, a destructive step only the owner may take, three failed fixes.
 3. Say it once in Slack. It is not a missing pull request and must not be reported
    as one.
 
-The owner's next comment reaches the session through step 2, like any other.
+### 5. Pull request state
 
-### 4. Pull request state
+Take the branch from the agent's claim comment or the pull request it linked, and
+run `pr <repo> <branch>`.
 
-From the issue, take the branch recorded in the session comment or the pull request
-the agent linked. Run `pr <repo> <branch>`.
-
-- `prs` empty and the session is idle, with a report that is not `BLOCKED`:
-  comment the branch name and that no pull request exists, keep `In Progress`, and
-  report it. A `BLOCKED` report went to step 3b instead.
-- The pull request is `open` while the issue is `Testing`: comment and status are
-  already right. Step 2 has already forwarded anything new the owner wrote.
-- The newest pull request is `open` and the issue is not `Testing`: run `review
-  <repo> <number>`, comment its URL and what changed on the issue, set `Testing`,
-  and post one Slack line saying it is ready to review.
-- It is `open` and the issue is already `Testing`: nothing here. Only step 2 has
-  anything to do, and it does it when the owner writes.
-- It is `merged`: set `Done`, comment the merge, and post one Slack line.
-
-### 5. Closed issues
-
-An issue closed on the board is `Done`. Set it when you notice, then leave it.
+- `prs` empty and the session is idle, with a report that is not `BLOCKED`: comment
+  the branch name and that no pull request exists, once. If a comment already says
+  it, say nothing. Keep `In Progress`.
+- `open` and the issue is `In Progress`: run `review <repo> <number>`, comment its
+  URL and what changed on the issue, set `Testing`, and post one Slack line saying
+  it is ready to review.
+- `open` and the issue is already `Testing`: nothing. Only step 3 has anything to
+  do, and it does it when the owner writes.
+- `open` and the issue is `Blocked`: nothing. A question outranks an old pull
+  request; only the owner's answer leaves `Blocked`.
+- `merged`: set `Done`, comment the merge, and post one Slack line.
 
 ## Reporting
 
@@ -174,5 +183,7 @@ An issue closed on the board is `Done`. Set it when you notice, then leave it.
 - Never set `Ready`. Only the owner moves an issue to `Ready`.
 - Never set `Done` on a pull request that is only open.
 - Never push, merge, or open a second pull request for an issue.
-- Never retry an `error` automatically.
+- Never retry an `error` automatically, and never start a session to replace a lost
+  one.
 - Never answer a question yourself. The agent's questions are for the owner.
+- Never leave `Blocked` for any reason except forwarding the owner's answer.

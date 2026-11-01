@@ -11,11 +11,12 @@ one.
 
 Usage:
   taskboard.py sync
+  taskboard.py board             (every open issue on the board, with its status)
   taskboard.py ready
   taskboard.py issue <n>
   taskboard.py inbox <n>              (comments the session has not been given)
   taskboard.py status <n> <Status>
-  taskboard.py comment <n>            (body on stdin)
+  taskboard.py comment <n> [--owner]  (body on stdin; --owner relays the owner's words)
   taskboard.py start <n> <session>    (records the session on the issue)
   taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
   taskboard.py pr <repo> <branch>
@@ -192,6 +193,47 @@ def repos_of(body: str) -> list[str]:
     return repos
 
 
+def active_items(items: list[dict]) -> list[dict]:
+    """Board items still being worked: an issue, agent-labelled, not Done.
+
+    The tick has no memory between runs, so its work list has to come from the
+    board. Without this the comment, question and pull-request steps have nothing
+    to iterate and silently do nothing.
+    """
+    active = []
+    for item in items:
+        content = item.get("content") or {}
+        if content.get("__typename") != "Issue":
+            continue
+        status = (item.get("fieldValueByName") or {}).get("name")
+        labels = [n["name"] for n in (content.get("labels") or {}).get("nodes", [])]
+        if status in (None, "Done") or "agent" not in labels:
+            continue
+        active.append(
+            {
+                "number": content["number"],
+                "title": content["title"],
+                "url": content["url"],
+                "status": status,
+                "state": content.get("state"),
+            }
+        )
+    order = ["Backlog", "Ready", "In Progress", "Blocked", "Testing"]
+    return sorted(active, key=lambda r: (order.index(r["status"]), r["number"]))
+
+
+def comment_body(body: str, owner: bool = False) -> str:
+    """What a comment posted by the tick carries.
+
+    `--owner` is the relay path: the words are the owner's, and marking them would
+    make `inbox` drop them, which is how an answer gets lost.
+    """
+    text = body.strip()
+    if owner or MARKER in text:
+        return text
+    return f"{text}\n\n{AGENT_MARKER}"
+
+
 def missing_on_board(issues: list[dict], items: list[dict]) -> list[dict]:
     """Open agent issues that never reached the board.
 
@@ -321,6 +363,10 @@ def main(argv: list[str]) -> int:
         raise SystemExit(__doc__)
     command, args = argv[0], argv[1:]
     github = GitHub(token)
+
+    if command == "board":
+        print(json.dumps({"items": active_items(github.project()["items"])}, indent=2))
+        return 0
 
     if command == "sync":
         issues = github._call("GET", f"/repos/{REPO}/issues?labels=agent&state=open&per_page=100")
@@ -454,11 +500,11 @@ def main(argv: list[str]) -> int:
 
     if command == "comment":
         number = int(args[0])
+        owner = "--owner" in args[1:]
         body = sys.stdin.read().strip()
         if not body:
             raise SystemExit("ERROR: comment body is empty")
-        if MARKER not in body:
-            body = f"{body}\n\n{AGENT_MARKER}"
+        body = comment_body(body, owner=owner)
         created = github._call("POST", f"/repos/{REPO}/issues/{number}/comments", {"body": body})
         print(json.dumps({"number": number, "url": created.get("html_url", "")}))
         return 0
@@ -488,6 +534,9 @@ def main(argv: list[str]) -> int:
         repo, branch = args[0], args[1]
         query = f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
         pulls = github._call("GET", query)
+        # A branch can carry an old merged pull request and a current one; the open
+        # one is the state the tick acts on.
+        pulls = sorted(pulls, key=lambda p: (p["state"] != "open", -p["number"]))
         print(
             json.dumps(
                 {

@@ -202,3 +202,31 @@ def test_last_branch_reads_the_claim_comment():
         comment_with_id("Claimed. Branch `feat/116-org-profile-readme` in datahub-local.", "2026-11-01T09:00:00Z")
     ]
     assert taskboard.last_branch(comments) == "feat/116-org-profile-readme"
+
+
+def test_comment_body_marks_a_machine_comment():
+    assert taskboard.comment_body("Claimed.").endswith(taskboard.AGENT_MARKER)
+
+
+def test_comment_body_keeps_an_owner_relay_unmarked():
+    body = taskboard.comment_body("use the other repository", owner=True)
+    assert body == "use the other repository"
+    assert taskboard.MARKER not in body
+
+
+def test_comment_body_does_not_double_mark():
+    body = taskboard.comment_body("Already.\n\n<!-- taskboard:help -->")
+    assert body.count("<!-- taskboard:") == 1
+
+
+def test_active_items_lists_every_open_issue_ordered_by_work_state():
+    items = [
+        item(9, "Testing", ["agent"]),
+        item(4, "Backlog", ["agent"]),
+        item(2, "In Progress", ["agent"]),
+        item(7, "Done", ["agent"]),
+        item(5, "Blocked", ["agent"]),
+        item(6, "In Progress", ["docs"]),
+        item(3, "Ready", ["agent"]),
+    ]
+    assert [r["number"] for r in taskboard.active_items(items)] == [4, 3, 2, 5, 9]

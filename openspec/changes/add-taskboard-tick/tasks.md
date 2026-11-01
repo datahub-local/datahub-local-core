@@ -23,6 +23,10 @@
   comments and pull-request review comments, de-duplicated by a marker.
 - [ ] 1.9b Confirm a `BLOCKED` report sets `Blocked` rather than "branch without a
   pull request", and that an owner answer relayed from Slack is forwarded.
+- [x] 1.9d Review fixes: `board` as the tick's work list, `comment --owner` for a
+  relayed answer, resume respecting the checkout rule, the retained PR-mention
+  requirement rewritten, the agent no longer closing issues, and the skill's
+  no-report-on-busy rule.
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
   answers `idle` with nothing ready.
