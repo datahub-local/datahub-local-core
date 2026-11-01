@@ -12,3 +12,7 @@ data:
 {{ .Files.Get "files/agent/taskboard-loop/SKILL.md" | indent 4 }}
   taskboard.py: |
 {{ .Files.Get "files/agent/taskboard-loop/taskboard.py" | indent 4 }}
+  HOOK.yaml: |
+{{ .Files.Get "files/agent/taskboard-loop/HOOK.yaml" | indent 4 }}
+  handler.py: |
+{{ .Files.Get "files/agent/taskboard-loop/handler.py" | indent 4 }}

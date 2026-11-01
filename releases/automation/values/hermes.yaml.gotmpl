@@ -62,6 +62,14 @@ extraVolumes:
   - name: taskboard-loop
     configMap:
       name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
+  - name: taskboard-hook
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
+      items:
+        - key: HOOK.yaml
+          path: HOOK.yaml
+        - key: handler.py
+          path: handler.py
 
 extraVolumeMounts:
   - name: run-tmpfs
@@ -73,6 +81,12 @@ extraVolumeMounts:
     readOnly: true
   - name: taskboard-loop
     mountPath: /opt/data/skills/devops/taskboard-loop
+    readOnly: true
+  # The gateway:startup hook that creates the tick job. Hermes only loads hooks
+  # from a directory holding HOOK.yaml and handler.py, and re-reads them at every
+  # start, so a restored volume repairs itself without an init container.
+  - name: taskboard-hook
+    mountPath: /opt/data/hooks/taskboard-tick
     readOnly: true
 
 # seed-config's chown only runs when that init container starts as root; the
@@ -99,51 +113,6 @@ extraInitContainers:
     volumeMounts:
       - name: data
         mountPath: /opt/data
-  # The loop's schedule lives in HERMES_HOME/cron/jobs.json, which no values file
-  # can carry and no ConfigMap may overwrite without dropping the owner's other
-  # jobs. Create the one job when it is absent; leave the file alone otherwise.
-  - name: cron-seed
-    image: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "nousresearch/hermes-agent") }}nousresearch/hermes-agent:{{ $value }}{{ end }}{{ end }}'
-    imagePullPolicy: IfNotPresent
-    command: ["/bin/sh", "-c"]
-    args:
-      - |
-        set -e
-        if grep -q '"name": "taskboard-tick"' /opt/data/cron/jobs.json 2>/dev/null; then
-          echo "taskboard-tick is already scheduled"
-          exit 0
-        fi
-        hermes_bin=/opt/hermes/.venv/bin/hermes
-        "$hermes_bin" cron create 10m \
-          "Follow the taskboard-loop skill for one tick. Report only what changed." \
-          --name taskboard-tick \
-          --skill taskboard-loop \
-          --deliver local
-    env:
-      - name: HERMES_HOME
-        value: /opt/data
-      # The CLI resolves its own caches through HOME, and the rootfs is read-only.
-      - name: HOME
-        value: /opt/data
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 10000
-      runAsGroup: 10000
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      capabilities:
-        drop: [ALL]
-    volumeMounts:
-      - name: data
-        mountPath: /opt/data
-      - name: tmp-tmpfs
-        mountPath: /tmp
-
-# seed-config copies config.yaml only when it is absent, so a new key never
-# reaches an existing volume. Adding one (mcp_servers was the first) needs a
-# deploy with `bootstrap.overwrite=true`; it stays false so runtime edits to
-# config.yaml survive later rollouts.
-
 persistence:
   enabled: true
   storageClass: longhorn

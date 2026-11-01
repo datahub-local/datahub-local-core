@@ -34,12 +34,24 @@ repository is the source, a deploy replaces it, and a `HERMES_HOME` restored fro
 backup still reads the current rules. The same reason the Slack ack plugin is
 mounted this way.
 
-### 4 — Seed the cron job, do not own the file
+### 4 — A gateway hook provisions the job, not an init container
 
-`jobs.json` holds the owner's other jobs and Hermes rewrites it at runtime. The
-init container greps for the job name and creates it only when it is missing, so
-the first boot of a fresh volume gets the loop and every later boot is a no-op. A
-ConfigMap over `jobs.json` would delete whatever the owner has scheduled since.
+`jobs.json` holds the owner's other jobs, Hermes rewrites it at runtime, and a
+ConfigMap over it would either be read-only or delete what the owner scheduled. So
+the job has to be created by something that runs with the file writable, and the
+choice is what runs it.
+
+Hermes loads hooks from `HERMES_HOME/hooks/<name>/` (`HOOK.yaml` plus `handler.py`)
+at every gateway start, in-process, and a raising handler is logged rather than
+fatal. A `gateway:startup` hook that reads `jobs.json`, returns when the job is
+already there, and otherwise calls `hermes cron create` is the same work the init
+container did, without a second container, and it repairs a restored volume because
+the gateway always starts.
+
+The trade is loudness. An init container that fails stops the pod; a hook that fails
+logs and the gateway serves Slack anyway, so an absent job is quiet. That is
+acceptable because the failure is visible in `hermes cron list` and in the log, and
+because the alternative couples a gateway-owned file to the pod lifecycle.
 
 `--deliver local` keeps the ten-minute output out of Slack; the skill posts through
 the Slack MCP server only when something moved, so an idle tick is silent by

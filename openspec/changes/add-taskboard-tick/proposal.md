@@ -23,10 +23,10 @@ else and drifts from the repository. This change puts both in git.
   of composing GraphQL. Owner answers are recognised by the absence of a
   `<!-- taskboard: -->` marker, because the PAT makes the owner the author of every
   machine comment too.
-- An idempotent `cron-seed` init container that creates the `taskboard-tick` job
-  (every 10 minutes, `--skill taskboard-loop`, `--deliver local`) only when it is
-  absent, so a fresh volume is provisioned and the owner's other jobs are left
-  alone.
+- A `gateway:startup` hook that creates the `taskboard-tick` job (every 10 minutes,
+  `--skill taskboard-loop`, `--deliver local`) only when it is absent, so a fresh or
+  restored volume is provisioned, the owner's other jobs are left alone, and no
+  extra container is needed.
 - `--deliver local` on purpose: the job speaks in Slack through the Slack MCP
   server only when something moved, so an idle tick is silent.
 

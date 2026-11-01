@@ -11,15 +11,21 @@ with the loop in place and the owner's other scheduled jobs untouched.
 
 #### Scenario: Hermes starts with a fresh volume
 
-- **WHEN** the Pod starts with no `cron/jobs.json`
-- **THEN** the init container creates the `taskboard-tick` job
+- **WHEN** the gateway starts with no `cron/jobs.json`, or with one that lacks the job
+- **THEN** the `gateway:startup` hook creates the `taskboard-tick` job
 - **AND** the skill directory is present from the mounted ConfigMap
 
 #### Scenario: Hermes restarts with the job already scheduled
 
 - **WHEN** the job exists in `jobs.json`
-- **THEN** the init container leaves the file unchanged
+- **THEN** the hook leaves the file unchanged
 - **AND** no duplicate job is created
+
+#### Scenario: The hook cannot create the job
+
+- **WHEN** `hermes cron create` fails or `jobs.json` cannot be parsed
+- **THEN** the hook logs the outcome and the gateway starts anyway
+- **AND** it never writes into a file it could not read
 
 ### Requirement: Only marked comments are machine comments
 

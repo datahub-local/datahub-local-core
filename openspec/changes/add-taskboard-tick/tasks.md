@@ -9,12 +9,14 @@
   release.
 - [x] 1.4 Mount the ConfigMap read-only at
   `/opt/data/skills/devops/taskboard-loop` in `values/hermes.yaml.gotmpl`.
-- [x] 1.5 Add the `cron-seed` init container: create `taskboard-tick` only when it
-  is absent, `--skill taskboard-loop`, `--deliver local`.
+- [x] 1.5 Add a `gateway:startup` hook (`HOOK.yaml` + `handler.py`) that creates
+  `taskboard-tick` only when `jobs.json` lacks it, `--skill taskboard-loop`,
+  `--deliver local`, and logs rather than raising. Verified in the live Hermes pod
+  against a scratch `HERMES_HOME`: created once, a second run left one job.
 - [x] 1.6 Add `tests/test_taskboard.py` for `pick_ready`, `last_session` and
   `help_state`, and run it.
-- [x] 1.7 `helmfile template` renders the ConfigMap, the mount and the init
-  container, with no change to the existing init containers.
+- [x] 1.7 `helmfile template` renders the ConfigMap, the skill mount and the hook
+  mount, with the `cron-seed` init container removed.
 - [x] 1.7b The live volume predates `mcp_servers.opencode` (the chart seeds
   `config.yaml` only when absent), so the key was written with `hermes config set`
   and `hermes mcp test opencode` now reports seven tools. Values already carry it,
