@@ -11,7 +11,7 @@
   `github-app-manager`, move the MCP server to loopback, keep the Service on 8080.
 - [x] 1.5 Remove the `headers` block and the `mcp-github-token` reference from the
   Hermes config.
-- [ ] 1.6 Publish the adapter image with `github-proxy.mjs` and the wrapper, and bump
+- [x] 1.6 Publish the adapter image with `github-proxy.mjs` and the wrapper, and bump
   the digest in `values/_version.yaml`.
 - [ ] 1.7 Rollout, then prove inside each pod: the minter answers `/token`, the proxy
   answers `/healthz`, and `gh api user` returns the App bot, not `alvsanand`.
