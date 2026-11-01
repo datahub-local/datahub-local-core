@@ -15,6 +15,10 @@
   `help_state`, and run it.
 - [x] 1.7 `helmfile template` renders the ConfigMap, the mount and the init
   container, with no change to the existing init containers.
+- [x] 1.7b The live volume predates `mcp_servers.opencode` (the chart seeds
+  `config.yaml` only when absent), so the key was written with `hermes config set`
+  and `hermes mcp test opencode` now reports seven tools. Values already carry it,
+  so a fresh volume gets it without that step.
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
   answers `idle` with nothing ready.
