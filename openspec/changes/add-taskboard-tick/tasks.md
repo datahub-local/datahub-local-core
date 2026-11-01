@@ -19,6 +19,8 @@
   `config.yaml` only when absent), so the key was written with `hermes config set`
   and `hermes mcp test opencode` now reports seven tools. Values already carry it,
   so a fresh volume gets it without that step.
+- [ ] 1.9b Confirm a `BLOCKED` report sets `Blocked` rather than "branch without a
+  pull request", and that an owner answer relayed from Slack is forwarded.
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
   answers `idle` with nothing ready.

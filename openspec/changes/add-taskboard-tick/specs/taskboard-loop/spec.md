@@ -87,3 +87,28 @@ repository.
 - **WHEN** `run_task` answers `status: busy`
 - **THEN** the tick dispatches no further issues this run
 - **AND** it neither comments nor changes a status because of the refusal
+
+### Requirement: A blocked report is not a missing pull request
+
+A turn that ends `BLOCKED` without asking a question SHALL be reported as blocked:
+the issue gets the reason and what would unblock it, the status becomes `Blocked`,
+and the owner is told once. The tick SHALL NOT report it as a branch without a pull
+request, which is the shape of a different failure.
+
+#### Scenario: The agent cannot continue
+
+- **WHEN** an idle session's report begins with `BLOCKED`
+- **THEN** the issue is `Blocked` with the reason on it
+- **AND** no pull-request lookup decides the outcome
+
+### Requirement: An answer relayed from Slack is the owner's answer
+
+The owner MAY answer in Slack. Hermes SHALL relay that text on the issue verbatim
+and without a taskboard marker, so the tick reads it as the answer and resumes the
+session, exactly as if the owner had typed it on the issue.
+
+#### Scenario: The owner answers in Slack
+
+- **WHEN** the owner gives the answer in a chat and Hermes posts it on the issue
+- **THEN** the comment carries no marker
+- **AND** the next tick forwards it with `respond` and sets `In Progress`

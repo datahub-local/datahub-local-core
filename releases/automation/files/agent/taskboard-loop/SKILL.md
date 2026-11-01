@@ -86,8 +86,9 @@ For each issue whose status is `In Progress`:
    report it.
 3. `get_session <id>` and act on its `status:` line:
    - `running`: nothing. Do not poll it again this tick.
-   - `idle`: the turn finished. Run `pr <repo> <branch>` for the branch recorded
-     in the issue, and go to step 4.
+   - `idle`: the turn finished. Read the first line of its last text. If it says
+     `BLOCKED`, go to step 3b. Otherwise run `pr <repo> <branch>` for the branch
+     recorded in the issue, and go to step 4.
    - `needs_input`: go to step 3.
    - `error`: post the `error:` line and the last `get_transcript` lines as a
      comment, set `Blocked`, and say the owner must decide. Do not retry.
@@ -111,6 +112,14 @@ permission id, not once per tick:
 2. `status <n> Blocked`.
 3. Post the same text, without the marker, to Slack.
 
+An answer can arrive three ways, and all three end in `respond`:
+
+- a comment on the issue, written by the owner;
+- the form answered in the OpenCode web UI, which `get_session` reflects;
+- the owner telling you in Slack. Relay it on the issue verbatim, without a
+  taskboard marker, because the words are theirs; the tick then treats it as the
+  answer, which it is.
+
 Then, for an issue already `Blocked`, resume when the owner answered:
 
 - `issue <n>` and read `help.answered`. If true, call `respond` with the session
@@ -120,13 +129,30 @@ Then, for an issue already `Blocked`, resume when the owner answered:
   owner answered in the web UI. Set `In Progress` and forward nothing.
 - When both are present, forward the issue answer and ignore the form answer.
 
+### 3b. A blocked report
+
+A turn can end `BLOCKED` without asking a question: a missing tool, a permission it
+does not have, a destructive step only the owner may take, three failed fixes.
+
+1. Comment the first line of the report and the part that explains what would
+   unblock it. Use `taskboard.py comment <n>` on stdin, with
+   `<!-- taskboard:help -->` so the tick does not read your own comment as an
+   answer, and mention the owner.
+2. `status <n> Blocked`.
+3. Say it once in Slack. It is not a missing pull request and must not be reported
+   as one.
+
+Resume the same way as a question: the owner's next comment becomes the new prompt
+through `run_task(session_id=...)`, and the status goes back to `In Progress`.
+
 ### 4. Pull requests
 
 From the issue, take the branch recorded in the session comment or the pull request
 the agent linked. Run `pr <repo> <branch>`.
 
-- `prs` empty and the session is idle: comment the branch name and that no pull
-  request exists, keep `In Progress`, and report it.
+- `prs` empty and the session is idle, with a report that is not `BLOCKED`:
+  comment the branch name and that no pull request exists, keep `In Progress`, and
+  report it. A `BLOCKED` report went to step 3b instead.
 - The newest pull request is `open`: run `review <repo> <number>`, comment its URL
   and what changed on the issue, set `Testing`, and post one Slack line saying it
   is ready to review.
