@@ -13,7 +13,7 @@
   is absent, `--skill taskboard-loop`, `--deliver local`.
 - [x] 1.6 Add `tests/test_taskboard.py` for `pick_ready`, `last_session` and
   `help_state`, and run it.
-- [ ] 1.7 `helmfile template` renders the ConfigMap, the mount and the init
+- [x] 1.7 `helmfile template` renders the ConfigMap, the mount and the init
   container, with no change to the existing init containers.
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
