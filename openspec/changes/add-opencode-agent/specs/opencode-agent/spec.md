@@ -8,10 +8,9 @@ The `opencode-server` workload SHALL run
 `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` by digest, pinned in
 `values/_version.yaml`. The image SHALL be built in `datahub-local-ai/agents/adapters/opencode/`
 from a Debian bookworm base with the pinned upstream OpenCode Linux release binary copied in. The
-release SHALL NOT deploy `ghcr.io/anomalyco/opencode` or any other upstream OpenCode image. The
-litellm plugin SHALL be `opencode-plugin-litellm` at the version pinned beside the image, installed
-by an init container into the writable plugin cache on the state volume, and listed in
-`opencode.json`.
+release SHALL NOT deploy `ghcr.io/anomalyco/opencode` or any other upstream OpenCode image. LiteLLM
+SHALL be a provider declared in `opencode.json`, not a plugin: there is no package to install, no
+cache to warm and no init container.
 
 #### Scenario: The image is ours and pinned
 
@@ -19,10 +18,10 @@ by an init container into the writable plugin cache on the state volume, and lis
 - **THEN** the server image is `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` by digest
 - **AND** no upstream OpenCode image is referenced anywhere in the release
 
-#### Scenario: The plugin install is idempotent
+#### Scenario: The Pod has no init container
 
-- **WHEN** the init container runs with a warm cache for the pinned version
-- **THEN** it exits without a registry request
+- **WHEN** the rendered Pod spec is inspected
+- **THEN** the server Pod has no init container and no plugin cache to fill
 
 ### Requirement: The image carries the platform toolchain
 
@@ -47,7 +46,7 @@ SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be 
 #### Scenario: The image is the only toolchain
 
 - **WHEN** the rendered Pod spec is inspected
-- **THEN** there is no `apk --root` init container and no init container other than the plugin
+- **THEN** there is no `apk --root` init container and no init container at all
 - **AND** every long-running container starts as uid 1000 with a read-only root filesystem
 
 #### Scenario: A version bump reaches the cluster by digest
@@ -63,14 +62,14 @@ The adapter image SHALL carry `opencode.json` at `/etc/opencode/opencode.json` (
 system configuration directory), `AGENTS.md` at `/opt/opencode/AGENTS.md` and referenced from the
 config's `instructions`, `gitconfig` at `/etc/gitconfig`, the credential helper at
 `/usr/local/bin/git-credential-opencode` (mode `0755`), the token minter at
-`/usr/local/bin/opencode-minter.mjs`, and the plugin pre-warm at
-`/usr/local/bin/opencode-plugin-prewarm`. The release SHALL NOT ship those files in a ConfigMap and
+`/usr/local/bin/opencode-minter.mjs`. The release SHALL NOT ship those files in a ConfigMap and
 SHALL NOT mount them under `/opt/data`, because the state volume is mounted there and hides what the
 image carries.
 
 The config SHALL use the v2 shapes: `permissions` as ordered `{action, resource, effect}` rules,
-`mcp.servers`, `plugins`, `update: "disable"`, the default model, the pinned LiteLLM plugin, and the
-Firecrawl server. The Firecrawl URL SHALL be `{env:OPENCODE_FIRECRAWL_MCP_URL}`, the one
+`mcp.servers`, `providers.litellm` with the `@opencode/ai/providers/openai-compatible` package,
+`enabled_providers: ["litellm"]`, `update: "disable"`, the default model, and the Firecrawl
+server. The Firecrawl URL SHALL be `{env:OPENCODE_FIRECRAWL_MCP_URL}`, the one
 cluster-specific value.
 
 #### Scenario: The files survive the state volume
@@ -80,11 +79,17 @@ cluster-specific value.
   from the image
 - **AND** no ConfigMap in the release carries any of them
 
-### Requirement: LiteLLM is the only model path, through the plugin
+### Requirement: LiteLLM is the only model path
 
 `LITELLM_BASE_URL` SHALL name the `data` release's LiteLLM `/v1` endpoint and `LITELLM_API_KEY`
 SHALL come from `litellm-auth-credentials` by reference. The default model SHALL be
 `litellm/opencode-go/deepseek-v4.1-flash`.
+
+#### Scenario: Only litellm models are selectable
+
+- **WHEN** the agent lists its models
+- **THEN** every entry is prefixed `litellm/`
+- **AND** no other provider is enabled, including `github-copilot` (which a `GITHUB_TOKEN` in the environment would otherwise activate)
 
 #### Scenario: A turn is served by LiteLLM
 
@@ -263,8 +268,8 @@ datahublocal-amd-1`, and `kubernetes.io/arch: amd64`.
 
 ### Requirement: Every container runs the restricted profile
 
-All containers SHALL run as a non-root uid: 1000 for the OpenCode, minter, plugin-init and shim
-containers, and the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
+All containers SHALL run as a non-root uid: 1000 for the OpenCode and shim containers (and the
+minter, when it is wired), and the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
 `allowPrivilegeEscalation: false`, all capabilities dropped, and `RuntimeDefault` seccomp. The
 service-account token SHALL NOT be mounted. No container SHALL run as uid 0. Writable paths SHALL be
 limited to `/opt/data`, `/workspace`, and a size-bounded memory `/tmp`.
@@ -279,7 +284,7 @@ limited to `/opt/data`, `/workspace`, and a size-bounded memory `/tmp`.
 ### Requirement: Server state is single-writer on two volumes
 
 The server SHALL use one replica, `Recreate`, a Longhorn RWO volume at `/opt/data` (home and
-plugin cache), and a second at `/workspace` (repositories). `HOME` SHALL be `/opt/data`.
+OpenCode state), and a second at `/workspace` (repositories). `HOME` SHALL be `/opt/data`.
 
 #### Scenario: A rollout does not share a volume
 
@@ -323,14 +328,14 @@ create one `sympozium.ai/v1alpha1 MCPServer` named for the shim, labelled
 - **THEN** the existing `mcpserver` egress rule admits the call
 - **AND** a 120-second bounded wait is not cut off by the MCP client timeout
 
-### Requirement: Health reflects the server, the plugin, and the proxy
+### Requirement: Health reflects the server, the provider, and the proxy
 
 Server liveness SHALL probe port 4096. Server readiness SHALL require a resolvable `litellm/*`
-model, because a cold cache installs the plugin. Startup SHALL allow at least 120 seconds. The
-proxy and shim SHALL expose readiness against the server.
+model, proving the declared provider loaded. Startup SHALL allow at least 120 seconds. The proxy and
+shim SHALL expose readiness against the server.
 
-#### Scenario: A cold install is not killed
+#### Scenario: A slow first start is not killed
 
-- **WHEN** the first start is still installing the plugin
+- **WHEN** the first start is still loading MCP and the provider
 - **THEN** the startup probe keeps the container alive
 - **AND** readiness stays false until a model is listed

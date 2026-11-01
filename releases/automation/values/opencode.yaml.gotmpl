@@ -35,26 +35,6 @@ controllers:
       nodeSelector:
         kubernetes.io/hostname: datahublocal-amd-1
         kubernetes.io/arch: amd64
-    initContainers:
-      plugin:
-        image:
-          repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
-          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter" }}'
-        # The pre-warm logic lives in the image (`opencode-plugin-prewarm`): it
-        # reads the baked plugin pin, skips a warm cache, and asserts the cache
-        # directory rather than the installer's exit status.
-        command: ["opencode-plugin-prewarm"]
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop: ["ALL"]
-        resources:
-          requests:
-            cpu: 50m
-            memory: 256Mi
-          limits:
-            memory: 1Gi
     containers:
       main:
         image:
@@ -104,9 +84,8 @@ controllers:
           - name: NO_PROXY
             value: '{{ .Values.egress_no_proxy }}'
         probes:
-          # The init container has already installed the plugin, but a cold start
-          # still registers MCP and the LiteLLM provider; a tight startup probe
-          # kills that and looks like a crash loop.
+          # A cold start registers MCP and the LiteLLM provider; a tight startup
+          # probe kills that and looks like a crash loop.
           startup:
             enabled: true
             type: TCP
@@ -122,9 +101,8 @@ controllers:
               periodSeconds: 30
               failureThreshold: 3
           # A model must be resolvable, not merely a listening port: the server's
-          # own model list proves the plugin activated and LiteLLM answered. The
-          # CLI (`opencode models`) is not used here: right after start it races
-          # its own plugin activation and exits non-zero for a few seconds.
+          # own model list proves the declared LiteLLM provider loaded. The CLI
+          # (`opencode models`) is not used here: it starts a private server.
           readiness:
             enabled: true
             type: COMMAND
@@ -302,8 +280,6 @@ persistence:
       server:
         main:
           - path: /opt/data
-        plugin:
-          - path: /opt/data
   workspace:
     type: persistentVolumeClaim
     accessMode: ReadWriteOnce
@@ -328,8 +304,6 @@ persistence:
     advancedMounts:
       server:
         main:
-          - path: /tmp
-        plugin:
           - path: /tmp
       mcp:
         main:
@@ -539,7 +513,7 @@ rawResources:
           gethomepage.dev/name: "OpenCode"
           gethomepage.dev/pod-selector: "app.kubernetes.io/controller=web"
           gethomepage.dev/group: "Automation"
-          gethomepage.dev/icon: "sh-opencode"
+          gethomepage.dev/icon: "si-opencode"
           gethomepage.dev/href: "https://automation-opencode.{{ .Values.gateway_hostname }}"
         name: '{{ .Values.release_name }}-automation-opencode'
       spec:

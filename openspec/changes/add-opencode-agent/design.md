@@ -130,13 +130,13 @@ harness contract and declares no capabilities, and its README says so.
 The agent's own files ship in the image, not in a ConfigMap: `opencode.json` at
 `/etc/opencode/opencode.json` (v2's machine-wide directory), `AGENTS.md` at
 `/opt/opencode/AGENTS.md` and named by `instructions`, `gitconfig` at `/etc/gitconfig`, and under
-`/usr/local/bin` the credential helper, the minter and the plugin pre-warm. `/opt/data` is a volume, so anything baked
-under `$HOME` would be hidden; `/etc` and `/usr/local` are not. The Firecrawl endpoint is the only
-cluster-specific value and is read from `OPENCODE_FIRECRAWL_MCP_URL` through v2's `{env:…}`
-substitution, so the image never hardcodes a Service address.
+`/usr/local/bin` the credential helper and the minter. `/opt/data` is a volume, so anything baked
+under `$HOME` would be hidden; `/etc` and `/usr/local` are not. The Firecrawl endpoint and the
+LiteLLM base URL are read from the environment through v2's `{env:…}` substitution, so the image
+never hardcodes a Service address.
 
-Consequences: no `apk`, no `--initdb`, no root process, no runtime download of `git` or a plugin
-toolchain, and a read-only root filesystem that still lets the agent clone, render and test.
+Consequences: no `apk`, no `--initdb`, no root process, no runtime download of `git` or a toolchain,
+and a read-only root filesystem that still lets the agent clone, render and test.
 
 ### 6 — Firecrawl is the self-hosted bridge, not a second deployment
 
@@ -173,26 +173,30 @@ consumer:
   `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`, and the OCI
   registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`. Without it
   `helmfile template` cannot resolve a chart and the toolchain is decoration.
-- PyPI and GitHub cover `uv sync` and `git`; npm covers the LiteLLM plugin. Browsing is the
-  Firecrawl bridge's job, not the proxy's.
+- PyPI and GitHub cover `uv sync` and `git`. Browsing is the Firecrawl bridge's job, not the
+  proxy's.
 
 The remaining residual is granularity, not reachability: an allowlisted domain is allowlisted for
 every path, and content inspection would need TLS interception.
 
-### 8 — Model path and plugin
+### 8 — Model path is a declared provider
 
-v2 installs a package plugin when a server starts, not in `opencode plugin add`, into
-`$HOME/.cache/opencode/npm/<spec>`. Measured: a cold `opencode models` races the activation and exits
-non-zero with `Location plugins did not finish activating` after writing the cache. The init
-container therefore runs the image's `opencode-plugin-prewarm`, which invokes
-`opencode models --standalone`, treats the cache directory as its assertion rather than the exit
-status, and short-circuits when the cache is already warm.
+LiteLLM is configured as an ordinary provider in the baked config — `providers.litellm` with the
+`@opencode/ai/providers/openai-compatible` package, `{env:LITELLM_BASE_URL}` and `LITELLM_API_KEY`
+from the environment, plus the one model the agent uses. `enabled_providers: ["litellm"]` is exclusive, so `litellm/*` is
+the only selectable path. That matters for more than the built-in free provider: a `GITHUB_TOKEN` in
+the environment makes OpenCode offer `github-copilot/*` as well (28 models, measured in the live
+Pod), and the allowlist is what keeps the agent on LiteLLM.
 
-Readiness does not use the CLI for the same reason: it asks the running server for
-`/api/model` and requires a `litellm` provider, which only exists once the plugin activated.
+That replaces the LiteLLM plugin the first draft used. The plugin discovered the proxy's catalogue,
+but it installed a package into `$HOME/.cache/opencode/npm/<spec>` on first server start, and a cold
+`opencode models` raced that activation and exited with `Location plugins did not finish activating`.
+An init container could only hide that race. A declared provider removes the install, the cache, the
+init container and the race; the cost is that a new LiteLLM model needs a config edit and an image
+rebuild, which is acceptable for one pinned default model.
 
-The image ships `node` and `npm`, so the install no longer depends on what the upstream image
-happens to carry, but the cache still lives on the state volume because `HOME` is `/opt/data`.
+Readiness asks the running server for `/api/model` and requires a `litellm` provider. The CLI is not
+used: it starts its own private server.
 
 ### 9 — Permissions
 
@@ -217,7 +221,7 @@ allow  fc_firecrawl_scrape, fc_firecrawl_search, fc_firecrawl_map
 The server Pod runs under `gvisor` on `datahublocal-amd-1`, because `datahublocal-amd-2` blacklists
 the TSC and Node's monotonic clock check fails inside the sandbox (53 of 800 starts measured during
 the Hermes investigation). Every container is non-root, read-only root, no capabilities, no
-service-account token. `/opt/data` (home, plugin cache) and `/workspace` (repos) are separate
+service-account token. `/opt/data` (home, OpenCode state) and `/workspace` (repos) are separate
 Longhorn RWO volumes; one replica, `Recreate`. The image makes every tool available under `/usr`
 and `/usr/local`, so nothing needs to be installed into the state volume and there is no root
 process at all.

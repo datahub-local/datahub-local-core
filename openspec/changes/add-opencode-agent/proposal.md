@@ -25,20 +25,20 @@ startup and left everything else missing. This change makes the image the toolch
   `python3` + `venv`/`pip`, and `uv` with a managed Python 3.13. `ansible`, `dbt` and `dlt` are
   project dependencies and arrive through `uv sync` in the repository that needs them.
 - Add an `opencode-server` Deployment: `opencode serve` on 4096, state on `/opt/data`, workspace on
-  `/workspace`, and the LiteLLM plugin installed into the volume at startup. No GitHub credential:
-  the App-backed minter is a documented gap, not a prerequisite.
+  `/workspace`, and LiteLLM declared as the only provider. No GitHub App: the token path and the
+  deferred minter are described below.
 - Add an `opencode-web` Deployment: an nginx reverse proxy to the server, preserving SSE and
   WebSocket; the only workload published through Traefik and dex.
 - Add an `opencode-mcp` Deployment: a stateless MCP shim (`run_task`, `get_session`, `get_diff`,
   `list_sessions`, `get_transcript`, `respond`, `abort_session`) that Hermes and Sympozium personas
   call.
-- Remove the `apk --root` git install. The image ships `git`, so the only init container left is the
-  plugin install, and the Pod has no root process at all.
+- Remove the `apk --root` git install. The image ships `git`, the Pod has no init container, and no
+  root process at all.
 - Consume the self-hosted Firecrawl MCP bridge from `add-firecrawl-mcp`; no Firecrawl workload, no
   account key, and no `api.firecrawl.dev` egress in this release.
 - Bake `opencode.json`, `AGENTS.md`, `gitconfig`, the git credential helper and the token minter into
   the adapter image (`/etc/opencode`, `/etc/gitconfig`, `/usr/local/bin`); the config names the
-  model, the plugin, Firecrawl, the helper, and the permission ruleset.
+  model, the LiteLLM provider, Firecrawl, the helper, and the permission ruleset.
 - Extend the `egress-proxy` allowlist with the helm chart repositories and OCI registries a
   `helmfile template` in these repositories needs.
 - Give OpenCode its own GitHub Secret: an `automation/opencode-github` ExternalSecret derived from

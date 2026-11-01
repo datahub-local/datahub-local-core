@@ -8,7 +8,7 @@
   release tarballs — `git`, `bash`, `curl`, `openssh-client`, `ca-certificates`, `jq`, `yq`,
   `kubectl`, `helm`, `helmfile`, `kustomize`, `gh`, `node`/`npm`, `python3` + `venv`/`pip`, and `uv`.
   It also carries the agent's own files: `opencode.json` (v2 config at `/etc/opencode`), `AGENTS.md`,
-  `gitconfig` at `/etc/gitconfig`, the credential helper, the minter and the plugin pre-warm.
+  `gitconfig` at `/etc/gitconfig`, the credential helper and the minter.
 - [x] 1.2 Add the managed Python 3.13: `uv python install 3.13` into `/opt/uv/python` and set
   `UV_PYTHON_INSTALL_DIR`; bookworm's system Python stays 3.11. Assert every tool in the build with
   `git --version`, `helm version`, `helmfile version`, `kubectl version --client`, `kustomize
@@ -21,7 +21,6 @@
   - Toolchain: a `# renovate: datasource=github-releases depName=<owner>/<repo>` line above each
     `ARG`, and one `customManager` whose regex matches the annotation plus the next `ARG`, so helm,
     helmfile, kubectl, kustomize, yq, gh and uv need no per-tool block.
-  - The LiteLLM plugin is pinned in the image's `opencode.json` and tracked by an npm manager.
   - The weekly adapter rebuild in `publish-images.yaml` carries base CVE fixes, and merging a
     Renovate bump publishes a new digest. Do not pin a release-asset sha256 that Renovate cannot
     update, or every bump will fail the build until it is edited by hand.
@@ -33,8 +32,7 @@
   `agents/adapters/*/Dockerfile` and names the image from the directory.
 - [x] 1.5 Add to `values/_version.yaml`: the adapter image
   (`ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:<digest>` from 1.4),
-  `nginxinc/nginx-unprivileged` (tag), and the shim image (digest). The plugin version is not here:
-  it is pinned in the adapter image's config. Keep the `tag@sha256:…` shape: the existing `container_image_version` jsonata
+  `nginxinc/nginx-unprivileged` (tag), and the shim image (digest). Keep the `tag@sha256:…` shape: the existing `container_image_version` jsonata
   manager then proposes the digest bump. The adapter is pinned to the published index digest; the
   shim is still a zero placeholder until it is published. No upstream OpenCode image and no Alpine
   git version. Firecrawl is pinned by `add-firecrawl-mcp`.
@@ -44,8 +42,8 @@
   `datahublocal-amd-1` + `kubernetes.io/arch: amd64`, uid/gid/fsGroup 1000, read-only root,
   capabilities dropped, no service-account token, `HOME=/opt/data`, `/opt/data` + `/workspace`
   PVCs, `/tmp` memory emptyDir of at least 1Gi. `command: ["opencode"]`, `args: ["serve", …]`.
-- [x] 1.8 Render with `helmfile template` and confirm: server + minter + one plugin init container,
-  web proxy, shim, three Services, no ingress to the server, no root container.
+- [x] 1.8 Render with `helmfile template` and confirm: server, web proxy, shim, three Services, no
+  init container, no ingress to the server, no root container.
 - [ ] 1.9 Prove the Renovate path before merging: run
   `renovate --platform=local --dry-run=full --repository-cache=reset --onboarding=false` in
   `datahub-local-ai` and confirm it lists `anomalyco/opencode` and each tool ARG; after the first
@@ -54,10 +52,11 @@
   `helmfile/helmfile`, `astral-sh/uv` and the two helmfile deps. Without a GitHub token it proposes
   no updates, so the digest-PR half still needs a token.
 
-## 2. Agent files and plugin pre-warm
+## 2. Agent files and model provider
 
 - [x] 2.1 Bake `opencode.json` at `/etc/opencode/opencode.json` in the adapter image: v2 shapes —
-  `model: litellm/opencode-go/deepseek-v4.1-flash`, `plugins`, `mcp.servers.fc` with
+  `model: litellm/opencode-go/deepseek-v4.1-flash`, `providers.litellm` (`openai-compatible`,
+  `{env:LITELLM_BASE_URL}`), `enabled_providers: ["litellm"]`, `mcp.servers.fc` with
   `codemode: false` and `{env:OPENCODE_FIRECRAWL_MCP_URL}`, `permissions` from design §9,
   `update: "disable"`, and `instructions: ["/opt/opencode/AGENTS.md"]`.
 - [x] 2.2 Bake `AGENTS.md` at `/opt/opencode/AGENTS.md`: work inside `/workspace`, report changed
@@ -70,12 +69,9 @@
   exists (task 3.1).
 - [x] 2.5 Ship no ConfigMap for these files and mount none under `/opt/data`: the state volume would
   hide them, and the image is the versioned source.
-- [x] 2.6 The only init container runs the image's `opencode-plugin-prewarm` as uid 1000. The script
-  reads the spec from `/etc/opencode/opencode.json`, exits 0 when
-  `$HOME/.cache/opencode/npm/<spec>` exists, and otherwise runs `opencode models --standalone` (v2
-  installs plugins on server start, not in `plugin add`) and asserts the cache directory, not the
-  command's exit status — a cold start can exit non-zero with "plugins did not finish activating"
-  after writing the cache. No `apk`, no `--root`, no git install.
+- [x] 2.6 Ship no init container: a declared provider has no package to install, so there is no
+  cache to pre-warm and no activation race. Verified by running the image's `opencode models
+  --standalone` against LiteLLM: only `litellm/*` is listed.
 - [ ] 2.7 Verify as uid 1000 under a read-only root filesystem: `git`, `helm`, `helmfile`,
   `kubectl`, `kustomize`, `yq`, `jq`, `gh`, `node`, `npm`, `uv`, `python3` and `curl` all run, and
   `git clone` over HTTPS works through the minter helper.
@@ -167,7 +163,7 @@
 ## 9. Isolation and state
 
 - [ ] 9.1 Confirm the server Pod is under gVisor on `datahublocal-amd-1`, every container is
-  non-root, and the plugin cache survives a restart.
+  non-root, and OpenCode's state survives a restart.
 - [ ] 9.2 Confirm no service-account token is mounted and only `/opt/data`, `/workspace`, `/tmp` are
   writable.
 - [ ] 9.3 Confirm a rollout terminates the old server Pod before the new one mounts either PVC.
@@ -179,7 +175,7 @@
 - [ ] 10.1 A task edits a file, runs a test, returns the final text and the changed file.
 - [ ] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
 - [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
-- [ ] 10.4 Record cold-start (plugin install → ready) and warm-start.
+- [ ] 10.4 Record cold-start (provider load → ready) and warm-start.
 - [ ] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
   `datahub-local-ai` and run `uv sync --extra dev`. Both succeed through the proxy with no tool
   installed at runtime.
