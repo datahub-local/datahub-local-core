@@ -56,6 +56,12 @@ extraVolumes:
   - name: slack-eyes-ack
     configMap:
       name: '{{ .Values.release_name }}-automation-hermes-slack-eyes-ack'
+  # The issue-to-PR loop: its instructions and the script that reads and writes the
+  # board. Mounted over the data volume, so the repository is the source and a
+  # deploy replaces whatever the live volume holds.
+  - name: taskboard-loop
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
 
 extraVolumeMounts:
   - name: run-tmpfs
@@ -64,6 +70,9 @@ extraVolumeMounts:
     mountPath: /tmp
   - name: slack-eyes-ack
     mountPath: /opt/data/plugins/slack-eyes-ack
+    readOnly: true
+  - name: taskboard-loop
+    mountPath: /opt/data/skills/devops/taskboard-loop
     readOnly: true
 
 # seed-config's chown only runs when that init container starts as root; the
@@ -90,6 +99,45 @@ extraInitContainers:
     volumeMounts:
       - name: data
         mountPath: /opt/data
+  # The loop's schedule lives in HERMES_HOME/cron/jobs.json, which no values file
+  # can carry and no ConfigMap may overwrite without dropping the owner's other
+  # jobs. Create the one job when it is absent; leave the file alone otherwise.
+  - name: cron-seed
+    image: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "nousresearch/hermes-agent") }}nousresearch/hermes-agent:{{ $value }}{{ end }}{{ end }}'
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        set -e
+        if grep -q '"name": "taskboard-tick"' /opt/data/cron/jobs.json 2>/dev/null; then
+          echo "taskboard-tick is already scheduled"
+          exit 0
+        fi
+        hermes_bin=/opt/hermes/.venv/bin/hermes
+        "$hermes_bin" cron create 10m \
+          "Follow the taskboard-loop skill for one tick. Report only what changed." \
+          --name taskboard-tick \
+          --skill taskboard-loop \
+          --deliver local
+    env:
+      - name: HERMES_HOME
+        value: /opt/data
+      # The CLI resolves its own caches through HOME, and the rootfs is read-only.
+      - name: HOME
+        value: /opt/data
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10000
+      runAsGroup: 10000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+      - name: data
+        mountPath: /opt/data
+      - name: tmp-tmpfs
+        mountPath: /tmp
 
 # seed-config copies config.yaml only when it is absent, so a new key never
 # reaches an existing volume. Adding one (mcp_servers was the first) needs a

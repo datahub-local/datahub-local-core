@@ -1,0 +1,14 @@
+# The issue-to-PR loop's instructions and the deterministic half of it, shipped as
+# one directory so the skill, the script and the release that mounts them cannot
+# drift apart. Hermes scans /opt/data/skills at start, so a new skill directory is
+# a rollout, not a live edit of the volume.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "name" . }}-hermes-taskboard-loop'
+  namespace: automation
+data:
+  SKILL.md: |
+{{ .Files.Get "files/agent/taskboard-loop/SKILL.md" | indent 4 }}
+  taskboard.py: |
+{{ .Files.Get "files/agent/taskboard-loop/taskboard.py" | indent 4 }}
