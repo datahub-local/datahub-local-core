@@ -51,8 +51,10 @@ Issue datahub-local/datahub-local#<n>: <title>
 
 <the issue body>
 
-Work it per your taskboard skill. This repository is the one named under `Repo`
-in the issue. Ask with the question tool if a decision is yours to make.
+Work it per your `router` skill and the skills it sends you to. This repository is
+the one named under `Repo` in the issue. Decide yourself whether the change needs an
+OpenSpec delta, by the reviewed repository's rule. Ask with the question tool if a
+decision is yours to make.
 ```
 
 Read `issue <n>` first and pass `directory` when it names exactly one repository
