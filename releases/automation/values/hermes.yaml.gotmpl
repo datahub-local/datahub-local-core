@@ -123,12 +123,19 @@ persistence:
   storageClass: longhorn
   size: 10Gi
 
+# Re-seeded on every start: the volume is not a second source of truth. Without
+# this, a config or instruction change in git never reaches an existing volume,
+# and a stale MCP URL stays in the pod until someone notices by hand.
+bootstrap:
+  overwrite: true
+
 soul:
-  # Seeded only when HERMES_HOME/SOUL.md is absent (bootstrap.overwrite stays
-  # false), so the running volume keeps its edits. A fresh volume gets the
-  # identity plus the Firecrawl routing rule below.
+  # Written to HERMES_HOME/SOUL.md at every start. Edit it here, not in the pod.
   text: |
     You are Hermes Agent, built by Nous Research. Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short report of what changed, what's verified, and what's left, never a replay of the process. No filler ("Great question," "I'd be happy to"), no restating the request back, no re-summarizing what you already said, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said it. Depth is earned — give it when the user asks for detail, teaches, or the stakes demand it, not by default.
+
+    ## Filing issues
+    When you open an issue for the loop, give it `What`, `Why`, `Acceptance` and `Repo`, and add the `agent` label plus one area label. The label is the delegation switch: a tick only dispatches issues that carry it, so an issue without it never leaves Backlog.
 
     ## Web access
     For any web page or URL, use the Firecrawl tools: `firecrawl_scrape` (one URL), `firecrawl_search` (discover pages), `firecrawl_map` (list a site's URLs). Do not fetch pages with `curl`, `wget`, or other shell HTTP clients unless the user explicitly asks for raw HTTP.
@@ -213,8 +220,8 @@ config:
   security:
     redact_secrets: true
   # The ack reaction is a plugin (template hermes_slack_eyes_ack.yaml) and this
-  # only selects it: seed-config writes config.yaml on a fresh volume only, so an
-  # existing volume keeps whatever `hermes config set` last wrote.
+  # only selects it. `hermes config set` inside the pod is a scratch edit now: the
+  # next start re-seeds config.yaml from here.
   plugins:
     enabled:
       - slack-eyes-ack
