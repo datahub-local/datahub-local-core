@@ -382,12 +382,15 @@ rawResources:
         labels:
           sympozium.ai/catalog: "true"
       spec:
-        transportType: stdio
+        # http, pointed at the github-hermes proxy, so this entry authenticates as
+        # the manager App like Hermes does. As stdio it could only take a token
+        # from an environment variable, which kept the owner's PAT alive for it.
+        transportType: http
+        url: http://{{ .Values.release_name }}-automation-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
         toolsPrefix: github
         timeout: 30
-        # Projects is opt-in and absent from the default toolsets. The token
-        # needs read:project for projects_get/list and project for
-        # projects_write. Renovate-reviewer comments on PRs; the rest of the PR
+        # Projects is opt-in and absent from the default toolsets, and the manager
+        # App carries it. Renovate-reviewer comments on PRs; the rest of the PR
         # workflow (branch, file write, PR, review, Projects) is allowed.
         toolsDeny:
           - create_repository
@@ -395,15 +398,6 @@ rawResources:
           - delete_repository
           - delete_file
           - merge_pull_request
-        deployment:
-          image: ghcr.io/github/github-mcp-server:{{ index .StateValues.container_image_version "ghcr.io/github/github-mcp-server" }}
-          cmd: /server/github-mcp-server
-          args:
-            - stdio
-          env:
-            GITHUB_TOOLSETS: default,projects
-          secretRefs:
-            - name: mcp-github-token
 
   mcp-grafana:
     forceRename: '{{ .Values.release_name }}-automation-mcp-grafana'
