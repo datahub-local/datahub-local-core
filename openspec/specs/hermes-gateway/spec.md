@@ -174,14 +174,17 @@ SHALL disable the native `web` and `browser` toolsets on every platform through
 surfaces. Slack SHALL be reached through the egress proxy, whose allowlist carries `.slack.com`;
 there SHALL be no direct public rule for it.
 
-`sympozium-github` SHALL instead point at a dedicated `…-mcp-github-hermes` Service running
-the upstream server in its `http` mode, because the bridge re-sends `initialize` to a long-lived
-child and `github-mcp-server` v2 rejects the duplicate. That
-instance SHALL authenticate with `Authorization: Bearer` resolved from `GITHUB_PERSONAL_ACCESS_TOKEN`
-at gateway start, never from a literal in `config.yaml`, SHALL exclude the tools the catalog server
-denies (`create_repository`, `fork_repository`, `delete_repository`, `delete_file`,
-`merge_pull_request`), and SHALL stay out of Sympozium's MCPServer catalog so its agents keep their
-own stdio instance.
+`sympozium-github` SHALL instead point at a dedicated `…-mcp-github` Service running the upstream
+server in its `http` mode, because the bridge re-sends `initialize` to a long-lived child and
+`github-mcp-server` v2 rejects the duplicate. Nothing in that pod SHALL hold a credential: a proxy
+sidecar on the Service port SHALL mint the manager App's installation token per request and add the
+`Authorization` header, since `http` mode ignores an environment token. The server SHALL listen on
+loopback only, and its `github` toolset SHALL exclude `create_repository`, `fork_repository`,
+`delete_repository`, `delete_file` and `merge_pull_request`.
+
+The catalog entry `mcp-github` SHALL point at that same Service over `http` rather than run its own
+`stdio` instance, so agents and the gateway authenticate as one identity and no personal access
+token reaches a pod.
 
 #### Scenario: The agent discovers the namespace's tools
 

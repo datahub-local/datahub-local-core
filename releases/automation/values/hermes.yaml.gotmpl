@@ -154,7 +154,7 @@ config:
       url: http://{{ .Values.release_name }}-automation-mcp-argocd.automation.svc.cluster.local:8080/mcp
     sympozium-github:
       # No header: the proxy mints the token per request.
-      url: http://{{ .Values.release_name }}-automation-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
+      url: http://{{ .Values.release_name }}-automation-mcp-github.automation.svc.cluster.local:8080/mcp
     sympozium-grafana:
       url: http://{{ .Values.release_name }}-automation-mcp-grafana.automation.svc.cluster.local:8080/mcp
     sympozium-postgres:
