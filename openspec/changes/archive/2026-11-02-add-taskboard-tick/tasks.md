@@ -26,15 +26,15 @@
 - [ ] 1.9b Confirm a `BLOCKED` report sets `Blocked` rather than "branch without a
   pull request", and that an owner answer relayed from Slack is forwarded.
   `Blocked` is confirmed: #122 moved there with the question commented and the ping
-  sent. The relay half is blocked on 1.9e: the only answer that arrived came through
-  the issue, not through Slack.
+  sent. The relay half is deferred: 1.9e is fixed, but no owner answer has arrived
+  through Slack since, so the path is unexercised (design, Residuals).
 - [x] 1.9d Review fixes: `board` as the tick's work list, `comment --owner` for a
   relayed answer, resume respecting the checkout rule, the retained PR-mention
   requirement rewritten, the agent no longer closing issues, and the skill's
   no-report-on-busy rule.
-- [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
-  skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
-  answers `idle` with nothing ready.
+- [x] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
+  skills list` shows `taskboard-loop`, and `taskboard.py ready` answers `[]`, so a
+  tick has nothing to dispatch. Verified in the Pod 2026-11-02.
 - [x] 1.9 With the default limit, one tick dispatches one issue and stops on the
   next `busy` without commenting.
 - [x] 1.11 Confirm the dispatch no longer holds the tick: `wait_seconds: 10`, the
@@ -42,11 +42,14 @@
 - [x] 1.10 Move #121 to `Ready` and confirm one tick starts it, sets
   `In Progress`, and records the session on the issue. (#116 was closed before this
   ran, so the loop took #121, the first dispatchable issue after it.)
-- [ ] 1.9e Fix the help ping's destination. The tick posted it to `#workflows`
-  (`C08RQNXQV3P`), which Hermes does not read, and the Sympozium Slack app is not a
-  member of `#agent-hermes` (`channel_not_found`), so an answer written under the
-  ping reached nothing. The skill now names `$SLACK_HOME_CHANNEL`; what remains is
-  inviting the `Homelab` app to `#agent-hermes` and re-running the relay.
+- [x] 1.9e Fix the help ping's destination. The tick posted it to `#workflows`
+  (`C08RQNXQV3P`), which Hermes does not read. The skill now names
+  `$SLACK_HOME_CHANNEL`, and the `Homelab` app (`B08SHC075UY`) is a member of
+  `#agentic-coding` (`C0CDNTM4GTH`), the home channel Hermes reads; verified with
+  `conversations.members` and `users.info` on 2026-11-02.
+- [x] 1.9h Replace the heredoc `comment` instructions: cron refuses a heredoc as a
+  dangerous command, so the helper takes `--text` and both skills pass the body on
+  argv. `tests/test_taskboard.py` pins the two paths.
 - [x] 1.9f Add `taskboard.py finish <n>`, which refuses `Done` while the issue is
   open. The tick moved #117 to `Done` on three merged pull requests that merely
   reference it, and the card had to be moved back to `Testing` by hand.
@@ -77,3 +80,8 @@ The first live run, 2026-11-02, against two throwaway issues in `datahub-local`.
   over-report.
 - Defect: `review` logged a 404 from `POST .../requested_reviewers` while the review
   request did land. It reads as a retry against an already-requested reviewer.
+- Defect: both skills fed `comment` through a quoted heredoc, which cron refuses
+  (`dangerous (script execution via heredoc)`), so a tick had no working documented
+  way to post a comment. Fixed with `--text` on the helper and the instructions.
+- The home channel is `#agentic-coding`; the `Homelab` app is a member, so the help
+  ping can be answered there. That relay has not been exercised end to end.
