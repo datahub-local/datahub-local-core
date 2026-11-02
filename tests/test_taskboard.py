@@ -273,6 +273,24 @@ def test_no_token_and_no_minter_fails_loudly():
     raise AssertionError("credential() accepted an environment with no token source")
 
 
+def test_comment_text_takes_the_body_from_argv_because_cron_blocks_a_heredoc():
+    """A heredoc is refused as dangerous in cron, so `comment` needs --text."""
+    assert taskboard.comment_text(["--text", "the body"], "") == "the body"
+
+
+def test_comment_text_falls_back_to_stdin():
+    assert taskboard.comment_text([], "the body\n") == "the body"
+
+
+def test_comment_text_refuses_a_missing_value():
+    try:
+        taskboard.comment_text(["--text"], "")
+    except SystemExit as exc:
+        assert "--text needs a value" in str(exc)
+        return
+    raise AssertionError("comment_text() accepted --text without a body")
+
+
 def test_done_needs_a_closed_issue():
     """#117 was moved to Done while open because three merged PRs mentioned it."""
     assert taskboard.may_finish("CLOSED")

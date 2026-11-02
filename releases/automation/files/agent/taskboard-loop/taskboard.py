@@ -17,7 +17,9 @@ Usage:
   taskboard.py inbox <n>              (comments the session has not been given)
   taskboard.py status <n> <Status>
   taskboard.py finish <n>             (Done, only once the issue is closed)
-  taskboard.py comment <n> [--owner]  (body on stdin; --owner relays the owner's words)
+  taskboard.py comment <n> [--owner] [--text <body>]
+                                  (body on stdin by default; --owner relays the
+                                   owner's words)
   taskboard.py start <n> <session>    (records the session on the issue)
   taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
   taskboard.py pr <repo> <branch>
@@ -273,6 +275,20 @@ def active_items(items: list[dict]) -> list[dict]:
         )
     order = ["Backlog", "Ready", "In Progress", "Blocked", "Testing"]
     return sorted(active, key=lambda r: (order.index(r["status"]), r["number"]))
+
+
+def comment_text(args: list[str], stdin_text: str) -> str:
+    """The body for `comment`: `--text`, or stdin when it is absent.
+
+    Cron mode refuses a heredoc as a dangerous command, so a tick has to pass the
+    body on argv. The body is public once posted; only the token stays off argv.
+    """
+    if "--text" in args:
+        index = args.index("--text")
+        if index + 1 >= len(args):
+            raise SystemExit("ERROR: --text needs a value")
+        return args[index + 1].strip()
+    return stdin_text.strip()
 
 
 def comment_body(body: str, owner: bool = False) -> str:
@@ -543,7 +559,7 @@ def main(argv: list[str]) -> int:
     if command == "comment":
         number = int(args[0])
         owner = "--owner" in args[1:]
-        body = sys.stdin.read().strip()
+        body = comment_text(args[1:], sys.stdin.read())
         if not body:
             raise SystemExit("ERROR: comment body is empty")
         body = comment_body(body, owner=owner)
