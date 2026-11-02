@@ -52,14 +52,14 @@ controllers:
             cpu: 500m
             memory: 256Mi
 
-  github-hermes:
+  github:
     strategy: RollingUpdate
     serviceAccount:
       name: default
     # Sympozium's stdio bridge forwards every client's initialize to one
     # long-lived child; github-mcp-server v2 rejects the duplicate. This is
-    # upstream's own HTTP mode, private to Hermes: it ignores the env token and
-    # authenticates per request, so the proxy supplies the header.
+    # upstream's own HTTP mode, shared by Hermes and the catalog entry: it ignores
+    # the env token and authenticates per request, so the proxy supplies the header.
     extraSelectorLabels:
       app.kubernetes.io/name: mcpserver
     containers:
@@ -265,8 +265,8 @@ service:
     ports:
       http:
         port: 8080
-  github-hermes:
-    controller: github-hermes
+  github:
+    controller: github
     ports:
       http:
         port: 8080
@@ -382,11 +382,11 @@ rawResources:
         labels:
           sympozium.ai/catalog: "true"
       spec:
-        # http, pointed at the github-hermes proxy, so this entry authenticates as
-        # the manager App like Hermes does. As stdio it could only take a token
-        # from an environment variable, which kept the owner's PAT alive for it.
+        # http, through the same proxy Hermes uses, so this entry authenticates as
+        # the manager App. As stdio it could only take a token from an environment
+        # variable, which kept the owner's PAT alive for it.
         transportType: http
-        url: http://{{ .Values.release_name }}-automation-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
+        url: http://{{ .Values.release_name }}-automation-mcp-github.automation.svc.cluster.local:8080/mcp
         toolsPrefix: github
         timeout: 30
         # Projects is opt-in and absent from the default toolsets, and the manager
