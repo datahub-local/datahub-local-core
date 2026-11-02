@@ -68,14 +68,7 @@ controllers:
             value: litellm/opencode-go/deepseek-v4.1-flash
           - name: OPENCODE_REVIEW_MODEL
             value: litellm/opencode-go/glm-5.3-flash
-          # Git and gh read this. The Secret is OpenCode's own, derived from
-          # github-root for now: no OpenCode-specific root exists yet. Change the
-          # source in datahub-local-secrets and this line does not move.
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: opencode-github
-                key: GITHUB_TOKEN
+          # No GITHUB_TOKEN: the git helper and the gh wrapper mint from the minter.
           # The baked config names the server as {env:OPENCODE_FIRECRAWL_MCP_URL};
           # the Service address is the one value the image cannot know.
           - name: OPENCODE_FIRECRAWL_MCP_URL
@@ -136,6 +129,51 @@ controllers:
           limits:
             cpu: 2
             memory: 4Gi
+      # Holds the coder key and answers /token on loopback. Sidecar, not an env
+      # var: the token lives an hour, a session lives days.
+      minter:
+        image:
+          repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter" }}'
+        command: ["node", "/usr/local/bin/opencode-minter.mjs"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        envFrom:
+          - secretRef:
+              name: github-app-coder
+        env:
+          - name: MINTER_PORT
+            value: "8787"
+          - name: HTTP_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: HTTPS_PROXY
+            value: '{{ .Values.egress_proxy_url }}'
+          - name: NO_PROXY
+            value: '{{ .Values.egress_no_proxy }},127.0.0.1,localhost'
+        probes:
+          readiness:
+            enabled: true
+            type: TCP
+            port: 8787
+            spec:
+              initialDelaySeconds: 2
+              periodSeconds: 10
+          liveness:
+            enabled: true
+            type: TCP
+            port: 8787
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 30
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
   web:
     replicas: 1
     strategy: RollingUpdate

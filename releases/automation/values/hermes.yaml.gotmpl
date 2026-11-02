@@ -153,11 +153,8 @@ config:
     sympozium-argocd:
       url: http://{{ .Values.release_name }}-automation-mcp-argocd.automation.svc.cluster.local:8080/mcp
     sympozium-github:
+      # No header: the proxy mints the token per request.
       url: http://{{ .Values.release_name }}-automation-mcp-github-hermes.automation.svc.cluster.local:8080/mcp
-      headers:
-        # Expanded when the gateway loads config.yaml, so no token lands in the
-        # ConfigMap; extraEnvFrom supplies GITHUB_PERSONAL_ACCESS_TOKEN.
-        Authorization: "Bearer ${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
     sympozium-grafana:
       url: http://{{ .Values.release_name }}-automation-mcp-grafana.automation.svc.cluster.local:8080/mcp
     sympozium-postgres:
@@ -266,10 +263,7 @@ extraEnvFrom:
   # connections, so a shared app means Hermes never receives anything.
   - secretRef:
       name: hermes-slack-token
-  # The dedicated github HTTP instance takes the token as a request header, and
-  # Hermes expands `${env:GITHUB_PERSONAL_ACCESS_TOKEN}` from this.
-  - secretRef:
-      name: mcp-github-token
+  # No GitHub credential: the manager key lives in the MCP proxy sidecar.
 
 extraEnv:
   - name: GATEWAY_ALLOW_ALL_USERS
