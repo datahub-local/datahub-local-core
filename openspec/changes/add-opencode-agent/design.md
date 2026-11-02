@@ -173,7 +173,8 @@ consumer:
 - Its egress policy keeps DNS, LiteLLM on 4000, the MCP bridges on 8080 and the proxy on 3128,
   and drops the public 443 rule. A binary that ignores the variables fails instead of leaking.
 - The allowlist gains a `helm` group: `.github.io` (every GitHub Pages chart repo this cluster
-  uses), `airflow.apache.org`, `downloads.apache.org`, `helm.openwebui.com`,
+  uses), `airflow.apache.org`, `archive.apache.org` (where the Airflow index sends its tarball),
+  `downloads.apache.org`, `helm.openwebui.com`,
   `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`, and the
   OCI registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`, plus the CDN
   hosts those registries redirect their blobs to (`.r2.cloudflarestorage.com`, `.quay.io`), because

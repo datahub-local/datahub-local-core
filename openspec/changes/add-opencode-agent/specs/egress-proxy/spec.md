@@ -8,7 +8,7 @@ Squid SHALL allow `CONNECT` only to `443` and only to hosts matching the `pypi`,
 `helm`, `alpine` or `slack` `dstdomain` ACL, and SHALL deny every other request. The ACLs SHALL
 cover exactly `.pypi.org`, `pypi.python.org`, `.pythonhosted.org`, `.github.com`,
 `.githubusercontent.com`, `registry.npmjs.org`, `.github.io`, `cloudnative-pg.io`,
-`docs.stirlingpdf.com`, `airflow.apache.org`, `downloads.apache.org`,
+`docs.stirlingpdf.com`, `airflow.apache.org`, `archive.apache.org`, `downloads.apache.org`,
 `helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
 `robusta-charts.storage.googleapis.com`, `ghcr.io`, `.r2.cloudflarestorage.com`, `.quay.io`,
 `8gears.container-registry.com`, `oci.trueforge.org`, `dl-cdn.alpinelinux.org` and `.slack.com`.
