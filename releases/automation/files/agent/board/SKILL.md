@@ -43,7 +43,7 @@ It mints its own token from the sidecar, so there is nothing to export first.
 | `/hermes board ready`, "anything to pick up" | `ready` |
 | `/hermes board show 116`, "116", "what is 116" | `issue 116` |
 | `/hermes board move 116 ready`, "block 116" | `status 116 <Status>` |
-| `/hermes board comment 116 ...` | `comment 116 --owner`, body on stdin |
+| `/hermes board comment 116 ...` | `comment 116 --owner --text '<their words>'` |
 
 Statuses are exactly `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
 `Done`. Translate the owner's words to one of those and nothing else.
@@ -66,14 +66,13 @@ so in that message.
 
 ## Comments are the owner's words
 
-A dictated comment is posted with `--owner`, so it carries no
-`<!-- taskboard:` marker and the tick treats it as the owner talking. Pass the body
-through a quoted heredoc, never `echo`: it can contain backticks and `$(...)`.
+A dictated comment is posted with `--owner --text '<their words>'`, so it carries
+no `<!-- taskboard:` marker and the tick treats it as the owner talking. Pass the
+body on argv, never through a heredoc, which cron mode refuses as a dangerous
+command; an embedded single quote is written `'\''`.
 
 ```
-cat <<'EOF' | python3 /opt/data/skills/devops/taskboard-loop/taskboard.py comment 116 --owner
-> the words the owner dictated
-EOF
+python3 /opt/data/skills/devops/taskboard-loop/taskboard.py comment 116 --owner --text 'the words the owner dictated'
 ```
 
 ## When the request is unclear

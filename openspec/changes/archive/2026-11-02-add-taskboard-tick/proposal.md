@@ -36,8 +36,8 @@ release, and the board's own automations.
 ## Impact
 
 - `releases/automation/templates/hermes_taskboard_loop.yaml`: one ConfigMap.
-- `releases/automation/values/hermes.yaml.gotmpl`: one volume, one mount, one init
-  container.
+- `releases/automation/values/hermes.yaml.gotmpl`: the skill, hook and board
+  volumes with their mounts.
 - `releases/automation/files/agent/taskboard-loop/{SKILL.md,taskboard.py}`.
 - `tests/test_taskboard.py`: the three decisions the tick makes, pinned.
 - One Hermes rollout. The Pod restarts; its volume, sessions and other jobs are

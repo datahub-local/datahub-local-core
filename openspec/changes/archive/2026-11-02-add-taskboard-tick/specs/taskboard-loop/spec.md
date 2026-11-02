@@ -119,6 +119,25 @@ session, exactly as if the owner had typed it on the issue.
 - **THEN** the comment carries no marker
 - **AND** the next tick forwards it with `respond` and sets `In Progress`
 
+### Requirement: Owner comments reach the session exactly once
+
+The tick SHALL forward issue comments and pull-request review comments through one
+ordered queue, SHALL send no comment already covered by the newest
+`<!-- taskboard:forwarded … -->` marker, and SHALL write that marker only after
+the send succeeded.
+
+#### Scenario: The owner reviews the pull request
+
+- **WHEN** a review comment is written after the newest forwarded marker
+- **THEN** it is sent to the session with its path and line
+- **AND** the marker advances to its timestamp
+
+#### Scenario: The session is still running
+
+- **WHEN** the owner writes while the session answers `running`
+- **THEN** the tick leaves the marker alone
+- **AND** the next tick sends the comment
+
 ### Requirement: The tick's work list comes from the board
 
 Every run SHALL read the set of issues it acts on from the project board, because a

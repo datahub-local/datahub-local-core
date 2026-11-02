@@ -53,8 +53,8 @@ logs and the gateway serves Slack anyway, so an absent job is quiet. That is
 acceptable because the failure is visible in `hermes cron list` and in the log, and
 because the alternative couples a gateway-owned file to the pod lifecycle.
 
-`--deliver local` keeps the ten-minute output out of Slack; the skill posts through
-the Slack MCP server only when something moved, so an idle tick is silent by
+`--deliver local` keeps the ten-minute output out of Slack; the skill posts with
+Hermes' own bot token, only when something moved, so an idle tick is silent by
 construction rather than by prompt discipline.
 
 ### 5 — Dispatch until the agent is full, lowest number first
@@ -85,3 +85,6 @@ list as work waiting on a decision.
 - A comment is forwarded as one joined turn. If the owner writes three comments in
   a minute, the agent sees one message made of three; the alternative is one turn
   per comment, which spends a slot and a model call each time.
+- The Slack relay has not been exercised end to end: the app is now a member of the
+  home channel, but the answer that arrived during the first live run came through
+  the issue.

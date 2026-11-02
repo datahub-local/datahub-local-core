@@ -39,20 +39,19 @@ moves a card.
   the `@homelab` app, which is Sympozium's identity, not this agent's.
 
 `taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `inbox <n>`,
-`status <n> <Status>`, `finish <n>`, `comment <n> [--owner]` (body on stdin),
-`start <n> <session>`, `forwarded <n> <since>`, `pr <repo> <branch>`,
+`status <n> <Status>`, `finish <n>`, `comment <n> [--owner] [--text <body>]` (body
+on stdin when `--text` is absent), `start <n> <session>`, `forwarded <n> <since>`, `pr <repo> <branch>`,
 `review <repo> <pr>`.
 
 Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
 `Done`.
 
-When you post a body that came from somewhere else, pass it through a quoted
-heredoc, never `echo`: the text can contain backticks and `$(...)`.
+When you post a body that came from somewhere else, pass it with `--text` in single
+quotes, never a heredoc: cron mode refuses a heredoc as a dangerous command. An
+embedded single quote is written `'\''`.
 
 ```
-cat <<'EOF' | python3 /opt/data/skills/devops/taskboard-loop/taskboard.py comment 116
-> the body, verbatim
-EOF
+python3 /opt/data/skills/devops/taskboard-loop/taskboard.py comment 116 --text 'the body, verbatim'
 ```
 
 ## The tick
@@ -128,8 +127,8 @@ If `items` is not empty:
 5. `status <n> "In Progress"`, and say in Slack that the owner's comment restarted
    the work, when the issue was `Blocked` or `Testing`.
 
-Relayed words are the owner's: post a Slack answer with `comment <n> --owner`, which
-leaves it unmarked so `inbox` forwards it like any other.
+Relayed words are the owner's: post a Slack answer with `comment <n> --owner --text
+'<their words>'`, which leaves it unmarked so `inbox` forwards it like any other.
 
 ### 4. Session state
 
