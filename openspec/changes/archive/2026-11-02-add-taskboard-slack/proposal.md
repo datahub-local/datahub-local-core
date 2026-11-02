@@ -18,8 +18,9 @@ starting a tick.
   mints an installation token from the sidecar on loopback.
 - `values/hermes.yaml.gotmpl` gains the manager minter as an `extraContainer`, the
   `MINTER_URL` it answers on, and a second skill mount.
-- `files/agent/board/SKILL.md`: the board verbs, read-before-write, one write per
-  request, and the rule that a request is not a tick.
+- `files/agent/board/SKILL.md`: the board verbs behind a `board` prefix,
+  read-before-write, one write per request, and the rule that a request is not a
+  tick.
 - `templates/hermes_taskboard_loop.yaml`: one more key, `BOARD.md`, so the skill
   ships from the repository like the tick's.
 - `tests/test_taskboard.py`: the token precedence and the mint.
@@ -31,6 +32,7 @@ tick, or the OpenCode side.
 ## Impact
 
 - One Hermes rollout: the Pod gains a sidecar and a read-only skill mount.
-- Slack words arrive as `/hermes <words>` or a plain message. A literal `/board` is
-  not available: Hermes delivers only the slash names its image declares, and the
-  registry is Python inside the pinned image.
+- Slack words arrive as `/hermes board <verb> ...` or a plain message. A literal
+  `/board` is not available: Hermes delivers only the slash names its image declares,
+  and the registry is Python inside the pinned image. The app manifest is reduced to
+  `/hermes` alone, so Slack shows one command instead of fifty.

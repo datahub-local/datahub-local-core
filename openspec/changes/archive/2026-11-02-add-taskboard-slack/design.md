@@ -38,7 +38,22 @@ regular message when the words are not a subcommand. A plain message in
 `#agent-hermes` reaches the same place. So the surface is instructions, not
 transport.
 
-### 2 — A second skill, not a section in the tick's
+### 2 — One declared slash, and `board` as the word that names this surface
+
+`hermes slack manifest` declares every command in the registry: fifty slash
+commands in Slack's menu, one per Hermes feature. That list is not the board's, and
+past fifty entries it stops being navigable.
+
+The app manifest is reduced to `/hermes` alone, so Slack shows one command and
+everything else is a word after it. Board requests then carry a `board` prefix:
+`/hermes board move 116 ready`. The prefix is safe because `board` is not in
+`slack_subcommand_map()`, while `status`, `start`, `review` and `tasks` are, so those
+still reach Hermes' own commands and are explicitly not this skill's.
+
+The cost is that Slack no longer completes `/stop` or `/new`. They are reachable as
+`/hermes stop` and `/hermes new`, through the same subcommand map.
+
+### 3 — A second skill, not a section in the tick's
 
 `taskboard-loop` starts with `sync`, `board`, then dispatch. Auto-loaded or chosen
 for a chat message, those steps would dispatch issues because somebody asked what
@@ -48,7 +63,7 @@ was in a column.
 the one thing asked, run no dispatch, move nothing unnamed. Two skills that share
 one helper, and neither can be mistaken for the other.
 
-### 3 — The helper mints its own token
+### 4 — The helper mints its own token
 
 `credential()` keeps the exported variable first, because that is what a manual run
 and the tests use, then asks `MINTER_URL` for an installation token. The sidecar
@@ -58,14 +73,14 @@ a token past the hour it is valid for.
 This also closes the gap that kept the tick from running: before this change,
 `taskboard.py` demanded a PAT that the identity refactor had removed from the Pod.
 
-### 4 — Read before write, one write per request
+### 5 — Read before write, one write per request
 
 Every move reads `issue <n>` first. The reply can then say "moved from Blocked", and
 a card already in the asked column is answered rather than written again. A chat
 request writes once: no comment plus a move plus a dispatch unless the message asked
 for all three.
 
-### 5 — A move to Ready is the owner's to make
+### 6 — A move to Ready is the owner's to make
 
 The tick may never set `Ready`; that is how a human reads an issue before work
 starts. The board skill may, because the owner is the one asking. The same rule for
@@ -74,7 +89,11 @@ starts. The board skill may, because the owner is the one asking. The same rule 
 ## Residuals
 
 - A native `/board` needs the image patch described above. Until then the command is
-  `/hermes`, and the words after it are the request.
+  `/hermes board`, and the words after it are the request.
+- The reduced manifest lives in Slack, not in git: running `hermes slack manifest`
+  prints all fifty commands again. Re-applying the one-command manifest is a manual
+  step after an upstream change that touches the command set, and nothing detects
+  that it is needed.
 - `channel_skill_bindings` in values would bind the skill to `#agent-hermes`, and
   with the repository as the only source of `config.yaml` it would take effect on
   the next rollout. It is left out on purpose: a binding loads the board
