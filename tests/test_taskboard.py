@@ -5,7 +5,10 @@ silently pick the wrong issue or answer the wrong person, so they are pinned.
 """
 
 import importlib.util
+import json
 import pathlib
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 SCRIPT = (
     pathlib.Path(__file__).resolve().parents[1]
@@ -230,3 +233,41 @@ def test_active_items_lists_every_open_issue_ordered_by_work_state():
         item(3, "Ready", ["agent"]),
     ]
     assert [r["number"] for r in taskboard.active_items(items)] == [4, 3, 2, 5, 9]
+
+
+class _Minter(BaseHTTPRequestHandler):
+    """A one-shot stand-in for the sidecar that answers /token on loopback."""
+
+    def do_GET(self):  # noqa: N802 - BaseHTTPRequestHandler's name
+        body = json.dumps({"token": "ghs_from_minter"}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+def test_an_exported_token_wins_over_the_minter():
+    assert taskboard.credential({"GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_exported"}) == "ghp_exported"
+
+
+def test_the_helper_mints_when_the_environment_has_no_token():
+    server = HTTPServer(("127.0.0.1", 0), _Minter)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        url = f"http://127.0.0.1:{server.server_address[1]}/token"
+        assert taskboard.credential({"MINTER_URL": url}) == "ghs_from_minter"
+    finally:
+        server.shutdown()
+
+
+def test_no_token_and_no_minter_fails_loudly():
+    try:
+        taskboard.credential({})
+    except SystemExit as exc:
+        assert "MINTER_URL is empty" in str(exc)
+        return
+    raise AssertionError("credential() accepted an environment with no token source")

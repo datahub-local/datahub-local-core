@@ -104,6 +104,27 @@ mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
 """
 
 
+def credential(env: dict | None = None) -> str:
+    """The installation token for this call.
+
+    Hermes has no GitHub token in its environment: the App key sits in a sidecar
+    that answers /token on loopback, so nothing in the process that runs the model
+    can read it, and nothing caches a token past the hour it is good for.
+    """
+    environment = os.environ if env is None else env
+    exported = environment.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+    if exported:
+        return exported
+    url = environment.get("MINTER_URL", "")
+    if not url:
+        raise SystemExit("ERROR: GITHUB_PERSONAL_ACCESS_TOKEN is not set and MINTER_URL is empty")
+    try:
+        with urllib.request.urlopen(url, timeout=5) as response:
+            return json.loads(response.read())["token"]
+    except (urllib.error.URLError, ValueError, KeyError) as exc:
+        raise SystemExit(f"ERROR: could not mint a GitHub token: {exc}")
+
+
 class GitHub:
     def __init__(self, token: str):
         self.token = token
@@ -356,13 +377,10 @@ def help_state(comments: list[dict]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    token = os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
-    if not token:
-        raise SystemExit("ERROR: GITHUB_PERSONAL_ACCESS_TOKEN is not set")
     if not argv:
         raise SystemExit(__doc__)
     command, args = argv[0], argv[1:]
-    github = GitHub(token)
+    github = GitHub(credential())
 
     if command == "board":
         print(json.dumps({"items": active_items(github.project()["items"])}, indent=2))
