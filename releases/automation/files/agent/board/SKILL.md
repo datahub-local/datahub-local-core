@@ -84,5 +84,7 @@ default. Never pick an issue because it is the only one in a column.
 ## Answer
 
 One line with what changed or what the column holds, and the link. Nothing about
-how you ran it, nothing repeated back. When the helper fails, say the error it
-printed and stop; do not retry and do not substitute a different command.
+how you ran it, nothing repeated back. `status` posts the move line to the home
+channel itself, so your reply is the answer to the request, not a second
+announcement. When the helper fails, say the error it printed and stop; do not
+retry and do not substitute a different command.

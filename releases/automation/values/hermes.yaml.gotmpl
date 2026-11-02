@@ -361,6 +361,11 @@ extraEnv:
   # tick and the owner's board requests work without a PAT in this container.
   - name: MINTER_URL
     value: "http://127.0.0.1:8787/token"
+  # The public OpenCode origin taskboard.py turns into a session link. The key in
+  # /server/<key>/session/<id> is a hash of this exact origin, so it must match
+  # what the browser reports as location.origin: https, hostname, no trailing slash.
+  - name: TASKBOARD_OPENCODE_URL
+    value: 'https://automation-opencode.{{ .StateValues.gateway_hostname }}'
   # Every public call goes through the security proxy; the NetworkPolicy no
   # longer permits direct 443. The Slack adapter resolves HTTPS_PROXY itself
   # (gateway.trust_env defaults to true) and passes it to both the WebClient and

@@ -16,6 +16,19 @@ kustomize:
       spec:
         strategy:
           type: Recreate
+    # The only pack the chart ships with `mountWorkspace: false`, and the field
+    # cannot stay false: the CRD defaults it to true and the controller's
+    # finalizer Update drops the false (`bool` with `omitempty` in the v0.12.x
+    # API type), so the API server re-defaults it after every sync and ArgoCD
+    # reports OutOfSync forever. Declare the value the cluster ends up holding.
+    - apiVersion: sympozium.ai/v1alpha1
+      kind: SkillPack
+      metadata:
+        name: web-endpoint
+        namespace: automation
+      spec:
+        sidecar:
+          mountWorkspace: true
   hermes:
     # The chart's NetworkPolicy always renders a public egress rule and no value
     # removes it; NetworkPolicies only add, so a second policy cannot deny it.

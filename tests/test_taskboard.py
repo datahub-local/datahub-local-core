@@ -296,3 +296,95 @@ def test_done_needs_a_closed_issue():
     assert taskboard.may_finish("CLOSED")
     assert not taskboard.may_finish("OPEN")
     assert not taskboard.may_finish("")
+
+
+def test_server_key_is_the_fnv1a_hash_of_the_web_origin():
+    """The OpenCode route key is a hash of location.origin, not the origin."""
+    assert taskboard.server_key("https://automation-opencode.homelab.alvsanand.com") == "jd9y2a"
+
+
+def test_session_url_uses_the_server_key():
+    assert (
+        taskboard.session_url("ses_abc", "https://automation-opencode.homelab.alvsanand.com/")
+        == "https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc"
+    )
+
+
+def test_session_url_is_empty_without_an_origin():
+    assert taskboard.session_url("ses_abc", "") == ""
+    assert taskboard.session_url("", "https://automation-opencode.example") == ""
+
+
+def test_start_body_carries_the_session_link():
+    body = taskboard.start_body(
+        "ses_abc", "2026-11-02T18:50:00Z", "https://automation-opencode.homelab.alvsanand.com"
+    )
+    assert "Session: https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc" in body
+    assert "<!-- taskboard:session ses_abc -->" in body
+    assert "<!-- taskboard:forwarded 2026-11-02T18:50:00Z -->" in body
+
+
+def test_move_line_names_the_transition_and_links_the_issue():
+    line = taskboard.move_line(
+        {
+            "number": 127,
+            "previous": "Ready",
+            "status": "In Progress",
+            "title": "renovate preset",
+            "url": "https://github.com/datahub-local/datahub-local/issues/127",
+            "changed": True,
+        }
+    )
+    assert line.startswith("#127 Ready → In Progress: renovate preset")
+    assert "https://github.com/datahub-local/datahub-local/issues/127" in line
+
+
+def test_move_line_adds_the_session_link():
+    line = taskboard.move_line(
+        {
+            "number": 127,
+            "previous": None,
+            "status": "Backlog",
+            "title": "t",
+            "url": "https://example/127",
+            "changed": True,
+        },
+        session="ses_abc",
+        origin="https://automation-opencode.homelab.alvsanand.com",
+    )
+    assert line.startswith("#127 Backlog: t")
+    assert (
+        "Session: https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc"
+        in line
+    )
+
+
+def test_notify_move_is_silent_when_nothing_changed():
+    posted = []
+    taskboard.notify_move({"number": 127, "status": "Ready", "changed": False}, post=posted.append)
+    assert posted == []
+
+
+def test_notify_move_posts_once():
+    posted = []
+    taskboard.notify_move(
+        {
+            "number": 127,
+            "previous": "Ready",
+            "status": "In Progress",
+            "title": "t",
+            "url": "https://example/127",
+            "changed": True,
+        },
+        post=posted.append,
+    )
+    assert len(posted) == 1
+    assert "Ready → In Progress" in posted[0]
+
+
+def test_strip_markers_removes_the_taskboard_comments():
+    assert taskboard.strip_markers("Question?\n\n<!-- taskboard:help -->") == "Question?"
+
+
+def test_slack_refuses_an_unconfigured_environment():
+    assert taskboard.slack("line", env={}) is False

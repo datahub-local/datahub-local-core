@@ -24,6 +24,7 @@ Usage:
   taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
   taskboard.py pr <repo> <branch>
   taskboard.py review <repo> <pr>
+  taskboard.py notify <n> [--text <body>]  (posts one Slack line with the links)
 """
 
 from __future__ import annotations
@@ -36,13 +37,16 @@ import urllib.error
 import urllib.request
 
 API = "https://api.github.com"
+SLACK_API = "https://slack.com/api/chat.postMessage"
 MARKER = "<!-- taskboard:"
 HELP_MARKER = "<!-- taskboard:help -->"
 AGENT_MARKER = "<!-- taskboard:agent -->"
 SESSION_RE = re.compile(r"<!-- taskboard:session (\S+) -->")
 FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
 BRANCH_RE = re.compile(r"Branch `([^`]+)`")
+MARKER_RE = re.compile(r"<!-- taskboard:[^>]*-->\s*", re.MULTILINE)
 MAX_COMMENT_CHARS = 1500
+BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 ORG = os.environ.get("TASKBOARD_ORG", "datahub-local")
 PROJECT = int(os.environ.get("TASKBOARD_PROJECT", "1"))
@@ -128,6 +132,40 @@ def credential(env: dict | None = None) -> str:
         raise SystemExit(f"ERROR: could not mint a GitHub token: {exc}")
 
 
+def server_key(origin: str) -> str:
+    """OpenCode's route key for a server origin.
+
+    The web app routes a session at /server/<serverKey>/session/<id>, and
+    serverKey is an FNV-1a hash of `location.origin` in base36, not the origin
+    itself. A link built from the session id alone opens the app root.
+    """
+    value = 2166136261
+    for char in origin:
+        value ^= ord(char)
+        value = (value * 16777619) & 0xFFFFFFFF
+    if value == 0:
+        return "0"
+    digits = []
+    while value:
+        value, remainder = divmod(value, 36)
+        digits.append(BASE36[remainder])
+    return "".join(reversed(digits))
+
+
+def session_url(session: str, origin: str | None = None) -> str:
+    """The web link to a session, or "" when no origin is configured.
+
+    The origin must match what the browser reports as `location.origin`; a
+    different scheme or a trailing slash produces a key that resolves to nothing.
+    """
+    base = (
+        origin if origin is not None else os.environ.get("TASKBOARD_OPENCODE_URL", "")
+    ).rstrip("/")
+    if not base or not session:
+        return ""
+    return f"{base}/server/{server_key(base)}/session/{session}"
+
+
 class GitHub:
     def __init__(self, token: str):
         self.token = token
@@ -202,9 +240,17 @@ def set_status(github: GitHub, number: int, wanted: str) -> dict:
     if wanted not in project["options"]:
         raise SystemExit(f"ERROR: unknown status {wanted}")
     item = github.item(number)
+    content = item.get("content") or {}
     previous = (item.get("fieldValueByName") or {}).get("name")
+    result = {
+        "number": number,
+        "title": content.get("title", ""),
+        "url": content.get("url", ""),
+        "status": wanted,
+        "changed": previous != wanted,
+    }
     if previous == wanted:
-        return {"number": number, "status": wanted, "changed": False}
+        return result
     github.graphql(
         SET_STATUS,
         {
@@ -215,7 +261,80 @@ def set_status(github: GitHub, number: int, wanted: str) -> dict:
         },
     )
     github.invalidate()
-    return {"number": number, "previous": previous, "status": wanted, "changed": True}
+    result["previous"] = previous
+    return result
+
+
+def move_line(result: dict, session: str | None = None, origin: str | None = None) -> str:
+    """The one Slack line a board write produces."""
+    status = result["status"]
+    previous = result.get("previous")
+    change = f"{previous} → {status}" if previous else status
+    line = f"#{result['number']} {change}: {result.get('title', '')}\n{result.get('url', '')}"
+    link = session_url(session, origin) if session else ""
+    if link:
+        line += f"\nSession: {link}"
+    return line
+
+
+def slack(text: str, env: dict | None = None) -> bool:
+    """Post one line as Hermes' own app.
+
+    The token rides in an Authorization header, never argv. The call is allowed
+    to fail without failing the board write that triggered it: the card has
+    already moved, and a retry would move it twice.
+    """
+    environment = os.environ if env is None else env
+    token = environment.get("SLACK_BOT_TOKEN", "")
+    channel = environment.get("SLACK_HOME_CHANNEL", "")
+    if not token or not channel:
+        print(
+            "WARNING: Slack is not configured (SLACK_BOT_TOKEN / SLACK_HOME_CHANNEL)",
+            file=sys.stderr,
+        )
+        return False
+    body = json.dumps({"channel": channel, "text": text}).encode()
+    request = urllib.request.Request(SLACK_API, data=body, method="POST")
+    request.add_header("Authorization", f"Bearer {token}")
+    request.add_header("Content-Type", "application/json; charset=utf-8")
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            answer = json.loads(response.read() or b"{}")
+    except (urllib.error.URLError, ValueError, OSError) as exc:
+        print(f"WARNING: Slack post failed: {exc}", file=sys.stderr)
+        return False
+    if not answer.get("ok"):
+        print(
+            f"WARNING: Slack post failed: {answer.get('error', 'unknown error')}",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
+def notify_move(result: dict, session: str | None = None, post=slack) -> bool:
+    """Announce a board write, and stay silent when the board did not change."""
+    if not result.get("changed"):
+        return False
+    return post(move_line(result, session))
+
+
+def strip_markers(body: str) -> str:
+    return MARKER_RE.sub("", body).strip()
+
+
+def start_body(session: str, newest: str, origin: str | None = None) -> str:
+    """The claim comment, with the link the owner needs to watch the turn."""
+    lines = [f"Started session `{session}`."]
+    link = session_url(session, origin)
+    if link:
+        lines += ["", f"Session: {link}"]
+    lines += [
+        "",
+        f"<!-- taskboard:session {session} -->",
+        f"<!-- taskboard:forwarded {newest} -->",
+    ]
+    return "\n".join(lines)
 
 
 def may_finish(state: str) -> bool:
@@ -316,7 +435,12 @@ def missing_on_board(issues: list[dict], items: list[dict]) -> list[dict]:
         if (item.get("content") or {}).get("__typename") == "Issue"
     }
     return [
-        {"number": i["number"], "node_id": i["node_id"], "title": i["title"]}
+        {
+            "number": i["number"],
+            "node_id": i["node_id"],
+            "title": i["title"],
+            "url": i.get("html_url", ""),
+        }
         for i in issues
         if i["number"] not in on_board
     ]
@@ -455,6 +579,15 @@ def main(argv: list[str]) -> int:
                     "option": project["options"]["Backlog"],
                 },
             )
+            notify_move(
+                {
+                    "number": issue["number"],
+                    "title": issue["title"],
+                    "url": issue["url"],
+                    "status": "Backlog",
+                    "changed": True,
+                }
+            )
             added.append(issue["number"])
         github.invalidate()
         print(json.dumps({"added": added, "on_board": len(github.project()["items"])}))
@@ -470,6 +603,7 @@ def main(argv: list[str]) -> int:
         item = github.item(number)
         content = item["content"]
         comments = github.comments(number)
+        session = last_session(comments)
         print(
             json.dumps(
                 {
@@ -481,7 +615,8 @@ def main(argv: list[str]) -> int:
                     "labels": [n["name"] for n in content["labels"]["nodes"]],
                     "body": content.get("body", "")[:4000] if content.get("body") else None,
                     "repos": repos_of(content.get("body") or ""),
-                    "session": last_session(comments),
+                    "session": session,
+                    "session_url": session_url(session) or None,
                     "help": help_state(comments),
                     "comments": comments,
                 },
@@ -542,7 +677,11 @@ def main(argv: list[str]) -> int:
         return 0
 
     if command == "status":
-        print(json.dumps(set_status(github, int(args[0]), args[1])))
+        number = int(args[0])
+        result = set_status(github, number, args[1])
+        session = last_session(github.comments(number)) if result["changed"] else None
+        result["notified"] = notify_move(result, session)
+        print(json.dumps(result))
         return 0
 
     if command == "finish":
@@ -553,7 +692,34 @@ def main(argv: list[str]) -> int:
                 f"ERROR: issue #{number} is {state or 'unknown'}, not CLOSED; "
                 "Done needs a closed issue, or the owner moving the card by hand"
             )
-        print(json.dumps(set_status(github, number, "Done")))
+        result = set_status(github, number, "Done")
+        session = last_session(github.comments(number)) if result["changed"] else None
+        result["notified"] = notify_move(result, session)
+        print(json.dumps(result))
+        return 0
+
+    if command == "notify":
+        number = int(args[0])
+        body = strip_markers(comment_text(args[1:], sys.stdin.read()))
+        if not body:
+            raise SystemExit("ERROR: notification body is empty")
+        issue = github.item(number)["content"]
+        session = last_session(github.comments(number))
+        link = session_url(session) if session else ""
+        text = f"{body}\n\n{issue['url']}"
+        if link:
+            text += f"\nSession: {link}"
+        posted = slack(text)
+        print(
+            json.dumps(
+                {
+                    "number": number,
+                    "posted": posted,
+                    "url": issue["url"],
+                    "session_url": link or None,
+                }
+            )
+        )
         return 0
 
     if command == "comment":
@@ -572,11 +738,7 @@ def main(argv: list[str]) -> int:
         # The marker carries the newest comment so the tick does not replay the
         # issue's history into a session that already has the body.
         newest = max((c["created_at"] for c in github.comments(number)), default="")
-        body = (
-            f"Started session `{session}`.\n\n"
-            f"<!-- taskboard:session {session} -->\n"
-            f"<!-- taskboard:forwarded {newest} -->"
-        )
+        body = start_body(session, newest)
         created = github._call("POST", f"/repos/{REPO}/issues/{number}/comments", {"body": body})
         print(json.dumps({"number": number, "session": session, "url": created.get("html_url", "")}))
         return 0
@@ -618,7 +780,16 @@ def main(argv: list[str]) -> int:
     if command == "review":
         repo, pull = args[0], int(args[1])
         github._call("POST", f"/repos/{repo}/pulls/{pull}/requested_reviewers", {"reviewers": [OWNER]})
-        print(json.dumps({"repo": repo, "pr": pull, "reviewer": OWNER}))
+        print(
+            json.dumps(
+                {
+                    "repo": repo,
+                    "pr": pull,
+                    "url": f"https://github.com/{repo}/pull/{pull}",
+                    "reviewer": OWNER,
+                }
+            )
+        )
         return 0
 
     raise SystemExit(f"ERROR: unknown command {command}")
