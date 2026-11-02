@@ -194,10 +194,10 @@
 - [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
 - [ ] 10.4 Record cold-start (provider load → ready) and warm-start. Cold start on 2026-11-02:
   69 seconds from Pod start to Ready. Warm start still unrecorded.
-- [ ] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
+- [x] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
   `datahub-local-ai` and run `uv sync --extra dev`. Both succeed through the proxy with no tool
-  installed at runtime. `uv sync` succeeds (Python 3.13.18); `helmfile template` failed on
-  2026-11-02 because two chart repositories redirect off the allowlist (task 11.5).
+  installed at runtime. Verified 2026-11-02: `uv sync` resolves Python 3.13.18; `helmfile template`
+  renders all seven releases after 11.3/11.5.
 
 ## 11. Egress proxy consumer (moved from `add-egress-proxy`)
 
@@ -220,6 +220,21 @@
   redirects to that host over plain HTTP, and the proxy keeps port 80 denied. Both redirecting
   chart sources were found by rendering through the live proxy; `cloudnative-pg.github.io` lands on
   `cloudnative-pg.io`.
-- [ ] 11.4 Verify `helmfile template` in a cloned `datahub-local-core` resolves every chart through
-  the proxy, and that an unlisted chart repository is refused. Blocked until 11.3/11.5 are deployed;
-  the 2026-11-02 run failed at cloudnative-pg and Stirling.
+- [x] 11.4 Verify `helmfile template` in a cloned `datahub-local-core` resolves every chart through
+  the proxy, and that an unlisted chart repository is refused. Verified 2026-11-02 from the server
+  Pod: all seven releases render (`common`, `data`, `media`, `monitoring`, `other`, `security`,
+  `automation`), and `helm repo add` for an unlisted host is refused with `Forbidden`.
+
+## Deferred
+
+Verified in the live cluster unless noted; the items below need a browser, a persona run, or a
+deliberate failure, and none of them blocks the release.
+
+- 4.4 — anonymous access returns the oauth2-proxy sign-in page; the signed-in UI and SSE stream
+  need a browser session.
+- 6.3 — `FIRECRAWL_API_KEY` is absent from server and bridge; search and scrape are unexercised.
+- 8.5 — no Sympozium persona run to list the seven tools.
+- 10.2 — the `.env`/`webfetch` denials and `fc_firecrawl_search` are unprobed.
+- 10.3 — busy, `abort_session` and `get_session` under contention are unexercised.
+- 10.4 — cold start measured at 69s; no restart has been timed for the warm figure.
+- 1.9 — Renovate extraction is verified, but the digest-PR half needs a GitHub token.
