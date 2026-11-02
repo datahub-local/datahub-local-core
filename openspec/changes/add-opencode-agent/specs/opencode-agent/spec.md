@@ -26,15 +26,17 @@ cache to warm and no init container.
 ### Requirement: The image carries the platform toolchain
 
 The image SHALL provide, on `PATH` and as a non-root user under a read-only root filesystem:
-`git`, `bash`, `curl`, `openssh-client`, `ca-certificates`, `jq`, `yq`, `kubectl`, `helm`,
-`helmfile`, `kustomize`, `gh`, `node`/`npm`, `python3` with `venv` and `pip`, and `uv` with a
-managed Python 3.13. Every tool SHALL be installed at build time from a pinned version; nothing
-SHALL be installed at container start, and no container SHALL run `apk`, `apt` or an installer.
+`opencode`, `openspec`, `git`, `bash`, `curl`, `openssh-client`, `ca-certificates`, `jq`, `yq`,
+`kubectl`, `helm`, `helmfile`, `kustomize`, `gh`, `node`/`npm`, `python3` with `venv` and `pip`,
+and `uv` with a managed Python 3.13. Every tool SHALL be installed at build time from a pinned
+version; nothing SHALL be installed at container start, and no container SHALL run `apk`, `apt` or
+an installer.
 
 `ansible`, `dbt`, `dlt` and other project dependencies SHALL NOT be baked into the image; they
 SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be published for
-`linux/amd64` and `linux/arm64`, and tool versions SHALL be tracked by Renovate in
-`datahub-local-ai/renovate.json`.
+`linux/amd64` and `linux/arm64`. Tool versions SHALL be pinned as Dockerfile `ARG`s and tracked by
+Renovate in `datahub-local-ai/renovate.json`; the OpenCode release SHALL be resolved by
+`publish-images.yaml` from the newest v2 tag, because GitHub's `latest` release still points at v1.
 
 #### Scenario: The agent can run the repositories' own checks
 
@@ -51,8 +53,9 @@ SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be 
 
 #### Scenario: A version bump reaches the cluster by digest
 
-- **WHEN** Renovate raises the OpenCode `ARG` in `datahub-local-ai` and that PR merges
-- **THEN** `publish-images.yaml` builds and publishes a new multi-arch digest
+- **WHEN** a tool `ARG` is bumped in `datahub-local-ai` by Renovate, or `publish-images.yaml` picks up a
+  newer OpenCode v2 release
+- **THEN** the workflow builds and publishes a new multi-arch digest
 - **AND** Renovate in this repository changes `values/_version.yaml` to that digest
 - **AND** the release never deploys a moving tag
 
@@ -60,17 +63,20 @@ SHALL be resolved by `uv sync` from the checkout's lockfile. The image SHALL be 
 
 The adapter image SHALL carry `opencode.json` at `/etc/opencode/opencode.json` (the OpenCode v2
 system configuration directory), `AGENTS.md` at `/opt/opencode/AGENTS.md` and referenced from the
-config's `instructions`, `gitconfig` at `/etc/gitconfig`, the credential helper at
-`/usr/local/bin/git-credential-opencode` (mode `0755`), the token minter at
-`/usr/local/bin/opencode-minter.mjs`. The release SHALL NOT ship those files in a ConfigMap and
-SHALL NOT mount them under `/opt/data`, because the state volume is mounted there and hides what the
-image carries.
+config's `instructions`, the agent skills under `/opt/opencode/skills`, `gitconfig` at
+`/etc/gitconfig`, the credential helper at `/usr/local/bin/git-credential-opencode` (mode `0755`),
+the `gh` wrapper at `/usr/local/bin/gh`, the token minter at `/usr/local/bin/opencode-minter.mjs`,
+and the token proxies `/usr/local/bin/github-proxy.mjs` and `/usr/local/bin/mcp-forward.mjs`. The
+release SHALL NOT ship those files in a ConfigMap and SHALL NOT mount them under `/opt/data`,
+because the state volume is mounted there and hides what the image carries.
 
 The config SHALL use the v2 shapes: `permissions` as ordered `{action, resource, effect}` rules,
-`mcp.servers`, `providers.litellm` with the `@opencode/ai/providers/openai-compatible` package,
-`enabled_providers: ["litellm"]`, `update: "disable"`, the default model, and the Firecrawl
-server. The Firecrawl URL SHALL be `{env:OPENCODE_FIRECRAWL_MCP_URL}`, the one
-cluster-specific value.
+`mcp.servers` with the Firecrawl and Kubernetes bridges, `providers.litellm` with the
+`@opencode/ai/providers/openai-compatible` package, `enabled_providers: ["litellm"]` (so a
+`GITHUB_TOKEN` cannot activate `github-copilot/*`), `update: "disable"`, the `reviewer` subagent,
+`skills.paths`, the default model from `{env:OPENCODE_MODEL}`, and the reviewer model from
+`{env:OPENCODE_REVIEW_MODEL}`. `OPENCODE_FIRECRAWL_MCP_URL` and `OPENCODE_K8S_MCP_URL` are the
+cluster-specific values the image cannot know.
 
 #### Scenario: The files survive the state volume
 
@@ -83,7 +89,9 @@ cluster-specific value.
 
 `LITELLM_BASE_URL` SHALL name the `data` release's LiteLLM `/v1` endpoint and `LITELLM_API_KEY`
 SHALL come from `litellm-auth-credentials` by reference. The default model SHALL be
-`litellm/opencode-go/deepseek-v4.1-flash`.
+`litellm/opencode-go/deepseek-v4.1-flash`, supplied as `OPENCODE_MODEL`, and the `reviewer`
+subagent SHALL use `litellm/opencode-go/glm-5.3-flash`, supplied as `OPENCODE_REVIEW_MODEL`, so a
+reviewer change is a values edit and a rollout rather than an image rebuild.
 
 #### Scenario: Only litellm models are selectable
 
@@ -112,40 +120,36 @@ target the server; the web proxy is the only published surface.
 - **WHEN** a request reaches `/api/*` without the Basic credential
 - **THEN** the server answers 401
 
-### Requirement: OpenCode gets its own GitHub Secret
+### Requirement: The agent authenticates as the coder GitHub App
 
-The `opencode-server` container SHALL receive `GITHUB_TOKEN` from a Secret named `opencode-github`.
-For now that Secret SHALL be derived from `github-root` by an ExternalSecret — there is no
-OpenCode-specific root yet — so the deployment reads one purpose-named Secret and changing the
-credential's source later is a single entry in `datahub-local-secrets`. No container SHALL reference
-`github-root` directly.
+The `opencode-server` Pod SHALL mint installation tokens from the coder GitHub App through the
+`minter` sidecar, which SHALL read `github-app-coder` (`GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`,
+`GITHUB_APP_PRIVATE_KEY`) and answer `/token` on loopback. The server container SHALL NOT carry
+`GITHUB_TOKEN`, `github-root` or an App private key; the git credential helper and the `gh` wrapper
+SHALL ask the minter, and no credential SHALL be written under `/opt/data`. The git identity SHALL be
+the coder bot (`datahub-local-coder[bot]` with the App's noreply address), so commits and pull
+requests are attributed to the App rather than the owner.
 
-The git credential helper SHALL answer from `GITHUB_TOKEN` and SHALL otherwise fall back to the
-minter endpoint, so no credential file is written under `/opt/data`. Pull requests SHALL be opened by
-the caller through the GitHub MCP server rather than `gh` in the Pod. SSH deploy keys SHALL NOT be
-used: GitHub cannot attach one key to several repositories, which the three-repository workspace
-needs.
+This replaces the shared `github-root` path: `agent-github-identity` owns the App, the roots and the
+derived secrets, and this requirement only fixes how the OpenCode server consumes them.
 
-A GitHub App with on-demand installation tokens remains the intended long-term design, but the
-release SHALL NOT require one.
+#### Scenario: A task pushes and opens a pull request as the bot
 
-#### Scenario: A task pushes with the OpenCode Secret
-
-- **WHEN** a task runs `git push` on a branch
-- **THEN** the helper answers from `GITHUB_TOKEN`
-- **AND** that value comes from the `opencode-github` Secret
+- **WHEN** a task runs `git push` or `gh pr create`
+- **THEN** the helper gets a token from the minter
+- **AND** GitHub attributes the branch and pull request to `datahub-local-coder[bot]`
 
 #### Scenario: The shared root is not in the Pod
 
 - **WHEN** the rendered Pod spec is inspected
-- **THEN** no container references `github-root` or an App key
+- **THEN** no container references `github-root` or carries an App key as an environment value
 - **AND** no credential file exists under `/opt/data`
 
-#### Scenario: The Pod starts without the App
+#### Scenario: A token expires mid-session
 
-- **WHEN** the release is rendered with no `github-app` Secret in the cluster
-- **THEN** the Pod starts and serves its API
-- **AND** no minter container is present
+- **WHEN** an installation token passes its hour while a session is still running
+- **THEN** the next `git` or `gh` call mints a new one from the sidecar
+- **AND** the session does not restart
 
 ### Requirement: The MCP shim is a separate stateless Pod
 
@@ -227,19 +231,34 @@ SHALL NOT enable the native `websearch` or `webfetch` tools.
 - **THEN** there is no Firecrawl Deployment and no `firecrawl-token` Secret
 - **AND** `FIRECRAWL_API_KEY` is absent from every container
 
+### Requirement: The agent reads cluster state through the Kubernetes MCP bridge
+
+The server's `opencode.json` SHALL register a second remote MCP server, `k8s`, at
+`{env:OPENCODE_K8S_MCP_URL}`, the read-only Kubernetes bridge the release deploys. The server SHALL
+keep no route to the Kubernetes API and no client credential; the bridge is the only way it can see
+what it changed. Its egress policy SHALL admit the bridge on 8080 and nothing else in
+`automation`.
+
+#### Scenario: The agent inspects a workload
+
+- **WHEN** the agent lists its Kubernetes tools
+- **THEN** the `k8s_*` tools are present from the bridge
+- **AND** a direct call to `kubernetes.default.svc` fails
+
 ### Requirement: Permissions name every needed directory and tool
 
 The OpenCode config SHALL resolve every permission check without a silent `ask`, using the v2
 ordered `permissions` ruleset:
 
 - deny `webfetch` and `websearch`;
-- deny reads of `*.env` and `*.env.*`;
+- deny reads of `*.env`, `*.env.*`, `*.pem`, `id_rsa*`, `id_ed25519*`, `.netrc` and `.kube/**`;
+- deny the `bash` patterns `curl *`, `wget *`, `git push --force*` and `git push -f*`;
 - deny `external_directory` for `*`, then allow `/workspace/*`, `/tmp/*`, and
   `/opt/data/.config/opencode/*`;
 - allow `question`, so the agent can ask and the shim reports `needs_input`;
-- allow `fc_firecrawl_scrape`, `fc_firecrawl_search`, and `fc_firecrawl_map`; the bridge registers
-  nothing else, so crawl, agent, monitor, interact, parse, and feedback never reach the permission
-  layer.
+- allow `fc_firecrawl_scrape`, `fc_firecrawl_search`, `fc_firecrawl_map` and `k8s_*`; the bridges
+  register nothing else, so crawl, agent, monitor, interact, parse, and feedback never reach the
+  permission layer.
 
 The Firecrawl server SHALL set `codemode: false`, so its tools appear as native
 `<server>_<tool>` actions rather than only through Code Mode. `read`, `edit`, `shell`, `glob` and
@@ -252,8 +271,9 @@ The Firecrawl server SHALL set `codemode: false`, so its tools appear as native
 
 #### Scenario: Only the registered bridge tools exist
 
-- **WHEN** the agent lists its Firecrawl tools
-- **THEN** only `fc_firecrawl_scrape`, `fc_firecrawl_search`, and `fc_firecrawl_map` are present
+- **WHEN** the agent lists its bridge tools
+- **THEN** only `fc_firecrawl_scrape`, `fc_firecrawl_search`, `fc_firecrawl_map` and `k8s_*` are
+  present
 
 ### Requirement: The Pod runs under gVisor on an amd-1 node
 
@@ -268,8 +288,8 @@ datahublocal-amd-1`, and `kubernetes.io/arch: amd64`.
 
 ### Requirement: Every container runs the restricted profile
 
-All containers SHALL run as a non-root uid: 1000 for the OpenCode and shim containers (and the
-minter, when it is wired), and the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
+All containers SHALL run as a non-root uid: 1000 for the OpenCode, minter and shim containers, and
+the proxy image's own non-root uid. All SHALL set `readOnlyRootFilesystem: true`,
 `allowPrivilegeEscalation: false`, all capabilities dropped, and `RuntimeDefault` seccomp. The
 service-account token SHALL NOT be mounted. No container SHALL run as uid 0. Writable paths SHALL be
 limited to `/opt/data`, `/workspace`, and a size-bounded memory `/tmp`.
@@ -293,16 +313,17 @@ OpenCode state), and a second at `/workspace` (repositories). `HOME` SHALL be `/
 
 ### Requirement: Egress is explicit per workload
 
-- Server Pod: DNS, `data/litellm` on 4000, the automation Firecrawl bridge on 8080, and the
-  `security` egress proxy on 3128. No Kubernetes API, no other `automation` Service, and no direct
-  public HTTPS.
+- Server Pod: DNS, `data/litellm` on 4000, the automation MCP bridges (Firecrawl and
+  Kubernetes) on 8080, and the `security` egress proxy on 3128. No Kubernetes API, no other
+  `automation` Service, and no direct public HTTPS.
 - Web proxy Pod: DNS and the server on 4096 only.
 - Shim Pod: DNS and the server on 4096 only.
 
 The server SHALL set `HTTP_PROXY` and `HTTPS_PROXY` to the proxy Service and `NO_PROXY` to the
 cluster domains, so installs, GitHub calls and `helmfile` chart resolution work; a client that
 ignores them is denied rather than leaking. The proxy's own allowlist is the `egress-proxy`
-capability, and SHALL include the helm chart repositories and OCI registries these releases use.
+capability, and SHALL include the helm chart repositories these releases use, including the hosts
+their redirects land on.
 
 #### Scenario: The API server is unreachable
 

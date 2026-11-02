@@ -7,8 +7,9 @@
 Squid SHALL allow `CONNECT` only to `443` and only to hosts matching the `pypi`, `github`, `npm`,
 `helm`, `alpine` or `slack` `dstdomain` ACL, and SHALL deny every other request. The ACLs SHALL
 cover exactly `.pypi.org`, `pypi.python.org`, `.pythonhosted.org`, `.github.com`,
-`.githubusercontent.com`, `registry.npmjs.org`, `.github.io`, `airflow.apache.org`,
-`downloads.apache.org`, `helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
+`.githubusercontent.com`, `registry.npmjs.org`, `.github.io`, `cloudnative-pg.io`,
+`docs.stirlingpdf.com`, `airflow.apache.org`, `downloads.apache.org`,
+`helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
 `robusta-charts.storage.googleapis.com`, `ghcr.io`, `8gears.container-registry.com`,
 `oci.trueforge.org`, `dl-cdn.alpinelinux.org` and `.slack.com`. Port 80, SSH and every other port
 SHALL be denied.
@@ -22,7 +23,7 @@ SHALL be denied.
 
 - **WHEN** the agent runs `helmfile template` in a `datahub-local-core` checkout through the proxy
 - **THEN** the GitHub Pages, Apache, Redpanda, Sympozium, Open WebUI, Robusta and OCI chart sources
-  in the `helm` ACL are reachable
+  in the `helm` ACL are reachable, including the hosts their redirects land on
 - **AND** a chart repository outside the list is refused
 
 #### Scenario: An unlisted host is refused before a socket opens

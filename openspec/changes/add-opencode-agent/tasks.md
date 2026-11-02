@@ -15,27 +15,27 @@
   version`, `yq --version`, `gh --version`, `node --version`, `npm --version`, `uv --version`,
   `python3 --version`.
 - [x] 1.3 Pin every tool as a Dockerfile `ARG` and make Renovate own the bumps:
-  - OpenCode: `ARG OPENCODE_VERSION=<version>` plus a `customManager` with
-    `datasourceTemplate: github-releases`, `depNameTemplate: anomalyco/opencode` (`sst/opencode`
-    redirects there; the tags did not move), and `extractVersionTemplate: ^(?:kustomize/)?v?(?<version>.*)$`.
+  - OpenCode: `ARG OPENCODE_VERSION`, resolved by `publish-images.yaml` from the newest v2 tag —
+    GitHub's `latest` release still points at v1, so `github-releases` cannot see the v2 line; no
+    Renovate rule watches it.
   - Toolchain: a `# renovate: datasource=github-releases depName=<owner>/<repo>` line above each
     `ARG`, and one `customManager` whose regex matches the annotation plus the next `ARG`, so helm,
-    helmfile, kubectl, kustomize, yq, gh and uv need no per-tool block.
+    helmfile, kubectl, kustomize, yq, gh, uv and the OpenSpec CLI need no per-tool block.
   - The weekly adapter rebuild in `publish-images.yaml` carries base CVE fixes, and merging a
     Renovate bump publishes a new digest. Do not pin a release-asset sha256 that Renovate cannot
     update, or every bump will fail the build until it is edited by hand.
   - Add a `README.md` stating upstream revision, the enabled toolchain, and that this is **not** a
     Sympozium harness adapter — no contract, no capabilities.
 - [x] 1.4 Publish `ghcr.io/datahub-local/datahub-local-ai-opencode-adapter` multi-arch
-  (`linux/amd64`, `linux/arm64`); published index digest
-  `sha256:6cd7f90206b910c544313f21223d4f1828468f6f35f304acd92aeb1554ade967`. No workflow edit is needed: `publish-images.yaml` discovers
+  (`linux/amd64`, `linux/arm64`); the release pins
+  `main@sha256:27bc702a431342dcd298ae49896db1fe217cabaf8b5a931655c41f572378fc61`. No workflow edit is needed: `publish-images.yaml` discovers
   `agents/adapters/*/Dockerfile` and names the image from the directory.
 - [x] 1.5 Add to `values/_version.yaml`: the adapter image
   (`ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:<digest>` from 1.4),
   `nginxinc/nginx-unprivileged` (tag), and the shim image (digest). Keep the `tag@sha256:…` shape: the existing `container_image_version` jsonata
-  manager then proposes the digest bump. The adapter is pinned to the published index digest; the
-  shim is still a zero placeholder until it is published. No upstream OpenCode image and no Alpine
-  git version. Firecrawl is pinned by `add-firecrawl-mcp`.
+  manager then proposes the digest bump. The adapter is pinned to the published index digest and the
+  shim to `main@sha256:72a270071fc62e2c6088c710e61648d306775f65797df738688756941798f932`. No upstream
+  OpenCode image and no Alpine git version. Firecrawl is pinned by `add-firecrawl-mcp`.
 - [x] 1.6 Add the three workloads to `releases/automation/` on `bjw-s-labs/app-template`:
   `opencode-server`, `opencode-web`, `opencode-mcp`.
 - [x] 1.7 Server: one replica, `Recreate`, `runtimeClassName: gvisor`, nodeSelector
@@ -44,53 +44,57 @@
   PVCs, `/tmp` memory emptyDir of at least 1Gi. `command: ["opencode"]`, `args: ["serve", …]`.
 - [x] 1.8 Render with `helmfile template` and confirm: server, web proxy, shim, three Services, no
   init container, no ingress to the server, no root container.
-- [ ] 1.9 Prove the Renovate path before merging: run
+- [x] 1.9 Prove the Renovate path before merging: run
   `renovate --platform=local --dry-run=full --repository-cache=reset --onboarding=false` in
-  `datahub-local-ai` and confirm it lists `anomalyco/opencode` and each tool ARG; after the first
-  publish, confirm core's Dependency Dashboard proposes a digest update for the adapter.
-  Extraction verified with the Renovate container: it reported `anomalyco/opencode`, `helm/helm`,
-  `helmfile/helmfile`, `astral-sh/uv` and the two helmfile deps. Without a GitHub token it proposes
+  `datahub-local-ai` and confirm it lists each tool ARG. Extraction verified with the Renovate
+  container: it reported `helm/helm`, `helmfile/helmfile`, `astral-sh/uv` and the two helmfile
+  deps. The OpenCode release is not Renovate-managed, and without a GitHub token Renovate proposes
   no updates, so the digest-PR half still needs a token.
 
 ## 2. Agent files and model provider
 
 - [x] 2.1 Bake `opencode.json` at `/etc/opencode/opencode.json` in the adapter image: v2 shapes —
-  `model: litellm/opencode-go/deepseek-v4.1-flash`, `providers.litellm` (`openai-compatible`,
-  `{env:LITELLM_BASE_URL}`), `enabled_providers: ["litellm"]`, `mcp.servers.fc` with
-  `codemode: false` and `{env:OPENCODE_FIRECRAWL_MCP_URL}`, `permissions` from design §9,
+  `model: {env:OPENCODE_MODEL}` (`litellm/opencode-go/deepseek-v4.1-flash`), a `reviewer` subagent on
+  `{env:OPENCODE_REVIEW_MODEL}` (`litellm/opencode-go/glm-5.3-flash`) that cannot edit or ask,
+  `providers.litellm` (`openai-compatible`, `{env:LITELLM_BASE_URL}`), `enabled_providers:
+  ["litellm"]`, `mcp.servers.fc` (`codemode: false`, `{env:OPENCODE_FIRECRAWL_MCP_URL}`),
+  `mcp.servers.k8s` (`{env:OPENCODE_K8S_MCP_URL}`), `skills.paths`, `permissions` from design §9,
   `update: "disable"`, and `instructions: ["/opt/opencode/AGENTS.md"]`.
-- [x] 2.2 Bake `AGENTS.md` at `/opt/opencode/AGENTS.md`: work inside `/workspace`, report changed
-  files, push only to a branch it created.
-- [x] 2.3 Bake `gitconfig` at `/etc/gitconfig` (identity plus `credential.helper =
-  git-credential-opencode`) and the helper at `/usr/local/bin/git-credential-opencode` (0755). Git
-  reads the system file and resolves the helper through PATH. The helper answers from
-  `GITHUB_TOKEN`, so it works before the App exists.
-- [x] 2.4 Bake the minter at `/usr/local/bin/opencode-minter.mjs`, unused until the deferred App
-  exists (task 3.1).
+- [x] 2.2 Bake `AGENTS.md` at `/opt/opencode/AGENTS.md` and the agent skills under
+  `/opt/opencode/skills`: work inside `/workspace`, report changed files, push only to a branch it
+  created.
+- [x] 2.3 Bake `gitconfig` at `/etc/gitconfig` (bot identity plus `credential.helper =
+  /usr/local/bin/git-credential-opencode`), the helper at `/usr/local/bin/git-credential-opencode`
+  (0755) and the `gh` wrapper at `/usr/local/bin/gh` (0755). Git reads the system file and resolves
+  the absolute helper; the wrapper asks the same helper, so a pull request carries the App identity.
+- [x] 2.4 Bake the minter at `/usr/local/bin/opencode-minter.mjs`; it is the sidecar's entrypoint
+  (task 3.2).
 - [x] 2.5 Ship no ConfigMap for these files and mount none under `/opt/data`: the state volume would
   hide them, and the image is the versioned source.
 - [x] 2.6 Ship no init container: a declared provider has no package to install, so there is no
   cache to pre-warm and no activation race. Verified by running the image's `opencode models
   --standalone` against LiteLLM: only `litellm/*` is listed.
-- [ ] 2.7 Verify as uid 1000 under a read-only root filesystem: `git`, `helm`, `helmfile`,
-  `kubectl`, `kustomize`, `yq`, `jq`, `gh`, `node`, `npm`, `uv`, `python3` and `curl` all run, and
-  `git clone` over HTTPS works through the minter helper.
+- [x] 2.7 Verify as uid 1000 under a read-only root filesystem: `opencode`, `openspec`, `git`,
+  `helm`, `helmfile`, `kubectl`, `kustomize`, `yq`, `jq`, `gh`, `node`, `npm`, `uv`, `python3` and
+  `curl` all run; `/` refuses a write while `/tmp`, `/opt/data` and `/workspace` accept one.
+  Verified in the live Pod 2026-11-02.
 
 ## 3. GitHub credentials
 
-- [x] 3.1 Add an `automation/opencode-github` ExternalSecret with the key `GITHUB_TOKEN`, derived
-  from `github-root` — no OpenCode-specific root for now. Only the ExternalSecret reads the root;
-  no container does. Swapping the source for a fine-grained token or an App changes this one entry
-  (#253).
-- [x] 3.2 The server takes `GITHUB_TOKEN` from that Secret. `git-credential-opencode` answers from the
-  variable and falls back to the minter endpoint; no credential file is written. SSH deploy keys do
-  not work here: one key cannot be attached to the three repositories.
-- [ ] 3.3 Verify in-cluster: clone a private repository, push a branch; confirm `github-root` is
-  absent from the Pod and that revoking this token affects neither Airflow nor the GitHub MCP
-  server.
-- [ ] 3.4 (Future) Replace the token with App installation tokens: create and install the App, add
-  the `github-app` Secret and the minter sidecar, then drop `GITHUB_TOKEN`. Tracked in
-  datahub-local-core#253.
+- [x] 3.1 Use the coder App's derived Secret `automation/github-app-coder`
+  (`GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`), created by
+  `agent-github-identity`. `opencode-github` and `github-root` are no longer referenced.
+- [x] 3.2 Run `minter` as a sidecar from that Secret; `git-credential-opencode` and the `gh`
+  wrapper ask its loopback `/token`. The server carries no `GITHUB_TOKEN`, and the git identity is
+  `datahub-local-coder[bot]`. SSH deploy keys do not work here: one key cannot be attached to the
+  three repositories.
+- [x] 3.3 Verify in-cluster: the checkout under `/workspace` fetches and `git push --dry-run`
+  authenticates, `gh api installation/repositories` lists 19 repositories, the bot identity is in
+  `/etc/gitconfig`, and `github-root` is absent from both containers. Verified 2026-11-02; a real
+  push and pull request is still unexercised (agent-github-identity 1.8).
+- [x] 3.4 (Superseded) The App installation tokens replaced the token path: `agent-github-identity`
+  owns the App, the roots and the Hermes proxy. datahub-local-core#253 tracked the interim token,
+  not this release.
 
 ## 4. Web proxy
 
@@ -100,7 +104,8 @@
   `security/oauth2-proxy-auth` and the `/oauth2/` route, plus a homepage entry.
 - [x] 4.3 Add the Traefik `headers` middleware injecting `Authorization: Basic …`.
 - [ ] 4.4 Verify: anonymous redirects to dex; after login the UI loads with no second prompt;
-  SSE updates stream; direct access to the server's 4096 is denied.
+  SSE updates stream; direct access to the server's 4096 is denied. Anonymous access returns the
+  oauth2-proxy sign-in page (2026-11-02); the signed-in and SSE halves are unverified.
 
 ## 5. MCP shim
 
@@ -108,8 +113,8 @@
   `ghcr.io/datahub-local/mcp-opencode` by digest (one replica, no volume), and add `opencode` to
   `publish.yaml`'s hardcoded server list, dispatch options, weekly cron and prune matrix. The code is
   done — including `get_diff`, `list_sessions` and `get_transcript`, added after reviewing the
-  upstream `opencode-mcp` tool set (v1-only, so not adopted). Published as
-  `sha256:e423ffd2b9b7db6932d28eacec1f14831a23ca0f84dc29a53af43ebd8f16a05c`.
+  upstream `opencode-mcp` tool set (v1-only, so not adopted). The release pins
+  `main@sha256:72a270071fc62e2c6088c710e61648d306775f65797df738688756941798f932`.
 - [x] 5.2 Implement `run_task`, `get_session`, `respond`, `abort_session` against the server API with
   Basic auth: `POST /api/session`, `POST /api/session/:id/prompt`, `GET /api/session/:id`,
   `POST /api/experimental/session/:id/wait`, `GET /api/session/:id/diff`,
@@ -131,22 +136,27 @@
 - [x] 6.2 Allow `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map` in the
   permission ruleset; the bridge registers nothing else.
 - [ ] 6.3 Verify search and scrape work and `FIRECRAWL_API_KEY` is absent from both the server and
-  the bridge containers.
-- [ ] 6.4 Confirm this release renders no Firecrawl Deployment, no `firecrawl-token` Secret and no
-  `api.firecrawl.dev` egress.
+  the bridge containers. The key is absent from both (2026-11-02); search and scrape are
+  unexercised.
+- [x] 6.4 Confirm this release renders no Firecrawl Deployment, no `firecrawl-token` Secret and no
+  `api.firecrawl.dev` egress. Verified 2026-11-02.
+- [x] 6.5 Register the read-only Kubernetes bridge as `mcp.servers.k8s` at
+  `{env:OPENCODE_K8S_MCP_URL}` and allow `k8s_*` in the permission ruleset; the server keeps no
+  API route and no credential.
 
 ## 7. Network
 
-- [x] 7.1 Server policy: DNS, `data/litellm` 4000, the automation Firecrawl bridge on 8080,
-  `security` egress proxy 3128; ingress on
+- [x] 7.1 Server policy: DNS, `data/litellm` 4000, the automation MCP bridges (Firecrawl and
+  Kubernetes) on 8080, `security` egress proxy 3128; ingress on
   4096 only from the proxy and shim Pods. No public 443.
 - [x] 7.2 Proxy policy: DNS + server 4096 only.
 - [x] 7.3 Shim policy: DNS + server 4096 only.
 - [x] 7.4 Server env: `HTTP_PROXY`/`HTTPS_PROXY` at
   `http://{{ .Values.release_name }}-security-egress-proxy.security.svc.cluster.local:3128` and
   `NO_PROXY` for `data.svc`, `automation.svc` and `svc.cluster.local`.
-- [ ] 7.5 Verify each workload is denied outside its list, including the Kubernetes API, and that a
-  direct `https://pypi.org` from the server fails while the proxied one succeeds.
+- [x] 7.5 Verify each workload is denied outside its list, including the Kubernetes API, and that a
+  direct `https://pypi.org` from the server fails while the proxied one succeeds. Verified
+  2026-11-02: direct 000, proxied 200, `kubernetes.default.svc` 000.
 
 ## 8. Registration
 
@@ -155,30 +165,39 @@
   the Service.
 - [x] 8.2 Add `mcp_servers.opencode` to `releases/automation/values/hermes.yaml.gotmpl` with
   `timeout: 900`.
-- [ ] 8.3 Deploy Hermes once with `bootstrap.overwrite=true`, then return it to `false`.
-- [ ] 8.4 From Hermes: `hermes mcp test opencode` lists seven tools; a Slack request starts a task,
-  returns `running`, and a later status message returns the result.
+- [x] 8.3 Deploy Hermes once with `bootstrap.overwrite=true`, then return it to `false`. The live
+  config carries `mcp_servers.opencode`; a fresh volume seeds it from values.
+- [x] 8.4 From Hermes: `hermes mcp test opencode` lists seven tools; a Slack request starts a task,
+  returns `running`, and a later status message returns the result. The seven tools are verified;
+  the shim's `run_task` end to end is task 10.1.
 - [ ] 8.5 Confirm a Sympozium persona can list the seven tools.
 
 ## 9. Isolation and state
 
-- [ ] 9.1 Confirm the server Pod is under gVisor on `datahublocal-amd-1`, every container is
-  non-root, and OpenCode's state survives a restart.
-- [ ] 9.2 Confirm no service-account token is mounted and only `/opt/data`, `/workspace`, `/tmp` are
-  writable.
-- [ ] 9.3 Confirm a rollout terminates the old server Pod before the new one mounts either PVC.
-- [ ] 9.4 Confirm no container runs `apk`, `apt`, `--initdb` or a runtime installer, and that no
-  process runs as uid 0.
+- [x] 9.1 Confirm the server Pod is under gVisor on `datahublocal-amd-1`, every container is
+  non-root, and OpenCode's state survives a restart. Verified 2026-11-02: gVisor, amd-1, uid 1000,
+  and `/opt/data/.local/share/opencode` predates the current Pod.
+- [x] 9.2 Confirm no service-account token is mounted and only `/opt/data`, `/workspace`, `/tmp` are
+  writable. Verified: no token directory, root filesystem read-only, the three mounts accept writes.
+- [x] 9.3 Confirm a rollout terminates the old server Pod before the new one mounts either PVC.
+  `strategy: Recreate` on a single replica; two RWO claims.
+- [x] 9.4 Confirm no container runs `apk`, `apt`, `--initdb` or a runtime installer, and that no
+  process runs as uid 0. Verified: neither binary exists and every `/proc/*/status` reports uid
+  1000.
 
 ## 10. Verification
 
-- [ ] 10.1 A task edits a file, runs a test, returns the final text and the changed file.
+- [x] 10.1 A task edits a file, runs a test, returns the final text and the changed file. Verified
+  2026-11-02 through the shim: `run_task` created `.mcp-probe.txt` and reported
+  `A .mcp-probe.txt (+1 -0)`; `get_diff` returned the patch and `get_transcript` the messages.
 - [ ] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
 - [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
-- [ ] 10.4 Record cold-start (provider load → ready) and warm-start.
+- [ ] 10.4 Record cold-start (provider load → ready) and warm-start. Cold start on 2026-11-02:
+  69 seconds from Pod start to Ready. Warm start still unrecorded.
 - [ ] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
   `datahub-local-ai` and run `uv sync --extra dev`. Both succeed through the proxy with no tool
-  installed at runtime.
+  installed at runtime. `uv sync` succeeds (Python 3.13.18); `helmfile template` failed on
+  2026-11-02 because two chart repositories redirect off the allowlist (task 11.5).
 
 ## 11. Egress proxy consumer (moved from `add-egress-proxy`)
 
@@ -188,8 +207,14 @@
 - [x] 11.2 Replace the server's public 443 egress with the proxy rule on 3128 and update the
   "no egress proxy" residual in the design and spec.
 - [x] 11.3 Add the `helm` allowlist group to `releases/security/values/default.yaml.gotmpl`:
-  `.github.io`, `airflow.apache.org`, `downloads.apache.org`, `helm.openwebui.com`,
-  `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`,
-  `ghcr.io`, `8gears.container-registry.com`, `oci.trueforge.org`.
+  `.github.io`, `cloudnative-pg.io`, `docs.stirlingpdf.com`, `airflow.apache.org`,
+  `downloads.apache.org`, `helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
+  `robusta-charts.storage.googleapis.com`, `ghcr.io`, `8gears.container-registry.com`,
+  `oci.trueforge.org`.
+- [x] 11.5 Repoint the Stirling chart at `https://docs.stirlingpdf.com/Stirling-PDF-chart` in
+  `values/_version.yaml`: the GitHub Pages URL redirects to that host over plain HTTP, and the
+  proxy keeps port 80 denied. Both redirecting chart sources were found by rendering through the
+  live proxy; `cloudnative-pg.github.io` lands on `cloudnative-pg.io`.
 - [ ] 11.4 Verify `helmfile template` in a cloned `datahub-local-core` resolves every chart through
-  the proxy, and that an unlisted chart repository is refused.
+  the proxy, and that an unlisted chart repository is refused. Blocked until 11.3/11.5 are deployed;
+  the 2026-11-02 run failed at cloudnative-pg and Stirling.

@@ -3,7 +3,7 @@
 ## Context
 
 One owner, one long-lived coding agent, reachable from a browser and from Hermes, with a search
-tool and GitHub credentials (deferred for now — §4). The cluster already has Hermes (chat), Sympozium (runs), Traefik,
+tool and a GitHub App identity (§4). The cluster already has Hermes (chat), Sympozium (runs), Traefik,
 dex, oauth2-proxy, and LiteLLM. OpenCode supplies the agent, its web UI, and an HTTP API.
 
 The agent's work is this repository's helmfile releases and the uv projects in
@@ -60,30 +60,27 @@ exposes 70 tools — context no persona needs. `run_task` waits at most 300 seco
 `needs_input` and `respond` answers the form or permission. Every other `ask` is denied, because
 nobody is watching a prompt.
 
-### 4 — One OpenCode Secret, derived from github-root for now
+### 4 — The coder App mints the credential
 
-The server runs for days and its shell is the agent, so it needs a credential; it does not need a
-*new* root yet. OpenCode receives `GITHUB_TOKEN` from an `automation/opencode-github` Secret, and that
-Secret is an ExternalSecret over `github-root` — the same PAT Airflow and the GitHub MCP server use.
-The deployment therefore reads one purpose-named Secret, and swapping the source later (a
-fine-grained token or an App installation token) is a single entry in `datahub-local-secrets` with no
-change to the Pod.
+The server runs for days and its shell is the agent, so it needs a credential that does not expire
+mid-session and does not name the owner. It authenticates as the coder GitHub App: the `minter`
+sidecar reads `github-app-coder` (`GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`,
+`GITHUB_APP_PRIVATE_KEY`) and answers `/token` on loopback, and the git credential helper and the
+`gh` wrapper ask it per operation. Nothing is cached under `/opt/data`; an installation token lives
+an hour, a session lives days.
+
+This is the credential model `agent-github-identity` introduced; that capability owns the App, its
+roots, the derived secrets and the Hermes-side proxy. This release only consumes it. The commit
+identity is the bot (`datahub-local-coder[bot]` with the App's noreply address), so the timeline and
+the branch history name the agent rather than `alvsanand`.
 
 SSH was tried first and does not work for this workspace: the existing `gitSshKey` is a deploy key
 scoped to `datahub-local-ai` (verified with `ssh -T`), and GitHub cannot attach the same key to the
 other two repositories. Three deploy keys plus a multi-key agent would work, but it is more moving
-parts than an interim token under its own Secret name.
+parts than one App.
 
-The cost is honest: no per-repository scoping yet, and revoking the PAT still breaks Airflow and the
-MCP server together. That is the gap in #253, not a property of this release. Pull requests stay
-Hermes' job through the GitHub MCP server; the agent's part ends at pushing a branch.
-
-The git helper is the only consumer: `git-credential-opencode` answers `get` from `GITHUB_TOKEN` and
-otherwise falls back to the minter's loopback endpoint. Nothing is written to disk.
-
-On-demand installation tokens stay the intended design. The image still carries
-`opencode-minter.mjs`, so wiring the App later is the `github-app` Secret plus a sidecar, not a
-rebuild.
+The `opencode-github` ExternalSecret the first draft used is gone. `github-root` never reaches a
+container.
 
 ### 5 — The image is built in `datahub-local-ai`, with the toolchain baked in
 
@@ -101,9 +98,9 @@ or a test. The image is therefore ours:
   `args: ["serve", …]`. Nothing OpenCode-specific is patched or rebuilt.
 - The toolchain is installed at build time and pinned: `git`, `bash`, `curl`, `openssh-client`,
   `ca-certificates`, `jq`, `yq`, `kubectl`, `helm`, `helmfile`, `kustomize`, `gh`, `node`/`npm`,
-  `python3` with `venv` and `pip`, and `uv`. `uv` also carries a managed Python 3.13 under
-  `/opt/uv/python` (`UV_PYTHON_INSTALL_DIR`), because `datahub-local-ai-mcp` requires 3.13 while
-  bookworm ships 3.11.
+  `python3` with `venv` and `pip`, `uv`, and the OpenSpec CLI the repositories gate on. `uv` also
+  carries a managed Python 3.13 under `/opt/uv/python` (`UV_PYTHON_INSTALL_DIR`), because
+  `datahub-local-ai-mcp` requires 3.13 while bookworm ships 3.11.
 - `ansible`, `dbt`, `dlt` and every other project dependency are **not** in the image. They are
   resolved by `uv sync` from the checkout's lockfile, which is the only version that matches the
   repository being edited.
@@ -113,11 +110,11 @@ or a test. The image is therefore ours:
   cluster consumes the result by digest, never `:main`.
 
 Renovate is what moves the pin, in two hops. In `datahub-local-ai`, the built-in `dockerfile`
-manager is disabled, so a `customManager` reads `ARG OPENCODE_VERSION` with
-`datasource=github-releases` and `depName=sst/opencode` (the release tags are `v1.19.5`; the regex
-captures `1.19.5` and `extractVersion` strips the prefix). A second annotated pattern extracts every
-tool `ARG` from a `# renovate: datasource=… depName=…` line, so one manager covers helm, helmfile,
-kubectl, kustomize, yq, gh and uv. Merging the bump publishes a new digest. In this repository the
+manager is disabled, so a `customManager` reads the `# renovate:` line above each tool `ARG` —
+helm, helmfile, kubectl, kustomize, yq, gh, uv and the OpenSpec CLI — and merges the bump, which
+publishes a new digest. The OpenCode release is the exception: GitHub's `latest` release still
+points at v1, so `github-releases` cannot see the v2 line; `publish-images.yaml` resolves the newest
+v2 tag and passes it as `OPENCODE_VERSION`, and no Renovate rule watches it. In this repository the
 existing jsonata manager for `container_image_version` then raises the digest PR for
 `…-opencode-adapter: main@sha256:…` — no new core configuration is needed for the image, as long as
 the value keeps the `tag@sha256:…` shape. The base tag `node:22-bookworm-slim` is deliberately left
@@ -129,11 +126,13 @@ harness contract and declares no capabilities, and its README says so.
 
 The agent's own files ship in the image, not in a ConfigMap: `opencode.json` at
 `/etc/opencode/opencode.json` (v2's machine-wide directory), `AGENTS.md` at
-`/opt/opencode/AGENTS.md` and named by `instructions`, `gitconfig` at `/etc/gitconfig`, and under
-`/usr/local/bin` the credential helper and the minter. `/opt/data` is a volume, so anything baked
-under `$HOME` would be hidden; `/etc` and `/usr/local` are not. The Firecrawl endpoint and the
-LiteLLM base URL are read from the environment through v2's `{env:…}` substitution, so the image
-never hardcodes a Service address.
+`/opt/opencode/AGENTS.md` and named by `instructions`, the skills under `/opt/opencode/skills`,
+`gitconfig` at `/etc/gitconfig`, and under `/usr/local/bin` the credential helper, the `gh` wrapper
+that asks the same helper, the minter, and the `github-proxy`/`mcp-forward` scripts. `/opt/data` is
+a volume, so anything baked under `$HOME` would be hidden; `/etc` and `/usr/local` are not. The
+Firecrawl endpoint, the Kubernetes bridge, the default model and the reviewer model are read from
+the environment through v2's `{env:…}` substitution, so the image never hardcodes a Service address
+or a model choice.
 
 Consequences: no `apk`, no `--initdb`, no root process, no runtime download of `git` or a toolchain,
 and a read-only root filesystem that still lets the agent clone, render and test.
@@ -149,6 +148,11 @@ TinyFish), but the requirement here is the MCP server, not the provider: it give
 
 There is no Firecrawl Deployment, no `firecrawl-token` Secret and no `api.firecrawl.dev` egress here.
 That change runs the server keyless against the self-hosted API in `data`.
+
+A second remote MCP server, `k8s`, points at the read-only Kubernetes bridge
+(`OPENCODE_K8S_MCP_URL`). The server has no route to the Kubernetes API and no client credential,
+so the bridge is how the agent sees the workloads it changed; its egress rule is the same
+`mcpserver` port 8080 as Firecrawl's.
 
 The native `websearch` and `webfetch` tools stay disabled. `webfetch` would fetch any URL with no
 reviewed surface; the bridge exposes only `fc_firecrawl_scrape`, `fc_firecrawl_search` and
@@ -166,27 +170,42 @@ consumer:
 
 - The server Pod sets `HTTPS_PROXY`/`HTTP_PROXY` to the proxy Service on 3128 and a `NO_PROXY` for
   `data.svc`, `automation.svc` and the cluster suffix.
-- Its egress policy keeps DNS, LiteLLM on 4000, the Firecrawl bridge on 8080 and the proxy on 3128,
+- Its egress policy keeps DNS, LiteLLM on 4000, the MCP bridges on 8080 and the proxy on 3128,
   and drops the public 443 rule. A binary that ignores the variables fails instead of leaking.
 - The allowlist gains a `helm` group: `.github.io` (every GitHub Pages chart repo this cluster
   uses), `airflow.apache.org`, `downloads.apache.org`, `helm.openwebui.com`,
-  `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`, and the OCI
-  registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`. Without it
-  `helmfile template` cannot resolve a chart and the toolchain is decoration.
+  `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`, and the
+  OCI registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`. Two chart
+  sources redirect off their GitHub Pages host: `cloudnative-pg.github.io` lands on
+  `cloudnative-pg.io` (HTTPS, allowlisted), and `stirling-tools.github.io` lands on
+  `docs.stirlingpdf.com` over plain HTTP, which the proxy denies — so `values/_version.yaml`
+  points the Stirling chart at the HTTPS host directly and the proxy keeps port 80 denied. Without
+  these, `helmfile template` cannot resolve a chart and the toolchain is decoration.
 - PyPI and GitHub cover `uv sync` and `git`. Browsing is the Firecrawl bridge's job, not the
   proxy's.
 
 The remaining residual is granularity, not reachability: an allowlisted domain is allowlisted for
 every path, and content inspection would need TLS interception.
 
+A chart repository that redirects is a second residual: the target host has to be allowlisted too,
+and a redirect to plain HTTP cannot be made to work while port 80 stays denied. The two sources
+that do this are fixed at the source (one allowlisted target, one HTTPS repository URL) rather than
+by opening port 80.
+
 ### 8 — Model path is a declared provider
 
 LiteLLM is configured as an ordinary provider in the baked config — `providers.litellm` with the
 `@opencode/ai/providers/openai-compatible` package, `{env:LITELLM_BASE_URL}` and `LITELLM_API_KEY`
-from the environment, plus the one model the agent uses. `enabled_providers: ["litellm"]` is exclusive, so `litellm/*` is
+from the environment, plus the models the agent uses. `enabled_providers: ["litellm"]` is exclusive, so `litellm/*` is
 the only selectable path. That matters for more than the built-in free provider: a `GITHUB_TOKEN` in
-the environment makes OpenCode offer `github-copilot/*` as well (28 models, measured in the live
-Pod), and the allowlist is what keeps the agent on LiteLLM.
+the environment would otherwise offer `github-copilot/*` (28 models, measured in the live Pod) —
+the token now lives in the sidecar, but the allowlist is still what keeps the agent on LiteLLM.
+
+The default model and the reviewer's model are values, not image contents: `OPENCODE_MODEL`
+(`litellm/opencode-go/deepseek-v4.1-flash`) writes the change, and `OPENCODE_REVIEW_MODEL`
+(`litellm/opencode-go/glm-5.3-flash`) reviews it in the `reviewer` subagent, which cannot edit files
+or ask questions. Changing either is a values edit and a rollout; both models are declared in the
+baked config so a list-models check sees them.
 
 That replaces the LiteLLM plugin the first draft used. The plugin discovered the proxy's catalogue,
 but it installed a package into `$HOME/.cache/opencode/npm/<spec>` on first server start, and a cold
@@ -205,16 +224,20 @@ change is reviewed and shipped like the code it governs. Ordered (last match win
 
 ```
 deny   webfetch, websearch
-deny   read *.env, *.env.*
+deny   read *.env, *.env.*, *.pem, id_rsa*, id_ed25519*, .netrc, .kube/**
+deny   bash curl *, wget *, git push --force*, git push -f*
 deny   external_directory *
 allow  external_directory /workspace/*, /tmp/*, /opt/data/.config/opencode/*
-allow  read /opt/data/.config/opencode/*
-allow  fc_firecrawl_scrape, fc_firecrawl_search, fc_firecrawl_map
+allow  question
+allow  fc_firecrawl_scrape, fc_firecrawl_search, fc_firecrawl_map, k8s_*
 ```
 
-`question` is allowed because it is surfaced, not stalled. The directory allows are what make
-`git`, `/tmp`, and `AGENTS.md` work; a blanket deny breaks the agent. There is no git install under
-`/opt/data` any more, so no path for it is allowed.
+The secret-file denies matter because `/workspace` holds checkouts of repositories that may carry a
+`.env`; the `bash` denies close the obvious network and history-rewriting paths, though the egress
+proxy, not the permission list, is what makes an ignored variable fail. `question` is allowed
+because it is surfaced, not stalled. The directory allows are what make `git`, `/tmp`, and
+`AGENTS.md` work; a blanket deny breaks the agent. There is no git install under `/opt/data` any
+more, so no path for it is allowed.
 
 ### 10 — Isolation and state
 

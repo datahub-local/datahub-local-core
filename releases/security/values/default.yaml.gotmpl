@@ -10,9 +10,9 @@ egress_proxy_domains:
   github: # git clone/push, GitHub App token minting, release assets
     - .github.com
     - .githubusercontent.com
-  npm: # the LiteLLM plugin OpenCode installs at startup
+  npm: # npm-registry access for the OpenCode CLI and its tools
     - registry.npmjs.org
-  alpine: # the apk init container that installs git
+  alpine: # retained: the egress ACL name predates the toolchain image
     - dl-cdn.alpinelinux.org
   slack: # Hermes' Socket Mode socket, Web API and file uploads
     - .slack.com
@@ -21,6 +21,11 @@ egress_proxy_domains:
   # unlisted repository means the toolchain cannot render a release.
   helm:
     - .github.io
+    # cloudnative-pg.github.io redirects here; the chart repo is on the target.
+    - cloudnative-pg.io
+    # stirling-tools.github.io redirects to this host, but over plain HTTP, which
+    # the proxy denies. values/_version.yaml points at it over HTTPS instead.
+    - docs.stirlingpdf.com
     - airflow.apache.org
     - downloads.apache.org
     - helm.openwebui.com

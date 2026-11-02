@@ -136,7 +136,9 @@ helm_chart_version:
     version: 2.5.2
   stirling-pdf-chart:
     ref: stirling-pdf/stirling-pdf-chart
-    repository: https://stirling-tools.github.io/Stirling-PDF-chart
+    # The GitHub Pages URL 301s to this host over plain HTTP, which the egress
+    # proxy denies; this host serves the same index over HTTPS.
+    repository: https://docs.stirlingpdf.com/Stirling-PDF-chart
     version: 4.0.0
   superset:
     ref: superset/superset
