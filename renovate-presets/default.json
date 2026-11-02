@@ -1,0 +1,67 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate ground for every datahub-local repository. A repository extends this and keeps only its own customManagers, includePaths and local policy. ignorePaths replaces the value config:recommended inherits rather than merging with it, so the inherited globs are repeated here and a repository that sets its own must list every glob it wants. The age gate is timestamp-optional because GHCR, Quay and ECR publish no release timestamp, and a timestamp-required gate holds their digest updates forever.",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "schedule": ["* 8 * * 0,6"],
+  "automerge": false,
+  "automergeStrategy": "squash",
+  "forkProcessing": "enabled",
+  "prCreation": "immediate",
+  "minimumReleaseAge": "2 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "**/.github/**"
+  ],
+  "packageRules": [
+    {
+      "description": "A major gets its own branch per datasource so it is never approved alongside a patch nobody read.",
+      "matchDatasources": ["helm"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "Helm chart major updates",
+      "groupSlug": "major-helm"
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Helm chart updates",
+      "groupSlug": "helm"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "Container image major updates",
+      "groupSlug": "major-docker"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "Container image updates",
+      "groupSlug": "docker"
+    },
+    {
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "Python dependency major updates",
+      "groupSlug": "major-python"
+    },
+    {
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Python dependency updates",
+      "groupSlug": "python-minor-patch"
+    },
+    {
+      "description": "Lock file maintenance delegates to the package manager, so there is no release timestamp to age against and the branch would stay pending forever.",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "minimumReleaseAge": null
+    }
+  ]
+}
