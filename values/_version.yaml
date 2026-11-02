@@ -135,7 +135,9 @@ helm_chart_version:
     repository: https://kubeflow.github.io/spark-operator
     version: 2.5.2
   stirling-pdf-chart:
-    ref: stirling-pdf/stirling-pdf-chart
+    # A new alias because Helm refuses to re-add an existing repository name at a
+    # different URL; the old `stirling-pdf` alias stays in a warm cache.
+    ref: stirling-tools/stirling-pdf-chart
     # The GitHub Pages URL 301s to this host over plain HTTP, which the egress
     # proxy denies; this host serves the same index over HTTPS.
     repository: https://docs.stirlingpdf.com/Stirling-PDF-chart

@@ -212,9 +212,11 @@
   `robusta-charts.storage.googleapis.com`, `ghcr.io`, `8gears.container-registry.com`,
   `oci.trueforge.org`.
 - [x] 11.5 Repoint the Stirling chart at `https://docs.stirlingpdf.com/Stirling-PDF-chart` in
-  `values/_version.yaml`: the GitHub Pages URL redirects to that host over plain HTTP, and the
-  proxy keeps port 80 denied. Both redirecting chart sources were found by rendering through the
-  live proxy; `cloudnative-pg.github.io` lands on `cloudnative-pg.io`.
+  `values/_version.yaml`, under a new repository alias: Helm refuses to re-add an existing alias at
+  a different URL, and a warm ArgoCD helmfile cache still holds the old one. The GitHub Pages URL
+  redirects to that host over plain HTTP, and the proxy keeps port 80 denied. Both redirecting
+  chart sources were found by rendering through the live proxy; `cloudnative-pg.github.io` lands on
+  `cloudnative-pg.io`.
 - [ ] 11.4 Verify `helmfile template` in a cloned `datahub-local-core` resolves every chart through
   the proxy, and that an unlisted chart repository is refused. Blocked until 11.3/11.5 are deployed;
   the 2026-11-02 run failed at cloudnative-pg and Stirling.

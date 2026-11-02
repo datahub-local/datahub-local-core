@@ -179,8 +179,9 @@ consumer:
   sources redirect off their GitHub Pages host: `cloudnative-pg.github.io` lands on
   `cloudnative-pg.io` (HTTPS, allowlisted), and `stirling-tools.github.io` lands on
   `docs.stirlingpdf.com` over plain HTTP, which the proxy denies — so `values/_version.yaml`
-  points the Stirling chart at the HTTPS host directly and the proxy keeps port 80 denied. Without
-  these, `helmfile template` cannot resolve a chart and the toolchain is decoration.
+  points the Stirling chart at the HTTPS host directly, under a new repository alias because Helm
+  refuses to re-add an existing alias at a different URL, and the proxy keeps port 80 denied.
+  Without these, `helmfile template` cannot resolve a chart and the toolchain is decoration.
 - PyPI and GitHub cover `uv sync` and `git`. Browsing is the Firecrawl bridge's job, not the
   proxy's.
 
