@@ -1,46 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    ":semanticCommits"
-  ],
-  "schedule": [
-    "* * * * 0,6"
-  ],
-  "automerge": false,
-  "prCreation": "immediate",
-  "automergeStrategy": "squash",
-  "forkProcessing": "enabled",
+  "extends": ["local>datahub-local/datahub-local-core:renovate-presets/default"],
   "ignorePaths": [
     "**/.devcontainer/**",
     "**/.github/**",
     "**/Dockerfile",
     "**/releases/**"
   ],
-  "packageRules": [
-    {
-      "matchDatasources": [
-        "helm",
-        "docker"
-      ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
-      "lockFileMaintenance": {
-        "enabled": true
-      },
-      "groupName": "all Helm/Docker dependencies ({{ lookup (split (lowercase currentVersionTimestamp ) 't') 0 }})",
-      "groupSlug": "all-helm"
-    }
-  ],
   "customManagers": [
     {
       "customType": "jsonata",
       "fileFormat": "yaml",
-      "managerFilePatterns": [
-        "/(^|/)values/_version.yaml$/"
-      ],
+      "managerFilePatterns": ["/(^|/)values/_version.yaml$/"],
       "matchStrings": [
         "$each(helm_chart_version, function($v, $k) { {'depName':$k, 'packageName': ($contains($v.repository, 'oci://'))?($replace($v.repository, 'oci://', '') & '/' & $k):$k, 'datasource': ($contains($v.repository, 'oci://'))?'docker':'helm', 'currentValue': $v.version, 'registryUrl': ($contains($v.repository, 'oci://'))?'':$v.repository} })"
       ]
@@ -48,9 +19,7 @@
     {
       "customType": "jsonata",
       "fileFormat": "yaml",
-      "managerFilePatterns": [
-        "/(^|/)values/_version.yaml$/"
-      ],
+      "managerFilePatterns": ["/(^|/)values/_version.yaml$/"],
       "matchStrings": [
         "$each(container_image_version, function($v, $k) { {'packageName': $k , 'datasource': 'docker', 'currentValue': ($contains($string($v), '@') ? $substringBefore($string($v), '@') : $string($v)), 'currentDigest': ($contains($string($v), '@') ? $substringAfter($string($v), '@'))} })"
       ]
