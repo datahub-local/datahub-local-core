@@ -25,6 +25,9 @@
   comments and pull-request review comments, de-duplicated by a marker.
 - [ ] 1.9b Confirm a `BLOCKED` report sets `Blocked` rather than "branch without a
   pull request", and that an owner answer relayed from Slack is forwarded.
+  `Blocked` is confirmed: #122 moved there with the question commented and the ping
+  sent. The relay half is blocked on 1.9e: the only answer that arrived came through
+  the issue, not through Slack.
 - [x] 1.9d Review fixes: `board` as the tick's work list, `comment --owner` for a
   relayed answer, resume respecting the checkout rule, the retained PR-mention
   requirement rewritten, the agent no longer closing issues, and the skill's
@@ -32,9 +35,38 @@
 - [ ] 1.8 After the rollout, `hermes cron list` shows `taskboard-tick`, `hermes
   skills` lists `taskboard-loop`, and one manual `hermes cron run taskboard-tick`
   answers `idle` with nothing ready.
-- [ ] 1.9 With the default limit, one tick dispatches one issue and stops on the
+- [x] 1.9 With the default limit, one tick dispatches one issue and stops on the
   next `busy` without commenting.
-- [ ] 1.11 Confirm the dispatch no longer holds the tick: `wait_seconds: 10`, the
+- [x] 1.11 Confirm the dispatch no longer holds the tick: `wait_seconds: 10`, the
   session recorded, the tick ends, and the next tick polls it.
-- [ ] 1.10 Move issue #116 to `Ready` and confirm one tick starts it, sets
-  `In Progress`, and records the session on the issue.
+- [x] 1.10 Move #121 to `Ready` and confirm one tick starts it, sets
+  `In Progress`, and records the session on the issue. (#116 was closed before this
+  ran, so the loop took #121, the first dispatchable issue after it.)
+- [ ] 1.9e Fix the help ping's destination. The tick posted it to `#workflows`
+  (`C08RQNXQV3P`), which Hermes does not read, and the Sympozium Slack app is not a
+  member of `#agent-hermes` (`channel_not_found`), so an answer written under the
+  ping reached nothing. The skill now names `$SLACK_HOME_CHANNEL`; what remains is
+  inviting the `Homelab` app to `#agent-hermes` and re-running the relay.
+
+## Record
+
+The first live run, 2026-11-02, against two throwaway issues in `datahub-local`.
+
+- #121 was dispatched, moved to `In Progress`, claimed by the coder, which opened PR
+  #123; the next tick moved it to `Testing`, requested review and posted one Slack
+  line.
+- #122 was dispatched on a later tick, the agent stopped to ask which H1 to use, the
+  card went to `Blocked`, the question was commented with the help marker, and the
+  ping went to Slack. The answer, written on the issue, was forwarded and marked, the
+  card returned to `In Progress`, PR #124 opened, then `Testing`.
+- A tick with one dispatch took 59s, and a dispatch plus a transition 95s, so the
+  ten-second wait does not hold the scheduler.
+- Defect: the help ping went to `#workflows`, which Hermes cannot read, and the
+  sending app cannot join `#agent-hermes`. The skill now names `$SLACK_HOME_CHANNEL`;
+  the membership is still missing.
+- Defect: the #121 summary claimed the PR changed `docs/services/automation.md` too
+  (+24 −0). PR #123 touches only `docs/services/core.md`, so the coder's workspace
+  holds something the pull request does not, and the changed-files line can
+  over-report.
+- Defect: `review` logged a 404 from `POST .../requested_reviewers` while the review
+  request did land. It reads as a retry against an already-requested reviewer.

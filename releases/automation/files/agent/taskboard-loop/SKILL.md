@@ -23,7 +23,10 @@ moves a card.
   `mcp__opencode__respond`, `mcp__opencode__get_diff`,
   `mcp__opencode__get_transcript`, `mcp__opencode__abort_session`,
   `mcp__opencode__list_sessions`.
-- Reporting: `mcp__sympozium_slack__slack_post_message` to the home channel.
+- Reporting: `mcp__sympozium_slack__slack_post_message` with `channel_id` set to
+  `printenv SLACK_HOME_CHANNEL`. That is Hermes' own channel, the one it reads, so an
+  answer written there comes back into this loop. Never pick a channel by name, and
+  never use the Sympozium home channel: no one answers in a room you do not read.
 
 `taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `inbox <n>`,
 `status <n> <Status>`, `comment <n> [--owner]` (body on stdin), `start <n>
@@ -135,7 +138,9 @@ leaves it unmarked so `inbox` forwards it like any other.
   <!-- taskboard:help -->
   ```
 
-  Then `status <n> Blocked` and post the same text, without the marker, to Slack.
+  Then `status <n> Blocked` and post the same text to Slack in
+  `$SLACK_HOME_CHANNEL`, with one line saying where to answer: on the issue, or in
+  this channel.
 - `idle`: the turn finished. Read the first line of its last text.
   - `BLOCKED`: go to step 4b.
   - otherwise: run `pr <repo> <branch>` and go to step 5.
