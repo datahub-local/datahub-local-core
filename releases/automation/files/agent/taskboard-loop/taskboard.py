@@ -16,6 +16,7 @@ Usage:
   taskboard.py issue <n>
   taskboard.py inbox <n>              (comments the session has not been given)
   taskboard.py status <n> <Status>
+  taskboard.py finish <n>             (Done, only once the issue is closed)
   taskboard.py comment <n> [--owner]  (body on stdin; --owner relays the owner's words)
   taskboard.py start <n> <session>    (records the session on the issue)
   taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
@@ -191,6 +192,37 @@ class GitHub:
 
 REPO_HEADING = re.compile(r"^##\s*Repo\s*$", re.IGNORECASE | re.MULTILINE)
 BACKTICK = re.compile(r"`([^`]+)`")
+
+
+def set_status(github: GitHub, number: int, wanted: str) -> dict:
+    """Move one card, or report that it is already there. The only board write."""
+    project = github.project()
+    if wanted not in project["options"]:
+        raise SystemExit(f"ERROR: unknown status {wanted}")
+    item = github.item(number)
+    previous = (item.get("fieldValueByName") or {}).get("name")
+    if previous == wanted:
+        return {"number": number, "status": wanted, "changed": False}
+    github.graphql(
+        SET_STATUS,
+        {
+            "project": project["id"],
+            "item": item["id"],
+            "field": project["field"],
+            "option": project["options"][wanted],
+        },
+    )
+    github.invalidate()
+    return {"number": number, "previous": previous, "status": wanted, "changed": True}
+
+
+def may_finish(state: str) -> bool:
+    """Done belongs to a closed issue, or to the owner's own move.
+
+    An open issue with merged pull requests referencing it is still being worked:
+    the loop's umbrella issue proved that the hard way.
+    """
+    return (state or "").upper() == "CLOSED"
 
 
 def repos_of(body: str) -> list[str]:
@@ -494,26 +526,18 @@ def main(argv: list[str]) -> int:
         return 0
 
     if command == "status":
-        number, wanted = int(args[0]), args[1]
-        project = github.project()
-        if wanted not in project["options"]:
-            raise SystemExit(f"ERROR: unknown status {wanted}")
-        item = github.item(number)
-        previous = (item.get("fieldValueByName") or {}).get("name")
-        if previous == wanted:
-            print(json.dumps({"number": number, "status": wanted, "changed": False}))
-            return 0
-        github.graphql(
-            SET_STATUS,
-            {
-                "project": project["id"],
-                "item": item["id"],
-                "field": project["field"],
-                "option": project["options"][wanted],
-            },
-        )
-        github.invalidate()
-        print(json.dumps({"number": number, "previous": previous, "status": wanted, "changed": True}))
+        print(json.dumps(set_status(github, int(args[0]), args[1])))
+        return 0
+
+    if command == "finish":
+        number = int(args[0])
+        state = ((github.item(number).get("content") or {}).get("state") or "").upper()
+        if not may_finish(state):
+            raise SystemExit(
+                f"ERROR: issue #{number} is {state or 'unknown'}, not CLOSED; "
+                "Done needs a closed issue, or the owner moving the card by hand"
+            )
+        print(json.dumps(set_status(github, number, "Done")))
         return 0
 
     if command == "comment":
