@@ -33,5 +33,9 @@ egress_proxy_domains:
     - deploy.sympozium.ai
     - robusta-charts.storage.googleapis.com
     - ghcr.io
+    # OCI chart registries redirect their blobs to a CDN; the signed URL is the
+    # only thing that can fetch the layer, so the CDN host has to be allowed too.
+    - .r2.cloudflarestorage.com
+    - .quay.io
     - 8gears.container-registry.com
     - oci.trueforge.org

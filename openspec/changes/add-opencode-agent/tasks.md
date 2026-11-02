@@ -209,8 +209,9 @@
 - [x] 11.3 Add the `helm` allowlist group to `releases/security/values/default.yaml.gotmpl`:
   `.github.io`, `cloudnative-pg.io`, `docs.stirlingpdf.com`, `airflow.apache.org`,
   `downloads.apache.org`, `helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
-  `robusta-charts.storage.googleapis.com`, `ghcr.io`, `8gears.container-registry.com`,
-  `oci.trueforge.org`.
+  `robusta-charts.storage.googleapis.com`, `ghcr.io`, `.r2.cloudflarestorage.com`, `.quay.io`,
+  `8gears.container-registry.com`, `oci.trueforge.org`. The CDN hosts are what the OCI registries
+  redirect their signed blob URLs to; without them `helm pull` fails after the manifest resolves.
 - [x] 11.5 Repoint the Stirling chart at `https://docs.stirlingpdf.com/Stirling-PDF-chart` in
   `values/_version.yaml`, under a new repository alias: Helm refuses to re-add an existing alias at
   a different URL, and a warm ArgoCD helmfile cache still holds the old one. The GitHub Pages URL

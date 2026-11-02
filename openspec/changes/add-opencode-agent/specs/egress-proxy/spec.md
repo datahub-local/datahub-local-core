@@ -10,9 +10,9 @@ cover exactly `.pypi.org`, `pypi.python.org`, `.pythonhosted.org`, `.github.com`
 `.githubusercontent.com`, `registry.npmjs.org`, `.github.io`, `cloudnative-pg.io`,
 `docs.stirlingpdf.com`, `airflow.apache.org`, `downloads.apache.org`,
 `helm.openwebui.com`, `charts.redpanda.com`, `deploy.sympozium.ai`,
-`robusta-charts.storage.googleapis.com`, `ghcr.io`, `8gears.container-registry.com`,
-`oci.trueforge.org`, `dl-cdn.alpinelinux.org` and `.slack.com`. Port 80, SSH and every other port
-SHALL be denied.
+`robusta-charts.storage.googleapis.com`, `ghcr.io`, `.r2.cloudflarestorage.com`, `.quay.io`,
+`8gears.container-registry.com`, `oci.trueforge.org`, `dl-cdn.alpinelinux.org` and `.slack.com`.
+Port 80, SSH and every other port SHALL be denied.
 
 #### Scenario: A dependency install succeeds
 

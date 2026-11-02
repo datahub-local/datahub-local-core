@@ -175,7 +175,9 @@ consumer:
 - The allowlist gains a `helm` group: `.github.io` (every GitHub Pages chart repo this cluster
   uses), `airflow.apache.org`, `downloads.apache.org`, `helm.openwebui.com`,
   `charts.redpanda.com`, `deploy.sympozium.ai`, `robusta-charts.storage.googleapis.com`, and the
-  OCI registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`. Two chart
+  OCI registries `ghcr.io`, `8gears.container-registry.com` and `oci.trueforge.org`, plus the CDN
+  hosts those registries redirect their blobs to (`.r2.cloudflarestorage.com`, `.quay.io`), because
+  a signed layer URL cannot be fetched from anywhere else. Two chart
   sources redirect off their GitHub Pages host: `cloudnative-pg.github.io` lands on
   `cloudnative-pg.io` (HTTPS, allowlisted), and `stirling-tools.github.io` lands on
   `docs.stirlingpdf.com` over plain HTTP, which the proxy denies — so `values/_version.yaml`
