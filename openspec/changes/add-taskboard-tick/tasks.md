@@ -47,6 +47,13 @@
   member of `#agent-hermes` (`channel_not_found`), so an answer written under the
   ping reached nothing. The skill now names `$SLACK_HOME_CHANNEL`; what remains is
   inviting the `Homelab` app to `#agent-hermes` and re-running the relay.
+- [x] 1.9f Add `taskboard.py finish <n>`, which refuses `Done` while the issue is
+  open. The tick moved #117 to `Done` on three merged pull requests that merely
+  reference it, and the card had to be moved back to `Testing` by hand.
+- [x] 1.9g Post the tick's Slack lines with Hermes' own bot token instead of
+  `mcp__sympozium_slack__slack_post_message`, which authors them as the `@homelab`
+  app. Verified from the Pod: `chat.postMessage` with `$SLACK_BOT_TOKEN` answers
+  `ok: true` and `bot_profile.name: Hermes`.
 
 ## Record
 

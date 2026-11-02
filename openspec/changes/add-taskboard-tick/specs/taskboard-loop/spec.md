@@ -156,3 +156,33 @@ wandering tick holds the only agent.
 - **WHEN** the tick has made twenty tool calls without finishing
 - **THEN** it posts what moved and ends
 - **AND** it does not use `execute_code`, which cron mode blocks
+
+### Requirement: Done needs a closed issue
+
+The helper SHALL refuse to set `Done` while the issue is open, however many merged
+pull requests reference it, and the tick SHALL reach `Done` only through `finish`,
+which reads the issue state first. The owner MAY still move a card to `Done` by hand.
+
+#### Scenario: An open umbrella issue with merged pull requests
+
+- **WHEN** an open issue is referenced by merged pull requests and its status is `Testing`
+- **THEN** `finish` refuses and reports the issue state
+- **AND** the card stays in `Testing`
+
+#### Scenario: The issue is closed
+
+- **WHEN** the issue state is `CLOSED`
+- **THEN** `finish` sets `Done` and reports the status it moved from
+
+### Requirement: A report carries the agent's identity
+
+The tick SHALL post its Slack lines with Hermes' own bot token, so the author of the
+message is the agent that did the work, and SHALL NOT post reports through the
+Sympozium Slack server, whose bot belongs to a different app. The token SHALL be
+passed on stdin rather than argv, because `/proc` exposes process arguments.
+
+#### Scenario: A card moves
+
+- **WHEN** the tick posts a status line
+- **THEN** the Slack message is authored by the Hermes app
+- **AND** it lands in the channel Hermes reads for answers

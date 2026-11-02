@@ -271,3 +271,10 @@ def test_no_token_and_no_minter_fails_loudly():
         assert "MINTER_URL is empty" in str(exc)
         return
     raise AssertionError("credential() accepted an environment with no token source")
+
+
+def test_done_needs_a_closed_issue():
+    """#117 was moved to Done while open because three merged PRs mentioned it."""
+    assert taskboard.may_finish("CLOSED")
+    assert not taskboard.may_finish("OPEN")
+    assert not taskboard.may_finish("")

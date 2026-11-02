@@ -23,14 +23,25 @@ moves a card.
   `mcp__opencode__respond`, `mcp__opencode__get_diff`,
   `mcp__opencode__get_transcript`, `mcp__opencode__abort_session`,
   `mcp__opencode__list_sessions`.
-- Reporting: `mcp__sympozium_slack__slack_post_message` with `channel_id` set to
-  `printenv SLACK_HOME_CHANNEL`. That is Hermes' own channel, the one it reads, so an
-  answer written there comes back into this loop. Never pick a channel by name, and
-  never use the Sympozium home channel: no one answers in a room you do not read.
+- Reporting: `terminal`, `chat.postMessage` with Hermes' own app token, so the line
+  carries the agent's name and not another app's. The token goes in through stdin,
+  never argv, because `/proc` shows every process's arguments:
+
+  ```
+  printf 'url = "https://slack.com/api/chat.postMessage"\nheader = "Authorization: Bearer %s"\n' \
+    "$SLACK_BOT_TOKEN" |
+    curl -s --config - \
+      --data-urlencode channel="$SLACK_HOME_CHANNEL" \
+      --data-urlencode text="$LINE"
+  ```
+
+  Never use `mcp__sympozium_slack__slack_post_message` for a report: it posts as
+  the `@homelab` app, which is Sympozium's identity, not this agent's.
 
 `taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `inbox <n>`,
-`status <n> <Status>`, `comment <n> [--owner]` (body on stdin), `start <n>
-<session>`, `forwarded <n> <since>`, `pr <repo> <branch>`, `review <repo> <pr>`.
+`status <n> <Status>`, `finish <n>`, `comment <n> [--owner]` (body on stdin),
+`start <n> <session>`, `forwarded <n> <since>`, `pr <repo> <branch>`,
+`review <repo> <pr>`.
 
 Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
 `Done`.
@@ -57,9 +68,9 @@ number.
 
 ### 1. Closed issues
 
-For any board item whose `state` is `CLOSED` and whose status is not `Done`: set
-`Done`, comment the merge or the close, and post one Slack line. Skip everything
-else for that issue.
+For any board item whose `state` is `CLOSED` and whose status is not `Done`: run
+`finish <n>`, comment the merge or the close, and post one Slack line. Skip
+everything else for that issue.
 
 ### 2. Ready issues, until the agent is full
 
@@ -177,7 +188,8 @@ run `pr <repo> <branch>`.
   do, and it does it when the owner writes.
 - `open` and the issue is `Blocked`: nothing. A question outranks an old pull
   request; only the owner's answer leaves `Blocked`.
-- `merged`: set `Done`, comment the merge, and post one Slack line.
+- `merged`: run `finish <n>`, comment the merge, and post one Slack line. The
+  merge is evidence for this issue's own branch; an open issue stays where it is.
 
 ## The tick has a budget
 
@@ -198,6 +210,8 @@ run `pr <repo> <branch>`.
 
 - Never set `Ready`. Only the owner moves an issue to `Ready`.
 - Never set `Done` on a pull request that is only open.
+- Never set `Done` while the issue is open, however many merged pull requests
+  mention it. `finish` refuses it, and the owner can still move the card by hand.
 - Never push, merge, or open a second pull request for an issue.
 - Never retry an `error` automatically, and never start a session to replace a lost
   one.
