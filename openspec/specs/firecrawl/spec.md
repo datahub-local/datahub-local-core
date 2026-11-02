@@ -212,7 +212,7 @@ SHALL NOT be pointed at the server.
 
 ### Requirement: Hermes and OpenCode use the same self-hosted server
 
-Hermes SHALL register `sympozium-firecrawl` in `config.mcp_servers` at the
+Hermes SHALL register `firecrawl` in `config.mcp_servers` at the
 `…-mcp-firecrawl-http` Service URL, with `tools.include` of `firecrawl_scrape`,
 `firecrawl_search` and `firecrawl_map`, and SHALL disable the native `web` and `browser` toolsets on
 every platform through `config.agent.disabled_toolsets`. That is a tool-surface control only: public
@@ -223,14 +223,14 @@ or hold a Firecrawl account key.
 #### Scenario: Hermes scrapes through the HTTP instance
 
 - **WHEN** Hermes enumerates its MCP servers and calls a scrape tool
-- **THEN** `sympozium-firecrawl` is listed
+- **THEN** `firecrawl` is listed
 - **AND** the call returns page markdown from the `data` API without waiting out the MCP timeout
 
 #### Scenario: Hermes has no built-in web tools
 
 - **WHEN** `hermes tools list --platform cli` or `--platform slack` runs
 - **THEN** `web` and `browser` are absent
-- **AND** only the three included Firecrawl tools are offered by `sympozium-firecrawl`
+- **AND** only the three included Firecrawl tools are offered by `firecrawl`
 
 #### Scenario: There is only one Firecrawl
 

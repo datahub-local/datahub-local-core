@@ -209,22 +209,22 @@ config:
   # adapter serves MCP over HTTP on 8080. `slack` here is an extra tool surface,
   # distinct from the built-in channel, which keeps its own Socket Mode socket.
   mcp_servers:
-    sympozium-k8s:
+    k8s:
       url: http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc.cluster.local:8080/mcp
-    sympozium-argocd:
+    argocd:
       url: http://{{ .Values.release_name }}-automation-mcp-argocd.automation.svc.cluster.local:8080/mcp
-    sympozium-github:
+    github:
       # No header: the proxy mints the token per request.
       url: http://{{ .Values.release_name }}-automation-mcp-github.automation.svc.cluster.local:8080/mcp
-    sympozium-grafana:
+    grafana:
       url: http://{{ .Values.release_name }}-automation-mcp-grafana.automation.svc.cluster.local:8080/mcp
-    sympozium-postgres:
+    postgres:
       url: http://{{ .Values.release_name }}-automation-mcp-postgres.automation.svc.cluster.local:8080/mcp
-    sympozium-trino:
+    trino:
       url: http://{{ .Values.release_name }}-automation-mcp-trino.automation.svc.cluster.local:8080/mcp
-    sympozium-slack:
+    slack:
       url: http://{{ .Values.release_name }}-automation-mcp-slack.automation.svc.cluster.local:8080/mcp
-    sympozium-firecrawl:
+    firecrawl:
       # The server's own stateless HTTP transport, not the stdio bridge: the
       # bridge misroutes replies for this server (a call can hang to timeout).
       url: http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp

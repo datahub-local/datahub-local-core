@@ -163,18 +163,18 @@ use; their stdio bridge speaks MCP over HTTP and needs no credential the Deploym
 mount. The `slack` entry is a tool surface on top of the built-in channel, which keeps its own Socket
 Mode connection.
 
-The seventh, `sympozium-firecrawl`, SHALL point at a dedicated
+The seventh, `firecrawl`, SHALL point at a dedicated
 `…-mcp-firecrawl-http` Service running `ghcr.io/firecrawl/firecrawl-mcp-server` in its own
 stateless HTTP mode, which proxies the self-hosted Firecrawl API in `data`. It SHALL expose only the
 scrape, search and map tools through the server's `tools.include` filter, and SHALL need no Firecrawl
-account key. Like `sympozium-github`, it SHALL bypass the stdio bridge, because the bridge forwards
+account key. Like `github`, it SHALL bypass the stdio bridge, because the bridge forwards
 each client's `initialize` to one long-lived child and misroutes this server's replies. The gateway
 SHALL disable the native `web` and `browser` toolsets on every platform through
 `config.agent.disabled_toolsets`, so those tools are not offered on Slack, CLI, dashboard or cron
 surfaces. Slack SHALL be reached through the egress proxy, whose allowlist carries `.slack.com`;
 there SHALL be no direct public rule for it.
 
-`sympozium-github` SHALL instead point at a dedicated `…-mcp-github` Service running the upstream
+`github` SHALL instead point at a dedicated `…-mcp-github` Service running the upstream
 server in its `http` mode, because the bridge re-sends `initialize` to a long-lived child and
 `github-mcp-server` v2 rejects the duplicate. Nothing in that pod SHALL hold a credential: a proxy
 sidecar on the Service port SHALL mint the manager App's installation token per request and add the
@@ -193,13 +193,13 @@ token reaches a pod.
 
 #### Scenario: github uses its own transport
 
-- **WHEN** the gateway connects to `sympozium-github`
+- **WHEN** the gateway connects to `github`
 - **THEN** it reaches the dedicated HTTP instance rather than the shared stdio bridge
 - **AND** the request carries the token from the Pod environment
 
 #### Scenario: Firecrawl is reachable through the bridge
 
-- **WHEN** the gateway connects to `sympozium-firecrawl`
+- **WHEN** the gateway connects to `firecrawl`
 - **THEN** it reaches the bridge in its own namespace on 8080
 - **AND** a scrape returns page markdown from the self-hosted API in `data`
 
@@ -207,7 +207,7 @@ token reaches a pod.
 
 - **WHEN** the gateway's tool list is read for any platform
 - **THEN** `web` and `browser` are absent
-- **AND** only the three included Firecrawl tools are registered from `sympozium-firecrawl`
+- **AND** only the three included Firecrawl tools are registered from `firecrawl`
 - **AND** Slack still receives events, through the egress proxy
 
 #### Scenario: MCP is the only in-namespace egress besides LiteLLM
@@ -226,7 +226,7 @@ rendered manifest. The dex client secret is the one exception: it is the shared 
 the other dex clients, it comes from `/helm-values/security.yaml` rather than this repository, and it
 reaches the Pod as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET`, because the dashboard reads that key from
 the environment and `config.yaml` renders into a ConfigMap. The GitHub token SHALL reach the
-`sympozium-github` header only through that environment expansion.
+`github` header only through that environment expansion.
 
 #### Scenario: No credential is rendered
 
