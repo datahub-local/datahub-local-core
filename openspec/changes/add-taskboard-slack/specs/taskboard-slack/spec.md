@@ -44,6 +44,30 @@ subcommand: list a column, show one issue, move an issue's Status, or comment on
 - **THEN** Hermes asks one question and stops
 - **AND** it does not pick the only card in a column
 
+### Requirement: Slack exposes one command, and `board` names this surface
+
+The Slack app manifest SHALL declare `/hermes` as its only slash command, and board
+requests SHALL carry `board` as the first word after it, so the surface is named
+without competing with the Hermes subcommands.
+
+#### Scenario: The command menu
+
+- **WHEN** a person opens Slack's slash command list in the workspace
+- **THEN** Hermes contributes one entry, `/hermes`
+- **AND** the fifty native commands are reachable as `/hermes <subcommand>`
+
+#### Scenario: A prefixed board request
+
+- **WHEN** the owner sends `/hermes board move 116 ready`
+- **THEN** the first word after `/hermes` is `board`, which is not a Hermes
+  subcommand, so the text reaches the board skill as a regular message
+
+#### Scenario: A Hermes subcommand is not a board request
+
+- **WHEN** the owner sends `/hermes status`
+- **THEN** Hermes answers its own status command
+- **AND** the board skill does not run, even though "status" is also a board word
+
 ### Requirement: A board request is not a tick
 
 The instructions that answer a chat request SHALL NOT run `sync`, start a session,

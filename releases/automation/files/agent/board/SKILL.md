@@ -1,7 +1,7 @@
 ---
 name: board
-description: Answer the owner's board request in Slack. List a column, show one issue, move an issue's Status, or comment on it. Use when the owner writes board words in chat, not for the scheduled tick (that is taskboard-loop).
-version: 1.0.0
+description: Answer the owner's board request in Slack, written as `/hermes board ...` or as a plain message. List a column, show one issue, move an issue's Status, or comment on it. Not for the scheduled tick (that is taskboard-loop).
+version: 1.1.0
 metadata:
   hermes:
     tags: [taskboard, github, slack]
@@ -13,6 +13,19 @@ metadata:
 The owner asks in Slack and you do the one thing asked. This is not a tick: never
 run `sync`, never dispatch an issue to the coding agent, never poll a session, and
 never move a card the owner did not name.
+
+## The prefix
+
+The request is `/hermes board <verb> ...`, for example `/hermes board move 116
+ready`. Slack declares one slash command, `/hermes`, so `board` is the word that
+says which surface is being asked, and it never collides with a Hermes subcommand.
+
+A plain message in the channel with board words in it is the same request.
+
+The text after `/hermes` is a native Hermes subcommand when its first word is one
+(`status`, `start`, `review`, `tasks`, `stop`, ...). Those are not yours: `/hermes
+status` reports the agent's own state. Only `board ...` and plain messages with
+board words belong to this skill.
 
 ## Tool
 
@@ -26,11 +39,11 @@ It mints its own token from the sidecar, so there is nothing to export first.
 
 | The owner writes | Run |
 | --- | --- |
-| "what's in Ready", "list in progress", "show me the board" | `board` (then keep the column asked for) |
-| "what's ready", "anything to pick up" | `ready` |
-| "116", "show 116", "what is 116" | `issue 116` |
-| "move 116 to ready", "block 116", "116 is testing" | `status 116 <Status>` |
-| "tell 116 ...", "comment on 116 ...", "answer 116 ..." | `comment 116 --owner`, body on stdin |
+| `/hermes board list`, "what's in Ready", "list in progress" | `board` (then keep the column asked for) |
+| `/hermes board ready`, "anything to pick up" | `ready` |
+| `/hermes board show 116`, "116", "what is 116" | `issue 116` |
+| `/hermes board move 116 ready`, "block 116" | `status 116 <Status>` |
+| `/hermes board comment 116 ...` | `comment 116 --owner`, body on stdin |
 
 Statuses are exactly `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
 `Done`. Translate the owner's words to one of those and nothing else.

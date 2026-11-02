@@ -14,15 +14,18 @@
       failure to `tests/test_taskboard.py`.
 - [x] 1.6 `helmfile template` renders the sidecar, the `MINTER_URL` env, the board
       skill mount and the whole namespace.
-- [ ] 2.1 Deploy, then confirm from inside the Pod that
+- [x] 2.1 Deploy, then confirm from inside the Pod that
       `python3 .../taskboard.py ready` mints and answers, and that `hermes skills`
       lists `board`.
-- [ ] 2.2 In Slack, send `/hermes move <n> to ready` and a plain message asking for
-      a column; confirm one write, a reply naming the previous status, and no tick
+- [ ] 2.2 Reduce the Slack app manifest to the one `/hermes` entry (paste
+      `features.slash_commands`, keep it to that item) and confirm Slack's command
+      menu lists one Hermes command.
+- [ ] 2.3 In Slack, send `/hermes board move <n> to ready` and a plain message asking
+      for a column; confirm one write, a reply naming the previous status, and no tick
       (no session started, no other card moved).
-- [ ] 2.3 Ask for a comment and confirm it lands on the issue without a
+- [ ] 2.4 Ask for a comment and confirm it lands on the issue without a
       `<!-- taskboard:` marker, so the tick reads it as the owner's.
-- [ ] 2.4 Confirm an unclear request gets one question back instead of a guessed
-      issue.
+- [ ] 2.5 Confirm an unclear request gets one question back instead of a guessed
+      issue, and that `/hermes status` still answers Hermes itself.
 - [ ] 3.1 Add the Slack surface to `docs/services/automation.md` in
       `datahub-local/datahub-local`, in a separate pull request.
