@@ -68,10 +68,7 @@ controllers:
             value: litellm/opencode-go/deepseek-v4.1-flash
           - name: OPENCODE_REVIEW_MODEL
             value: litellm/opencode-go/glm-5.3-flash
-          # No GITHUB_TOKEN: the credential comes from the minter sidecar, so the
-          # token is minted for this session and expires with it. The git helper
-          # falls back to loopback when the variable is absent, and the `gh`
-          # wrapper in the image asks the same helper.
+          # No GITHUB_TOKEN: the git helper and the gh wrapper mint from the minter.
           # The baked config names the server as {env:OPENCODE_FIRECRAWL_MCP_URL};
           # the Service address is the one value the image cannot know.
           - name: OPENCODE_FIRECRAWL_MCP_URL
@@ -132,9 +129,8 @@ controllers:
           limits:
             cpu: 2
             memory: 4Gi
-      # Holds the coder App's key and answers `/token` on loopback. It is a
-      # sidecar rather than an env var because an installation token lasts an
-      # hour and a session lasts days; nothing is written to disk.
+      # Holds the coder key and answers /token on loopback. Sidecar, not an env
+      # var: the token lives an hour, a session lives days.
       minter:
         image:
           repository: ghcr.io/datahub-local/datahub-local-ai-opencode-adapter
