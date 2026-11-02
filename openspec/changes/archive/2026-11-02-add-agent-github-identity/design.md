@@ -15,7 +15,7 @@ consumers need.
 
 ## Decisions
 
-### 1 — Two identities, split by permission
+### 1 — Two identities, one grant
 
 | | manager (Hermes) | coder (OpenCode) |
 | --- | --- | --- |
@@ -24,9 +24,9 @@ consumers need.
 | Workflows | none | read/write |
 | Issues, Pull requests | read/write | read/write |
 
-The manager moves the board and asks for review; the coder writes and pushes. A
-leaked coder key cannot alter a card, and a mistaken manager call cannot rewrite a
-workflow.
+The split is by purpose, not by grant: both Apps were created with the same
+permissions, because the owner wants Hermes able to make an ad-hoc change without a
+second install. The table above is what narrowing would look like, not what runs.
 
 ### 2 — The coder mints through the helper it already has
 

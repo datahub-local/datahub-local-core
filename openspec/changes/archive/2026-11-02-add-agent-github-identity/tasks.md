@@ -13,9 +13,14 @@
   Hermes config.
 - [x] 1.6 Publish the adapter image with `github-proxy.mjs` and the wrapper, and bump
   the digest in `values/_version.yaml`.
-- [ ] 1.7 Rollout, then prove inside each pod: the minter answers `/token`, the proxy
-  answers `/healthz`, and `gh api user` returns the App bot, not `alvsanand`.
+- [x] 1.7 Rollout, then prove inside each pod: the minter answers `/token`, the proxy
+  answers `/healthz`, and `gh api user` returns the App bot, not `alvsanand`. The
+  minter's loopback listener needed a `COMMAND` probe, not TCP, or the pod never
+  became ready.
 - [ ] 1.8 Open one throwaway issue comment from Hermes and one pull request from the
-  coder, and confirm the two bot handles in the timeline.
-- [ ] 1.9 Only then, remove `opencode-github` and `mcp-github-token` from the secrets
-  repo and the unused ExternalSecret entries in core.
+  coder, and confirm the two bot handles in the timeline. Deferred: nothing has been
+  written by a bot yet, so this is the first live cycle rather than a migration task.
+- [ ] 1.9 Remove `opencode-github` from the secrets repo and the unused
+  ExternalSecret entries in core; nothing consumes it. `mcp-github-token` stays for
+  now: the Sympozium catalog server `mcp-github` is stdio, cannot take a per-request
+  header, and reads its token from that Secret.
