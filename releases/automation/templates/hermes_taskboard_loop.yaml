@@ -10,6 +10,8 @@ metadata:
 data:
   SKILL.md: |
 {{ .Files.Get "files/agent/taskboard-loop/SKILL.md" | indent 4 }}
+  BOARD.md: |
+{{ .Files.Get "files/agent/board/SKILL.md" | indent 4 }}
   taskboard.py: |
 {{ .Files.Get "files/agent/taskboard-loop/taskboard.py" | indent 4 }}
   HOOK.yaml: |

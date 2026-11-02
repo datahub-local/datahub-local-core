@@ -75,6 +75,15 @@ extraVolumes:
           path: HOOK.yaml
         - key: handler.py
           path: handler.py
+  # The owner's board requests in Slack. A second skill mount because a skill is a
+  # directory holding SKILL.md, and this one must not carry the tick's dispatch
+  # steps just because both talk to the same helper.
+  - name: board-skill
+    configMap:
+      name: '{{ .Values.release_name }}-automation-hermes-taskboard-loop'
+      items:
+        - key: BOARD.md
+          path: SKILL.md
 
 extraVolumeMounts:
   - name: run-tmpfs
@@ -92,6 +101,9 @@ extraVolumeMounts:
   # start, so a restored volume repairs itself without an init container.
   - name: taskboard-hook
     mountPath: /opt/data/hooks/taskboard-tick
+    readOnly: true
+  - name: board-skill
+    mountPath: /opt/data/skills/devops/board
     readOnly: true
 
 # seed-config's chown only runs when that init container starts as root; the
@@ -122,6 +134,48 @@ persistence:
   enabled: true
   storageClass: longhorn
   size: 10Gi
+
+# The manager App key stays in this sidecar, never in the container that runs the
+# model. taskboard.py asks /token on loopback per call, so a token never outlives
+# the hour it is valid for, and the tick and the owner's requests share one path.
+extraContainers:
+  - name: minter
+    image: '{{ range $key,$value := .StateValues.container_image_version }}{{ if (eq $key "ghcr.io/datahub-local/datahub-local-ai-opencode-adapter") }}ghcr.io/datahub-local/datahub-local-ai-opencode-adapter:{{ $value }}{{ end }}{{ end }}'
+    command: ["node", "/usr/local/bin/opencode-minter.mjs"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    envFrom:
+      - secretRef:
+          name: github-app-manager
+    env:
+      - name: MINTER_PORT
+        value: "8787"
+      - name: HTTP_PROXY
+        value: '{{ .Values.egress_proxy_url }}'
+      - name: HTTPS_PROXY
+        value: '{{ .Values.egress_proxy_url }}'
+      - name: NO_PROXY
+        value: '{{ .Values.egress_no_proxy }},127.0.0.1,localhost'
+    # Loopback-only, so the kubelet cannot probe the port. /healthz answers without
+    # minting, so a wrong key stays diagnosable on the first real call.
+    readinessProbe:
+      exec:
+        command:
+          - node
+          - -e
+          - 'fetch("http://127.0.0.1:8787/healthz").then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))'
+      initialDelaySeconds: 2
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
 
 # Re-seeded on every start: the volume is not a second source of truth. Without
 # this, a config or instruction change in git never reaches an existing volume,
@@ -301,6 +355,10 @@ extraEnv:
     value: "0"
   - name: PYTHONPYCACHEPREFIX
     value: /opt/data/.pycache
+  # taskboard.py mints its own installation token from the sidecar below, so the
+  # tick and the owner's board requests work without a PAT in this container.
+  - name: MINTER_URL
+    value: "http://127.0.0.1:8787/token"
   # Every public call goes through the security proxy; the NetworkPolicy no
   # longer permits direct 443. The Slack adapter resolves HTTPS_PROXY itself
   # (gateway.trust_env defaults to true) and passes it to both the WebClient and
