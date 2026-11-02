@@ -17,15 +17,16 @@
 - [x] 2.1 Deploy, then confirm from inside the Pod that
       `python3 .../taskboard.py ready` mints and answers, and that `hermes skills`
       lists `board`.
-- [ ] 2.2 Reduce the Slack app manifest to the one `/hermes` entry (paste
+- [x] 2.2 Reduce the Slack app manifest to the one `/hermes` entry (paste
       `features.slash_commands`, keep it to that item) and confirm Slack's command
       menu lists one Hermes command.
-- [ ] 2.3 In Slack, send `/hermes board move <n> to ready` and a plain message asking
+- [x] 2.3 In Slack, send `/hermes board move <n> to ready` and a plain message asking
       for a column; confirm one write, a reply naming the previous status, and no tick
       (no session started, no other card moved).
-- [ ] 2.4 Ask for a comment and confirm it lands on the issue without a
+- [x] 2.4 Ask for a comment and confirm it lands on the issue without a
       `<!-- taskboard:` marker, so the tick reads it as the owner's.
-- [ ] 2.5 Confirm an unclear request gets one question back instead of a guessed
+- [x] 2.5 Confirm an unclear request gets one question back instead of a guessed
       issue, and that `/hermes status` still answers Hermes itself.
 - [ ] 3.1 Add the Slack surface to `docs/services/automation.md` in
       `datahub-local/datahub-local`, in a separate pull request.
+- [x] 2.6 The owner ran the surface in Slack and reported every command working.
