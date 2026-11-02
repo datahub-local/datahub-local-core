@@ -251,11 +251,12 @@ model API directly.
 
 The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, with
 `GATEWAY_ALLOW_ALL_USERS=false`, `SLACK_ALLOWED_USERS` containing only `U08RV08387L`, and
-`SLACK_ALLOWED_CHANNELS` plus `SLACK_FREE_RESPONSE_CHANNELS` containing only `#agent-hermes`
-(`C0CBX92B6PQ`), so plain messages there are answered without an @mention.
+`SLACK_ALLOWED_CHANNELS` plus `SLACK_FREE_RESPONSE_CHANNELS` containing only `#agentic-coding`
+(`C0CDNTM4GTH`), so plain messages there are answered without an @mention.
 
-That channel is private, so the Slack app SHALL subscribe to `message.groups` and grant
-`groups:history`; without both, a plain message produces no event. The app SHALL be a dedicated one
+That channel is private, so the app SHALL be a member of it, subscribe to `message.groups`
+and grant `groups:history`; without membership no event arrives, and without both of those a plain
+message produces no event. The app SHALL be a dedicated one
 with its own bot and app-level tokens in `hermes-slack-token`, because Slack delivers each event to
 one of an app's Socket Mode connections: the `@homelab` app is held by Sympozium's channel responder,
 which received and dropped the gateway's messages. Reinstalling an app to add a scope rotates its bot
@@ -268,13 +269,13 @@ token, so the Secret SHALL be updated and the Pod restarted.
 
 #### Scenario: A message in the scoped channel is answered
 
-- **WHEN** the owner posts a plain message in `#agent-hermes`
+- **WHEN** the owner posts a plain message in `#agentic-coding`
 - **THEN** the gateway logs `inbound message: platform=slack`, opens a `source=slack` session, and
   replies in the channel
 
 #### Scenario: Another channel is ignored
 
-- **WHEN** the bot is mentioned in a channel other than `#agent-hermes`
+- **WHEN** the bot is mentioned in a channel other than `#agentic-coding`
 - **THEN** no agent turn runs, because `SLACK_ALLOWED_CHANNELS` is set
 
 ### Requirement: Inbound Slack messages are acknowledged with a reaction
@@ -291,7 +292,7 @@ needs `reactions:write`.
 
 #### Scenario: A plain channel message is acknowledged
 
-- **WHEN** the owner posts a plain message in `#agent-hermes`
+- **WHEN** the owner posts a plain message in `#agentic-coding`
 - **THEN** the message carries `:eyes:` while the turn runs
 - **AND** the plugin log line `every inbound Slack message now gets :eyes: before gating` appears once
   per gateway start

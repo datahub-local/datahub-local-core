@@ -333,16 +333,18 @@ extraEnv:
     value: U08RV08387L
   # Hermes has its own Slack app (@homelab_hermes): the @homelab app is held by
   # Sympozium's channel responder and Slack splits one app's events across its
-  # Socket Mode connections. #agent-hermes is Hermes's channel: it answers plain
-  # messages there, which the responder's trigger set ignores.
+  # Socket Mode connections. #agentic-coding is Hermes's channel: it answers plain
+  # messages there, which the responder's trigger set ignores. Private, so the app
+  # must be invited; both it and the Sympozium app are members.
   - name: SLACK_ALLOWED_CHANNELS
-    value: C0CBX92B6PQ
+    value: C0CDNTM4GTH
   - name: SLACK_FREE_RESPONSE_CHANNELS
-    value: C0CBX92B6PQ
+    value: C0CDNTM4GTH
   # The app has no /hermes slash command registered, so /hermes sethome cannot
   # run; cron and cross-platform results need the home channel from the env.
+  # The tick's help ping reads this too, so it lands where Hermes listens.
   - name: SLACK_HOME_CHANNEL
-    value: C0CBX92B6PQ
+    value: C0CDNTM4GTH
   # Same dex client secret as the other apps; config.yaml is a ConfigMap, so
   # the secret cannot live in config.dashboard.oauth.self_hosted.
   - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
