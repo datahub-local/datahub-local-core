@@ -298,15 +298,19 @@ def test_done_needs_a_closed_issue():
     assert not taskboard.may_finish("")
 
 
-def test_server_key_is_the_fnv1a_hash_of_the_web_origin():
-    """The OpenCode route key is a hash of location.origin, not the origin."""
-    assert taskboard.server_key("https://automation-opencode.homelab.alvsanand.com") == "jd9y2a"
+def test_server_key_is_the_base64url_encoded_web_origin():
+    """The OpenCode route key is the base64url origin, not a hash of it."""
+    assert (
+        taskboard.server_key("https://automation-opencode.homelab.alvsanand.com")
+        == "aHR0cHM6Ly9hdXRvbWF0aW9uLW9wZW5jb2RlLmhvbWVsYWIuYWx2c2FuYW5kLmNvbQ"
+    )
 
 
 def test_session_url_uses_the_server_key():
     assert (
         taskboard.session_url("ses_abc", "https://automation-opencode.homelab.alvsanand.com/")
-        == "https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc"
+        == "https://automation-opencode.homelab.alvsanand.com/server/"
+        "aHR0cHM6Ly9hdXRvbWF0aW9uLW9wZW5jb2RlLmhvbWVsYWIuYWx2c2FuYW5kLmNvbQ/session/ses_abc"
     )
 
 
@@ -319,7 +323,11 @@ def test_start_body_carries_the_session_link():
     body = taskboard.start_body(
         "ses_abc", "2026-11-02T18:50:00Z", "https://automation-opencode.homelab.alvsanand.com"
     )
-    assert "Session: https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc" in body
+    assert (
+        "Session: https://automation-opencode.homelab.alvsanand.com/server/"
+        "aHR0cHM6Ly9hdXRvbWF0aW9uLW9wZW5jb2RlLmhvbWVsYWIuYWx2c2FuYW5kLmNvbQ/session/ses_abc"
+        in body
+    )
     assert "<!-- taskboard:session ses_abc -->" in body
     assert "<!-- taskboard:forwarded 2026-11-02T18:50:00Z -->" in body
 
@@ -354,7 +362,8 @@ def test_move_line_adds_the_session_link():
     )
     assert line.startswith("#127 Backlog: t")
     assert (
-        "Session: https://automation-opencode.homelab.alvsanand.com/server/jd9y2a/session/ses_abc"
+        "Session: https://automation-opencode.homelab.alvsanand.com/server/"
+        "aHR0cHM6Ly9hdXRvbWF0aW9uLW9wZW5jb2RlLmhvbWVsYWIuYWx2c2FuYW5kLmNvbQ/session/ses_abc"
         in line
     )
 

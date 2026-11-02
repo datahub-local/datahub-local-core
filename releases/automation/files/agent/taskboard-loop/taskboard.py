@@ -29,6 +29,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -46,7 +47,6 @@ FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
 BRANCH_RE = re.compile(r"Branch `([^`]+)`")
 MARKER_RE = re.compile(r"<!-- taskboard:[^>]*-->\s*", re.MULTILINE)
 MAX_COMMENT_CHARS = 1500
-BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 ORG = os.environ.get("TASKBOARD_ORG", "datahub-local")
 PROJECT = int(os.environ.get("TASKBOARD_PROJECT", "1"))
@@ -136,20 +136,11 @@ def server_key(origin: str) -> str:
     """OpenCode's route key for a server origin.
 
     The web app routes a session at /server/<serverKey>/session/<id>, and
-    serverKey is an FNV-1a hash of `location.origin` in base36, not the origin
-    itself. A link built from the session id alone opens the app root.
+    serverKey is the base64url encoding of `location.origin` without padding,
+    not the origin or a hash of it. A link built from the session id alone opens
+    the app root, and a hash makes the app fail while resolving the server.
     """
-    value = 2166136261
-    for char in origin:
-        value ^= ord(char)
-        value = (value * 16777619) & 0xFFFFFFFF
-    if value == 0:
-        return "0"
-    digits = []
-    while value:
-        value, remainder = divmod(value, 36)
-        digits.append(BASE36[remainder])
-    return "".join(reversed(digits))
+    return base64.urlsafe_b64encode(origin.encode()).decode().rstrip("=")
 
 
 def session_url(session: str, origin: str | None = None) -> str:

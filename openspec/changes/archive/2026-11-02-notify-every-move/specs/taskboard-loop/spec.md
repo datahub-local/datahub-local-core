@@ -53,8 +53,9 @@ writing or open the session and select an option. The issue comment SHALL keep t
 `<!-- taskboard:help -->` marker; the Slack copy SHALL NOT.
 
 The session URL SHALL be `<origin>/server/<serverKey>/session/<sessionID>`, where
-`<origin>` is `TASKBOARD_OPENCODE_URL` and `<serverKey>` is the FNV-1a hash of that
-origin in base36. The link SHALL be built by the helper, not by the model.
+`<origin>` is `TASKBOARD_OPENCODE_URL` and `<serverKey>` is that origin encoded as
+base64url without padding. The link SHALL be built by the helper, not by the
+model.
 
 #### Scenario: The agent asks a question
 

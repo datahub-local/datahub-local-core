@@ -20,8 +20,9 @@ warning to stderr and reports `notified: false` in its JSON.
 
 The OpenCode v2 web app routes a session at
 `/server/<serverKey>/session/<sessionID>`. `serverKey` is not the origin string:
-it is an FNV-1a hash of `location.origin`, rendered in base36. A link built from
-the session id alone lands on the app root and loses the question.
+it is the origin encoded as base64url without padding. A link built from the
+session id alone lands on the app root, and a hash in place of the encoding makes
+the app fail while resolving the server.
 
 `taskboard.py session_url` computes that key from `TASKBOARD_OPENCODE_URL`. The
 value is the public origin (`https://automation-opencode.<gateway_hostname>`) and

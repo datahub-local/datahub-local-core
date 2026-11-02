@@ -18,7 +18,7 @@ session is a question the owner has to go looking for.
   added at `Backlog`, every status transition (`In Progress`, `Blocked`,
   `Testing`, `Done`), with the issue link and the session link when one exists.
 - `taskboard.py session_url` builds the OpenCode web link:
-  `<origin>/server/<fnv1a-base36(origin)>/session/<id>`. The origin comes from
+  `<origin>/server/<base64url(origin)>/session/<id>`. The origin comes from
   `TASKBOARD_OPENCODE_URL` in the Hermes values.
 - `taskboard.py notify <n>` posts a question or report to Slack and appends the
   issue URL and the session URL, so the owner can answer on the issue or pick the
