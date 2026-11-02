@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate ground for every datahub-local repository. A repository extends this and keeps only its own customManagers, includePaths and local policy.",
+  "description": "Shared Renovate ground for every datahub-local repository. A repository extends this and keeps only its own customManagers, includePaths and local policy. ignorePaths replaces the value config:recommended inherits rather than merging with it, so the inherited globs are repeated here and a repository that sets its own must list every glob it wants.",
   "extends": ["config:recommended", ":semanticCommits"],
   "schedule": ["* 8 * * 0,6"],
   "automerge": false,
@@ -8,7 +8,17 @@
   "forkProcessing": "enabled",
   "prCreation": "immediate",
   "minimumReleaseAge": "2 days",
-  "ignorePaths": ["**/.github/**"],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "**/.github/**"
+  ],
   "packageRules": [
     {
       "description": "A major gets its own branch per datasource so it is never approved alongside a patch nobody read.",
@@ -43,7 +53,7 @@
     },
     {
       "matchDatasources": ["pypi"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Python dependency updates",
       "groupSlug": "python-minor-patch"
     }
