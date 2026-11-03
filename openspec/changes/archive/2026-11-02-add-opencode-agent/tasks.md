@@ -104,8 +104,9 @@
   `security/oauth2-proxy-auth` and the `/oauth2/` route, plus a homepage entry.
 - [x] 4.3 Add the Traefik `headers` middleware injecting `Authorization: Basic …`.
 - [ ] 4.4 Verify: anonymous redirects to dex; after login the UI loads with no second prompt;
-  SSE updates stream; direct access to the server's 4096 is denied. Anonymous access returns the
-  oauth2-proxy sign-in page (2026-11-02); the signed-in and SSE halves are unverified.
+  SSE updates stream; direct access to the server's 4096 is denied. Verified 2026-11-02: anonymous
+  access returns the oauth2-proxy sign-in page and a Pod outside the proxy/shim cannot connect to
+  4096. The signed-in UI and SSE stream still need a browser session.
 
 ## 5. MCP shim
 
@@ -135,9 +136,9 @@
   (the HTTP transport Service; `…-mcp-firecrawl` is the MCPServer name, not a Service).
 - [x] 6.2 Allow `fc_firecrawl_scrape`, `fc_firecrawl_search` and `fc_firecrawl_map` in the
   permission ruleset; the bridge registers nothing else.
-- [ ] 6.3 Verify search and scrape work and `FIRECRAWL_API_KEY` is absent from both the server and
-  the bridge containers. The key is absent from both (2026-11-02); search and scrape are
-  unexercised.
+- [x] 6.3 Verify search and scrape work and `FIRECRAWL_API_KEY` is absent from both the server and
+  the bridge containers. Verified 2026-11-02: from a session, `fc_firecrawl_search` returned
+  opencode.ai and `fc_firecrawl_scrape` fetched example.com; the key is absent from both containers.
 - [x] 6.4 Confirm this release renders no Firecrawl Deployment, no `firecrawl-token` Secret and no
   `api.firecrawl.dev` egress. Verified 2026-11-02.
 - [x] 6.5 Register the read-only Kubernetes bridge as `mcp.servers.k8s` at
@@ -190,8 +191,12 @@
 - [x] 10.1 A task edits a file, runs a test, returns the final text and the changed file. Verified
   2026-11-02 through the shim: `run_task` created `.mcp-probe.txt` and reported
   `A .mcp-probe.txt (+1 -0)`; `get_diff` returned the patch and `get_transcript` the messages.
-- [ ] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
-- [ ] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
+- [x] 10.2 `.env` reads and direct `webfetch` are denied; `fc_firecrawl_search` works; `git` works.
+  Verified 2026-11-02 in one session: the `.env` read was refused, `webfetch` was absent (Firecrawl
+  scrape used instead), `git status` ran, and search returned opencode.ai.
+- [x] 10.3 A second task returns busy; `abort_session` stops the first; `get_session` reports state.
+  Verified 2026-11-02: a second `run_task` answered `busy` with the active session, `abort_session`
+  reported `interrupted: true`, and `get_session` then returned `idle` / `interrupted`.
 - [ ] 10.4 Record cold-start (provider load → ready) and warm-start. Cold start on 2026-11-02:
   69 seconds from Pod start to Ready. Warm start still unrecorded.
 - [x] 10.5 Clone `datahub-local-core` and run `helmfile template` from the server workspace; clone
@@ -230,11 +235,8 @@
 Verified in the live cluster unless noted; the items below need a browser, a persona run, or a
 deliberate failure, and none of them blocks the release.
 
-- 4.4 — anonymous access returns the oauth2-proxy sign-in page; the signed-in UI and SSE stream
-  need a browser session.
-- 6.3 — `FIRECRAWL_API_KEY` is absent from server and bridge; search and scrape are unexercised.
+- 4.4 — anonymous access returns the oauth2-proxy sign-in page and 4096 is unreachable outside the
+  proxy/shim; the signed-in UI and SSE stream need a browser session.
 - 8.5 — no Sympozium persona run to list the seven tools.
-- 10.2 — the `.env`/`webfetch` denials and `fc_firecrawl_search` are unprobed.
-- 10.3 — busy, `abort_session` and `get_session` under contention are unexercised.
 - 10.4 — cold start measured at 69s; no restart has been timed for the warm figure.
 - 1.9 — Renovate extraction is verified, but the digest-PR half needs a GitHub token.

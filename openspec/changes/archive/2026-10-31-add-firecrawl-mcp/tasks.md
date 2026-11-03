@@ -122,11 +122,13 @@
   `firecrawl-token` Secret and `api.firecrawl.dev` egress.
 - [x] 6.2 Point its `opencode.json` Firecrawl entry at
   `http://{{ .Values.release_name }}-automation-mcp-firecrawl.automation.svc.cluster.local:8080/mcp`.
-- [ ] 6.3 (tracked in `add-opencode-agent`) Allow the raw Firecrawl tool names under OpenCode's
+- [x] 6.3 (tracked in `add-opencode-agent`) Allow the raw Firecrawl tool names under OpenCode's
   server-name prefix; `fc_*` does not exist on the HTTP instance. Keep crawl, agent, monitor,
-  interact, parse and feedback denied.
-- [ ] 6.4 (tracked in `add-opencode-agent`) Re-render that release and confirm no Firecrawl API key
-  is referenced and no SaaS host remains.
+  interact, parse and feedback denied. Verified 2026-11-02: `fc_firecrawl_search` and
+  `fc_firecrawl_scrape` run from a session; the bridge registers only scrape, search and map.
+- [x] 6.4 (tracked in `add-opencode-agent`) Re-render that release and confirm no Firecrawl API key
+  is referenced and no SaaS host remains. Verified 2026-11-02: `FIRECRAWL_API_KEY` is absent from
+  server and bridge, and the allowlist has no `api.firecrawl.dev`.
 
 ## 7. Verification
 
