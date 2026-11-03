@@ -251,8 +251,9 @@ model API directly.
 
 The gateway SHALL enable Slack through `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN`, with
 `GATEWAY_ALLOW_ALL_USERS=false`, `SLACK_ALLOWED_USERS` containing only `U08RV08387L`, and
-`SLACK_ALLOWED_CHANNELS` plus `SLACK_FREE_RESPONSE_CHANNELS` containing only `#agentic-coding`
-(`C0CDNTM4GTH`), so plain messages there are answered without an @mention.
+`SLACK_ALLOWED_CHANNELS` plus `SLACK_FREE_RESPONSE_CHANNELS` containing `#agentic-coding`
+(`C0CDNTM4GTH`) and `#agentic-hermes` (`C0CBX92B6PQ`), so plain messages in either are answered
+without an @mention.
 
 That channel is private, so the app SHALL be a member of it, subscribe to `message.groups`
 and grant `groups:history`; without membership no event arrives, and without both of those a plain
@@ -275,7 +276,7 @@ token, so the Secret SHALL be updated and the Pod restarted.
 
 #### Scenario: Another channel is ignored
 
-- **WHEN** the bot is mentioned in a channel other than `#agentic-coding`
+- **WHEN** the bot is mentioned in a channel other than `#agentic-coding` or `#agentic-hermes`
 - **THEN** no agent turn runs, because `SLACK_ALLOWED_CHANNELS` is set
 
 ### Requirement: Inbound Slack messages are acknowledged with a reaction

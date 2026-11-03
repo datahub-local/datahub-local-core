@@ -333,13 +333,14 @@ extraEnv:
     value: U08RV08387L
   # Hermes has its own Slack app (@homelab_hermes): the @homelab app is held by
   # Sympozium's channel responder and Slack splits one app's events across its
-  # Socket Mode connections. #agentic-coding is Hermes's channel: it answers plain
-  # messages there, which the responder's trigger set ignores. Private, so the app
-  # must be invited; both it and the Sympozium app are members.
+  # Socket Mode connections. #agentic-coding is Hermes's channel and
+  # #agentic-hermes (C0CBX92B6PQ) is kept as the second one it answers in, so a
+  # question asked in either produces a turn. Private, so the app must be
+  # invited; both it and the Sympozium app are members.
   - name: SLACK_ALLOWED_CHANNELS
-    value: C0CDNTM4GTH
+    value: C0CDNTM4GTH,C0CBX92B6PQ
   - name: SLACK_FREE_RESPONSE_CHANNELS
-    value: C0CDNTM4GTH
+    value: C0CDNTM4GTH,C0CBX92B6PQ
   # The app has no /hermes slash command registered, so /hermes sethome cannot
   # run; cron and cross-platform results need the home channel from the env.
   # The tick's help ping reads this too, so it lands where Hermes listens.
