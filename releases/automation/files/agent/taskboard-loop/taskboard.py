@@ -21,7 +21,9 @@ Usage:
                                   (body on stdin by default; --owner relays the
                                    owner's words)
   taskboard.py start <n> <session>    (records the session on the issue)
-  taskboard.py forwarded <n> <since>  (records that comments up to <since> were sent)
+  taskboard.py forwarded <n> <since> [--failed]
+                                  (records the send and reacts 👀; --failed reacts 😕
+                                   and leaves the marker so the next tick retries)
   taskboard.py pr <repo> <branch>
   taskboard.py review <repo> <pr>
   taskboard.py notify <n> [--text <body>]  (posts one Slack line with the links)
@@ -212,6 +214,7 @@ class GitHub:
         return [
             {
                 "id": c.get("id"),
+                "repo": REPO,
                 "author": (c.get("user") or {}).get("login", ""),
                 "created_at": c.get("created_at", ""),
                 "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
@@ -235,6 +238,7 @@ class GitHub:
         return [
             {
                 "id": c.get("id"),
+                "repo": repo,
                 "author": (c.get("user") or {}).get("login", ""),
                 "created_at": c.get("created_at", ""),
                 "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
@@ -548,6 +552,54 @@ def last_branch(comments: list[dict]) -> str:
     return found
 
 
+def pull_comments_for(github, body: str, comments: list[dict]) -> list[dict]:
+    """The pull request's comments when the issue names where it was opened."""
+    repo = repo_of(body, comments)
+    branch = last_branch(comments)
+    if not (repo and branch):
+        return []
+    found = github._call(
+        "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
+    )
+    if not found:
+        return []
+    return github.pull_comments(repo, found[0]["number"])
+
+
+def reaction_path(comment: dict) -> str:
+    """The reactions endpoint for the collection the comment came from.
+
+    GitHub splits issue/PR conversation comments from inline review comments;
+    posting to the wrong collection is a 404, not a reaction on the same comment.
+    """
+    repo = comment.get("repo") or REPO
+    ident = comment.get("id")
+    if comment.get("path") or "#discussion_r" in (comment.get("url") or ""):
+        return f"/repos/{repo}/pulls/comments/{ident}/reactions"
+    return f"/repos/{repo}/issues/comments/{ident}/reactions"
+
+
+def ack(github, comments: list[dict], failed: bool = False) -> int:
+    """React 👀 to what the session received, 😕 to what the send could not deliver.
+
+    A reaction is the only receipt GitHub offers; it is worth one call per
+    comment, and a failed reaction must not fail the marker that prevents a
+    duplicate send.
+    """
+    content = "confused" if failed else "eyes"
+    acked = 0
+    for comment in comments:
+        if comment.get("id") is None:
+            continue
+        try:
+            github._call("POST", reaction_path(comment), {"content": content})
+        except SystemExit as exc:
+            print(f"WARNING: reaction failed: {exc}", file=sys.stderr)
+            continue
+        acked += 1
+    return acked
+
+
 def merge_pending(
     issue_comments: list[dict], pull_comments: list[dict], since: str
 ) -> list[dict]:
@@ -785,9 +837,34 @@ def main(argv: list[str]) -> int:
 
     if command == "forwarded":
         number, since = int(args[0]), args[1]
-        body = f"Forwarded to the session.\n\n<!-- taskboard:forwarded {since} -->"
-        created = github._call("POST", f"/repos/{REPO}/issues/{number}/comments", {"body": body})
-        print(json.dumps({"number": number, "since": since, "url": created.get("html_url", "")}))
+        failed = "--failed" in args[2:]
+        body = github.item(number)["content"].get("body") or ""
+        comments = github.comments(number)
+        previous = last_forwarded(comments)
+        pull_comments = pull_comments_for(github, body, comments)
+        sent = [
+            comment
+            for comment in merge_pending(comments, pull_comments, previous)
+            if comment["created_at"] <= since
+        ]
+        created = {}
+        if not failed:
+            marker = f"Forwarded to the session.\n\n<!-- taskboard:forwarded {since} -->"
+            created = github._call(
+                "POST", f"/repos/{REPO}/issues/{number}/comments", {"body": marker}
+            )
+        acked = ack(github, sent, failed=failed)
+        print(
+            json.dumps(
+                {
+                    "number": number,
+                    "since": since,
+                    "failed": failed,
+                    "acked": acked,
+                    "url": created.get("html_url", ""),
+                }
+            )
+        )
         return 0
 
     if command == "pr":

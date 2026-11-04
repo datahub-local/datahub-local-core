@@ -59,3 +59,14 @@ is told the repository the way the issue prose names it and `/repos/<name>` is a
 If neither the section nor a claim names a repository, `inbox` still reports
 `"repo": null` and no items. Guessing from another issue's branch is worse than
 leaving the next tick to a corrected issue.
+
+### D5 — The receipt is a reaction, written with the outcome
+
+GitHub has no check-mark reaction; `eyes` is the available acknowledgement that
+matches the Slacks plugin's 👀. `forwarded` reacts after writing the marker, so a
+comment is acknowledged only once the session actually has it. `--failed` reacts
+`confused` (😕) and skips the marker, which keeps the retry intact. Each comment
+knows the repository and collection it came from, and the reaction goes to
+`/issues/comments/<id>/reactions` or `/pulls/comments/<id>/reactions` accordingly.
+A failed reaction warns, because losing the receipt is better than losing the
+comment to a duplicate send.

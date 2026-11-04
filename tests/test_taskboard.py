@@ -310,6 +310,113 @@ def test_pr_prefixes_the_organisation_on_a_bare_repository(monkeypatch):
     ]
 
 
+def test_ack_reacts_eyes_on_the_collection_the_comment_came_from():
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append((path, body["content"]))
+            return {}
+
+    conversation = {
+        "id": 1,
+        "repo": "datahub-local/datahub-local",
+        "url": "https://github.com/datahub-local/datahub-local/issues/99#issuecomment-1",
+        "path": None,
+    }
+    review = {
+        "id": 2,
+        "repo": "datahub-local/datahub-local-ai",
+        "url": "https://github.com/datahub-local/datahub-local-ai/pull/53#discussion_r2",
+        "path": "src/a.py",
+    }
+    assert taskboard.ack(Fake(), [conversation, review]) == 2
+    assert calls == [
+        ("/repos/datahub-local/datahub-local/issues/comments/1/reactions", "eyes"),
+        ("/repos/datahub-local/datahub-local-ai/pulls/comments/2/reactions", "eyes"),
+    ]
+
+
+def test_ack_reacts_confused_when_the_send_failed():
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append(body["content"])
+            return {}
+
+    comment = {
+        "id": 1,
+        "repo": "datahub-local/datahub-local",
+        "url": "https://github.com/datahub-local/datahub-local/issues/99#issuecomment-1",
+        "path": None,
+    }
+    assert taskboard.ack(Fake(), [comment], failed=True) == 1
+    assert calls == ["confused"]
+
+
+def test_forwarded_failed_reacts_confused_and_leaves_the_marker(monkeypatch):
+    calls = []
+    comment = {
+        "id": 1,
+        "repo": "datahub-local/datahub-local",
+        "created_at": "2026-11-04T05:00:00Z",
+        "body": "why is helm needed?",
+        "url": "https://github.com/datahub-local/datahub-local/issues/99#issuecomment-1",
+        "machine": False,
+    }
+    monkeypatch.setattr(taskboard, "credential", lambda: "token")
+    monkeypatch.setattr(
+        taskboard.GitHub, "item", lambda self, number: {"content": {"body": "no repo"}}
+    )
+    monkeypatch.setattr(taskboard.GitHub, "comments", lambda self, number: [comment])
+    monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
+
+    def fake_call(self, method, path, body=None):
+        calls.append((path, body))
+        return {}
+
+    monkeypatch.setattr(taskboard.GitHub, "_call", fake_call)
+    assert taskboard.main(["forwarded", "99", "2026-11-04T05:00:00Z", "--failed"]) == 0
+    assert len(calls) == 1
+    path, body = calls[0]
+    assert path.endswith("/issues/comments/1/reactions")
+    assert body == {"content": "confused"}
+
+
+def test_forwarded_success_writes_the_marker_then_reacts(monkeypatch):
+    calls = []
+    comment = {
+        "id": 1,
+        "repo": "datahub-local/datahub-local",
+        "created_at": "2026-11-04T05:00:00Z",
+        "body": "why is helm needed?",
+        "url": "https://github.com/datahub-local/datahub-local/issues/99#issuecomment-1",
+        "machine": False,
+    }
+    monkeypatch.setattr(taskboard, "credential", lambda: "token")
+    monkeypatch.setattr(
+        taskboard.GitHub, "item", lambda self, number: {"content": {"body": "no repo"}}
+    )
+    monkeypatch.setattr(taskboard.GitHub, "comments", lambda self, number: [comment])
+    monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
+
+    def fake_call(self, method, path, body=None):
+        calls.append((path, body))
+        return {"html_url": "marker"}
+
+    monkeypatch.setattr(taskboard.GitHub, "_call", fake_call)
+    assert taskboard.main(["forwarded", "99", "2026-11-04T05:00:00Z"]) == 0
+    assert len(calls) == 2
+    marker_path, marker_body = calls[0]
+    assert marker_path == f"/repos/{taskboard.REPO}/issues/99/comments"
+    assert "<!-- taskboard:forwarded 2026-11-04T05:00:00Z -->" in marker_body["body"]
+    reaction_path, reaction_body = calls[1]
+    assert reaction_path.endswith("/issues/comments/1/reactions")
+    assert reaction_body == {"content": "eyes"}
+
+
+
 
 def test_last_branch_reads_the_claim_comment():
     comments = [

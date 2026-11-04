@@ -55,3 +55,22 @@ branch's repository. A bare repository name SHALL be prefixed with
 - **WHEN** neither the issue nor a claim names one
 - **THEN** `inbox` reports no repository and no items
 - **AND** it does not guess from another issue
+
+### Requirement: A forwarded comment is acknowledged
+
+After the tick records a successful forward, the helper SHALL react 👀 to every
+comment that forward covered. When the send failed, the helper SHALL instead react
+😕 to those comments and SHALL NOT advance the forwarded marker, so the next tick
+retries. A reaction failure SHALL be reported and SHALL NOT fail the marker write.
+
+#### Scenario: The session received the comment
+
+- **WHEN** the send succeeded and `forwarded <n> <since>` runs
+- **THEN** the marker is written
+- **AND** each comment in that window carries an 👀 reaction
+
+#### Scenario: The send failed
+
+- **WHEN** `forwarded <n> <since> --failed` runs
+- **THEN** no marker is written
+- **AND** each comment in that window carries a 😕 reaction

@@ -129,7 +129,10 @@ If `items` is not empty:
      form has several fields, answer each from the comment.
    - otherwise: `run_task` with `session_id` and the text, prefixed with
      `The owner wrote:`.
-4. `forwarded <n> <the created_at of the newest item you sent>`.
+4. `forwarded <n> <the created_at of the newest item you sent>`. It posts the
+   marker and reacts 👀 to every comment it just recorded. If the send failed, run
+   the same command with `--failed`: it reacts 😕 and leaves the marker alone, so
+   the next tick retries. The reaction is the receipt the owner sees in GitHub.
 5. If the issue was `Blocked` or `Testing`, `status <n> "In Progress"`. `status`
    posts the Slack line for the move.
 

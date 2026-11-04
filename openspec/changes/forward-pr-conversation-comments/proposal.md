@@ -21,7 +21,10 @@ which the API reads as an owner, so every poll since 2026-11-03 answered
   (`Branch \`x\` in <repo>`) when the issue has no `## Repo` section, and always
   carries the organisation.
 - `pr` and `review` accept a bare repository name as well as a full slug.
-- The `taskboard-loop` skill and the spec name the conversation surface.
+- `forwarded` reacts 👀 to the comments it records, or 😕 with `--failed` while
+  leaving the marker alone.
+- The `taskboard-loop` skill and the spec name the conversation surface and the
+  reaction.
 
 Not changed: delivery is still the ten-minute tick, not a webhook; a review
 submitted with only a body (`/pulls/<n>/reviews`) is still not read.
