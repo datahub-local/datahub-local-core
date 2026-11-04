@@ -28,6 +28,13 @@ in more than one collection SHALL be forwarded once.
 - **THEN** the tick leaves the marker alone
 - **AND** the next tick sends the comment
 
+#### Scenario: The agent is busy with another issue
+
+- **WHEN** `run_task` answers `busy` because another issue's turn holds the shim
+- **THEN** the tick leaves the marker alone
+- **AND** it adds no reaction, because the comment is queued rather than delivered
+- **AND** the next tick retries it
+
 ## ADDED Requirements
 
 ### Requirement: The pull request is found without a Repo section
@@ -59,9 +66,11 @@ branch's repository. A bare repository name SHALL be prefixed with
 ### Requirement: A forwarded comment is acknowledged
 
 After the tick records a successful forward, the helper SHALL react 👀 to every
-comment that forward covered. When the send failed, the helper SHALL instead react
-😕 to those comments and SHALL NOT advance the forwarded marker, so the next tick
-retries. A reaction failure SHALL be reported and SHALL NOT fail the marker write.
+comment that forward covered. When the send failed with an error, the helper SHALL
+instead react 😕 to those comments and SHALL NOT advance the forwarded marker, so
+the next tick retries. A `busy` answer from the agent SHALL NOT be treated as a
+send failure: it SHALL leave the marker and the reactions untouched. A reaction
+failure SHALL be reported and SHALL NOT fail the marker write.
 
 #### Scenario: The session received the comment
 
@@ -74,3 +83,23 @@ retries. A reaction failure SHALL be reported and SHALL NOT fail the marker writ
 - **WHEN** `forwarded <n> <since> --failed` runs
 - **THEN** no marker is written
 - **AND** each comment in that window carries a 😕 reaction
+
+### Requirement: A queued comment says it is waiting
+
+When the agent answers `busy`, the helper SHALL post one ⏳ note on the pull
+request, or on the issue when there is no pull request, SHALL NOT post a second
+note while one already exists, and SHALL delete it once the send succeeds or a
+real send error is recorded. The note SHALL carry a machine marker so it is never
+forwarded as the owner's words.
+
+#### Scenario: The agent is busy
+
+- **WHEN** the tick finds a pending comment and `run_task` answers `busy`
+- **THEN** one ⏳ note says the comment is queued
+- **AND** the forwarded marker is unchanged
+
+#### Scenario: The comment is finally delivered
+
+- **WHEN** a later tick sends it and runs `forwarded`
+- **THEN** the ⏳ note is deleted
+- **AND** the owner comment carries the 👀 receipt

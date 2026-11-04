@@ -23,6 +23,7 @@ which the API reads as an owner, so every poll since 2026-11-03 answered
 - `pr` and `review` accept a bare repository name as well as a full slug.
 - `forwarded` reacts 👀 to the comments it records, or 😕 with `--failed` while
   leaving the marker alone.
+- `waiting <n>` posts one ⏳ note while the agent is busy; `forwarded` deletes it.
 - The `taskboard-loop` skill and the spec name the conversation surface and the
   reaction.
 

@@ -9,6 +9,8 @@
 - [x] 1.4 Update `SKILL.md` step 3 to name conversation and inline review comments,
       and note that `pr` accepts a bare repository name.
 - [x] 1.5 Add the 👀/😕 reaction to `forwarded` and `--failed` to the command.
+- [x] 1.6 Treat the shim's `busy` as queued: no marker, no reaction, retry next tick.
+- [x] 1.7 Add `waiting <n>` (one ⏳ note) and delete it from `forwarded`.
 - [x] 2.1 Pin `repo_of` (section, claim, neither), id deduplication, the two
       collections, and both reactions in `tests/test_taskboard.py`.
 - [x] 2.2 Run `python3 -m pytest tests/test_taskboard.py`; run

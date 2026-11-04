@@ -69,4 +69,15 @@ comment is acknowledged only once the session actually has it. `--failed` reacts
 knows the repository and collection it came from, and the reaction goes to
 `/issues/comments/<id>/reactions` or `/pulls/comments/<id>/reactions` accordingly.
 A failed reaction warns, because losing the receipt is better than losing the
-comment to a duplicate send.
+comment to a duplicate send. A `busy` answer is not a failure: the agent is
+single-turn, so a comment that arrives while another issue's turn runs waits for
+the next tick, and writing 😕 would claim a loss that did not happen.
+
+### D6 — The queue is visible as one ⏳ note, not a reaction
+
+GitHub has no hourglass reaction, so a queued comment gets a temporary comment in
+the same thread, marked `<!-- taskboard:waiting -->`. `waiting` posts it only when
+none exists, and `forwarded` deletes it after success or a real error. It goes on
+the pull request when there is one and on the issue otherwise, because that is the
+thread the owner is reading. The marker is a machine marker, so `inbox` can never
+forward the note as the owner's words.

@@ -373,13 +373,16 @@ def test_forwarded_failed_reacts_confused_and_leaves_the_marker(monkeypatch):
     monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
 
     def fake_call(self, method, path, body=None):
-        calls.append((path, body))
+        calls.append((method, path, body))
+        if method == "GET":
+            return []
         return {}
 
     monkeypatch.setattr(taskboard.GitHub, "_call", fake_call)
     assert taskboard.main(["forwarded", "99", "2026-11-04T05:00:00Z", "--failed"]) == 0
-    assert len(calls) == 1
-    path, body = calls[0]
+    posts = [call for call in calls if call[0] == "POST"]
+    assert len(posts) == 1
+    path, body = posts[0][1], posts[0][2]
     assert path.endswith("/issues/comments/1/reactions")
     assert body == {"content": "confused"}
 
@@ -402,18 +405,104 @@ def test_forwarded_success_writes_the_marker_then_reacts(monkeypatch):
     monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
 
     def fake_call(self, method, path, body=None):
-        calls.append((path, body))
+        calls.append((method, path, body))
+        if method == "GET":
+            return []
         return {"html_url": "marker"}
 
     monkeypatch.setattr(taskboard.GitHub, "_call", fake_call)
     assert taskboard.main(["forwarded", "99", "2026-11-04T05:00:00Z"]) == 0
-    assert len(calls) == 2
-    marker_path, marker_body = calls[0]
+    posts = [call for call in calls if call[0] == "POST"]
+    assert len(posts) == 2
+    marker_path, marker_body = posts[0][1], posts[0][2]
     assert marker_path == f"/repos/{taskboard.REPO}/issues/99/comments"
     assert "<!-- taskboard:forwarded 2026-11-04T05:00:00Z -->" in marker_body["body"]
-    reaction_path, reaction_body = calls[1]
+    reaction_path, reaction_body = posts[1][1], posts[1][2]
     assert reaction_path.endswith("/issues/comments/1/reactions")
     assert reaction_body == {"content": "eyes"}
+
+
+def test_waiting_posts_one_hourglass_note():
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append((method, path, body))
+            if method == "GET":
+                return []
+            return {"html_url": "note"}
+
+    url = taskboard.waiting(Fake(), 99, "no repo", [comment("hello")])
+    assert url == "note"
+    assert [call[0] for call in calls] == ["GET", "POST"]
+    path, body = calls[1][1], calls[1][2]
+    assert path == f"/repos/{taskboard.REPO}/issues/99/comments"
+    assert "⏳" in body["body"]
+    assert taskboard.WAITING_MARKER in body["body"]
+
+
+def test_waiting_does_not_post_a_second_note():
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append(method)
+            if method == "GET":
+                return [
+                    {
+                        "id": 7,
+                        "body": f"⏳ Waiting\n\n{taskboard.WAITING_MARKER}",
+                        "html_url": "existing",
+                    }
+                ]
+            raise AssertionError("a second waiting note was posted")
+
+    assert taskboard.waiting(Fake(), 99, "no repo", [comment("hello")]) == "existing"
+    assert calls == ["GET"]
+
+
+def test_clear_waiting_deletes_only_the_note():
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append((method, path))
+            if method == "GET":
+                return [
+                    {
+                        "id": 7,
+                        "body": f"⏳ Waiting\n\n{taskboard.WAITING_MARKER}",
+                    },
+                    {"id": 8, "body": "an owner comment"},
+                ]
+            return {}
+
+    assert taskboard.clear_waiting(Fake(), 99, "no repo", [comment("hello")]) == 1
+    assert calls == [
+        ("GET", f"/repos/{taskboard.REPO}/issues/99/comments?per_page=100"),
+        ("DELETE", f"/repos/{taskboard.REPO}/issues/comments/7"),
+    ]
+
+
+def test_waiting_targets_the_pull_request_when_one_exists(monkeypatch):
+    calls = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            calls.append((method, path, body))
+            if method == "GET":
+                return []
+            return {"html_url": "note"}
+
+    monkeypatch.setattr(
+        taskboard,
+        "pull_of",
+        lambda github, body, comments: ("datahub-local/datahub-local-ai", {"number": 54}),
+    )
+    taskboard.waiting(Fake(), 109, "no repo", [comment("hello")])
+    path = [call for call in calls if call[0] == "POST"][0][1]
+    assert path == "/repos/datahub-local/datahub-local-ai/issues/54/comments"
+
 
 
 

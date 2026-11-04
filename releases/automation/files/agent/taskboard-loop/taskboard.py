@@ -24,6 +24,7 @@ Usage:
   taskboard.py forwarded <n> <since> [--failed]
                                   (records the send and reacts 👀; --failed reacts 😕
                                    and leaves the marker so the next tick retries)
+  taskboard.py waiting <n>           (posts one ⏳ note while the agent is busy)
   taskboard.py pr <repo> <branch>
   taskboard.py review <repo> <pr>
   taskboard.py notify <n> [--text <body>]  (posts one Slack line with the links)
@@ -44,6 +45,7 @@ SLACK_API = "https://slack.com/api/chat.postMessage"
 MARKER = "<!-- taskboard:"
 HELP_MARKER = "<!-- taskboard:help -->"
 AGENT_MARKER = "<!-- taskboard:agent -->"
+WAITING_MARKER = "<!-- taskboard:waiting -->"
 SESSION_RE = re.compile(r"<!-- taskboard:session (\S+) -->")
 FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
 BRANCH_RE = re.compile(r"Branch `([^`]+)`")
@@ -552,18 +554,23 @@ def last_branch(comments: list[dict]) -> str:
     return found
 
 
-def pull_comments_for(github, body: str, comments: list[dict]) -> list[dict]:
-    """The pull request's comments when the issue names where it was opened."""
+def pull_of(github, body: str, comments: list[dict]):
+    """The pull request's repository and record, when the issue names where it opened."""
     repo = repo_of(body, comments)
     branch = last_branch(comments)
     if not (repo and branch):
-        return []
+        return None, None
     found = github._call(
         "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
     )
     if not found:
-        return []
-    return github.pull_comments(repo, found[0]["number"])
+        return None, None
+    return repo, found[0]
+
+
+def pull_comments_for(github, body: str, comments: list[dict]) -> list[dict]:
+    repo, pull = pull_of(github, body, comments)
+    return github.pull_comments(repo, pull["number"]) if pull else []
 
 
 def reaction_path(comment: dict) -> str:
@@ -598,6 +605,54 @@ def ack(github, comments: list[dict], failed: bool = False) -> int:
             continue
         acked += 1
     return acked
+
+
+def waiting_surface(github, number: int, body: str, comments: list[dict]):
+    """Where the ⏳ note belongs: the pull request if it exists, else the issue."""
+    repo, pull = pull_of(github, body, comments)
+    if pull:
+        return repo, pull["number"]
+    return REPO, number
+
+
+def waiting(github, number: int, body: str, comments: list[dict]) -> str:
+    """Post one ⏳ note while the agent is busy, and never a second one.
+
+    GitHub has no hourglass reaction, so a queued comment says it in the thread.
+    The marker makes the note machine-written: `inbox` never forwards it, and the
+    next `forwarded` deletes it.
+    """
+    repo, target = waiting_surface(github, number, body, comments)
+    path = f"/repos/{repo}/issues/{target}/comments?per_page=100"
+    for comment in github._call("GET", path):
+        if WAITING_MARKER in (comment.get("body") or ""):
+            return comment.get("html_url", "")
+    note = (
+        "⏳ Waiting — the agent is finishing another turn. This comment is queued "
+        f"and will be forwarded on the next tick.\n\n{WAITING_MARKER}"
+    )
+    created = github._call(
+        "POST", f"/repos/{repo}/issues/{target}/comments", {"body": note}
+    )
+    return created.get("html_url", "")
+
+
+def clear_waiting(github, number: int, body: str, comments: list[dict]) -> int:
+    """Remove the ⏳ note once the comment is delivered, or the send failed."""
+    repo, target = waiting_surface(github, number, body, comments)
+    removed = 0
+    for comment in github._call(
+        "GET", f"/repos/{repo}/issues/{target}/comments?per_page=100"
+    ):
+        if WAITING_MARKER not in (comment.get("body") or ""):
+            continue
+        try:
+            github._call("DELETE", f"/repos/{repo}/issues/comments/{comment['id']}")
+        except SystemExit as exc:
+            print(f"WARNING: waiting note not removed: {exc}", file=sys.stderr)
+            continue
+        removed += 1
+    return removed
 
 
 def merge_pending(
@@ -854,6 +909,7 @@ def main(argv: list[str]) -> int:
                 "POST", f"/repos/{REPO}/issues/{number}/comments", {"body": marker}
             )
         acked = ack(github, sent, failed=failed)
+        cleared = clear_waiting(github, number, body, comments)
         print(
             json.dumps(
                 {
@@ -861,7 +917,22 @@ def main(argv: list[str]) -> int:
                     "since": since,
                     "failed": failed,
                     "acked": acked,
+                    "waiting_cleared": cleared,
                     "url": created.get("html_url", ""),
+                }
+            )
+        )
+        return 0
+
+    if command == "waiting":
+        number = int(args[0])
+        body = github.item(number)["content"].get("body") or ""
+        comments = github.comments(number)
+        print(
+            json.dumps(
+                {
+                    "number": number,
+                    "url": waiting(github, number, body, comments),
                 }
             )
         )

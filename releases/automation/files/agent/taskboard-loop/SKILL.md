@@ -129,10 +129,15 @@ If `items` is not empty:
      form has several fields, answer each from the comment.
    - otherwise: `run_task` with `session_id` and the text, prefixed with
      `The owner wrote:`.
+   If `run_task` answers `busy`, the agent is running another issue's turn: run
+   `waiting <n>` once, leave the marker alone and do NOT run `--failed`. The ⏳
+   note tells the owner it is queued, not failed, and the next tick retries it.
+   Use `--failed` only for a real `ERROR:`.
 4. `forwarded <n> <the created_at of the newest item you sent>`. It posts the
-   marker and reacts 👀 to every comment it just recorded. If the send failed, run
-   the same command with `--failed`: it reacts 😕 and leaves the marker alone, so
-   the next tick retries. The reaction is the receipt the owner sees in GitHub.
+   marker, reacts 👀 to every comment it just recorded, and deletes the ⏳ note.
+   On a real `ERROR:`, run the same command with `--failed`: it reacts 😕 and
+   leaves the marker alone, so the next tick retries. The reaction is the receipt
+   the owner sees in GitHub.
 5. If the issue was `Blocked` or `Testing`, `status <n> "In Progress"`. `status`
    posts the Slack line for the move.
 
