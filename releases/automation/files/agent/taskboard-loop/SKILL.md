@@ -29,10 +29,11 @@ moves a card.
   `mcp__sympozium_slack__slack_post_message`, which authors the line as the
   `@homelab` app.
 
-`taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `inbox <n>`,
-`status <n> <Status>`, `finish <n>`, `comment <n> [--owner] [--text <body>]` (body
-on stdin when `--text` is absent), `start <n> <session>`, `forwarded <n> <since>`,
-`pr <repo> <branch>`, `review <repo> <pr>`, `notify <n> [--text <body>]`.
+`taskboard.py` subcommands: `sync`, `board`, `ready`, `issue <n>`, `pull <n>`,
+`inbox <n>`, `status <n> <Status>`, `finish <n>`, `comment <n> [--owner]
+[--text <body>]` (body on stdin when `--text` is absent), `start <n> <session>`,
+`forwarded <n> <since>`, `pr <repo> <branch>`, `review <repo> <pr>`,
+`notify <n> [--text <body>]`.
 
 Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Code Review`,
 `Testing`, `Done`. `Code Review` means a pull request is open; `Testing` means it
@@ -115,8 +116,9 @@ fails, comment the error and stop dispatching.
 For every board item that is `In Progress`, `Blocked`, `Code Review` or `Testing`,
 run `inbox <n>`.
 It returns the comments written since the last one you forwarded, from the issue
-and from the pull request — both its conversation and its inline review comments —
-in order. One queue, because to the agent all of them are the owner talking to it.
+and from every pull request that references it — its conversation and its inline
+review comments — in order. One queue, because to the agent all of them are the
+owner talking to it.
 
 If `items` is not empty:
 
@@ -192,34 +194,36 @@ does not have, a destructive step only the owner may take, three failed fixes.
 
 ### 5. Pull request state
 
-Take the branch from the agent's claim comment or the pull request it linked, and
-run `pr <repo> <branch>` — a bare name such as `datahub-local-ai` is fine, the
-helper adds the organisation.
+Run `pull <n>`. It returns `current`, the pull request the issue is working on: an
+open one if there is one, otherwise the newest merged. The link is the
+`Refs datahub-local/datahub-local#<n>` line in the pull request body, so it
+survives a second cycle and a new branch. `pulls` lists every pull request that
+references the issue, newest first.
 
-- `prs` empty and the session is idle, with a report that is not `BLOCKED`: comment
-  the branch name and that no pull request exists, once. If a comment already says
-  it, say nothing. Keep `In Progress`.
-- `open` and the issue is `In Progress`: run `review <repo> <number>`, comment the
-  **full pull request URL** (`review` returns it as `url`, or build
+- `current` is null and the session is idle, with a report that is not `BLOCKED`:
+  comment the branch name and that no pull request exists, once. If a comment
+  already says it, say nothing. Keep `In Progress`.
+- `current.state` is `open` and the issue is `In Progress`: run `review <repo>
+  <current.number>`, comment the **full pull request URL** (`review` returns it
+  as `url`, or build
   `https://github.com/<org>/<repo>/pull/<number>`) and what changed, then set
   `Code Review`. `status` posts the Slack line for the move; GitHub notifies on
   the pull request itself.
-- `open` and the issue is already `Code Review`: nothing. Only step 3 has
-  anything to do, and it does it when the owner writes.
-- `open` and the issue is `Blocked`: nothing. A question outranks an old pull
-  request; only the owner's answer leaves `Blocked`.
-- `merged`: comment the merge with the full pull request URL, then
+- `current.state` is `open` and the issue is already `Code Review`: nothing. Only
+  step 3 has anything to do, and it does it when the owner writes.
+- `current.state` is `open` and the issue is `Blocked`: nothing. A question
+  outranks an old pull request; only the owner's answer leaves `Blocked`.
+- `current.merged` is true: comment the merge with the full pull request URL, then
   `status <n> Testing`, which posts the Slack line for the move. The merge is the
   deploy, so the card moves to `Testing` and stays there until the issue closes.
-- `merged` and the issue is already `Testing`: nothing. That is a fix merged
-  while the owner was testing; the card is where it belongs.
+- `current.merged` is true and the issue is already `Testing`: nothing. That is a
+  fix merged while the owner was testing; the card is where it belongs.
 
 A merged pull request ends that branch, not the issue. If the owner comments on a
 card in `Testing` and the fix needs code, step 3 forwards the comment and sets
-`In Progress`. The agent then cuts a new branch from `main`, writes the claim
-comment that names it in the repository (`Branch ... in <repo>`), and opens a new
-pull request. That pull request goes through `Code Review` and back to `Testing`
-on merge.
+`In Progress`. The agent then cuts a new branch from `main` and opens a new pull
+request whose body carries `Refs datahub-local/datahub-local#<n>`; `pull` finds it
+by that line, and the next tick comments it and sets `Code Review`.
 
 ## The tick has a budget
 

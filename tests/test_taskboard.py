@@ -370,7 +370,9 @@ def test_forwarded_failed_reacts_confused_and_leaves_the_marker(monkeypatch):
         taskboard.GitHub, "item", lambda self, number: {"content": {"body": "no repo"}}
     )
     monkeypatch.setattr(taskboard.GitHub, "comments", lambda self, number: [comment])
-    monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
+    monkeypatch.setattr(
+        taskboard, "pull_comments_for", lambda github, body, comments, number: []
+    )
 
     def fake_call(self, method, path, body=None):
         calls.append((method, path, body))
@@ -402,7 +404,9 @@ def test_forwarded_success_writes_the_marker_then_reacts(monkeypatch):
         taskboard.GitHub, "item", lambda self, number: {"content": {"body": "no repo"}}
     )
     monkeypatch.setattr(taskboard.GitHub, "comments", lambda self, number: [comment])
-    monkeypatch.setattr(taskboard, "pull_comments_for", lambda github, body, comments: [])
+    monkeypatch.setattr(
+        taskboard, "pull_comments_for", lambda github, body, comments, number: []
+    )
 
     def fake_call(self, method, path, body=None):
         calls.append((method, path, body))
@@ -497,7 +501,10 @@ def test_waiting_targets_the_pull_request_when_one_exists(monkeypatch):
     monkeypatch.setattr(
         taskboard,
         "pull_of",
-        lambda github, body, comments: ("datahub-local/datahub-local-ai", {"number": 54}),
+        lambda github, body, comments, number: (
+            "datahub-local/datahub-local-ai",
+            {"number": 54},
+        ),
     )
     taskboard.waiting(Fake(), 109, "no repo", [comment("hello")])
     path = [call for call in calls if call[0] == "POST"][0][1]
@@ -512,6 +519,127 @@ def test_last_branch_reads_the_claim_comment():
         comment_with_id("Claimed. Branch `feat/116-org-profile-readme` in datahub-local.", "2026-11-01T09:00:00Z")
     ]
     assert taskboard.last_branch(comments) == "feat/116-org-profile-readme"
+
+
+def test_last_branch_reads_a_pull_request_comment_without_the_capital():
+    """#99: the second branch only ever appeared as "(branch `fix/...`)"."""
+    comments = [
+        comment_with_id(
+            "Claimed. Branch `feat/99-agent-authored-articles` in datahub-local-ai.",
+            "2026-11-02T21:28:03Z",
+        ),
+        comment_with_id(
+            "Pull request: https://example/pull/55 (branch `fix/99-pi-writer-auth-secret`, 1 commit)",
+            "2026-11-04T19:48:50Z",
+        ),
+    ]
+    assert taskboard.last_branch(comments) == "fix/99-pi-writer-auth-secret"
+
+
+def test_referenced_pulls_keeps_only_the_ones_that_claim_the_issue():
+    class Fake:
+        def _call(self, method, path, body=None):
+            assert "/pulls?state=all" in path
+            return [
+                {"number": 53, "state": "closed", "merged_at": "2026-11-04T19:18:40Z",
+                 "body": "Refs datahub-local/datahub-local#99"},
+                {"number": 55, "state": "open", "merged_at": None,
+                 "body": "Refs datahub-local/datahub-local#99"},
+                {"number": 50, "state": "open", "merged_at": None,
+                 "body": "Refs datahub-local/datahub-local#98"},
+            ]
+
+    pulls = taskboard.referenced_pulls(
+        Fake(), "datahub-local/datahub-local-ai", 99
+    )
+    assert [p["number"] for p in pulls] == [55, 53]
+
+
+def test_pull_of_finds_a_second_cycle_pull_request():
+    """#99: the claim comment named the merged branch, the fix was on a new one."""
+    class Fake:
+        def _call(self, method, path, body=None):
+            return [
+                {"number": 53, "state": "closed", "merged_at": "2026-11-04T19:18:40Z",
+                 "body": "Refs datahub-local/datahub-local#99"},
+                {"number": 55, "state": "open", "merged_at": None,
+                 "body": "Refs datahub-local/datahub-local#99"},
+            ]
+
+    comments = [
+        comment_with_id(
+            "Claimed. Branch `feat/99-agent-authored-articles` in datahub-local-ai.",
+            "2026-11-02T21:28:03Z",
+        )
+    ]
+    _, pull = taskboard.pull_of(Fake(), "", comments, 99)
+    assert pull["number"] == 55
+
+
+def test_pull_comments_come_from_every_referenced_pull_request():
+    """A reply on the merged pull request is still the owner talking."""
+    seen = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            seen.append(path)
+            if "/pulls?state=all" in path:
+                return [
+                    {"number": 55, "state": "open", "merged_at": None,
+                     "body": "Refs datahub-local/datahub-local#99"},
+                    {"number": 53, "state": "closed", "merged_at": "2026-11-04T19:18:40Z",
+                     "body": "Refs datahub-local/datahub-local#99"},
+                ]
+            return []
+
+        def pull_comments(self, repo, number):
+            self._call("GET", f"/repos/{repo}/issues/{number}/comments?per_page=100")
+            return []
+
+    comments = [
+        comment_with_id(
+            "Claimed. Branch `feat/99-agent-authored-articles` in datahub-local-ai.",
+            "2026-11-02T21:28:03Z",
+        )
+    ]
+    taskboard.pull_comments_for(Fake(), "", comments, 99)
+    assert "/repos/datahub-local/datahub-local-ai/issues/53/comments?per_page=100" in seen
+    assert "/repos/datahub-local/datahub-local-ai/issues/55/comments?per_page=100" in seen
+
+
+def test_pull_command_reports_the_pull_request_the_issue_is_working_on(monkeypatch, capsys):
+    monkeypatch.setattr(taskboard, "credential", lambda: "token")
+    monkeypatch.setattr(
+        taskboard.GitHub, "item", lambda self, number: {"content": {"body": "no repo"}}
+    )
+    monkeypatch.setattr(taskboard.GitHub, "comments", lambda self, number: [])
+    monkeypatch.setattr(
+        taskboard,
+        "referenced_pulls",
+        lambda github, repo, number: [
+            {
+                "number": 55,
+                "state": "open",
+                "merged_at": None,
+                "html_url": "https://example/pull/55",
+                "head": {"ref": "fix/99"},
+                "title": "fix",
+            },
+            {
+                "number": 53,
+                "state": "closed",
+                "merged_at": "2026-11-04T19:18:40Z",
+                "html_url": "https://example/pull/53",
+                "head": {"ref": "feat/99"},
+                "title": "feat",
+            },
+        ],
+    )
+
+    assert taskboard.main(["pull", "99"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["current"]["number"] == 55
+    assert [p["number"] for p in out["pulls"]] == [55, 53]
 
 
 def test_comment_body_marks_a_machine_comment():

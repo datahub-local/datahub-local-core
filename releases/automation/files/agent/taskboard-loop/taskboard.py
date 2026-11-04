@@ -48,8 +48,10 @@ AGENT_MARKER = "<!-- taskboard:agent -->"
 WAITING_MARKER = "<!-- taskboard:waiting -->"
 SESSION_RE = re.compile(r"<!-- taskboard:session (\S+) -->")
 FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
-BRANCH_RE = re.compile(r"Branch `([^`]+)`")
-CLAIM_REPO_RE = re.compile(r"Branch `[^`]+` in ([\w-]+(?:/[\w.-]+)?)")
+BRANCH_RE = re.compile(r"branch `([^`]+)`", re.IGNORECASE)
+CLAIM_REPO_RE = re.compile(
+    r"branch `[^`]+` in ([\w-]+(?:/[\w.-]+)?)", re.IGNORECASE
+)
 MARKER_RE = re.compile(r"<!-- taskboard:[^>]*-->\s*", re.MULTILINE)
 MAX_COMMENT_CHARS = 1500
 
@@ -554,11 +556,37 @@ def last_branch(comments: list[dict]) -> str:
     return found
 
 
-def pull_of(github, body: str, comments: list[dict]):
-    """The pull request's repository and record, when the issue names where it opened."""
+def referenced_pulls(github, repo: str, number: int | None) -> list[dict]:
+    """The pull requests whose body claims this issue, current first.
+
+    A second cycle starts from `main` on a new branch, so the branch in the
+    original claim comment no longer names the work in progress. The
+    `Refs <repo>#<n>` line in the pull request body is the durable link, and the
+    open pull request outranks a merged one from an earlier cycle.
+    """
+    if not (repo and number):
+        return []
+    pattern = re.compile(rf"Refs\s+{re.escape(REPO)}#{number}\b", re.IGNORECASE)
+    pulls = github._call("GET", f"/repos/{repo}/pulls?state=all&per_page=100")
+    matched = [p for p in pulls if pattern.search(p.get("body") or "")]
+    matched.sort(key=lambda p: (p["state"] != "open", -p["number"]))
+    return matched
+
+
+def pull_of(github, body: str, comments: list[dict], number: int | None = None):
+    """The pull request the issue is working on: current PR, else the branch's.
+
+    The referenced pull request wins because it survives a second cycle. Only an
+    issue whose pull requests predate the `Refs` line falls back to the branch.
+    """
     repo = repo_of(body, comments)
+    if not repo:
+        return None, None
+    referenced = referenced_pulls(github, repo, number)
+    if referenced:
+        return repo, referenced[0]
     branch = last_branch(comments)
-    if not (repo and branch):
+    if not branch:
         return None, None
     found = github._call(
         "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
@@ -568,9 +596,23 @@ def pull_of(github, body: str, comments: list[dict]):
     return repo, found[0]
 
 
-def pull_comments_for(github, body: str, comments: list[dict]) -> list[dict]:
-    repo, pull = pull_of(github, body, comments)
-    return github.pull_comments(repo, pull["number"]) if pull else []
+def pull_comments_for(
+    github, body: str, comments: list[dict], number: int | None = None
+) -> list[dict]:
+    """Comments from every pull request that references the issue.
+
+    Reading only the current one would drop a reply left on the merged pull
+    request that started the cycle; `merge_pending` deduplicates by id anyway.
+    """
+    repo = repo_of(body, comments)
+    pulls = referenced_pulls(github, repo, number) if repo else []
+    if not pulls:
+        _, pull = pull_of(github, body, comments, number)
+        return github.pull_comments(repo, pull["number"]) if pull else []
+    out = []
+    for pull in pulls:
+        out.extend(github.pull_comments(repo, pull["number"]))
+    return out
 
 
 def reaction_path(comment: dict) -> str:
@@ -609,7 +651,7 @@ def ack(github, comments: list[dict], failed: bool = False) -> int:
 
 def waiting_surface(github, number: int, body: str, comments: list[dict]):
     """Where the ⏳ note belongs: the pull request if it exists, else the issue."""
-    repo, pull = pull_of(github, body, comments)
+    repo, pull = pull_of(github, body, comments, number)
     if pull:
         return repo, pull["number"]
     return REPO, number
@@ -792,18 +834,10 @@ def main(argv: list[str]) -> int:
         item = github.item(number)
         body = item["content"].get("body") or ""
         issue_comments = github.comments(number)
-        branch = last_branch(issue_comments)
         since = last_forwarded(issue_comments)
-        repo = repo_of(body, issue_comments)
-        pull = None
-        pull_comments = []
-        if repo and branch:
-            found = github._call(
-                "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
-            )
-            if found:
-                pull = found[0]
-                pull_comments = github.pull_comments(repo, pull["number"])
+        repo, pull = pull_of(github, body, issue_comments, number)
+        branch = (pull or {}).get("head", {}).get("ref") or last_branch(issue_comments)
+        pull_comments = pull_comments_for(github, body, issue_comments, number)
         print(
             json.dumps(
                 {
@@ -896,7 +930,7 @@ def main(argv: list[str]) -> int:
         body = github.item(number)["content"].get("body") or ""
         comments = github.comments(number)
         previous = last_forwarded(comments)
-        pull_comments = pull_comments_for(github, body, comments)
+        pull_comments = pull_comments_for(github, body, comments, number)
         sent = [
             comment
             for comment in merge_pending(comments, pull_comments, previous)
@@ -934,6 +968,49 @@ def main(argv: list[str]) -> int:
                     "number": number,
                     "url": waiting(github, number, body, comments),
                 }
+            )
+        )
+        return 0
+
+    if command == "pull":
+        number = int(args[0])
+        body = github.item(number)["content"].get("body") or ""
+        comments = github.comments(number)
+        repo = repo_of(body, comments)
+        pulls = referenced_pulls(github, repo, number)
+        if not pulls:
+            _, fallback = pull_of(github, body, comments, number)
+            pulls = [fallback] if fallback else []
+        current = pulls[0] if pulls else None
+        print(
+            json.dumps(
+                {
+                    "number": number,
+                    "repo": repo or None,
+                    "current": (
+                        {
+                            "number": current["number"],
+                            "url": current["html_url"],
+                            "state": current["state"],
+                            "merged": bool(current.get("merged_at")),
+                            "head": (current.get("head") or {}).get("ref"),
+                            "title": current.get("title", ""),
+                        }
+                        if current
+                        else None
+                    ),
+                    "pulls": [
+                        {
+                            "number": p["number"],
+                            "url": p["html_url"],
+                            "state": p["state"],
+                            "merged": bool(p.get("merged_at")),
+                            "head": (p.get("head") or {}).get("ref"),
+                        }
+                        for p in pulls
+                    ],
+                },
+                indent=2,
             )
         )
         return 0
