@@ -536,10 +536,11 @@ def test_active_items_lists_every_open_issue_ordered_by_work_state():
         item(2, "In Progress", ["agent"]),
         item(7, "Done", ["agent"]),
         item(5, "Blocked", ["agent"]),
+        item(8, "Code Review", ["agent"]),
         item(6, "In Progress", ["docs"]),
         item(3, "Ready", ["agent"]),
     ]
-    assert [r["number"] for r in taskboard.active_items(items)] == [4, 3, 2, 5, 9]
+    assert [r["number"] for r in taskboard.active_items(items)] == [4, 3, 2, 5, 8, 9]
 
 
 class _Minter(BaseHTTPRequestHandler):

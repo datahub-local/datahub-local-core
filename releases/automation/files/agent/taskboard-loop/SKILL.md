@@ -1,6 +1,6 @@
 ---
 name: taskboard-loop
-description: Run one tick of the issue-to-PR loop. Dispatch a Ready issue to the coding agent, forward the owner's comments, move the issue to Testing when its pull request exists, and to Done when it merges. Use when the scheduled taskboard-tick runs, or when the owner asks for the queue state.
+description: Run one tick of the issue-to-PR loop. Dispatch a Ready issue to the coding agent, forward the owner's comments, move the issue to Code Review when its pull request opens, to Testing when it merges, and to Done when the issue closes. Use when the scheduled taskboard-tick runs, or when the owner asks for the queue state.
 version: 1.3.0
 metadata:
   hermes:
@@ -34,8 +34,9 @@ moves a card.
 on stdin when `--text` is absent), `start <n> <session>`, `forwarded <n> <since>`,
 `pr <repo> <branch>`, `review <repo> <pr>`, `notify <n> [--text <body>]`.
 
-Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
-`Done`.
+Statuses are exactly: `Backlog`, `Ready`, `In Progress`, `Blocked`, `Code Review`,
+`Testing`, `Done`. `Code Review` means a pull request is open; `Testing` means it
+merged and the change is live.
 
 When you post a body that came from somewhere else, pass it with `--text` in single
 quotes, never a heredoc: cron mode refuses a heredoc as a dangerous command. An
@@ -111,7 +112,8 @@ fails, comment the error and stop dispatching.
 
 ### 3. Comments the session has not seen
 
-For every board item that is `In Progress`, `Blocked` or `Testing`, run `inbox <n>`.
+For every board item that is `In Progress`, `Blocked`, `Code Review` or `Testing`,
+run `inbox <n>`.
 It returns the comments written since the last one you forwarded, from the issue
 and from the pull request — both its conversation and its inline review comments —
 in order. One queue, because to the agent all of them are the owner talking to it.
@@ -138,8 +140,8 @@ If `items` is not empty:
    On a real `ERROR:`, run the same command with `--failed`: it reacts 😕 and
    leaves the marker alone, so the next tick retries. The reaction is the receipt
    the owner sees in GitHub.
-5. If the issue was `Blocked` or `Testing`, `status <n> "In Progress"`. `status`
-   posts the Slack line for the move.
+5. If the issue was `Blocked`, `Code Review` or `Testing`, `status <n> "In Progress"`.
+   `status` posts the Slack line for the move.
 
 Relayed words are the owner's: post a Slack answer with `comment <n> --owner --text
 '<their words>'`, which leaves it unmarked so `inbox` forwards it like any other.
@@ -200,15 +202,24 @@ helper adds the organisation.
 - `open` and the issue is `In Progress`: run `review <repo> <number>`, comment the
   **full pull request URL** (`review` returns it as `url`, or build
   `https://github.com/<org>/<repo>/pull/<number>`) and what changed, then set
-  `Testing`. `status` posts the Slack line for the move; GitHub notifies on the
-  pull request itself.
-- `open` and the issue is already `Testing`: nothing. Only step 3 has anything to
-  do, and it does it when the owner writes.
+  `Code Review`. `status` posts the Slack line for the move; GitHub notifies on
+  the pull request itself.
+- `open` and the issue is already `Code Review`: nothing. Only step 3 has
+  anything to do, and it does it when the owner writes.
 - `open` and the issue is `Blocked`: nothing. A question outranks an old pull
   request; only the owner's answer leaves `Blocked`.
-- `merged`: run `finish <n>`, comment the merge with the full pull request URL,
-  and stop. `finish` posts the Slack line for the move. The merge is evidence for
-  this issue's own branch; an open issue stays where it is.
+- `merged`: comment the merge with the full pull request URL, then
+  `status <n> Testing`, which posts the Slack line for the move. The merge is the
+  deploy, so the card moves to `Testing` and stays there until the issue closes.
+- `merged` and the issue is already `Testing`: nothing. That is a fix merged
+  while the owner was testing; the card is where it belongs.
+
+A merged pull request ends that branch, not the issue. If the owner comments on a
+card in `Testing` and the fix needs code, step 3 forwards the comment and sets
+`In Progress`. The agent then cuts a new branch from `main`, writes the claim
+comment that names it in the repository (`Branch ... in <repo>`), and opens a new
+pull request. That pull request goes through `Code Review` and back to `Testing`
+on merge.
 
 ## The tick has a budget
 
@@ -236,7 +247,9 @@ helper adds the organisation.
 - Never set `Done` on a pull request that is only open.
 - Never set `Done` while the issue is open, however many merged pull requests
   mention it. `finish` refuses it, and the owner can still move the card by hand.
-- Never push, merge, or open a second pull request for an issue.
+- Never push or merge, and never open a second pull request while one is open.
+  After a merge, a fix may open a new branch and a new pull request for the same
+  issue.
 - Never retry an `error` automatically, and never start a session to replace a lost
   one.
 - Never answer a question yourself. The agent's questions are for the owner.

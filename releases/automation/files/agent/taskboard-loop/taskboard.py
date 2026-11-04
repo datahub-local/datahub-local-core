@@ -446,7 +446,7 @@ def active_items(items: list[dict]) -> list[dict]:
                 "state": content.get("state"),
             }
         )
-    order = ["Backlog", "Ready", "In Progress", "Blocked", "Testing"]
+    order = ["Backlog", "Ready", "In Progress", "Blocked", "Code Review", "Testing"]
     return sorted(active, key=lambda r: (order.index(r["status"]), r["number"]))
 
 

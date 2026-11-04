@@ -45,8 +45,10 @@ It mints its own token from the sidecar, so there is nothing to export first.
 | `/hermes board move 116 ready`, "block 116" | `status 116 <Status>` |
 | `/hermes board comment 116 ...` | `comment 116 --owner --text '<their words>'` |
 
-Statuses are exactly `Backlog`, `Ready`, `In Progress`, `Blocked`, `Testing`,
-`Done`. Translate the owner's words to one of those and nothing else.
+Statuses are exactly `Backlog`, `Ready`, `In Progress`, `Blocked`, `Code Review`,
+`Testing`, `Done`. Translate the owner's words to one of those and nothing else.
+`Code Review` holds a pull request that is open; `Testing` holds a merged change
+that is already deployed.
 
 ## Read before you write
 
