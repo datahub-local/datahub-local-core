@@ -58,8 +58,7 @@
       {"url": "https://openai.com/news/rss.xml", "title": "OpenAI News"},
       {"url": "https://deepmind.google/blog/rss.xml", "title": "Google DeepMind Blog"},
       {"url": "https://huggingface.co/blog/feed.xml", "title": "Hugging Face Blog"},
-      {"url": "https://engineering.fb.com/feed/", "title": "Meta Engineering"},
-      {"url": "https://developer.nvidia.com/blog/feed/", "title": "NVIDIA Developer Blog"}
+      {"url": "https://engineering.fb.com/feed/", "title": "Meta Engineering"}
     ],
     "DevOps": [
       {"url": "https://newsletter.pragmaticengineer.com/feed", "title": "Gergely Orosz - The Pragmatic Engineer"},
