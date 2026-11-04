@@ -204,9 +204,11 @@ references the issue, newest first.
   comment the branch name and that no pull request exists, once. If a comment
   already says it, say nothing. Keep `In Progress`.
 - `current.state` is `open` and the issue is `In Progress`: run `review <repo>
-  <current.number>`, comment the **full pull request URL** (`review` returns it
-  as `url`, or build
-  `https://github.com/<org>/<repo>/pull/<number>`) and what changed, then set
+  <current.number>`. If no comment on the issue already carries this pull
+  request's URL, comment the **full pull request URL** (`review` returns it as
+  `url`, or build
+  `https://github.com/<org>/<repo>/pull/<number>`) and what changed. If it does,
+  do not repeat the URL: the agent's fix comment is the record. Then set
   `Code Review`. `status` posts the Slack line for the move; GitHub notifies on
   the pull request itself.
 - `current.state` is `open` and the issue is already `Code Review`: nothing. Only
