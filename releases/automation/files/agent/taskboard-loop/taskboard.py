@@ -45,6 +45,7 @@ AGENT_MARKER = "<!-- taskboard:agent -->"
 SESSION_RE = re.compile(r"<!-- taskboard:session (\S+) -->")
 FORWARDED_RE = re.compile(r"<!-- taskboard:forwarded (\S+) -->")
 BRANCH_RE = re.compile(r"Branch `([^`]+)`")
+CLAIM_REPO_RE = re.compile(r"Branch `[^`]+` in ([\w-]+(?:/[\w.-]+)?)")
 MARKER_RE = re.compile(r"<!-- taskboard:[^>]*-->\s*", re.MULTILINE)
 MAX_COMMENT_CHARS = 1500
 
@@ -220,6 +221,31 @@ class GitHub:
             for c in raw
         ]
 
+    def pull_comments(self, repo: str, number: int) -> list[dict]:
+        """Every surface the owner can write on, shaped alike.
+
+        A conversation comment and an inline review comment are different REST
+        collections; reading only the second is how an owner reply on the pull
+        request is lost. `path`/`line` stay empty on a conversation comment.
+        """
+        conversation = self._call(
+            "GET", f"/repos/{repo}/issues/{number}/comments?per_page=100"
+        )
+        review = self._call("GET", f"/repos/{repo}/pulls/{number}/comments?per_page=100")
+        return [
+            {
+                "id": c.get("id"),
+                "author": (c.get("user") or {}).get("login", ""),
+                "created_at": c.get("created_at", ""),
+                "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
+                "url": c.get("html_url", ""),
+                "machine": MARKER in (c.get("body") or ""),
+                "path": c.get("path"),
+                "line": c.get("line") or c.get("original_line"),
+            }
+            for c in list(conversation) + list(review)
+        ]
+
 
 REPO_HEADING = re.compile(r"^##\s*Repo\s*$", re.IGNORECASE | re.MULTILINE)
 BACKTICK = re.compile(r"`([^`]+)`")
@@ -358,6 +384,37 @@ def repos_of(body: str) -> list[str]:
     return repos
 
 
+def full_repo(name: str) -> str:
+    """A repository slug with its organisation.
+
+    Everything reads a repository the way the issue prose names it; the API path
+    needs `<owner>/<repo>`, and a bare name is an owner that does not exist.
+    """
+    name = (name or "").strip().strip("/")
+    if not name:
+        return ""
+    return name if "/" in name else f"{ORG}/{name}"
+
+
+def repo_of(body: str, comments: list[dict]) -> str:
+    """The repository the work is in, from the issue or the agent's claim.
+
+    `## Repo` is the intake contract, but an older issue can lack it; the claim
+    comment still names where the branch was pushed (`Branch `x` in <repo>`), and
+    that is enough to find the pull request.
+    """
+    repos = repos_of(body)
+    if len(repos) == 1:
+        return full_repo(repos[0])
+    if repos:
+        return ""
+    for comment in reversed(comments):
+        match = CLAIM_REPO_RE.search(comment.get("body") or "")
+        if match:
+            return full_repo(match.group(1))
+    return ""
+
+
 def active_items(items: list[dict]) -> list[dict]:
     """Board items still being worked: an issue, agent-labelled, not Done.
 
@@ -492,19 +549,26 @@ def last_branch(comments: list[dict]) -> str:
 
 
 def merge_pending(
-    issue_comments: list[dict], review_comments: list[dict], since: str
+    issue_comments: list[dict], pull_comments: list[dict], since: str
 ) -> list[dict]:
     """One queue for a session, whatever surface the words arrived on.
 
-    A review comment on the pull request is the owner writing to the agent just as
-    much as a comment on the issue is; the agent should not have to learn the
-    difference, and the tick should not have two bookkeeping paths.
+    A conversation or review comment on the pull request is the owner writing to
+    the agent just as much as a comment on the issue is; the agent should not have
+    to learn the difference, and the tick should not have two bookkeeping paths.
+    An id keeps a comment read from two collections out of the queue twice.
     """
-    items = [
-        comment
-        for comment in list(issue_comments) + list(review_comments)
-        if not comment["machine"] and comment["created_at"] > since
-    ]
+    items = []
+    seen = set()
+    for comment in list(issue_comments) + list(pull_comments):
+        if comment["machine"] or comment["created_at"] <= since:
+            continue
+        ident = comment.get("id")
+        if ident is not None:
+            if ident in seen:
+                continue
+            seen.add(ident)
+        items.append(comment)
     return sorted(items, key=lambda c: c["created_at"])
 
 
@@ -621,38 +685,23 @@ def main(argv: list[str]) -> int:
         item = github.item(number)
         body = item["content"].get("body") or ""
         issue_comments = github.comments(number)
-        repos = repos_of(body)
         branch = last_branch(issue_comments)
         since = last_forwarded(issue_comments)
-        repo = f"{ORG}/{repos[0]}" if len(repos) == 1 else None
+        repo = repo_of(body, issue_comments)
         pull = None
-        review_comments = []
+        pull_comments = []
         if repo and branch:
             found = github._call(
                 "GET", f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
             )
             if found:
                 pull = found[0]
-                review_comments = [
-                    {
-                        "id": c.get("id"),
-                        "author": (c.get("user") or {}).get("login", ""),
-                        "created_at": c.get("created_at", ""),
-                        "body": (c.get("body") or "")[:MAX_COMMENT_CHARS],
-                        "url": c.get("html_url", ""),
-                        "machine": MARKER in (c.get("body") or ""),
-                        "path": c.get("path"),
-                        "line": c.get("line") or c.get("original_line"),
-                    }
-                    for c in github._call(
-                        "GET", f"/repos/{repo}/pulls/{found[0]['number']}/comments?per_page=100"
-                    )
-                ]
+                pull_comments = github.pull_comments(repo, pull["number"])
         print(
             json.dumps(
                 {
                     "number": number,
-                    "repo": repo,
+                    "repo": repo or None,
                     "branch": branch,
                     "since": since,
                     "pull": (
@@ -660,7 +709,7 @@ def main(argv: list[str]) -> int:
                         if pull
                         else None
                     ),
-                    "items": merge_pending(issue_comments, review_comments, since),
+                    "items": merge_pending(issue_comments, pull_comments, since),
                 },
                 indent=2,
             )
@@ -742,7 +791,7 @@ def main(argv: list[str]) -> int:
         return 0
 
     if command == "pr":
-        repo, branch = args[0], args[1]
+        repo, branch = full_repo(args[0]), args[1]
         query = f"/repos/{repo}/pulls?state=all&head={repo.split('/')[0]}:{branch}"
         pulls = github._call("GET", query)
         # A branch can carry an old merged pull request and a current one; the open
@@ -769,7 +818,7 @@ def main(argv: list[str]) -> int:
         return 0
 
     if command == "review":
-        repo, pull = args[0], int(args[1])
+        repo, pull = full_repo(args[0]), int(args[1])
         github._call("POST", f"/repos/{repo}/pulls/{pull}/requested_reviewers", {"reviewers": [OWNER]})
         print(
             json.dumps(

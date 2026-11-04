@@ -113,16 +113,17 @@ fails, comment the error and stop dispatching.
 
 For every board item that is `In Progress`, `Blocked` or `Testing`, run `inbox <n>`.
 It returns the comments written since the last one you forwarded, from the issue
-and from the pull request's review, in order. One queue, because to the agent both
-are the owner talking to it.
+and from the pull request — both its conversation and its inline review comments —
+in order. One queue, because to the agent all of them are the owner talking to it.
 
 If `items` is not empty:
 
 1. Check `get_session` first. If the session is `running`, stop here and leave the
    marker alone: forwarding into a live turn returns `busy`, and marking it would
    lose the comment. The next tick sends it.
-2. Join the items, oldest first. Say where each came from when it is a review
-   comment: `<path>:<line>: <body>`.
+2. Join the items, oldest first. Say where each came from when it is an inline
+   review comment: `<path>:<line>: <body>`. A conversation comment has no path;
+   send it as written.
 3. Send them:
    - `needs_input`: `respond` with the form or permission id and that text. If the
      form has several fields, answer each from the comment.
@@ -182,7 +183,8 @@ does not have, a destructive step only the owner may take, three failed fixes.
 ### 5. Pull request state
 
 Take the branch from the agent's claim comment or the pull request it linked, and
-run `pr <repo> <branch>`.
+run `pr <repo> <branch>` — a bare name such as `datahub-local-ai` is fine, the
+helper adds the organisation.
 
 - `prs` empty and the session is idle, with a report that is not `BLOCKED`: comment
   the branch name and that no pull request exists, once. If a comment already says

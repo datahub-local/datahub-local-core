@@ -134,6 +134,36 @@ def test_repos_of_returns_nothing_for_an_issue_without_the_section():
     assert taskboard.repos_of("## What\nno repo line here, only `code`\n") == []
 
 
+def test_repo_of_uses_the_repo_section():
+    body = "## Repo\n`datahub-local-ai`\n"
+    assert taskboard.repo_of(body, []) == f"{taskboard.ORG}/datahub-local-ai"
+
+
+def test_repo_of_keeps_a_full_slug():
+    body = "## Repo\n`datahub-local/datahub-local-ai`\n"
+    assert taskboard.repo_of(body, []) == "datahub-local/datahub-local-ai"
+
+
+def test_repo_of_falls_back_to_the_claim_comment():
+    """#99 has no ## Repo, but its claim names where the branch was pushed."""
+    comments = [
+        comment("Claimed. Branch `feat/99-agent-authored-articles` in datahub-local-ai.\n\n<!-- taskboard:agent -->")
+    ]
+    assert taskboard.repo_of("Spec: `add-agent-authored-articles`", comments) == (
+        f"{taskboard.ORG}/datahub-local-ai"
+    )
+
+
+def test_repo_of_does_not_pick_a_repo_out_of_an_ambiguous_section():
+    body = "## Repo\n`one` `two`\n"
+    assert taskboard.repo_of(body, [comment("Claimed. Branch `feat/1-x` in three.")]) == ""
+
+
+def test_repo_of_is_empty_when_nothing_names_a_repository():
+    assert taskboard.repo_of("no section", [comment("hello")]) == ""
+
+
+
 def comment_with_id(body, created_at, ident=1):
     c = comment(body, created_at)
     c["id"] = ident
@@ -198,6 +228,87 @@ def test_merge_pending_drops_a_review_comment_already_forwarded():
         }
     ]
     assert taskboard.merge_pending([], review, "2026-11-01T10:00:00Z") == []
+
+
+def test_merge_pending_forwards_a_pull_request_conversation_comment():
+    conversation = [
+        {
+            "id": 9,
+            "author": "alvsanand",
+            "created_at": "2026-11-04T05:38:48Z",
+            "body": "why is helm needed?",
+            "url": "",
+            "machine": False,
+            "path": None,
+            "line": None,
+        }
+    ]
+    merged = taskboard.merge_pending([], conversation, "2026-11-02T21:28:03Z")
+    assert [c["body"] for c in merged] == ["why is helm needed?"]
+
+
+def test_merge_pending_does_not_send_a_comment_read_twice():
+    same = comment_with_id("why is helm needed?", "2026-11-04T05:38:48Z", 9)
+    merged = taskboard.merge_pending([same], [same], "2026-11-02T21:28:03Z")
+    assert [c["body"] for c in merged] == ["why is helm needed?"]
+
+
+def test_pull_comments_reads_conversation_and_inline_review():
+    """The owner's comment was in /issues/53/comments, not /pulls/53/comments."""
+    seen = []
+
+    class Fake:
+        def _call(self, method, path, body=None):
+            seen.append(path)
+            if "/issues/" in path:
+                return [
+                    {
+                        "id": 1,
+                        "user": {"login": "alvsanand"},
+                        "created_at": "2026-11-04T05:38:48Z",
+                        "body": "why is helm needed?",
+                        "html_url": "",
+                    }
+                ]
+            return [
+                {
+                    "id": 2,
+                    "user": {"login": "alvsanand"},
+                    "created_at": "2026-11-04T06:00:00Z",
+                    "body": "rename this",
+                    "html_url": "",
+                    "path": "src/a.py",
+                    "line": 4,
+                }
+            ]
+
+    got = taskboard.GitHub.pull_comments(
+        Fake(), "datahub-local/datahub-local-ai", 53
+    )
+    assert seen == [
+        "/repos/datahub-local/datahub-local-ai/issues/53/comments?per_page=100",
+        "/repos/datahub-local/datahub-local-ai/pulls/53/comments?per_page=100",
+    ]
+    assert [c["body"] for c in got] == ["why is helm needed?", "rename this"]
+    assert got[0]["path"] is None
+    assert got[1]["path"] == "src/a.py" and got[1]["line"] == 4
+
+
+def test_pr_prefixes_the_organisation_on_a_bare_repository(monkeypatch):
+    seen = []
+    monkeypatch.setattr(taskboard, "credential", lambda: "token")
+
+    def fake_call(self, method, path, body=None):
+        seen.append(path)
+        return []
+
+    monkeypatch.setattr(taskboard.GitHub, "_call", fake_call)
+    assert taskboard.main(["pr", "datahub-local-ai", "feat/99-x"]) == 0
+    assert seen == [
+        f"/repos/{taskboard.ORG}/datahub-local-ai/pulls"
+        f"?state=all&head={taskboard.ORG}:feat/99-x"
+    ]
+
 
 
 def test_last_branch_reads_the_claim_comment():
