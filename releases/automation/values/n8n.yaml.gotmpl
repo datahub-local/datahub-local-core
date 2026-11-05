@@ -67,6 +67,12 @@ _shared_config:
     PI_RENDER_URL:
       value: "http://datahub-local-ai-pi-render-api.automation.svc.cluster.local:8080"
 
+    # The article lane calls the pi-writer session; the workflow reads it as
+    # $env.ARTICLE_WRITER_URL. The session and its Service are declared in the
+    # datahub-local-ai repository (agents/sympozium/templates/pi-writer-session.yaml).
+    ARTICLE_WRITER_URL:
+      value: "http://datahub-local-ai-pi-writer-api.automation.svc.cluster.local:8080"
+
     # The temp-bucket MCP server (`utils`), which stores a finished artifact for the
     # studio and signs a download URL for the publish path, so no workflow carries
     # the asset's bytes. Declared in the datahub-local-ai repository
