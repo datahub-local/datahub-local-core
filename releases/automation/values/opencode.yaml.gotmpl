@@ -78,6 +78,13 @@ controllers:
           # can see what it changed.
           - name: OPENCODE_K8S_MCP_URL
             value: 'http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc.cluster.local:8080/mcp'
+          # n8n workflow authoring. The server refuses to start without a bearer,
+          # so the same derived value as the OpenCode server password below is
+          # sent as the header.
+          - name: OPENCODE_N8N_MCP_URL
+            value: 'http://{{ .Values.release_name }}-automation-mcp-n8n.automation.svc.cluster.local:8080/mcp'
+          - name: OPENCODE_N8N_MCP_TOKEN
+            value: '{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}'
 
           # Never fall back to a prompt: nothing is watching one.
           - name: GIT_TERMINAL_PROMPT

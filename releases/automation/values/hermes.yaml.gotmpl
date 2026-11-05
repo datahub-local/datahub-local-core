@@ -244,6 +244,14 @@ config:
     opencode:
       url: http://{{ .Values.release_name }}-automation-opencode-mcp.automation.svc.cluster.local:8080/mcp
       timeout: 900
+    # n8n workflow authoring and management. The server answers only with the
+    # derived bearer, and this ConfigMap must not carry it: the header is built
+    # from the environment below.
+    n8n:
+      url: http://{{ .Values.release_name }}-automation-mcp-n8n.automation.svc.cluster.local:8080/mcp
+      headers:
+        Authorization: Bearer ${env:N8N_MCP_AUTH_TOKEN}
+      timeout: 60
   # The built-in web and browser toolsets stay off on every surface, not only
   # Slack. platform_toolsets is per platform, so CLI and dashboard chats kept
   # web_extract; this list is the global suppression applied last. Firecrawl is
@@ -367,6 +375,10 @@ extraEnv:
   # match what the browser reports as location.origin: https, hostname, no slash.
   - name: TASKBOARD_OPENCODE_URL
     value: 'https://automation-opencode.{{ .StateValues.gateway_hostname }}'
+  # The n8n MCP server's bearer, derived the same way as the OpenCode server
+  # password. It reaches config.yaml only as ${env:N8N_MCP_AUTH_TOKEN}.
+  - name: N8N_MCP_AUTH_TOKEN
+    value: '{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}'
   # Every public call goes through the security proxy; the NetworkPolicy no
   # longer permits direct 443. The Slack adapter resolves HTTPS_PROXY itself
   # (gateway.trust_env defaults to true) and passes it to both the WebClient and

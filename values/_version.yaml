@@ -5,6 +5,7 @@ container_image_version:
   ghcr.io/c4illin/convertx: v0.20.0
   ghcr.io/civilblur/mazanoke: v1.1.7
   ghcr.io/containers/kubernetes-mcp-server: v0.1.1@sha256:d616331a99184d42f7471eac5ae257192e7065bb684ad115cc95c2e76cfbc2d1
+  ghcr.io/czlonkowski/n8n-mcp: 2.40.0@sha256:5ddc5468c67de4bb5b2ff8081e3e135a92a1b1e1855ec3e3efc9c08e2147673e
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   # Both images are published multi-arch (linux/amd64, linux/arm64); these are the
   # index digests, so the same pin schedules on either architecture. Keep the

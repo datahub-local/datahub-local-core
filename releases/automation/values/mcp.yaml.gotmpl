@@ -259,6 +259,70 @@ controllers:
             cpu: 500m
             memory: 512Mi
 
+  n8n:
+    strategy: RollingUpdate
+    serviceAccount:
+      name: default
+    # No MCPServer CR: the catalog cannot carry an Authorization header and this
+    # server refuses to start without one. Hermes and OpenCode send it themselves.
+    extraSelectorLabels:
+      app.kubernetes.io/name: mcpserver
+    containers:
+      main:
+        image:
+          repository: ghcr.io/czlonkowski/n8n-mcp
+          tag: '{{ index .StateValues.container_image_version "ghcr.io/czlonkowski/n8n-mcp" }}'
+        env:
+          - name: MCP_MODE
+            value: http
+          - name: HOST
+            value: 0.0.0.0
+          - name: PORT
+            value: "8080"
+          - name: NODE_ENV
+            value: production
+          # The SSRF gate covers N8N_API_URL, and strict refuses every RFC1918
+          # address, including this cluster's Services.
+          - name: WEBHOOK_SECURITY_MODE
+            value: permissive
+          - name: N8N_API_URL
+            value: 'http://{{ .Values.release_name }}-automation-n8n.automation.svc.cluster.local'
+          - name: N8N_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: n8n-secrets
+                key: N8N_API_KEY
+          # The same derived value as OPENCODE_SERVER_PASSWORD, so neither client
+          # has a credential of its own to hold.
+          - name: AUTH_TOKEN
+            value: '{{ .StateValues.security_github_client_secret | sha256sum | trunc 32 }}'
+          # The tool whose reads and writes both return decrypted credentials;
+          # upstream recommends removing it whole rather than filtering it.
+          - name: DISABLED_TOOLS
+            value: n8n_manage_credentials
+        probes:
+          # /health is answered before authentication; /mcp is not.
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 8080
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /health
+            port: 8080
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 15
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+
 service:
   k8s:
     controller: k8s
@@ -277,6 +341,11 @@ service:
         port: 8080
   firecrawl-http:
     controller: firecrawl-http
+    ports:
+      http:
+        port: 8080
+  n8n:
+    controller: n8n
     ports:
       http:
         port: 8080

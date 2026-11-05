@@ -152,3 +152,11 @@ A Gauge behaves differently — a missing path logs
 `got nil while resolving path` at `registry_factory.go:719` and emits nothing.
 Those lines are normal for the token-usage gauges of a run that never reached the
 model; they are not an error to chase.
+
+## Tests cover code, not configuration
+
+Do not add a unit test that asserts the contents of a values file, a chart
+template, a rendered manifest, a prompt or a workflow export. Those are reviewed
+in the diff and gated by `helmfile template`; a test that pins them goes red on
+the next correct edit and says nothing about whether the cluster works. The
+Python tests here cover `taskboard.py`, which actually runs.
