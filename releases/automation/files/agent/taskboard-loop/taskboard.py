@@ -5,16 +5,19 @@ comment and pull-request lookup the tick needs is one subcommand here, so the
 model never composes GraphQL and never guesses which card is where.
 
 Identity is the trap this exists to avoid: the owner's PAT posts the agent's and
-Hermes' comments too, so author is not a discriminator. Every machine comment ends
-with a `<!-- taskboard:... -->` marker and an owner answer is a comment without
-one.
+Hermes' comments too, so a marker, not the author, decides what is machine-written.
+Every machine comment ends with a `<!-- taskboard:... -->` marker and an owner
+answer is a comment without one. The repositories are public, so the author still
+decides what reaches the session: only `GITHUB_TRUSTED_USERS` and
+`TASKBOARD_OWNER` may instruct it.
 
 Usage:
   taskboard.py sync
   taskboard.py board             (every open issue on the board, with its status)
   taskboard.py ready
   taskboard.py issue <n>
-  taskboard.py inbox <n>              (comments the session has not been given)
+  taskboard.py inbox <n>              (comments the session has not been given;
+                                       untrusted authors come back under ignored)
   taskboard.py status <n> <Status>
   taskboard.py finish <n>             (Done, only once the issue is closed)
   taskboard.py comment <n> [--owner] [--text <body>]
@@ -59,6 +62,14 @@ ORG = os.environ.get("TASKBOARD_ORG", "datahub-local")
 PROJECT = int(os.environ.get("TASKBOARD_PROJECT", "1"))
 REPO = os.environ.get("TASKBOARD_REPO", "datahub-local/datahub-local")
 OWNER = os.environ.get("TASKBOARD_OWNER", "alvsanand")
+# The repositories are public, so anyone can comment. A forwarded comment is an
+# instruction to a session that can write, so only these logins' words reach it;
+# `machine` already drops the loop's own.
+TRUSTED_USERS = {
+    login.strip().lower()
+    for login in f"{os.environ.get('GITHUB_TRUSTED_USERS', '')},{OWNER}".split(",")
+    if login.strip()
+}
 
 PROJECT_QUERY = """
 query($org: String!, $number: Int!) {
@@ -417,6 +428,8 @@ def repo_of(body: str, comments: list[dict]) -> str:
     if repos:
         return ""
     for comment in reversed(comments):
+        if not readable(comment):
+            continue
         match = CLAIM_REPO_RE.search(comment.get("body") or "")
         if match:
             return full_repo(match.group(1))
@@ -525,12 +538,48 @@ def pick_ready(items: list[dict]) -> list[dict]:
 
 
 def last_forwarded(comments: list[dict]) -> str:
-    """The newest comment timestamp already sent to the session."""
+    """The newest comment timestamp already sent to the session.
+
+    Only a machine comment can carry the marker. A stranger who types one must not
+    be able to move the cursor past the owner's next comment.
+    """
     found = ""
     for comment in comments:
+        if not comment["machine"]:
+            continue
         for match in FORWARDED_RE.finditer(comment["body"]):
             found = match.group(1)
     return found
+
+
+def trusted(comment: dict) -> bool:
+    """Whether the author of a comment may instruct the session."""
+    return (comment.get("author") or "").lower() in TRUSTED_USERS
+
+
+def readable(comment: dict) -> bool:
+    """Whether the model may read a comment's text.
+
+    The loop's own comments (session and marker records) are machine-written and
+    carry no author from the trusted set, so `machine` has to stand on its own.
+    """
+    return comment["machine"] or trusted(comment)
+
+
+def visible_comments(comments: list[dict]) -> list[dict]:
+    """The issue's comments as the model may see them.
+
+    `issue` is context, not a queue, so an untrusted body would reach the model
+    there even though `inbox` drops it. The metadata stays; the text does not.
+    """
+    return [
+        {
+            **comment,
+            "body": comment["body"] if readable(comment) else "",
+            "withheld": not readable(comment),
+        }
+        for comment in comments
+    ]
 
 
 def pending_comments(comments: list[dict]) -> list[dict]:
@@ -538,19 +587,22 @@ def pending_comments(comments: list[dict]) -> list[dict]:
 
     Forwarding is not the same as reading: the owner can write on the issue at any
     point, including while a pull request waits for review, and each of those is a
-    message the agent has to receive exactly once.
+    message the agent has to receive exactly once. A public issue takes comments
+    from anyone, so the author decides too.
     """
     since = last_forwarded(comments)
     return [
         comment
         for comment in comments
-        if not comment["machine"] and comment["created_at"] > since
+        if not comment["machine"] and comment["created_at"] > since and trusted(comment)
     ]
 
 
 def last_branch(comments: list[dict]) -> str:
     found = ""
     for comment in comments:
+        if not readable(comment):
+            continue
         for match in BRANCH_RE.finditer(comment["body"]):
             found = match.group(1)
     return found
@@ -710,7 +762,7 @@ def merge_pending(
     items = []
     seen = set()
     for comment in list(issue_comments) + list(pull_comments):
-        if comment["machine"] or comment["created_at"] <= since:
+        if comment["machine"] or comment["created_at"] <= since or not trusted(comment):
             continue
         ident = comment.get("id")
         if ident is not None:
@@ -721,9 +773,44 @@ def merge_pending(
     return sorted(items, key=lambda c: c["created_at"])
 
 
+def untrusted_comments(
+    issue_comments: list[dict], pull_comments: list[dict], since: str
+) -> list[dict]:
+    """What `merge_pending` dropped because of the author, without the bodies.
+
+    The tick names them on the issue so a person learns nothing was forwarded and
+    the owner sees who wrote; the text itself never reaches the model.
+    """
+    dropped = []
+    seen = set()
+    for comment in list(issue_comments) + list(pull_comments):
+        if (
+            comment["machine"]
+            or comment["created_at"] <= since
+            or trusted(comment)
+        ):
+            continue
+        ident = comment.get("id")
+        if ident is not None:
+            if ident in seen:
+                continue
+            seen.add(ident)
+        dropped.append(
+            {
+                "id": ident,
+                "author": comment.get("author", ""),
+                "url": comment.get("url", ""),
+                "created_at": comment["created_at"],
+            }
+        )
+    return sorted(dropped, key=lambda c: c["created_at"])
+
+
 def last_session(comments: list[dict]) -> str | None:
     found = None
     for comment in comments:
+        if not comment["machine"]:
+            continue
         for match in SESSION_RE.finditer(comment["body"]):
             found = match.group(1)
     return found
@@ -734,14 +821,18 @@ def help_state(comments: list[dict]) -> dict:
     marker_at = None
     marker_body = ""
     for comment in comments:
-        if HELP_MARKER in comment["body"]:
+        if comment["machine"] and HELP_MARKER in comment["body"]:
             marker_at = comment["created_at"]
             marker_body = comment["body"]
     if marker_at is None:
         return {"asked": False, "answered": False, "question": ""}
     answer = None
     for comment in comments:
-        if comment["created_at"] > marker_at and not comment["machine"]:
+        if (
+            comment["created_at"] > marker_at
+            and not comment["machine"]
+            and trusted(comment)
+        ):
             answer = comment
             break
     return {
@@ -822,7 +913,7 @@ def main(argv: list[str]) -> int:
                     "session": session,
                     "session_url": session_url(session) or None,
                     "help": help_state(comments),
-                    "comments": comments,
+                    "comments": visible_comments(comments),
                 },
                 indent=2,
             )
@@ -851,6 +942,7 @@ def main(argv: list[str]) -> int:
                         else None
                     ),
                     "items": merge_pending(issue_comments, pull_comments, since),
+                    "ignored": untrusted_comments(issue_comments, pull_comments, since),
                 },
                 indent=2,
             )

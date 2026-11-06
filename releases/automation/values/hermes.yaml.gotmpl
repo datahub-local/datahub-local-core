@@ -347,6 +347,12 @@ extraEnv:
   # invited; both it and the Sympozium app are members.
   - name: SLACK_ALLOWED_CHANNELS
     value: C0CDNTM4GTH,C0CBX92B6PQ
+  # The repositories are public, so anyone can comment on an agent issue. Only
+  # these logins' words reach the coding session; everyone else is named in the
+  # tick's `ignored` list and never forwarded. The list is global so the other
+  # components can read the same one.
+  - name: GITHUB_TRUSTED_USERS
+    value: '{{ .Values.github_trusted_users | join "," }}'
   - name: SLACK_FREE_RESPONSE_CHANNELS
     value: C0CDNTM4GTH,C0CBX92B6PQ
   # The app has no /hermes slash command registered, so /hermes sethome cannot

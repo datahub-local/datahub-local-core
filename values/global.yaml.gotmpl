@@ -3,6 +3,14 @@
 cluster_name: homelab.alvsanand.com
 release_name: datahub-local-core
 
+# The GitHub logins whose words may instruct an agent. The public repositories
+# accept a comment from anyone, so a component that reads one filters by this list
+# instead of keeping its own. A login here is a person the owner trusts with the
+# same write access the agent has.
+github_trusted_users:
+  - alvsanand
+  - alvarosantossyngenta
+
 #{{ $gateway_hostname := "homelab.alvsanand.com" }}
 gateway_hostname: "{{ $gateway_hostname }}"
 ingress_port: 443
