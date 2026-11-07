@@ -86,7 +86,7 @@ helm_chart_version:
   kube-prometheus-stack:
     ref: prometheus-community/kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: 92.17.0
+    version: 92.18.0
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
@@ -106,7 +106,7 @@ helm_chart_version:
   ollama:
     ref: ollama/ollama
     repository: https://otwld.github.io/ollama-helm
-    version: 1.94.0
+    version: 1.95.0
   open-webui:
     ref: open-webui/open-webui
     repository: https://helm.openwebui.com
@@ -122,7 +122,7 @@ helm_chart_version:
   robusta:
     ref: robusta/robusta
     repository: https://robusta-charts.storage.googleapis.com
-    version: 0.53.0
+    version: 0.54.0
   # servarr:
   #   ref: datahub-local/servarr
   #   repository: https://datahub-local.github.io/servarr
@@ -162,7 +162,7 @@ helm_chart_version:
   velero:
     ref: vmware-tanzu/velero
     repository: https://vmware-tanzu.github.io/helm-charts
-    version: 12.2.2
+    version: 12.2.3
   vui:
     ref: seriohub/vui
     repository: https://seriohub.github.io/velero-helm
