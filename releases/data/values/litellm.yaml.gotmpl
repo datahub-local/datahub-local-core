@@ -68,6 +68,15 @@ extraResources:
     kind: ConfigMap
     metadata:
       name: "{{ $pricingConfigMap }}"
+      annotations:
+        # The chart mounts these volumes on the migration Job too, and that Job is
+        # an ArgoCD PreSync hook that would otherwise mount the ConfigMap before
+        # the sync creates it and park the whole app in ContainerCreating. As a
+        # PreSync hook in wave -1 the ConfigMap exists first; the cost is that
+        # ArgoCD treats it as a hook (re-applied every sync, deleted first under
+        # the default BeforeHookCreation policy) rather than a tracked resource.
+        argocd.argoproj.io/hook: PreSync
+        argocd.argoproj.io/sync-wave: "-1"
     data:
       opencode_pricing.py: |
 {{- readFile "../files/litellm/opencode_pricing.py" | nindent 8 }}
