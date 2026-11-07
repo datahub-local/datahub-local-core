@@ -399,3 +399,90 @@ spec:
     - ports:
         - port: 443
           protocol: TCP
+---
+# Fix (8): a harness session cannot be given env.
+#
+# The HarnessSession controller builds the container's environment from a
+# fixed list (contract version, session port, model routing, provider keys) and
+# never reads `Agent.spec.agents.default.env`, which only reaches the AgentRun
+# path. So the Pi adapters' catalog addresses have nowhere to live in a CRD, and
+# baking them into the image would copy this cluster's release name into a
+# published artefact.
+#
+# Injected here at pod admission instead: the adapter reads
+# SYMPOZIUM_GITHUB_MCP_URL / SYMPOZIUM_FIRECRAWL_MCP_URL, and an unset variable
+# leaves that server out, so a cluster without this policy degrades to the
+# adapter's own fallbacks rather than failing a turn.
+#
+# Probe after any change: `kubectl delete pod -l app.kubernetes.io/name=harness-session`
+# and read the replacement's env. A rendered policy is not evidence — see (6).
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: '{{ include "name" . }}-harness-session-mcp'
+spec:
+  failurePolicy: Fail
+  reinvocationPolicy: Never
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+        scope: Namespaced
+  matchConditions:
+    - name: harness-session
+      expression: >-
+        has(object.metadata.labels) &&
+        ('app.kubernetes.io/name' in object.metadata.labels) &&
+        object.metadata.labels['app.kubernetes.io/name'] == 'harness-session'
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: >-
+          has(object.spec.containers[0].env)
+            ? [
+                JSONPatch{
+                  op: "add",
+                  path: "/spec/containers/0/env/-",
+                  value: {
+                    "name": "SYMPOZIUM_GITHUB_MCP_URL",
+                    "value": "http://{{ .Values.release_name }}-automation-mcp-github.automation.svc.cluster.local:8080/mcp"
+                  }
+                },
+                JSONPatch{
+                  op: "add",
+                  path: "/spec/containers/0/env/-",
+                  value: {
+                    "name": "SYMPOZIUM_FIRECRAWL_MCP_URL",
+                    "value": "http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp"
+                  }
+                }
+              ]
+            : [
+                JSONPatch{
+                  op: "add",
+                  path: "/spec/containers/0/env",
+                  value: [
+                    {
+                      "name": "SYMPOZIUM_GITHUB_MCP_URL",
+                      "value": "http://{{ .Values.release_name }}-automation-mcp-github.automation.svc.cluster.local:8080/mcp"
+                    },
+                    {
+                      "name": "SYMPOZIUM_FIRECRAWL_MCP_URL",
+                      "value": "http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp"
+                    }
+                  ]
+                }
+              ]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: '{{ include "name" . }}-harness-session-mcp'
+spec:
+  policyName: '{{ include "name" . }}-harness-session-mcp'
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: '{{ .Release.Namespace }}'
