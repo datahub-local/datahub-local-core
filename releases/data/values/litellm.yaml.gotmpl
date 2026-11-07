@@ -87,10 +87,12 @@ proxy_config:
     # Go rejects requests without an x-opencode-session header (400
     # MissingSessionID); clients pointed at the proxy do not send one and LiteLLM
     # strips client headers, so inject a fixed id here.
-    # These are custom aliases, so LiteLLM has no cost-map entry and /model/info
-    # reports a null token limit - clients then fall back to their own default
-    # (OpenCode uses 200000/32000) instead of the model's real window. Pin the
-    # limits on every entry so the window travels with the alias.
+    # These are custom aliases, so LiteLLM has no cost-map entry; without a pin,
+    # /model/info reports a null token limit. Pin it on every entry anyway:
+    # LiteLLM repeats it on /v1/models, which is where OpenCode's LiteLLM plugin
+    # reads max_input_tokens and max_output_tokens. OpenCode's
+    # openai-compatible provider never reads /model/info, so it keeps its own
+    # 200000/32000 default for a model declared by hand.
     # Cost is not billed per token - Go is a flat subscription - but spend left at
     # 0 made the dashboard count the primary model's traffic as free while the
     # OpenRouter fallback hop showed a real number, so the spend panels read as if
