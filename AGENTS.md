@@ -67,6 +67,25 @@ with helmfile instead of adding a standalone template:
 Only add a file under `releases/<namespace>/templates/` for a resource the chart
 does not render at all.
 
+## Read the chart's values before adding a resource it does not render
+
+"A resource the chart does not render" is a reason to read the chart, not an
+answer. Most charts ship a hook for extra objects and wiring, and one that fits
+beats a parallel resource and a patch:
+
+- `extraResources` — arbitrary objects, for a ConfigMap, CronJob or policy the
+  chart has no field for (litellm-helm's `extraResources` is what carries its
+  pricing plugin).
+- `volumes` / `volumeMounts`, `envVars` / `extraEnvVars`, `extraContainers` /
+  `extraInitContainers` — the pod-level equivalents.
+- `proxyConfigMap.create` / `.name`, or any `create`/`existingSecret` pair — for
+  config the chart does render but from the wrong source.
+
+Check the chart version actually pinned in `values/_version.yaml`, not upstream's
+main branch. Say in a comment which hooks you tried, so the next reader does not
+repeat the survey, and fall back to `releases/<namespace>/templates/` only when
+none of them reach the field.
+
 ## Prometheus rules are not validated by a render
 
 `prometheus_rules` in `releases/monitoring/values/default.yaml.gotmpl` is a list
