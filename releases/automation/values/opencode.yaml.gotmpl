@@ -564,8 +564,9 @@ rawResources:
       spec:
         transportType: http
         toolsPrefix: opencode
-        # A run_task turn may wait up to 300s; the client timeout has to clear it.
-        timeout: 900
+        # A run_task turn waits up to 300s; twice that leaves the bridge and the
+        # 900s Hermes client headroom on either side of the wait.
+        timeout: 600
         url: 'http://{{ .Values.release_name }}-automation-opencode-mcp.automation.svc:8080/mcp'
 
   ingress:

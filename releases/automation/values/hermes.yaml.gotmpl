@@ -208,9 +208,11 @@ config:
   # Sympozium's MCP servers already run in this namespace and their stdio
   # adapter serves MCP over HTTP on 8080. `slack` here is an extra tool surface,
   # distinct from the built-in channel, which keeps its own Socket Mode socket.
-  # Every ceiling is explicit: server-internal < MCPServer.spec.timeout < this
-  # timeout, with headroom at each step. The per-server table is in
-  # datahub-local-ai-mcp/docs/deployment.md.
+  # The Hermes and bridge ceilings are pinned here and in mcp.yaml.gotmpl;
+  # server-internal ones live in datahub-local-ai-mcp. Order is
+  # server-internal < MCPServer.spec.timeout < this timeout, with headroom at
+  # each step, so the bridge reports its own failure rather than this one. The
+  # per-server table is in datahub-local-ai-mcp/docs/deployment.md.
   mcp_servers:
     k8s:
       url: http://{{ .Values.release_name }}-automation-mcp-k8s.automation.svc.cluster.local:8080/mcp
@@ -238,8 +240,8 @@ config:
       # The server's own stateless HTTP transport, not the stdio bridge: the
       # bridge misroutes replies for this server (a call can hang to timeout).
       url: http://{{ .Values.release_name }}-automation-mcp-firecrawl-http.automation.svc.cluster.local:8080/mcp
-      # Grep this file rather than trusting the implicit 300s default: firecrawl
-      # is the one server whose own API can legitimately run past its 60s bridge.
+      # 300s is explicit because the Firecrawl API can legitimately run past the
+      # 60s MCPServer bridge; the bridge remains the effective limit.
       timeout: 300
       # FastMCP stateless mode closes the GET event stream, which Hermes reads as
       # a failed keepalive and tears down the transport mid-call. The transport
