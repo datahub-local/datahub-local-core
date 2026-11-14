@@ -41,9 +41,11 @@ module.exports = {
                 assert(CUSTOM_INSTANCE_OWNER_PASSWORD, "Password missing from environment");
 
                 try {
-                    const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
+                    // findByEmailWithRole returns the row with role, which issueCookie
+                    // needs; it survived the n8n 2.47.0 removal of the old lookup.
+                    const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
 
-                    if (!owner) {
+                    if (owner) {
                         logger.debug('[OwnerSetup] Found existing owner with ID: ' + owner.id);
 
                         const passwordHash = await hash(CUSTOM_INSTANCE_OWNER_PASSWORD, 10);
@@ -125,7 +127,7 @@ module.exports = {
                         logger.debug('[OAuth2Proxy] Found forwarded user: ' + forwardedUser);
 
                         try {
-                            const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
+                            const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
 
                             if (owner) {
                                 logger.debug('[OAuth2Proxy] Found owner, attempting to issue cookie');
