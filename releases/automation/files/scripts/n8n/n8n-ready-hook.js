@@ -41,9 +41,16 @@ module.exports = {
                 assert(CUSTOM_INSTANCE_OWNER_PASSWORD, "Password missing from environment");
 
                 try {
-                    // findByEmailWithRole returns the row with role, which issueCookie
-                    // needs; it survived the n8n 2.47.0 removal of the old lookup.
-                    const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
+                    // dbCollections.User is PersonRepository.forCloudHooks(), a plain
+                    // TypeORM repository in 2.47, so the custom lookup methods are gone
+                    // and only findOne/save remain. relations: ['role'] is what
+                    // issueCookie(res, user) reads.
+                    const owner = await this.dbCollections.User.findOne({
+                        where: {
+                            email: CUSTOM_INSTANCE_OWNER_EMAIL
+                        },
+                        relations: ['role'],
+                    });
 
                     if (!owner) {
                         // First boot creates the instance owner as an unclaimed shell with
@@ -138,7 +145,12 @@ module.exports = {
                         logger.debug('[OAuth2Proxy] Found forwarded user: ' + forwardedUser);
 
                         try {
-                            const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
+                            const owner = await this.dbCollections.User.findOne({
+                                where: {
+                                    email: CUSTOM_INSTANCE_OWNER_EMAIL
+                                },
+                                relations: ['role'],
+                            });
 
                             if (owner) {
                                 logger.debug('[OAuth2Proxy] Found owner, attempting to issue cookie');
