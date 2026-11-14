@@ -201,6 +201,10 @@ main:
 
   podAnnotations:
     backup.velero.io/backup-volumes: backup
+    # The chart's master checksum hashes .Values.main only, so a change to the
+    # hook's extraManifests ConfigMap never rolls the pod; this puts the hook in
+    # that hash and the sync restarts the master when it changes.
+    checksum/ready-hook: {{ readFile "../files/scripts/n8n/n8n-ready-hook.js" | sha256sum }}
     pre.hook.backup.velero.io/command: '["/bin/sh", "-c", "n8n export:credentials --all --decrypted | gzip > /scratch/n8n_credentials_backup.json.gz && n8n export:workflow --all --decrypted | gzip > /scratch/n8n_workflow_backup.json.gz"]'
     pre.hook.backup.velero.io/timeout: 60m
     post.hook.restore.velero.io/command: '["/bin/sh", "-c", "[ -f \"/scratch/n8n_credentials_backup.json.gz\" ] && gunzip /scratch/n8n_credentials_backup.json.gz && n8n import:credentials --input /scratch/n8n_credentials_backup.json && rm -f /scratch/n8n_credentials_backup.json; [ -f \"/scratch/n8n_workflow_backup.json.gz\" ] && gunzip /scratch/n8n_workflow_backup.json.gz && n8n import:workflow --input /scratch/n8n_workflow_backup.json && rm -f /scratch/n8n_workflow_backup.json;"]'
