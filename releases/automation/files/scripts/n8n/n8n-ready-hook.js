@@ -41,22 +41,35 @@ module.exports = {
                 assert(CUSTOM_INSTANCE_OWNER_PASSWORD, "Password missing from environment");
 
                 try {
-                    const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
+                    // findByEmailWithRole returns the row with role, which issueCookie
+                    // needs; it survived the n8n 2.47.0 removal of the old lookup.
+                    const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
 
                     if (!owner) {
-                        logger.debug('[OwnerSetup] Found existing owner with ID: ' + owner.id);
+                        // First boot creates the instance owner as an unclaimed shell with
+                        // role global:owner and no email, so the lookup above misses it.
+                        // Claim that shell instead of creating a second owner.
+                        const shellOwner = await this.dbCollections.User.findOneOrFail({
+                            where: {
+                                role: {
+                                    slug: 'global:owner'
+                                }
+                            },
+                            relations: ['role'],
+                        });
+                        logger.debug('[OwnerSetup] Found owner shell with ID: ' + shellOwner.id);
 
                         const passwordHash = await hash(CUSTOM_INSTANCE_OWNER_PASSWORD, 10);
                         logger.debug('[OwnerSetup] Generated password hash for owner');
 
                         await this.dbCollections.User.save({
-                            id: owner.id,
+                            id: shellOwner.id,
                             email: CUSTOM_INSTANCE_OWNER_EMAIL,
                             firstName: "no",
                             lastName: "name",
                             password: passwordHash,
                         });
-                        logger.debug('[OwnerSetup] Updated owner details successfully');
+                        logger.debug('[OwnerSetup] Claimed owner shell successfully');
 
                         await this.dbCollections.Settings.update(
                             {
@@ -125,7 +138,7 @@ module.exports = {
                         logger.debug('[OAuth2Proxy] Found forwarded user: ' + forwardedUser);
 
                         try {
-                            const owner = await this.dbCollections.User.findNonShellUser(CUSTOM_INSTANCE_OWNER_EMAIL);
+                            const owner = await this.dbCollections.User.findByEmailWithRole(CUSTOM_INSTANCE_OWNER_EMAIL);
 
                             if (owner) {
                                 logger.debug('[OAuth2Proxy] Found owner, attempting to issue cookie');
