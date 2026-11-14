@@ -41,7 +41,7 @@ container_image_version:
   # The nginx-unprivileged tag, not the digest: the adapter release publishes no
   # nginx image, and Renovate tracks the tag through the docker datasource.
   nginxinc/nginx-unprivileged: 1.31.7-alpine
-  n8nio/n8n: 2.48.1
+  n8nio/n8n: 3.2.0
   nousresearch/hermes-agent: v0.23.1
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
