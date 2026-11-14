@@ -43,8 +43,8 @@ module.exports = {
                 try {
                     // dbCollections.User is PersonRepository.forCloudHooks(), a plain
                     // TypeORM repository in 2.47, so the custom lookup methods are gone
-                    // and only findOne/save remain. relations: ['role'] is what
-                    // issueCookie(res, user) reads.
+                    // and only the generic TypeORM methods remain. relations: ['role'] is
+                    // what issueCookie(res, user) reads.
                     const owner = await this.dbCollections.User.findOne({
                         where: {
                             email: CUSTOM_INSTANCE_OWNER_EMAIL
