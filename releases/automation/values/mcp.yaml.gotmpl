@@ -527,6 +527,11 @@ rawResources:
         transportType: stdio
         toolsPrefix: pg
         timeout: 60
+        # The controller's stdio adapter answers /healthz from the same child as
+        # tool calls, so a request before initialize blocks both and the 30s
+        # initial delay plus five 15s liveness periods restarts the Pod. The CRD
+        # has no probe fields, so sizing them is a controller change, not a
+        # larger tool timeout.
         # execute_sql is the only write tool; --access-mode blocks it at the
         # server, so this deny is the backstop rather than the enforcement.
         toolsDeny:
