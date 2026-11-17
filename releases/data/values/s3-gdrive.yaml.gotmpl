@@ -32,7 +32,19 @@ controllers:
           TZ: "Europe/Madrid"
           RCLONE_CONFIG_GDRIVE_TYPE: drive
           RCLONE_CONFIG_GDRIVE_SCOPE: drive
-          RCLONE_CONFIG_GDRIVE_TOKEN: # rclone authorize "drive" --auth-no-open-browser
+          # Explicit so a missing key fails the Pod instead of silently falling
+          # back to rclone's shared client_id, retired during 2026.
+          RCLONE_CONFIG_GDRIVE_CLIENT_ID:
+            valueFrom:
+              secretKeyRef:
+                name: gdrive-rclone-credentials
+                key: RCLONE_CONFIG_GDRIVE_CLIENT_ID
+          RCLONE_CONFIG_GDRIVE_CLIENT_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: gdrive-rclone-credentials
+                key: RCLONE_CONFIG_GDRIVE_CLIENT_SECRET
+          RCLONE_CONFIG_GDRIVE_TOKEN: # must be re-issued by this client_id: rclone authorize "drive" --auth-no-open-browser --client-id <id> --client-secret <secret>
             valueFrom:
               secretKeyRef:
                 name: gdrive-rclone-credentials
