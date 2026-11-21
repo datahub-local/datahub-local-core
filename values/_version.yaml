@@ -1,29 +1,29 @@
 container_image_version:
   actualbudget/actual-server: 26.11.0
-  g33kphr33k/musicgrabber: 4.5.3
-  ghcr.io/browserless/chromium: v2.63.1
+  g33kphr33k/musicgrabber: 4.6.1
+  ghcr.io/browserless/chromium: v2.64.2
   ghcr.io/c4illin/convertx: v0.20.0
   ghcr.io/civilblur/mazanoke: v1.1.7
   ghcr.io/containers/kubernetes-mcp-server: v0.1.3@sha256:6347155616c49c78512114500688b50d275ddde7597b6a38cefe6f40a8c42c16
-  ghcr.io/czlonkowski/n8n-mcp: 2.102.0@sha256:48e0f38c4e7622ee029c61c66660b5d75f12d869fe8311c6711073af0d0cd4aa
+  ghcr.io/czlonkowski/n8n-mcp: 2.103.2@sha256:e7e8377e8bcb683abbe56e6ced70d142bbd4c607cf0fbea438a9365de14ddef1
   ghcr.io/datahub-local/dagster-celery-k8s-oci: 1.11.8
   # Both images are published multi-arch (linux/amd64, linux/arm64); these are the
   # index digests, so the same pin schedules on either architecture. Keep the
   # `tag@sha256:…` shape the jsonata manager proposes bumps for.
-  ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:0077fe7277289d9e566f3335b763139c82d897a3f56fb36faaf03e066cfbda8e
-  ghcr.io/datahub-local/mcp-opencode: main@sha256:5941d20b0d032ebe75262083a16ae2e3d2844b3d9c71fd9c70d1ff7effee9047
+  ghcr.io/datahub-local/datahub-local-ai-opencode-adapter: main@sha256:2083e80ed4700337e83d8eae640bf3892093a2d3ac36a29fc8abf9407a2350b7
+  ghcr.io/datahub-local/mcp-opencode: main@sha256:086cdbb282a668b4790f7262a7d0ecba1d74e8ac09e97e6b7f3483821f6f5442
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
-  ghcr.io/firecrawl/firecrawl: 2.11.743@sha256:41871c2290a498de7fd1456c7c869bc0345f45646a410daa8fc1e128372ce7a6
+  ghcr.io/firecrawl/firecrawl: 2.11.809@sha256:e12baea631bc48c30566403166192735c2e31b0232aed81274c9a6dea67d1d19
   # The MCP server image is amd64-only; the Deployment is pinned by a
   # MutatingAdmissionPolicy. The other Firecrawl images are multi-arch.
-  ghcr.io/firecrawl/firecrawl-mcp-server: v3.40.0@sha256:f19cd94cf3ce280deb0989326f4fb10cd885e87135ae382d10e892d3833abd70
+  ghcr.io/firecrawl/firecrawl-mcp-server: v3.41.0@sha256:413100651d19918cadef1c62856f02dd5eafc6661717dda79fd93434e06deddb
   # PG17 + pg_cron + nuq.sql at initdb. Only `latest` is published, so the
   # digest is the pin; the queue is disposable and needs no backup.
   ghcr.io/firecrawl/nuq-postgres: latest@sha256:d719b36160eac2fcbe16dc7e7360ddb9c82c40ea5da183d07bf4a755c6a0b2ae
   ghcr.io/firecrawl/playwright-service: latest@sha256:227ce3d8059173925a5a0697c63a1e947662cca934a609151651f578774edd5d
   ghcr.io/gethomepage/homepage: v2.8.0
-  ghcr.io/github/github-mcp-server: v2.1.0@sha256:f6056fc10bfffcc8c81a6417a2e9ca12808647e8dd6049642a4feaadee0e0f8a
+  ghcr.io/github/github-mcp-server: v2.2.0@sha256:040c4e99810076035eb1d9beb4b4a96fcf589c43cefed6ff51a46a553eb4e174
   ghcr.io/headlamp-k8s/headlamp: v0.46.0
   ghcr.io/miniflux/miniflux: 2.3.5
   ghcr.io/sharevb/it-tools: 2026.10.25
@@ -31,7 +31,7 @@ container_image_version:
   ghcr.io/tuannvm/mcp-trino: 4.3.1@sha256:5ae7d6f845d3b2aa24dbbde7b783d5ffdb6a58070e54873033d4773e8417cf30
   iib0011/omni-tools: 0.7.0
   alpine/k8s: 1.37.2
-  apache/polaris-admin-tool: 1.8.0
+  apache/polaris-admin-tool: 1.9.0
   crystaldba/postgres-mcp: 0.3.0@sha256:dbbd346860d29f1543e991f30f3284bf4ab5f096d049ecc3426528f20b1b6e6b
   curlimages/curl: 8.23.0
   kopia/kopia: 20251215.0.232403
@@ -41,14 +41,14 @@ container_image_version:
   # The nginx-unprivileged tag, not the digest: the adapter release publishes no
   # nginx image, and Renovate tracks the tag through the docker datasource.
   nginxinc/nginx-unprivileged: 1.31.7-alpine
-  n8nio/n8n: 2.48.1
-  nousresearch/hermes-agent: v0.23.1
+  n8nio/n8n: 2.49.2
+  nousresearch/hermes-agent: v0.23.2
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
   rclone/rclone: 1.76.0
   # Ubuntu publishes no stable version tag for this image; latest is the pin.
   ubuntu/squid: latest@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
-  valkey/valkey: 9.1.3
+  valkey/valkey: 9.1.4
   velero/velero-plugin-for-aws: v1.14.4
 helm_chart_version:
   airflow:
@@ -78,7 +78,7 @@ helm_chart_version:
   hermes-agent:
     ref: ghcr.io/jyje/hermes-agent-helm/hermes-agent
     repository: oci://ghcr.io/jyje/hermes-agent-helm
-    version: 1.25.0
+    version: 1.27.0
   homepage:
     ref: jameswynn/homepage
     repository: https://jameswynn.github.io/helm-charts
@@ -90,7 +90,7 @@ helm_chart_version:
   litellm-helm:
     ref: ghcr.io/berriai/litellm-helm
     repository: oci://ghcr.io/berriai
-    version: 1.109.1
+    version: 1.110.2
   loki:
     ref: grafana/loki
     repository: https://grafana.github.io/helm-charts
