@@ -14,10 +14,10 @@ container_image_version:
   ghcr.io/datahub-local/mcp-opencode: main@sha256:086cdbb282a668b4790f7262a7d0ecba1d74e8ac09e97e6b7f3483821f6f5442
   ghcr.io/datahub-local/node-exporter-textfiles: v202608211826
   ghcr.io/datahub-local/ollama-proxy: v202608300621
-  ghcr.io/firecrawl/firecrawl: 2.11.809@sha256:e12baea631bc48c30566403166192735c2e31b0232aed81274c9a6dea67d1d19
+  ghcr.io/firecrawl/firecrawl: 2.11.813@sha256:3736b7582b1b261f0fa346f9feb235fbf70fb7c6ef734603bfcfd540c490142b
   # The MCP server image is amd64-only; the Deployment is pinned by a
   # MutatingAdmissionPolicy. The other Firecrawl images are multi-arch.
-  ghcr.io/firecrawl/firecrawl-mcp-server: v3.41.0@sha256:413100651d19918cadef1c62856f02dd5eafc6661717dda79fd93434e06deddb
+  ghcr.io/firecrawl/firecrawl-mcp-server: v3.41.0@sha256:659e6eead6e157dbc7c6871573fc574800a1c459d524efeb45bf30bc0c9e045e
   # PG17 + pg_cron + nuq.sql at initdb. Only `latest` is published, so the
   # digest is the pin; the queue is disposable and needs no backup.
   ghcr.io/firecrawl/nuq-postgres: latest@sha256:d719b36160eac2fcbe16dc7e7360ddb9c82c40ea5da183d07bf4a755c6a0b2ae
@@ -42,13 +42,13 @@ container_image_version:
   # nginx image, and Renovate tracks the tag through the docker datasource.
   nginxinc/nginx-unprivileged: 1.31.7-alpine
   n8nio/n8n: 2.49.2
-  nousresearch/hermes-agent: v0.23.2
+  nousresearch/hermes-agent: v0.23.3
   python: "3.15"
   quay.io/argoprojlabs/mcp-for-argocd: v0.9.0@sha256:dffc6c719d8635be2d5f2c8ad1c0178540325da4b40da0b373307e12b4c48f86
   rclone/rclone: 1.76.0
   # Ubuntu publishes no stable version tag for this image; latest is the pin.
   ubuntu/squid: latest@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
-  valkey/valkey: 9.1.4
+  valkey/valkey: 9.2.0
   velero/velero-plugin-for-aws: v1.14.4
 helm_chart_version:
   airflow:
