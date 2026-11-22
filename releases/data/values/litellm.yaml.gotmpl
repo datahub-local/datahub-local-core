@@ -207,6 +207,18 @@ proxy_config:
         max_input_tokens: {{ $maxInputTokens }}
         max_output_tokens: {{ $maxOutputTokens }}
         supports_vision: true
+    - model_name: opencode-go/minimax-m3
+      litellm_params:
+        model: openai/minimax-m3
+        api_base: https://opencode.ai/zen/go/v1
+        api_key: os.environ/OPENCODE_GO_API_KEY
+        extra_headers:
+          x-opencode-session: ses_datahub-local-litellm
+        use_chat_completions_api: true
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
 
     # --- OpenRouter (chat) ---
     # Same model as the opencode-go entry, second source. Reasoning model: a
@@ -306,6 +318,8 @@ proxy_config:
           - openrouter/deepseek/deepseek-v4.1-flash
       - opencode-go/glm-5.3-flash:
           - openrouter/deepseek/deepseek-v4.1-flash
+      - opencode-go/minimax-m3:
+          - opencode-go/glm-5.3-flash
     # New SSO users default to proxy_admin; without this LiteLLM falls back to
     # internal_user_viewer.
     default_internal_user_params:
