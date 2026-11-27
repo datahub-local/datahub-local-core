@@ -232,6 +232,23 @@ proxy_config:
         max_output_tokens: {{ $maxOutputTokens }}
         supports_vision: true
 
+    # The glm entries' last hop: the same model as opencode-go/glm-5.3-flash on
+    # a different provider, because OpenCode Go meters one shared window and a
+    # fallback inside that window is not a fallback (2026-11-26, a weekly limit
+    # failed a writer turn outright). The Pi composer sends reasoning_effort=none,
+    # which OpenRouter's GLM rejects, so the hop drops it and takes the
+    # provider's own default.
+    - model_name: openrouter/z-ai/glm-5.3-flash
+      litellm_params:
+        model: openrouter/z-ai/glm-5.3-flash
+        api_key: os.environ/OPENROUTER_API_KEY
+        additional_drop_params:
+          - reasoning_effort
+      model_info:
+        max_input_tokens: {{ $maxInputTokens }}
+        max_output_tokens: {{ $maxOutputTokens }}
+        supports_vision: true
+
     # --- OpenRouter (image generation) ---
     # All but gemini-3.1-flash-image are absent from /chat/completions, which is
     # the only route LiteLLM's openrouter/ image handler posts to. OpenRouter's
@@ -311,13 +328,19 @@ proxy_config:
     # x-opencode-session, so a provider-level failure takes both out at once:
     # on 2026-09-14 deepseek hung and glm answered InternalServerError in the
     # same run. The last hop is therefore OpenRouter, an independent path to the
-    # same model, and the only one of the three that is paid per token.
+    # same model, and the only one of the three that is paid per token. The glm
+    # entries name it as their own last hop too: on 2026-11-26 a weekly OpenCode
+    # Go limit failed a writer turn outright because glm-5.3 had no fallback at
+    # all, and a hop back into the same subscription would have hit the wall
+    # again.
     fallbacks:
       - opencode-go/deepseek-v4.1-flash:
           - opencode-go/glm-5.3-flash
           - openrouter/deepseek/deepseek-v4.1-flash
       - opencode-go/glm-5.3-flash:
-          - openrouter/deepseek/deepseek-v4.1-flash
+          - openrouter/z-ai/glm-5.3-flash
+      - opencode-go/glm-5.3:
+          - openrouter/z-ai/glm-5.3-flash
       - opencode-go/minimax-m3:
           - opencode-go/glm-5.3-flash
     # New SSO users default to proxy_admin; without this LiteLLM falls back to
